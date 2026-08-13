@@ -61,10 +61,10 @@ chore(deps): 📌 pin qwik to 1.20.0
 
 ## Git workflow
 
-Short-lived feature branches, merged via PR into `main`. No release-train
-model yet (see `tuxery/.dev`'s AGENTS.md) — this is an early-stage, mostly
-solo project; adopt stricter branch protection when it actually ships to
-users or gains collaborators, not preemptively.
+Push straight to `main`, no PR needed — this is an early-stage PoC, mostly
+solo project. No release-train model yet (see `tuxery/.dev`'s AGENTS.md).
+Adopt feature branches + PRs and stricter branch protection once it actually
+ships to users or gains collaborators, not preemptively.
 
 ## License
 
