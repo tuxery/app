@@ -4,3 +4,8 @@ packages:
 allowBuilds:
   esbuild: true
   sharp: true
+overrides:
+  # vite-imagetools (pulled in by @builder.io/qwik-city) pins an older sharp
+  # with known libvips CVEs (GHSA-f88m-g3jw-g9cj); force the patched line.
+  # Dev-only build tool (image asset processing), never shipped to the browser.
+  sharp: ">=0.35.0"
