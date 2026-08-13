@@ -8,9 +8,7 @@ import type { SourcedPackage } from "./types";
  * un-deduplicated results — pass this to `@tuxery/matcher`'s
  * `groupPackages` to get one unified app per result.
  */
-export async function searchAllSources(
-  query: string,
-): Promise<SourcedPackage[]> {
+export async function searchAllSources(query: string): Promise<SourcedPackage[]> {
   const results = await Promise.all([
     searchFlathub(query),
     searchSnapcraft(query),

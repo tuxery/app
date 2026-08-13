@@ -1,8 +1,8 @@
 {
   "name": "@tuxery/sources",
-  "description": "Tuxery's source connectors: normalized package types and async clients for Flathub, Snapcraft, AppImage and native package sources",
   "version": "0.0.0",
   "private": true,
+  "description": "Tuxery's source connectors: normalized package types and async clients for Flathub, Snapcraft, AppImage and native package sources",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",

@@ -7,9 +7,7 @@ import type { SourcedPackage } from "./types";
  * connector" card on the Tuxery GitHub Project). Returns an empty list so
  * callers and tests can already depend on the real function signature.
  */
-export async function searchSnapcraft(
-  query: string,
-): Promise<SourcedPackage[]> {
+export async function searchSnapcraft(query: string): Promise<SourcedPackage[]> {
   void query;
   return [];
 }
