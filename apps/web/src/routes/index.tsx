@@ -38,11 +38,7 @@ export default component$(() => {
 
       <div class="tuxery-filters">
         {CATEGORIES.map((category, index) => (
-          <span
-            key={category}
-            class="tuxery-filter"
-            data-active={index === 0 ? "true" : "false"}
-          >
+          <span key={category} class="tuxery-filter" data-active={index === 0 ? "true" : "false"}>
             {category}
           </span>
         ))}

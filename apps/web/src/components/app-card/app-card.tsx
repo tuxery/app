@@ -12,21 +12,19 @@ export interface AppCardProps {
  * an app ships as Flatpak, Snap, *and* AppImage, it renders as exactly one
  * card here, with a badge per available format.
  */
-export const AppCard = component$<AppCardProps>(
-  ({ icon, name, description, formats }) => {
-    return (
-      <article class="tuxery-card">
-        <div class="tuxery-card-icon">{icon}</div>
-        <h3 class="tuxery-card-name">{name}</h3>
-        <p class="tuxery-card-description">{description}</p>
-        <div class="tuxery-badges">
-          {formats.map((format) => (
-            <span key={format} class="tuxery-badge">
-              {format}
-            </span>
-          ))}
-        </div>
-      </article>
-    );
-  },
-);
+export const AppCard = component$<AppCardProps>(({ icon, name, description, formats }) => {
+  return (
+    <article class="tuxery-card">
+      <div class="tuxery-card-icon">{icon}</div>
+      <h3 class="tuxery-card-name">{name}</h3>
+      <p class="tuxery-card-description">{description}</p>
+      <div class="tuxery-badges">
+        {formats.map((format) => (
+          <span key={format} class="tuxery-badge">
+            {format}
+          </span>
+        ))}
+      </div>
+    </article>
+  );
+});

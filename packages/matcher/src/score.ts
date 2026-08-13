@@ -21,10 +21,7 @@ export const MATCH_WEIGHTS = {
 export function scoreMatch(a: SourcedPackage, b: SourcedPackage): number {
   const nameScore = levenshteinSimilarity(a.name, b.name);
   const appIdScore = a.appId && b.appId && a.appId === b.appId ? 1 : 0;
-  const iconScore =
-    a.iconFilename && b.iconFilename && a.iconFilename === b.iconFilename
-      ? 1
-      : 0;
+  const iconScore = a.iconFilename && b.iconFilename && a.iconFilename === b.iconFilename ? 1 : 0;
 
   return (
     nameScore * MATCH_WEIGHTS.name +
