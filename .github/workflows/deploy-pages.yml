@@ -1,4 +1,4 @@
-name: Deploy — Cloudflare Pages
+name: Deploy Pages Test
 
 on:
   push:
@@ -7,27 +7,7 @@ on:
 
 jobs:
   deploy:
-    name: Build & deploy apps/web
+    name: Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: helpers4/action/setup-pnpm@6fddd178620e7325d446a246c38a44f979569fc4 # main @ 2026-07-29
-        with:
-          node-version: "24"
-
-      - name: Build (Cloudflare Pages adapter)
-        working-directory: apps/web
-        run: pnpm run build
-
-      # No-ops until the CLOUDFLARE_API_TOKEN secret is configured on this
-      # repository — see apps/web/README.md. A step-level check (rather than
-      # a job-level `if`) so the rest of the job still runs and the workflow
-      # stays green while that secret isn't set yet.
-      - name: Deploy to Cloudflare Pages
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
-        working-directory: apps/web
-        run: pnpm dlx wrangler pages deploy dist --project-name=tuxery
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      - run: echo hello
