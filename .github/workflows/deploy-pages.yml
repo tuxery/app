@@ -7,7 +7,15 @@ on:
 
 jobs:
   deploy:
-    name: Test
+    name: Build & deploy apps/web
     runs-on: ubuntu-latest
     steps:
-      - run: echo hello
+      - uses: actions/checkout@v7
+
+      - uses: helpers4/action/setup-pnpm@6fddd178620e7325d446a246c38a44f979569fc4 # main @ 2026-07-29
+        with:
+          node-version: "24"
+
+      - name: Build (Cloudflare Pages adapter)
+        working-directory: apps/web
+        run: pnpm run build
