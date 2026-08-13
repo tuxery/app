@@ -1,0 +1,35 @@
+{
+  "name": "@tuxery/web",
+  "description": "Tuxery — Qwik UI: search-first homepage, unified app cards, category filters",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "qwik build",
+    "build.client": "vite build",
+    "build.preview": "vite build --ssr src/entry.preview.tsx",
+    "build.server": "vite build -c adapters/cloudflare-pages/vite.config.ts",
+    "build.types": "tsc --incremental --noEmit",
+    "dev": "vite --mode ssr",
+    "fmt": "prettier --write .",
+    "fmt.check": "prettier --check .",
+    "lint": "oxlint src",
+    "preview": "qwik build preview && vite preview --open",
+    "start": "vite --open --mode ssr",
+    "test": "vitest run",
+    "typecheck": "tsc --incremental --noEmit"
+  },
+  "devDependencies": {
+    "@builder.io/qwik": "1.20.0",
+    "@builder.io/qwik-city": "1.20.0",
+    "@types/node": "20.19.0",
+    "ignore": "^7.0.6",
+    "oxlint": "^1.76.0",
+    "typescript": "7.0.2",
+    "vite": "^7.3.1",
+    "vite-tsconfig-paths": "4.3.2",
+    "vitest": "4.1.10"
+  }
+}

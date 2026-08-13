@@ -1,0 +1,41 @@
+# Build
+dist
+dist-dev
+lib
+lib-types
+server
+build
+tmp
+
+# Development
+node_modules
+.pnpm-store
+.env
+*.local
+
+# Cache
+.cache
+.mf
+.rollup.cache
+tsconfig.tsbuildinfo
+
+# Playwright (e2e/)
+/test-results
+/playwright-report
+/blob-report
+/playwright/.cache
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Editor
+.history
+.vscode/*
+!.vscode/launch.json
+!.vscode/*.code-snippets
+.idea
+.DS_Store

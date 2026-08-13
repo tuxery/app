@@ -1,0 +1,145 @@
+/* Deep Dark Slate theme, Neon Cyan accent — see init.md's UI/UX style guide. */
+:root {
+  --tuxery-bg: #0f1115;
+  --tuxery-surface: #171a21;
+  --tuxery-surface-alt: #1f2430;
+  --tuxery-border: #2a2f3a;
+  --tuxery-text: #e6e9ef;
+  --tuxery-text-muted: #9aa3b2;
+  --tuxery-accent: #00e5ff;
+  --tuxery-accent-strong: #00b8cc;
+  --tuxery-radius: 0.75rem;
+  --tuxery-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--tuxery-font);
+  background: var(--tuxery-bg);
+  color: var(--tuxery-text);
+}
+
+a {
+  color: var(--tuxery-accent);
+}
+
+.tuxery-header {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--tuxery-border);
+}
+
+.tuxery-brand {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--tuxery-text);
+  text-decoration: none;
+}
+
+.tuxery-brand-accent {
+  color: var(--tuxery-accent);
+}
+
+.tuxery-main {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+.tuxery-search {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.tuxery-search-input {
+  width: 100%;
+  max-width: 40rem;
+  padding: 0.9rem 1.25rem;
+  font-size: 1.05rem;
+  color: var(--tuxery-text);
+  background: var(--tuxery-surface);
+  border: 1px solid var(--tuxery-border);
+  border-radius: var(--tuxery-radius);
+  outline: none;
+}
+
+.tuxery-search-input:focus {
+  border-color: var(--tuxery-accent);
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--tuxery-accent) 25%, transparent);
+}
+
+.tuxery-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+}
+
+.tuxery-filter {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.875rem;
+  color: var(--tuxery-text-muted);
+  background: var(--tuxery-surface);
+  border: 1px solid var(--tuxery-border);
+  border-radius: 999px;
+}
+
+.tuxery-filter[data-active="true"] {
+  color: var(--tuxery-bg);
+  background: var(--tuxery-accent);
+  border-color: var(--tuxery-accent);
+}
+
+.tuxery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.tuxery-card {
+  padding: 1.25rem;
+  background: var(--tuxery-surface);
+  border: 1px solid var(--tuxery-border);
+  border-radius: var(--tuxery-radius);
+}
+
+.tuxery-card-icon {
+  font-size: 1.75rem;
+}
+
+.tuxery-card-name {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.tuxery-card-description {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: var(--tuxery-text-muted);
+}
+
+.tuxery-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.tuxery-badge {
+  padding: 0.15rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--tuxery-accent);
+  background: var(--tuxery-surface-alt);
+  border: 1px solid var(--tuxery-border);
+  border-radius: 0.375rem;
+}

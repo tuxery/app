@@ -1,0 +1,16 @@
+**/*.log
+**/.DS_Store
+.history
+node_modules
+.pnpm-store
+dist
+dist-dev
+server
+build
+tmp
+.cache
+.rollup.cache
+tsconfig.tsbuildinfo
+*.spec.tsx
+*.spec.ts
+pnpm-lock.yaml
