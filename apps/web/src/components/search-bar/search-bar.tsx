@@ -5,8 +5,8 @@ export interface SearchBarProps {
 }
 
 /**
- * Stub search input — not wired to `@tuxery/sources`/`@tuxery/matcher` yet.
- * Real search is tracked on the Tuxery GitHub Project ("Homepage search UI").
+ * Stub search input — not wired to `tuxery/catalog`'s dataset yet. Real
+ * search is tracked on the Tuxery GitHub Project ("Homepage search UI").
  */
 export const SearchBar = component$<SearchBarProps>(({ placeholder }) => {
   return (

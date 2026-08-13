@@ -7,8 +7,8 @@ const CATEGORIES = ["All", "Games", "Dev Tools", "Productivity", "Multimedia"];
 
 /**
  * Placeholder catalog so the homepage renders something real. Not backed by
- * `@tuxery/sources`/`@tuxery/matcher` yet — see the "Homepage search UI"
- * card on the Tuxery GitHub Project for wiring this up to live data.
+ * `tuxery/catalog`'s dataset yet — see the "Homepage search UI" card on the
+ * Tuxery GitHub Project for wiring this up to live data.
  */
 const DEMO_APPS = [
   {
