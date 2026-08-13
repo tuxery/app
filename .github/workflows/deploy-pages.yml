@@ -21,7 +21,7 @@ jobs:
         run: pnpm run build
 
       - name: Deploy to Cloudflare Pages
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+        if: secrets.CLOUDFLARE_API_TOKEN != ''
         working-directory: apps/web
         run: pnpm dlx wrangler pages deploy dist --project-name=tuxery
         env:
