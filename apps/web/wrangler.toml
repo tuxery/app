@@ -1,0 +1,7 @@
+name = "tuxery-web"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-08-14"
+
+[[r2_buckets]]
+binding = "CATALOG_BUCKET"
+bucket_name = "tuxery-catalog"

@@ -1,0 +1,32 @@
+{
+  "generatedAt": "2026-08-14T00:00:00.000Z",
+  "apps": [
+    {
+      "id": "flathub:com.discordapp.Discord",
+      "packages": [
+        {
+          "source": "flathub",
+          "name": "Discord",
+          "description": "Voice, video, and text chat for communities.",
+          "version": "0.0.0-dev",
+          "appId": "com.discordapp.Discord",
+          "homepage": "https://discord.com"
+        }
+      ]
+    },
+    {
+      "id": "snapcraft:spotify",
+      "packages": [
+        {
+          "source": "snapcraft",
+          "name": "Spotify",
+          "description": "Stream music, podcasts, and playlists.",
+          "version": "0.0.0-dev",
+          "appId": "spotify",
+          "channel": "stable",
+          "homepage": "https://spotify.com"
+        }
+      ]
+    }
+  ]
+}

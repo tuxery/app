@@ -7,13 +7,15 @@
     "build": "qwik build",
     "build.client": "vite build",
     "build.preview": "vite build --ssr src/entry.preview.tsx",
-    "build.server": "vite build -c adapters/cloudflare-pages/vite.config.ts",
+    "build.server": "vite build -c adapters/cloudflare-pages/vite.config.ts && node scripts/fix-worker-entry.mjs",
     "build.types": "tsc --incremental --noEmit",
     "dev": "vite --mode ssr",
+    "dev.cf": "pnpm build.server && wrangler pages dev dist --port 8788",
     "fmt": "oxfmt .",
     "fmt.check": "oxfmt --check .",
     "lint": "oxlint src",
     "preview": "qwik build preview && vite preview --open",
+    "seed.r2": "wrangler r2 object put tuxery-catalog/dataset.json --file=./dev-fixtures/dataset.json --local",
     "start": "vite --open --mode ssr",
     "test": "vitest run",
     "typecheck": "tsc --incremental --noEmit"
@@ -21,13 +23,15 @@
   "devDependencies": {
     "@builder.io/qwik": "1.20.0",
     "@builder.io/qwik-city": "1.20.0",
+    "@cloudflare/workers-types": "^5.20260812.1",
     "@types/node": "20.19.0",
     "ignore": "^7.0.6",
     "oxlint": "^1.76.0",
     "typescript": "7.0.2",
     "vite": "^7.3.1",
     "vite-tsconfig-paths": "4.3.2",
-    "vitest": "4.1.10"
+    "vitest": "4.1.10",
+    "wrangler": "^4.122.0"
   },
   "engines": {
     "node": ">=20.0.0"
