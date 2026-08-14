@@ -16,6 +16,10 @@ export default component$(() => {
     <QwikCityProvider>
       <head>
         <meta charset="utf-8" />
+        {/* Sets data-theme before first paint so light/dark/system never flashes the wrong theme. */}
+        <script
+          dangerouslySetInnerHTML={`(function(){try{var s=localStorage.getItem('tuxery:settings');var t=s?JSON.parse(s).theme:null;var dark=t==='dark'||((!t||t==='system')&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.setAttribute('data-theme',dark?'tuxerydark':'tuxerylight');}catch(e){}})();`}
+        />
         {!isDev && <link rel="manifest" href={`${import.meta.env.BASE_URL}manifest.json`} />}
         <RouterHead />
       </head>

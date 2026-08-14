@@ -38,5 +38,9 @@
   },
   "engines": {
     "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@qwik-ui/headless": "^0.7.7",
+    "@qwikest/icons": "^0.0.13"
   }
 }
