@@ -16,7 +16,10 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const APP_WEB_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const DEFAULT_DATASET = resolve(APP_WEB_DIR, "dev-sample/dataset.json");
+// Committed in `catalog` (same repo as the `pnpm --filter @tuxery/pipeline
+// sample` command that generates it), not here — fixed sibling path, same
+// convention as catalog's dev.ts reaching into this repo.
+const DEFAULT_DATASET = "/workspaces/catalog/packages/pipeline/dev-sample/dataset.json";
 
 function flagValue(name) {
   const arg = process.argv.find((a) => a.startsWith(`--${name}=`));
