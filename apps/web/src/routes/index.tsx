@@ -36,15 +36,18 @@ export default component$(() => {
     <>
       <SearchBar />
 
-      <div class="tuxery-filters">
+      <div class="flex flex-wrap gap-2 justify-center mb-10">
         {CATEGORIES.map((category, index) => (
-          <span key={category} class="tuxery-filter" data-active={index === 0 ? "true" : "false"}>
+          <span
+            key={category}
+            class={["badge badge-lg", index === 0 ? "badge-primary" : "badge-outline"]}
+          >
             {category}
           </span>
         ))}
       </div>
 
-      <div class="tuxery-grid">
+      <div class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
         {DEMO_APPS.map((app) => (
           <AppCard
             key={app.name}

@@ -14,16 +14,18 @@ export interface AppCardProps {
  */
 export const AppCard = component$<AppCardProps>(({ icon, name, description, formats }) => {
   return (
-    <article class="tuxery-card">
-      <div class="tuxery-card-icon">{icon}</div>
-      <h3 class="tuxery-card-name">{name}</h3>
-      <p class="tuxery-card-description">{description}</p>
-      <div class="tuxery-badges">
-        {formats.map((format) => (
-          <span key={format} class="tuxery-badge">
-            {format}
-          </span>
-        ))}
+    <article class="card bg-base-100 border border-base-300">
+      <div class="card-body gap-2 p-5">
+        <div class="text-3xl leading-none">{icon}</div>
+        <h3 class="card-title text-base">{name}</h3>
+        <p class="text-sm text-base-content/70">{description}</p>
+        <div class="flex flex-wrap gap-1.5 mt-1">
+          {formats.map((format) => (
+            <span key={format} class="badge badge-outline badge-primary badge-sm">
+              {format}
+            </span>
+          ))}
+        </div>
       </div>
     </article>
   );

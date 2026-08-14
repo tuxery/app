@@ -7,6 +7,7 @@ import { defineConfig } from "vitest/config";
 import { qwikVite } from "@builder.io/qwik/optimizer";
 import { qwikCity } from "@builder.io/qwik-city/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+import tailwindcss from "@tailwindcss/vite";
 
 // Pinned so the qwikCity plugin's default `routesDir` (resolved from Vite's
 // `root`) always points at apps/web/src/routes, even when this config is
@@ -21,7 +22,7 @@ const ROOT = fileURLToPath(new URL(".", import.meta.url));
 export default defineConfig(() => {
   return {
     root: ROOT,
-    plugins: [qwikCity(), qwikVite(), tsconfigPaths({ root: "." })],
+    plugins: [qwikCity(), qwikVite(), tsconfigPaths({ root: "." }), tailwindcss()],
     // This tells Vite which dependencies to pre-build in dev mode.
     optimizeDeps: {
       // Put problematic deps that break bundling here, mostly those with binaries.

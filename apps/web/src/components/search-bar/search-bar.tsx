@@ -10,9 +10,9 @@ export interface SearchBarProps {
  */
 export const SearchBar = component$<SearchBarProps>(({ placeholder }) => {
   return (
-    <div class="tuxery-search">
+    <div class="flex justify-center mb-8">
       <input
-        class="tuxery-search-input"
+        class="input input-lg focus:input-primary w-full max-w-xl"
         type="search"
         placeholder={placeholder ?? "Search for an app…"}
         aria-label="Search for an app"
