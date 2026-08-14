@@ -21,8 +21,14 @@ app/
 
 ```shell
 pnpm install
-pnpm dev            # Qwik dev server on :5173 (apps/web)
+pnpm dev            # Qwik dev server on :5173 (apps/web), no data
+pnpm --filter web dev --sample   # + wrangler-simulated worker on :8788, seeded with ~1k real apps
 ```
+
+For the full production dataset instead of the small sample, run `pnpm dev`
+from `tuxery/catalog`'s repo root — it builds/reuses the real merged
+dataset and launches this same worker seeded with it (see that repo's
+`AGENTS.md`).
 
 ## Checks
 
