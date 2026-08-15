@@ -1,10 +1,9 @@
 {
-  "name": "my-qwik-empty-starter",
-  "description": "Blank project with routing included",
+  "name": "@tuxery/web",
+  "description": "Tuxery — Qwik UI: search-first homepage, unified app cards, category filters",
   "engines": {
-    "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+    "node": ">=20.0.0"
   },
-  "engines-annotation": "Mostly required by sharp which needs a Node-API v9 compatible runtime",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,27 +14,32 @@
     "deploy": "echo 'Run \"npm run qwik add\" to install a server adapter'",
     "dev": "vite --mode ssr",
     "dev.debug": "node --inspect-brk ./node_modules/vite/bin/vite.js --mode ssr --force",
-    "fmt": "prettier --write .",
-    "fmt.check": "prettier --check .",
-    "lint": "eslint \"src/**/*.ts*\"",
+    "fmt": "oxfmt .",
+    "fmt.check": "oxfmt --check .",
+    "lint": "oxlint src",
     "preview": "qwik build preview && vite preview --open",
     "start": "vite --open --mode ssr",
+    "test": "vitest run",
+    "typecheck": "tsc --incremental --noEmit",
     "qwik": "qwik"
   },
   "devDependencies": {
     "@builder.io/qwik": "^1.20.0",
     "@builder.io/qwik-city": "^1.20.0",
-    "@eslint/js": "^9",
+    "@tailwindcss/vite": "^4.3.3",
     "@types/node": "20.19.0",
-    "eslint": "9.32.0",
-    "eslint-plugin-qwik": "^1.20.0",
-    "globals": "16.4.0",
-    "prettier": "3.6.2",
-    "typescript": "5.4.5",
-    "typescript-eslint": "8.38.0",
-    "typescript-plugin-css-modules": "latest",
-    "undici": "*",
-    "vite": "7.3.1",
-    "vite-tsconfig-paths": "^4.2.1"
+    "oxfmt": "^0.63.0",
+    "oxlint": "^1.78.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "7.0.2",
+    "vite": "^7.3.1",
+    "vite-tsconfig-paths": "^4.2.1",
+    "vitest": "4.1.10"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.17.4",
+    "@qwik-ui/headless": "^0.7.7",
+    "@qwikest/icons": "^0.0.13",
+    "daisyui": "^5.7.17"
   }
 }
