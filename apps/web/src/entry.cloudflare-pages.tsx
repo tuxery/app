@@ -9,7 +9,7 @@ import render from "./entry.ssr";
 
 declare global {
   interface QwikCityPlatform extends PlatformCloudflarePages {
-    env: { CATALOG_BUCKET: R2Bucket };
+    env: { TURSO_DB_URL: string; TURSO_DB_AUTH_TOKEN?: string };
   }
 }
 

@@ -11,6 +11,7 @@ tmp
 node_modules
 .pnpm-store
 .env
+.dev.vars
 *.local
 
 # Cache
@@ -19,7 +20,7 @@ node_modules
 .rollup.cache
 tsconfig.tsbuildinfo
 
-# Wrangler (local dev state, incl. simulated R2 storage)
+# Wrangler (local dev state)
 .wrangler
 
 # Playwright (e2e/)

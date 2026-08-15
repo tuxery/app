@@ -2,6 +2,7 @@ name = "tuxery-web"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-08-14"
 
-[[r2_buckets]]
-binding = "CATALOG_BUCKET"
-bucket_name = "tuxery-catalog"
+# TURSO_DB_URL / TURSO_DB_AUTH_TOKEN are not set here: local dev reads them
+# from .dev.vars (gitignored, see .dev.vars.example), prod reads them from
+# Cloudflare Pages' encrypted secrets. Neither belongs in a committed file —
+# the auth token is a real credential, not project config.

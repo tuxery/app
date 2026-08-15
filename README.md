@@ -21,14 +21,23 @@ app/
 
 ```shell
 pnpm install
-pnpm dev            # Qwik dev server on :5173 (apps/web), no data
-pnpm --filter web dev --sample   # + wrangler-simulated worker on :8788, seeded with ~1k real apps
+pnpm dev            # local mode: builds + wrangler pages dev on :8788, connects to catalog's local server
+pnpm dev --remote   # remote mode: same, but queries the real hosted Turso dev DB
+pnpm start          # fast Vite SSR on :5173 (apps/web), no worker, no data
 ```
 
-For the full production dataset instead of the small sample, run `pnpm dev`
-from `tuxery/catalog`'s repo root — it builds/reuses the real merged
-dataset and launches this same worker seeded with it (see that repo's
-`AGENTS.md`).
+**Local (default)** is a pure client — it never starts any database
+infrastructure itself. It connects to a libSQL server that
+`tuxery/catalog` runs (`pnpm seed` then `pnpm serve` there, in two of
+their own terminals) — unlimited reads/writes, no network. Without that
+server running, `pnpm dev` here refuses to start rather than silently
+serving an empty catalog.
+
+**Remote** (`--remote`) points the Worker at the real hosted Turso dev DB
+instead — no local server needed, `tuxery/catalog`'s `pnpm seed --remote`
+publishes straight there. Real network latency, real quotas, closer to
+how prod behaves. Credentials come from `/workspaces/.dev/.env` (shared
+with `tuxery/catalog`'s side), not from anything committed in this repo.
 
 ## Checks
 
@@ -51,9 +60,11 @@ configured in this repository's settings — until then the job is a no-op.
 
 ## Status
 
-`apps/web`'s homepage currently renders a placeholder catalog, not live
-search results — it isn't wired to `tuxery/catalog`'s dataset yet, and that
-dataset itself is still mostly stubs. Real source integration, the matching
-algorithm, and live search are tracked as cards on the
+`apps/web`'s homepage renders live, server-side search results against
+`tuxery/catalog`'s dataset (substring match on name/description, via a
+Turso database — see `src/catalog.ts` and `src/routes/api/search/`).
+`tuxery/catalog`'s dataset itself is still mostly stubs beyond the core
+fields (name, description, packages) — richer per-app fields (screenshots,
+ratings, reviews...) are tracked as cards on the
 [Tuxery GitHub Project](https://github.com/orgs/tuxery/projects/1), not in
 this file.

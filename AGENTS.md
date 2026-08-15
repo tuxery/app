@@ -11,8 +11,8 @@ messages, issues, pull requests, and configuration. No exceptions.
 
 ## Scope
 
-- `apps/web` — Qwik City UI. No product logic beyond rendering/routing; the
-  UI will consume `tuxery/catalog`'s dataset once that's wired up, not
+- `apps/web` — Qwik City UI. No product logic beyond rendering/routing; it
+  queries `tuxery/catalog`'s dataset via Turso (see `src/catalog.ts`), not
   reimplement matching/scoring locally.
 
 ## Rules

@@ -1,14 +1,12 @@
-import { component$ } from "@builder.io/qwik";
+import { component$, type Signal } from "@builder.io/qwik";
 
 export interface SearchBarProps {
   placeholder?: string;
+  value: Signal<string>;
 }
 
-/**
- * Stub search input — not wired to `tuxery/catalog`'s dataset yet. Real
- * search is tracked on the Tuxery GitHub Project ("Homepage search UI").
- */
-export const SearchBar = component$<SearchBarProps>(({ placeholder }) => {
+/** Debounced server-side search — see `routes/index.tsx`'s call to `/api/search`. */
+export const SearchBar = component$<SearchBarProps>(({ placeholder, value }) => {
   return (
     <div class="flex justify-center mb-8">
       <input
@@ -16,6 +14,10 @@ export const SearchBar = component$<SearchBarProps>(({ placeholder }) => {
         type="search"
         placeholder={placeholder ?? "Search for an app…"}
         aria-label="Search for an app"
+        value={value.value}
+        onInput$={(_, el) => {
+          value.value = el.value;
+        }}
       />
     </div>
   );

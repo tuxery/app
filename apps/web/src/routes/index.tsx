@@ -1,63 +1,71 @@
-import { component$ } from "@builder.io/qwik";
+import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { AppCard } from "~/components/app-card/app-card";
 import { SearchBar } from "~/components/search-bar/search-bar";
+import { searchApps, getStats, type AppSummary } from "~/catalog";
 
-const CATEGORIES = ["All", "Games", "Dev Tools", "Productivity", "Multimedia"];
+export const useInitialApps = routeLoader$(async (requestEvent) => {
+  return searchApps(requestEvent.platform.env, "");
+});
 
-/**
- * Placeholder catalog so the homepage renders something real. Not backed by
- * `tuxery/catalog`'s dataset yet — see the "Homepage search UI" card on the
- * Tuxery GitHub Project for wiring this up to live data.
- */
-const DEMO_APPS = [
-  {
-    icon: "🎮",
-    name: "Discord",
-    description: "Voice, video, and text chat for communities.",
-    formats: ["Flatpak", "Snap"],
-  },
-  {
-    icon: "🎵",
-    name: "Spotify",
-    description: "Stream music, podcasts, and playlists.",
-    formats: ["Flatpak", "Snap", "AppImage"],
-  },
-  {
-    icon: "🧩",
-    name: "GIMP",
-    description: "Free and open source image editor.",
-    formats: ["Flatpak", "AppImage"],
-  },
-];
+export const useStats = routeLoader$(async (requestEvent) => {
+  return getStats(requestEvent.platform.env);
+});
+
+const DEBOUNCE_MS = 200;
 
 export default component$(() => {
+  const initialApps = useInitialApps();
+  const stats = useStats();
+  const query = useSignal("");
+  const results = useSignal<AppSummary[]>(initialApps.value);
+  const searching = useSignal(false);
+
+  useVisibleTask$(({ track, cleanup }) => {
+    const q = track(() => query.value);
+    searching.value = true;
+    const timer = setTimeout(async () => {
+      const response = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+      results.value = (await response.json()) as AppSummary[];
+      searching.value = false;
+    }, DEBOUNCE_MS);
+    cleanup(() => clearTimeout(timer));
+  });
+
   return (
     <>
-      <SearchBar />
+      <SearchBar value={query} />
 
-      <div class="flex flex-wrap gap-2 justify-center mb-10">
-        {CATEGORIES.map((category, index) => (
-          <span
-            key={category}
-            class={["badge badge-lg", index === 0 ? "badge-primary" : "badge-outline"]}
-          >
-            {category}
-          </span>
-        ))}
-      </div>
+      {stats.value.total === 0 ? (
+        <p class="text-center text-base-content/60">
+          No catalog data loaded — run <code class="font-mono">pnpm seed</code> in{" "}
+          <code class="font-mono">tuxery/catalog</code> first to seed it.
+        </p>
+      ) : searching.value ? (
+        <p class="text-center text-base-content/60">Searching…</p>
+      ) : results.value.length === 0 ? (
+        <p class="text-center text-base-content/60">No apps found for "{query.value}".</p>
+      ) : (
+        <>
+          <p class="text-sm text-base-content/60 mb-4">
+            {results.value.length} of {stats.value.total} apps
+          </p>
 
-      <div class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
-        {DEMO_APPS.map((app) => (
-          <AppCard
-            key={app.name}
-            icon={app.icon}
-            name={app.name}
-            description={app.description}
-            formats={app.formats}
-          />
-        ))}
-      </div>
+          <div class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
+            {results.value.map((app) => (
+              <a key={app.id} href={`/app/${encodeURIComponent(app.id)}/`} class="block">
+                <AppCard
+                  iconUrl={app.iconUrl}
+                  name={app.name}
+                  description={app.shortDescription}
+                  sources={app.sources}
+                />
+              </a>
+            ))}
+          </div>
+        </>
+      )}
     </>
   );
 });

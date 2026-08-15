@@ -15,6 +15,9 @@ export default component$(() => {
         </div>
 
         <div class="navbar-end gap-1">
+          <a href="/about" class="btn btn-ghost">
+            About
+          </a>
           <a href="/settings" class="btn btn-ghost btn-square" aria-label="Settings">
             <LuSettings class="text-lg" />
           </a>
