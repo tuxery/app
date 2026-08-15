@@ -1,8 +1,11 @@
 # Build
-/dist
-/lib
-/lib-types
-/server
+dist
+dist-dev
+lib
+lib-types
+server
+build
+tmp
 
 # Development
 node_modules
@@ -15,16 +18,21 @@ node_modules
 .rollup.cache
 tsconfig.tsbuildinfo
 
+# Playwright (e2e/)
+/test-results
+/playwright-report
+/blob-report
+/playwright/.cache
+
 # Logs
 logs
 *.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
 # Editor
+.history
 .vscode/*
 !.vscode/launch.json
 !.vscode/*.code-snippets
@@ -36,7 +44,3 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
-
-# Yarn
-.yarn/*
-!.yarn/releases

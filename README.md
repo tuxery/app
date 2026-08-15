@@ -1,65 +1,59 @@
-# Qwik City App ⚡️
+# Tuxery — `app`
 
-- [Qwik Docs](https://qwik.dev/)
-- [Discord](https://qwik.dev/chat)
-- [Qwik GitHub](https://github.com/QwikDev/qwik)
-- [@QwikDev](https://twitter.com/QwikDev)
-- [Vite](https://vitejs.dev/)
+The Tuxery product: a search-first Qwik UI. The data behind it — source
+connectors (Flatpak/Flathub, Snap/Snapcraft, AppImage, native), the matching
+engine, and the persisted dataset — lives in
+[`tuxery/catalog`](https://github.com/tuxery/catalog), a separate repo so
+contributors can work on a connector without touching Qwik. See
+[`init.md`](https://github.com/tuxery/.github) and the
+[Tuxery GitHub Project](https://github.com/orgs/tuxery/projects/1) for the
+product brief and roadmap.
 
----
+## Layout
 
-## Project Structure
-
-This project is using Qwik with [QwikCity](https://qwik.dev/qwikcity/overview/). QwikCity is just an extra set of tools on top of Qwik to make it easier to build a full site, including directory-based routing, layouts, and more.
-
-Inside your project, you'll see the following directory structure:
-
-```
-├── public/
-│   └── ...
-└── src/
-    ├── components/
-    │   └── ...
-    └── routes/
-        └── ...
-```
-
-- `src/routes`: Provides the directory-based routing, which can include a hierarchy of `layout.tsx` layout files, and an `index.tsx` file as the page. Additionally, `index.ts` files are endpoints. Please see the [routing docs](https://qwik.dev/qwikcity/routing/overview/) for more info.
-
-- `src/components`: Recommended directory for components.
-
-- `public`: Any static assets, like images, can be placed in the public directory. Please see the [Vite public directory](https://vitejs.dev/guide/assets.html#the-public-directory) for more info.
-
-## Add Integrations and deployment
-
-Use the `pnpm qwik add` command to add additional integrations. Some examples of integrations includes: Cloudflare, Netlify or Express Server, and the [Static Site Generator (SSG)](https://qwik.dev/qwikcity/guides/static-site-generation/).
-
-```shell
-pnpm qwik add # or `pnpm qwik add`
+```text
+app/
+└── apps/
+    └── web/            # Qwik City UI (search, filters, unified app cards)
 ```
 
 ## Development
 
-Development mode uses [Vite's development server](https://vitejs.dev/). The `dev` command will server-side render (SSR) the output during development.
-
 ```shell
-npm start # or `pnpm start`
+pnpm install
+pnpm dev            # Qwik dev server on :5173 (apps/web), no data
+pnpm --filter web dev --sample   # + wrangler-simulated worker on :8788, seeded with ~1k real apps
 ```
 
-> Note: during dev mode, Vite may request a significant number of `.js` files. This does not represent a Qwik production build.
+For the full production dataset instead of the small sample, run `pnpm dev`
+from `tuxery/catalog`'s repo root — it builds/reuses the real merged
+dataset and launches this same worker seeded with it (see that repo's
+`AGENTS.md`).
 
-## Preview
-
-The preview command will create a production build of the client modules, a production build of `src/entry.preview.tsx`, and run a local server. The preview server is only for convenience to preview a production build locally and should not be used as a production server.
-
-```shell
-pnpm preview # or `pnpm preview`
-```
-
-## Production
-
-The production build will generate client and server modules by running both client and server build commands. The build command will use Typescript to run a type check on the source code.
+## Checks
 
 ```shell
-pnpm build # or `pnpm build`
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm build
 ```
+
+Or scoped to `apps/web`: `pnpm --filter web dev`, `pnpm --filter web test`, etc.
+
+## Deploy
+
+`apps/web` builds via the Cloudflare Pages adapter
+(`apps/web/adapters/cloudflare-pages/`). `.github/workflows/deploy.yml`
+builds and runs `wrangler pages deploy` on push to `main`, but only once the
+`CLOUDFLARE_API_TOKEN` secret and `CLOUDFLARE_ACCOUNT_ID` repo variable are
+configured in this repository's settings — until then the job is a no-op.
+
+## Status
+
+`apps/web`'s homepage currently renders a placeholder catalog, not live
+search results — it isn't wired to `tuxery/catalog`'s dataset yet, and that
+dataset itself is still mostly stubs. Real source integration, the matching
+algorithm, and live search are tracked as cards on the
+[Tuxery GitHub Project](https://github.com/orgs/tuxery/projects/1), not in
+this file.
