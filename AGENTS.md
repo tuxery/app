@@ -11,9 +11,10 @@ messages, issues, pull requests, and configuration. No exceptions.
 
 ## Scope
 
-- `apps/web` — Qwik City UI. No product logic beyond rendering/routing; the
-  UI will consume `tuxery/catalog`'s dataset once that's wired up, not
-  reimplement matching/scoring locally.
+This whole repo is one Qwik City app — no `apps/*`/`packages/*` nesting,
+there's only ever been one deployable here. `src/` — no product logic
+beyond rendering/routing; it queries `tuxery/catalog`'s dataset via Turso,
+not reimplement matching/scoring locally.
 
 ## Rules
 
@@ -31,12 +32,12 @@ Format: `type(scope): <emoji> description`.
 
 Scopes live in [`scopes.json`](./scopes.json) at this repo's root:
 
-| Scope  | Maps to                                       |
-| ------ | --------------------------------------------- |
-| `web`  | `apps/web`                                    |
-| `ui`   | Cross-cutting UI/design changes in `apps/web` |
-| `ci`   | `.github/workflows/`                          |
-| `deps` | Dependency bumps                              |
+| Scope  | Maps to                          |
+| ------ | --------------------------------- |
+| `web`  | `src/` (this whole repo)          |
+| `ui`   | Cross-cutting UI/design changes   |
+| `ci`   | `.github/workflows/`              |
+| `deps` | Dependency bumps                  |
 
 **Do not use a scope outside this list.** If a new top-level concern is
 added, update `scopes.json` (and this table) together.

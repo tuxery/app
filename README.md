@@ -11,24 +11,28 @@ product brief and roadmap.
 
 ## Layout
 
+One Qwik City app at the repo root — no `apps/*`/`packages/*` nesting,
+there's only ever been one deployable here.
+
 ```text
 app/
-└── apps/
-    └── web/            # Qwik City UI (search, filters, unified app cards)
+├── public/       # static assets
+└── src/
+    ├── components/
+    └── routes/    # search homepage, app detail, about, settings
 ```
 
 ## Development
 
 ```shell
 pnpm install
-pnpm dev            # Qwik dev server on :5173 (apps/web), no data
-pnpm --filter web dev --sample   # + wrangler-simulated worker on :8788, seeded with ~1k real apps
+pnpm dev            # Vite SSR dev server on :5173
 ```
 
-For the full production dataset instead of the small sample, run `pnpm dev`
-from `tuxery/catalog`'s repo root — it builds/reuses the real merged
-dataset and launches this same worker seeded with it (see that repo's
-`AGENTS.md`).
+Queries `tuxery/catalog`'s dataset via Turso — run `tuxery/catalog`'s
+`pnpm seed` then `pnpm serve` first (its own README) to have real data
+locally; without that, the homepage just shows an empty catalog rather
+than failing.
 
 ## Checks
 
@@ -39,21 +43,12 @@ pnpm test
 pnpm build
 ```
 
-Or scoped to `apps/web`: `pnpm --filter web dev`, `pnpm --filter web test`, etc.
-
-## Deploy
-
-`apps/web` builds via the Cloudflare Pages adapter
-(`apps/web/adapters/cloudflare-pages/`). `.github/workflows/deploy.yml`
-builds and runs `wrangler pages deploy` on push to `main`, but only once the
-`CLOUDFLARE_API_TOKEN` secret and `CLOUDFLARE_ACCOUNT_ID` repo variable are
-configured in this repository's settings — until then the job is a no-op.
-
 ## Status
 
-`apps/web`'s homepage currently renders a placeholder catalog, not live
-search results — it isn't wired to `tuxery/catalog`'s dataset yet, and that
-dataset itself is still mostly stubs. Real source integration, the matching
-algorithm, and live search are tracked as cards on the
-[Tuxery GitHub Project](https://github.com/orgs/tuxery/projects/1), not in
-this file.
+`apps/web`'s homepage renders live, server-side search results against
+`tuxery/catalog`'s dataset (substring match on name/description, via a
+Turso database). That dataset itself is still mostly stubs beyond the
+core fields (name, description, packages) — richer per-app fields
+(screenshots, ratings, reviews...) are tracked as cards on the
+[Tuxery GitHub Project](https://github.com/orgs/tuxery/projects/1), not
+in this file.
