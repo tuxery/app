@@ -7,9 +7,12 @@ import {
   type Signal,
 } from "@builder.io/qwik";
 
+import { SOURCE_LABELS, type PackageSourceId } from "~/catalog";
+
 export type Theme = "light" | "dark" | "system";
 export type CtaBehavior = "automatic" | "exhaustive";
-export type InstallMethodId = "flathub" | "snapcraft" | "appimage" | "aur";
+/** The sources with a live connector today — see catalog.ts's `PackageSourceId` for the full set. */
+export type InstallMethodId = Extract<PackageSourceId, "flathub" | "snapcraft" | "appimage" | "aur">;
 
 export interface InstallMethodPreference {
   id: InstallMethodId;
@@ -33,19 +36,14 @@ const STORAGE_KEY = "tuxery:settings";
 /** daisyUI theme names — kept in one place since root.tsx's anti-FOUC script needs the same mapping. */
 export const DAISY_THEME = { light: "tuxerylight", dark: "tuxerydark" } as const;
 
-export const INSTALL_METHOD_LABELS: Record<InstallMethodId, string> = {
-  flathub: "Flathub (Flatpak)",
-  snapcraft: "Snap Store",
-  appimage: "AppImage",
-  aur: "AUR",
-};
+const LIVE_INSTALL_METHODS: InstallMethodId[] = ["flathub", "snapcraft", "appimage", "aur"];
 
-const defaultInstallMethods = (): InstallMethodPreference[] => [
-  { id: "flathub", enabled: true },
-  { id: "snapcraft", enabled: true },
-  { id: "appimage", enabled: true },
-  { id: "aur", enabled: true },
-];
+export const INSTALL_METHOD_LABELS: Record<InstallMethodId, string> = Object.fromEntries(
+  LIVE_INSTALL_METHODS.map((id) => [id, SOURCE_LABELS[id]]),
+) as Record<InstallMethodId, string>;
+
+const defaultInstallMethods = (): InstallMethodPreference[] =>
+  LIVE_INSTALL_METHODS.map((id) => ({ id, enabled: true }));
 
 export const SettingsContext = createContextId<SettingsState>("tuxery.settings");
 
