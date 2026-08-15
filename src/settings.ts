@@ -7,50 +7,102 @@ import {
   type Signal,
 } from "@builder.io/qwik";
 
-import { SOURCE_LABELS, type PackageSourceId } from "~/catalog";
-
 export type Theme = "light" | "dark" | "system";
-export type CtaBehavior = "automatic" | "exhaustive";
-/** The sources with a live connector today — see catalog.ts's `PackageSourceId` for the full set. */
-export type InstallMethodId = Extract<PackageSourceId, "flathub" | "snapcraft" | "appimage" | "aur">;
+export type CtaBehavior = "exhaustive" | "automatic";
 
-export interface InstallMethodPreference {
-  id: InstallMethodId;
+/** One toggleable leaf under a format/distro group — not always a `PackageSourceId` 1:1 (e.g. Ubuntu's "Universe" is a repo component within the single "ubuntu" source, not a separate one). */
+export interface InstallSourceOption {
+  id: string;
+  label: string;
   enabled: boolean;
+}
+
+/** A "big line" the settings page groups sources under — a packaging format (Flatpak, Snap, AppImage) or a distro (Ubuntu, Debian, ...), each with one or more concrete sources/components as children. */
+export interface InstallFormatGroup {
+  id: string;
+  label: string;
+  enabled: boolean;
+  sources: InstallSourceOption[];
 }
 
 export interface SettingsState {
   theme: Signal<Theme>;
   ctaBehavior: Signal<CtaBehavior>;
-  installMethods: Signal<InstallMethodPreference[]>;
+  installGroups: Signal<InstallFormatGroup[]>;
 }
 
 interface PersistedSettings {
   theme: Theme;
   ctaBehavior: CtaBehavior;
-  installMethods: InstallMethodPreference[];
+  installGroups: InstallFormatGroup[];
 }
 
 const STORAGE_KEY = "tuxery:settings";
 
-const LIVE_INSTALL_METHODS: InstallMethodId[] = ["flathub", "snapcraft", "appimage", "aur"];
-
-export const INSTALL_METHOD_LABELS: Record<InstallMethodId, string> = Object.fromEntries(
-  LIVE_INSTALL_METHODS.map((id) => [id, SOURCE_LABELS[id]]),
-) as Record<InstallMethodId, string>;
-
-const defaultInstallMethods = (): InstallMethodPreference[] =>
-  LIVE_INSTALL_METHODS.map((id) => ({ id, enabled: true }));
+// Kept in sync by hand with catalog's docs/sources.md — no cross-repo
+// import (separate repos), same convention as catalog.ts itself. Not
+// wired into search filtering yet (tracked on the Tuxery GitHub
+// Project); this is the preference the UI will read once it is.
+const defaultInstallGroups = (): InstallFormatGroup[] => [
+  {
+    id: "flatpak",
+    label: "Flatpak",
+    enabled: true,
+    sources: [{ id: "flathub", label: "Flathub", enabled: true }],
+  },
+  {
+    id: "snap",
+    label: "Snap",
+    enabled: true,
+    sources: [{ id: "snap-store", label: "Snap Store", enabled: true }],
+  },
+  {
+    id: "appimage",
+    label: "AppImage",
+    enabled: true,
+    sources: [{ id: "appimagehub", label: "AppImageHub", enabled: true }],
+  },
+  {
+    id: "arch",
+    label: "Arch Linux",
+    enabled: true,
+    sources: [
+      { id: "arch-aur", label: "AUR (community)", enabled: true },
+      { id: "arch-official", label: "Official (core + extra)", enabled: true },
+    ],
+  },
+  {
+    id: "debian",
+    label: "Debian",
+    enabled: true,
+    sources: [{ id: "debian-main", label: "Main", enabled: true }],
+  },
+  {
+    id: "ubuntu",
+    label: "Ubuntu",
+    enabled: true,
+    sources: [
+      { id: "ubuntu-main", label: "Main", enabled: true },
+      { id: "ubuntu-universe", label: "Universe", enabled: true },
+    ],
+  },
+  {
+    id: "fedora",
+    label: "Fedora",
+    enabled: true,
+    sources: [{ id: "fedora-everything", label: "Everything", enabled: true }],
+  },
+];
 
 export const SettingsContext = createContextId<SettingsState>("tuxery.settings");
 
 /** Call once, at the layout root. Provides + persists the settings store. */
 export const useProvideSettings = (): SettingsState => {
   const theme = useSignal<Theme>("system");
-  const ctaBehavior = useSignal<CtaBehavior>("automatic");
-  const installMethods = useSignal<InstallMethodPreference[]>(defaultInstallMethods());
+  const ctaBehavior = useSignal<CtaBehavior>("exhaustive");
+  const installGroups = useSignal<InstallFormatGroup[]>(defaultInstallGroups());
 
-  const state: SettingsState = { theme, ctaBehavior, installMethods };
+  const state: SettingsState = { theme, ctaBehavior, installGroups };
   useContextProvider(SettingsContext, state);
 
   const hydrated = useSignal(false);
@@ -59,7 +111,7 @@ export const useProvideSettings = (): SettingsState => {
   useVisibleTask$(({ track }) => {
     track(() => theme.value);
     track(() => ctaBehavior.value);
-    track(() => JSON.stringify(installMethods.value));
+    track(() => JSON.stringify(installGroups.value));
 
     if (!hydrated.value) {
       hydrated.value = true;
@@ -69,7 +121,7 @@ export const useProvideSettings = (): SettingsState => {
           const stored = JSON.parse(raw) as Partial<PersistedSettings>;
           if (stored.theme) theme.value = stored.theme;
           if (stored.ctaBehavior) ctaBehavior.value = stored.ctaBehavior;
-          if (stored.installMethods) installMethods.value = stored.installMethods;
+          if (stored.installGroups) installGroups.value = stored.installGroups;
         }
       } catch {
         // malformed/unavailable storage — keep defaults
@@ -80,7 +132,7 @@ export const useProvideSettings = (): SettingsState => {
     const payload: PersistedSettings = {
       theme: theme.value,
       ctaBehavior: ctaBehavior.value,
-      installMethods: installMethods.value,
+      installGroups: installGroups.value,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   });
@@ -108,25 +160,42 @@ export const useProvideSettings = (): SettingsState => {
 
 export const useSettings = () => useContext(SettingsContext);
 
-/** Move the install method at `index` up (-1) or down (+1) in preference order. */
-export const reorderInstallMethod = (
-  installMethods: Signal<InstallMethodPreference[]>,
+/** Move the group at `index` up (-1) or down (+1) in preference order. */
+export const reorderInstallGroup = (
+  installGroups: Signal<InstallFormatGroup[]>,
   index: number,
   direction: -1 | 1,
 ) => {
   const target = index + direction;
-  const list = installMethods.value;
+  const list = installGroups.value;
   if (target < 0 || target >= list.length) return;
   const next = [...list];
   const item = next[index];
   if (!item) return;
   next.splice(index, 1);
   next.splice(target, 0, item);
-  installMethods.value = next;
+  installGroups.value = next;
 };
 
-export const toggleInstallMethod = (installMethods: Signal<InstallMethodPreference[]>, index: number) => {
-  installMethods.value = installMethods.value.map((method, i) =>
-    i === index ? { ...method, enabled: !method.enabled } : method,
+export const toggleInstallGroup = (installGroups: Signal<InstallFormatGroup[]>, index: number) => {
+  installGroups.value = installGroups.value.map((group, i) =>
+    i === index ? { ...group, enabled: !group.enabled } : group,
+  );
+};
+
+export const toggleInstallSource = (
+  installGroups: Signal<InstallFormatGroup[]>,
+  groupIndex: number,
+  sourceIndex: number,
+) => {
+  installGroups.value = installGroups.value.map((group, i) =>
+    i === groupIndex
+      ? {
+          ...group,
+          sources: group.sources.map((source, j) =>
+            j === sourceIndex ? { ...source, enabled: !source.enabled } : source,
+          ),
+        }
+      : group,
   );
 };

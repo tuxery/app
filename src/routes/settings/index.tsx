@@ -2,9 +2,9 @@ import { component$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { LuArrowDown, LuArrowUp } from "@qwikest/icons/lucide";
 import {
-  INSTALL_METHOD_LABELS,
-  reorderInstallMethod,
-  toggleInstallMethod,
+  reorderInstallGroup,
+  toggleInstallGroup,
+  toggleInstallSource,
   useSettings,
   type CtaBehavior,
   type Theme,
@@ -17,8 +17,12 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
 ];
 
 const CTA_OPTIONS: { value: CtaBehavior; label: string; hint: string }[] = [
-  { value: "automatic", label: "Automatic", hint: "Show the single best-matching source as the main install button." },
   { value: "exhaustive", label: "Exhaustive", hint: "Show every available source as an equal install option." },
+  {
+    value: "automatic",
+    label: "Automatic",
+    hint: "Show the single best-matching source as the main install button.",
+  },
 ];
 
 export default component$(() => {
@@ -35,10 +39,7 @@ export default component$(() => {
             <button
               key={option.value}
               type="button"
-              class={[
-                "btn join-item",
-                settings.theme.value === option.value ? "btn-primary" : "btn-ghost",
-              ]}
+              class={["btn join-item", settings.theme.value === option.value ? "btn-primary" : "btn-ghost"]}
               onClick$={() => {
                 settings.theme.value = option.value;
               }}
@@ -75,40 +76,58 @@ export default component$(() => {
       <section>
         <h2 class="text-lg font-semibold mb-3">Install sources</h2>
         <p class="text-sm text-base-content/60 mb-3">
-          Order and enable the sources shown on each app's page. Disabled sources are hidden.
+          Order and enable the formats/distros shown on each app's page. Expand one to pick which
+          of its sources to use.
         </p>
         <ul class="flex flex-col gap-2">
-          {settings.installMethods.value.map((method, index) => (
-            <li
-              key={method.id}
-              class="flex items-center gap-3 border border-base-300 rounded-box px-3 py-2"
-            >
-              <input
-                type="checkbox"
-                class="checkbox checkbox-primary"
-                checked={method.enabled}
-                onChange$={() => toggleInstallMethod(settings.installMethods, index)}
-                aria-label={`Enable ${INSTALL_METHOD_LABELS[method.id]}`}
-              />
-              <span class="flex-1">{INSTALL_METHOD_LABELS[method.id]}</span>
-              <button
-                type="button"
-                class="btn btn-ghost btn-square btn-sm"
-                disabled={index === 0}
-                aria-label={`Move ${INSTALL_METHOD_LABELS[method.id]} up`}
-                onClick$={() => reorderInstallMethod(settings.installMethods, index, -1)}
-              >
-                <LuArrowUp />
-              </button>
-              <button
-                type="button"
-                class="btn btn-ghost btn-square btn-sm"
-                disabled={index === settings.installMethods.value.length - 1}
-                aria-label={`Move ${INSTALL_METHOD_LABELS[method.id]} down`}
-                onClick$={() => reorderInstallMethod(settings.installMethods, index, 1)}
-              >
-                <LuArrowDown />
-              </button>
+          {settings.installGroups.value.map((group, groupIndex) => (
+            <li key={group.id} class="border border-base-300 rounded-box px-3 py-2">
+              <div class="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  class="checkbox checkbox-primary"
+                  checked={group.enabled}
+                  onChange$={() => toggleInstallGroup(settings.installGroups, groupIndex)}
+                  aria-label={`Enable ${group.label}`}
+                />
+                <span class="flex-1 font-medium">{group.label}</span>
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-square btn-sm"
+                  disabled={groupIndex === 0}
+                  aria-label={`Move ${group.label} up`}
+                  onClick$={() => reorderInstallGroup(settings.installGroups, groupIndex, -1)}
+                >
+                  <LuArrowUp />
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-square btn-sm"
+                  disabled={groupIndex === settings.installGroups.value.length - 1}
+                  aria-label={`Move ${group.label} down`}
+                  onClick$={() => reorderInstallGroup(settings.installGroups, groupIndex, 1)}
+                >
+                  <LuArrowDown />
+                </button>
+              </div>
+
+              {group.enabled && group.sources.length > 0 && (
+                <ul class="flex flex-col gap-1.5 mt-2 pl-8">
+                  {group.sources.map((source, sourceIndex) => (
+                    <li key={source.id}>
+                      <label class="flex items-center gap-2 cursor-pointer text-sm">
+                        <input
+                          type="checkbox"
+                          class="checkbox checkbox-sm checkbox-primary"
+                          checked={source.enabled}
+                          onChange$={() => toggleInstallSource(settings.installGroups, groupIndex, sourceIndex)}
+                        />
+                        {source.label}
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ul>
