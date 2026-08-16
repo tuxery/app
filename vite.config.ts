@@ -2,6 +2,7 @@
  * This is the base config for vite.
  * When building, the adapter config is used which loads this file and extends it.
  */
+/// <reference types="vitest/config" />
 import { defineConfig, loadEnv, type UserConfig } from "vite";
 import { qwikVite } from "@builder.io/qwik/optimizer";
 import { qwikCity } from "@builder.io/qwik-city/vite";
@@ -48,6 +49,12 @@ export default defineConfig(({ mode }): UserConfig => {
         // Do cache the server response in preview (non-adapter production build)
         "Cache-Control": "public, max-age=600",
       },
+    },
+    // No test files exist yet (the monorepo's unit-tested `matcher` package
+    // moved to `catalog`) — vitest exits 1 on an empty suite by default,
+    // which would otherwise fail CI for no real reason.
+    test: {
+      passWithNoTests: true,
     },
   };
 });
