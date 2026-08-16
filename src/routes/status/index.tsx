@@ -83,6 +83,55 @@ export default component$(() => {
         </p>
       </div>
 
+      <section class="max-w-2xl">
+        <h2 class="text-lg font-semibold mb-2">Contribute</h2>
+        <p class="text-base-content/80 mb-2">
+          Tuxery is a small, entirely community-run project — there's real work to do, and outside
+          help matters.
+        </p>
+        <ul class="list-disc list-inside text-base-content/80 flex flex-col gap-1">
+          <li>
+            <span class="font-medium">Help with the data.</span> More sources, cleaning up what's
+            already fetched (filtering out libraries and dev packages that slip through), fixing
+            bad matches, improving the matching itself — this is where the most help is needed
+            today.
+          </li>
+          <li>
+            <span class="font-medium">Help with Tuxery in general.</span> The UI, the pipeline,
+            anything — check the{" "}
+            <a
+              href="https://github.com/orgs/tuxery/projects/1"
+              class="link link-primary"
+              target="_blank"
+              rel="noopener"
+            >
+              Tuxery GitHub Project
+            </a>{" "}
+            for what's tracked and pick something up.
+          </li>
+          <li>
+            <span class="font-medium">Use Tuxery's cleaned-up data for your own apps.</span>{" "}
+            There's no public dump or API yet, but if it would genuinely help the wider Linux
+            community, it's worth exploring — all help is welcome.
+          </li>
+        </ul>
+        <p class="text-sm text-base-content/60 mt-3">
+          Bonus reminder: Tuxery is licensed AGPL-3.0-or-later — worth knowing if you're planning
+          to build on it or run a modified version as a public service.
+        </p>
+      </section>
+
+      <section class="max-w-2xl">
+        <h2 class="text-lg font-semibold mb-2">Sponsoring</h2>
+        <p class="text-base-content/80">
+          For now, Tuxery runs entirely on free tiers of the tools it uses — that's the right
+          scale for a small community project. But some things the community might genuinely want
+          (a public API, for instance) would need to go beyond what's free, and that means
+          funding. If that ever becomes the right next step, sponsoring will be part of how it
+          happens.
+        </p>
+      </section>
+
       <div class="overflow-x-auto border border-base-300 rounded-box">
         <table class="table">
           <thead>
