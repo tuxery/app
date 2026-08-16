@@ -67,7 +67,7 @@ export default component$(() => {
   return (
     <div class="flex flex-col gap-6">
       <div>
-        <h1 class="text-3xl font-bold mb-2">Source status</h1>
+        <h1 class="text-3xl font-bold mb-2">Status</h1>
         <p class="text-base-content/70 max-w-2xl">
           Every source Tuxery pulls from or plans to, and what's actually implemented today. See
           the{" "}
@@ -83,7 +83,21 @@ export default component$(() => {
         </p>
       </div>
 
-      <section class="max-w-2xl">
+      <section>
+        <h2 class="text-lg font-semibold mb-2">Roadmap</h2>
+        <ul class="list-disc list-inside text-base-content/80 flex flex-col gap-1">
+          <li>More distributions and sources supported.</li>
+          <li>A voting system so you can help surface your favorite apps and games.</li>
+          <li>
+            Real need for help from distro maintainers and contributors to clean up and correct
+            the data.
+          </li>
+          <li>An "influencer" mode for sharing your own discoveries with others.</li>
+          <li>A personal space to fine-tune filters and track your installs.</li>
+        </ul>
+      </section>
+
+      <section>
         <h2 class="text-lg font-semibold mb-2">Contribute</h2>
         <p class="text-base-content/80 mb-2">
           Tuxery is a small, entirely community-run project — there's real work to do, and outside
@@ -91,13 +105,11 @@ export default component$(() => {
         </p>
         <ul class="list-disc list-inside text-base-content/80 flex flex-col gap-1">
           <li>
-            <span class="font-medium">Help with the data.</span> More sources, cleaning up what's
-            already fetched (filtering out libraries and dev packages that slip through), fixing
-            bad matches, improving the matching itself — this is where the most help is needed
+            <span class="font-medium">Help with the data.</span> More cleaned sources, improving the matching itself — this is where the most help is needed
             today.
           </li>
           <li>
-            <span class="font-medium">Help with Tuxery in general.</span> The UI, the pipeline,
+            <span class="font-medium">Help with Tuxery.</span> The UI, the pipeline,
             anything — check the{" "}
             <a
               href="https://github.com/orgs/tuxery/projects/1"
@@ -106,12 +118,11 @@ export default component$(() => {
               rel="noopener"
             >
               Tuxery GitHub Project
-            </a>{" "}
-            for what's tracked and pick something up.
+            </a>.
           </li>
           <li>
-            <span class="font-medium">Use Tuxery's cleaned-up data for your own apps.</span>{" "}
-            There's no public dump or API yet, but if it would genuinely help the wider Linux
+            <span class="font-medium">There's no public dump or API yet,</span>{" "}
+            but if it would genuinely help the wider Linux
             community, it's worth exploring — all help is welcome.
           </li>
         </ul>
@@ -121,7 +132,7 @@ export default component$(() => {
         </p>
       </section>
 
-      <section class="max-w-2xl">
+      <section>
         <h2 class="text-lg font-semibold mb-2">Sponsoring</h2>
         <p class="text-base-content/80">
           For now, Tuxery runs entirely on free tiers of the tools it uses — that's the right
@@ -132,6 +143,7 @@ export default component$(() => {
         </p>
       </section>
 
+      <h2 class="text-lg font-semibold mb-2">Data Sources</h2>
       <div class="overflow-x-auto border border-base-300 rounded-box">
         <table class="table">
           <thead>
@@ -165,11 +177,12 @@ export default component$(() => {
 });
 
 export const head: DocumentHead = {
-  title: "Source status — Tuxery",
+  title: "Status — Tuxery",
   meta: [
     {
       name: "description",
-      content: "Detailed status per source: what's implemented, coverage, and what's planned.",
+      content:
+        "Where Tuxery stands: the roadmap, how to contribute, sponsoring, and a detailed breakdown per source.",
     },
   ],
 };
