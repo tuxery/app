@@ -32,12 +32,12 @@ Format: `type(scope): <emoji> description`.
 
 Scopes live in [`scopes.json`](./scopes.json) at this repo's root:
 
-| Scope  | Maps to                          |
-| ------ | --------------------------------- |
-| `web`  | `src/` (this whole repo)          |
-| `ui`   | Cross-cutting UI/design changes   |
-| `ci`   | `.github/workflows/`              |
-| `deps` | Dependency bumps                  |
+| Scope  | Maps to                         |
+| ------ | ------------------------------- |
+| `web`  | `src/` (this whole repo)        |
+| `ui`   | Cross-cutting UI/design changes |
+| `ci`   | `.github/workflows/`            |
+| `deps` | Dependency bumps                |
 
 **Do not use a scope outside this list.** If a new top-level concern is
 added, update `scopes.json` (and this table) together.

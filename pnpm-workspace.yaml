@@ -1,5 +1,5 @@
 allowBuilds:
-  '@parcel/watcher': false
+  "@parcel/watcher": false
   esbuild: true
   sharp: false
 
@@ -9,4 +9,4 @@ allowBuilds:
 # app doesn't use Qwik's <Image> transform), so forcing a patched version
 # is a safe, low-risk way to clear `pnpm audit --audit-level high`.
 overrides:
-  sharp: '>=0.35.0'
+  sharp: ">=0.35.0"

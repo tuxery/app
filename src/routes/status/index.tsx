@@ -27,11 +27,24 @@ const STATUS_BADGE: Record<RowStatus, string> = {
 // Kept in sync by hand with catalog's docs/sources.md — no cross-repo
 // import (separate repos), same convention as catalog.ts itself.
 const ROWS: SourceRow[] = [
-  { type: "Flatpak", source: "Flathub", status: "complete", desc: "Canonical catalog", count: "~3,300", arch: "x64" },
+  {
+    type: "Flatpak",
+    source: "Flathub",
+    status: "complete",
+    desc: "Canonical catalog",
+    count: "~3,300",
+    arch: "x64",
+  },
   { type: "Flatpak", source: "GNOME nightly", status: "planned" },
   { type: "Flatpak", source: "KDE kdeapps", status: "planned" },
   { type: "Flatpak", source: "Fedora's remote", status: "planned" },
-  { type: "Snap", source: "Snap Store", status: "partial", desc: "Capped sweep, 100/category", count: "~1,500" },
+  {
+    type: "Snap",
+    source: "Snap Store",
+    status: "partial",
+    desc: "Capped sweep, 100/category",
+    count: "~1,500",
+  },
   {
     type: "AppImage",
     source: "AppImageHub",
@@ -39,10 +52,38 @@ const ROWS: SourceRow[] = [
     desc: "~22% skipped, no version numbers yet",
     count: "~1,100",
   },
-  { type: "Ubuntu", source: "Main", status: "partial", desc: "resolute only", count: "~6,500", arch: "x64" },
-  { type: "Ubuntu", source: "Universe", status: "partial", desc: "resolute only", count: "~66,700", arch: "x64" },
-  { type: "Debian", source: "Main", status: "partial", desc: "stable only", count: "~68,800", arch: "x64" },
-  { type: "Fedora", source: "Everything", status: "partial", desc: "Release 44 only", count: "~76,400", arch: "x64" },
+  {
+    type: "Ubuntu",
+    source: "Main",
+    status: "partial",
+    desc: "resolute only",
+    count: "~6,500",
+    arch: "x64",
+  },
+  {
+    type: "Ubuntu",
+    source: "Universe",
+    status: "partial",
+    desc: "resolute only",
+    count: "~66,700",
+    arch: "x64",
+  },
+  {
+    type: "Debian",
+    source: "Main",
+    status: "partial",
+    desc: "stable only",
+    count: "~68,800",
+    arch: "x64",
+  },
+  {
+    type: "Fedora",
+    source: "Everything",
+    status: "partial",
+    desc: "Release 44 only",
+    count: "~76,400",
+    arch: "x64",
+  },
   { type: "Arch Linux", source: "AUR", status: "complete", desc: "Full dump", count: "~117,500" },
   {
     type: "Arch Linux",
@@ -69,8 +110,7 @@ export default component$(() => {
       <div>
         <h1 class="text-3xl font-bold mb-2">Status</h1>
         <p class="text-base-content/70 max-w-2xl">
-          Every source Tuxery pulls from or plans to, and what's actually implemented today. See
-          the{" "}
+          Every source Tuxery pulls from or plans to, and what's actually implemented today. See the{" "}
           <a
             href="https://github.com/orgs/tuxery/projects/1"
             class="link link-primary"
@@ -89,8 +129,8 @@ export default component$(() => {
           <li>More distributions and sources supported.</li>
           <li>A voting system so you can help surface your favorite apps and games.</li>
           <li>
-            Real need for help from distro maintainers and contributors to clean up and correct
-            the data.
+            Real need for help from distro maintainers and contributors to clean up and correct the
+            data.
           </li>
           <li>An "influencer" mode for sharing your own discoveries with others.</li>
           <li>A personal space to fine-tune filters and track your installs.</li>
@@ -105,12 +145,12 @@ export default component$(() => {
         </p>
         <ul class="list-disc list-inside text-base-content/80 flex flex-col gap-1">
           <li>
-            <span class="font-medium">Help with the data.</span> More cleaned sources, improving the matching itself — this is where the most help is needed
-            today.
+            <span class="font-medium">Help with the data.</span> More cleaned sources, improving the
+            matching itself — this is where the most help is needed today.
           </li>
           <li>
-            <span class="font-medium">Help with Tuxery.</span> The UI, the pipeline,
-            anything — check the{" "}
+            <span class="font-medium">Help with Tuxery.</span> The UI, the pipeline, anything —
+            check the{" "}
             <a
               href="https://github.com/orgs/tuxery/projects/1"
               class="link link-primary"
@@ -118,12 +158,12 @@ export default component$(() => {
               rel="noopener"
             >
               Tuxery GitHub Project
-            </a>.
+            </a>
+            .
           </li>
           <li>
-            <span class="font-medium">There's no public dump or API yet,</span>{" "}
-            but if it would genuinely help the wider Linux
-            community, it's worth exploring — all help is welcome.
+            <span class="font-medium">There's no public dump or API yet,</span> but if it would
+            genuinely help the wider Linux community, it's worth exploring — all help is welcome.
           </li>
         </ul>
         <p class="text-sm text-base-content/60 mt-3">
@@ -139,11 +179,10 @@ export default component$(() => {
       <section>
         <h2 class="text-lg font-semibold mb-2">Sponsoring</h2>
         <p class="text-base-content/80">
-          For now, Tuxery runs entirely on free tiers of the tools it uses — that's the right
-          scale for a small community project. But some things the community might genuinely want
-          (a public API, for instance) would need to go beyond what's free, and that means
-          funding. If that ever becomes the right next step, sponsoring will be part of how it
-          happens.
+          For now, Tuxery runs entirely on free tiers of the tools it uses — that's the right scale
+          for a small community project. But some things the community might genuinely want (a
+          public API, for instance) would need to go beyond what's free, and that means funding. If
+          that ever becomes the right next step, sponsoring will be part of how it happens.
         </p>
       </section>
 
@@ -166,7 +205,9 @@ export default component$(() => {
                 <td class="whitespace-nowrap font-medium">{row.type}</td>
                 <td class="whitespace-nowrap text-base-content/70">{row.source ?? "–"}</td>
                 <td>
-                  <span class={["badge badge-sm", STATUS_BADGE[row.status]]}>{STATUS_LABEL[row.status]}</span>
+                  <span class={["badge badge-sm", STATUS_BADGE[row.status]]}>
+                    {STATUS_LABEL[row.status]}
+                  </span>
                 </td>
                 <td class="text-base-content/70">{row.desc ?? "–"}</td>
                 <td class="whitespace-nowrap">{row.count ?? "–"}</td>

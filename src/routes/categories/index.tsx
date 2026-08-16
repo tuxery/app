@@ -10,9 +10,10 @@ export default component$(() => {
       </div>
 
       <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
-        Tuxery doesn't have a defined category taxonomy yet — sources report categories inconsistently, if at
-        all, and nothing normalizes them today (tracked on the Tuxery GitHub Project). Once that's defined,
-        this page will list every category and let you browse into it.
+        Tuxery doesn't have a defined category taxonomy yet — sources report categories
+        inconsistently, if at all, and nothing normalizes them today (tracked on the Tuxery GitHub
+        Project). Once that's defined, this page will list every category and let you browse into
+        it.
       </div>
     </div>
   );

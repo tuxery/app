@@ -77,7 +77,10 @@ function toCatalogApp(row: Row): CatalogApp {
     rating:
       row.rating_average === null || row.rating_average === undefined
         ? undefined
-        : { average: row.rating_average as number, count: (row.rating_count as number | null) ?? 0 },
+        : {
+            average: row.rating_average as number,
+            count: (row.rating_count as number | null) ?? 0,
+          },
     aiFeatures: bool(row.ai_features),
     inAppPurchases: bool(row.in_app_purchases),
     gdprCompliant: bool(row.gdpr_compliant),
@@ -134,7 +137,10 @@ export async function browseApps(query: string, page: number): Promise<BrowseRes
   const where = trimmed ? "WHERE id LIKE ? OR name LIKE ? OR short_description LIKE ?" : "";
   const whereArgs = trimmed ? [`%${trimmed}%`, `%${trimmed}%`, `%${trimmed}%`] : [];
 
-  const countResult = await db.execute({ sql: `SELECT COUNT(*) as count FROM apps ${where}`, args: whereArgs });
+  const countResult = await db.execute({
+    sql: `SELECT COUNT(*) as count FROM apps ${where}`,
+    args: whereArgs,
+  });
   const total = Number(countResult.rows[0]?.count ?? 0);
 
   const offset = Math.max(0, page) * BROWSE_PAGE_SIZE;
@@ -161,6 +167,9 @@ export async function getStats(): Promise<CatalogStats> {
   if (!db) return EMPTY_STATS;
 
   const result = await db.execute(`SELECT key, value FROM meta`);
-  const meta = Object.fromEntries(result.rows.map((row) => [row.key, row.value])) as Record<string, string>;
+  const meta = Object.fromEntries(result.rows.map((row) => [row.key, row.value])) as Record<
+    string,
+    string
+  >;
   return { total: Number(meta.totalApps ?? 0), generatedAt: meta.generatedAt ?? "" };
 }

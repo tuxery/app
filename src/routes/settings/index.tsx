@@ -17,7 +17,11 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
 ];
 
 const CTA_OPTIONS: { value: CtaBehavior; label: string; hint: string }[] = [
-  { value: "exhaustive", label: "Exhaustive", hint: "Show every available source as an equal install option." },
+  {
+    value: "exhaustive",
+    label: "Exhaustive",
+    hint: "Show every available source as an equal install option.",
+  },
   {
     value: "automatic",
     label: "Automatic",
@@ -39,7 +43,10 @@ export default component$(() => {
             <button
               key={option.value}
               type="button"
-              class={["btn join-item", settings.theme.value === option.value ? "btn-primary" : "btn-ghost"]}
+              class={[
+                "btn join-item",
+                settings.theme.value === option.value ? "btn-primary" : "btn-ghost",
+              ]}
               onClick$={() => {
                 settings.theme.value = option.value;
               }}
@@ -54,7 +61,11 @@ export default component$(() => {
         <h2 class="text-lg font-semibold mb-3">Install button behavior</h2>
         <div class="flex flex-col gap-2">
           {CTA_OPTIONS.map((option) => (
-            <label key={option.value} class="flex items-start gap-3 cursor-pointer" aria-label={option.label}>
+            <label
+              key={option.value}
+              class="flex items-start gap-3 cursor-pointer"
+              aria-label={option.label}
+            >
               <input
                 type="radio"
                 name="cta-behavior"
@@ -76,8 +87,8 @@ export default component$(() => {
       <section>
         <h2 class="text-lg font-semibold mb-3">Install sources</h2>
         <p class="text-sm text-base-content/60 mb-3">
-          Order and enable the formats/distros shown on each app's page. Expand one to pick which
-          of its sources to use.
+          Order and enable the formats/distros shown on each app's page. Expand one to pick which of
+          its sources to use.
         </p>
         <ul class="flex flex-col gap-2">
           {settings.installGroups.value.map((group, groupIndex) => (
@@ -120,7 +131,9 @@ export default component$(() => {
                           type="checkbox"
                           class="checkbox checkbox-sm checkbox-primary"
                           checked={source.enabled}
-                          onChange$={() => toggleInstallSource(settings.installGroups, groupIndex, sourceIndex)}
+                          onChange$={() =>
+                            toggleInstallSource(settings.installGroups, groupIndex, sourceIndex)
+                          }
                         />
                         {source.label}
                       </label>

@@ -9,5 +9,13 @@
   "rules": {
     "typescript/no-explicit-any": "off"
   },
-  "ignorePatterns": ["dist", "dist-dev", ".history", "node_modules", "server", "tmp", "*.tsbuildinfo"]
+  "ignorePatterns": [
+    "dist",
+    "dist-dev",
+    ".history",
+    "node_modules",
+    "server",
+    "tmp",
+    "*.tsbuildinfo"
+  ]
 }

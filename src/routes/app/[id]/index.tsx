@@ -74,9 +74,12 @@ export default component$(() => {
   useVisibleTask$(({ cleanup }) => {
     const el = jumboRef.value;
     if (!el) return;
-    const observer = new IntersectionObserver(([entry]) => (showStickyBar.value = !entry.isIntersecting), {
-      rootMargin: "-64px 0px 0px 0px",
-    });
+    const observer = new IntersectionObserver(
+      ([entry]) => (showStickyBar.value = !entry.isIntersecting),
+      {
+        rootMargin: "-64px 0px 0px 0px",
+      },
+    );
     observer.observe(el);
     cleanup(() => observer.disconnect());
   });
@@ -87,8 +90,8 @@ export default component$(() => {
         <h1 class="text-2xl font-bold mb-2">App not found</h1>
         <p class="text-base-content/60 mb-4">
           It may not be in the loaded dataset — run <code class="font-mono">pnpm seed</code> then{" "}
-          <code class="font-mono">pnpm serve</code> in <code class="font-mono">tuxery/catalog</code> for a local
-          one.
+          <code class="font-mono">pnpm serve</code> in <code class="font-mono">tuxery/catalog</code>{" "}
+          for a local one.
         </p>
         <a href="/" class="link link-primary">
           Back to search
@@ -109,7 +112,13 @@ export default component$(() => {
           <div class="max-w-6xl mx-auto px-4 md:px-6 py-2 flex items-center gap-3">
             <div class="w-8 h-8 rounded-field bg-base-300 flex items-center justify-center overflow-hidden shrink-0">
               {a.iconUrl ? (
-                <img src={a.iconUrl} alt="" width={32} height={32} class="w-full h-full object-cover" />
+                <img
+                  src={a.iconUrl}
+                  alt=""
+                  width={32}
+                  height={32}
+                  class="w-full h-full object-cover"
+                />
               ) : (
                 <LuPackage class="text-base text-base-content/40" />
               )}
@@ -121,12 +130,20 @@ export default component$(() => {
                   Install
                 </a>
               ) : (
-                <button type="button" class="btn btn-primary btn-sm" onClick$={() => (noLinkModalOpen.value = true)}>
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  onClick$={() => (noLinkModalOpen.value = true)}
+                >
                   Install
                 </button>
               )
             ) : (
-              <button type="button" class="btn btn-primary btn-sm" onClick$={() => (drawerOpen.value = true)}>
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+                onClick$={() => (drawerOpen.value = true)}
+              >
                 Install
               </button>
             )}
@@ -134,7 +151,10 @@ export default component$(() => {
         </div>
       )}
 
-      <section ref={jumboRef} class="relative flex flex-col md:flex-row gap-6 md:items-start overflow-hidden rounded-box">
+      <section
+        ref={jumboRef}
+        class="relative flex flex-col md:flex-row gap-6 md:items-start overflow-hidden rounded-box"
+      >
         {a.videos?.[0] && (
           <video
             class="absolute inset-0 w-full h-full object-cover opacity-15 -z-10 pointer-events-none"
@@ -198,7 +218,11 @@ export default component$(() => {
               </span>
             )
           ) : orderedPackages.length ? (
-            <button type="button" class="btn btn-primary btn-sm" onClick$={() => (drawerOpen.value = true)}>
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              onClick$={() => (drawerOpen.value = true)}
+            >
               Install options ({orderedPackages.length})
             </button>
           ) : (
@@ -261,7 +285,11 @@ export default component$(() => {
                 ? `"${a.name}" is available via ${SOURCE_LABELS[bestPkg.source]}, but that source doesn't expose a direct link yet — search for it there instead.`
                 : "No package source is available for this app yet."}
             </p>
-            <button type="button" class="btn btn-primary btn-block" onClick$={() => (noLinkModalOpen.value = false)}>
+            <button
+              type="button"
+              class="btn btn-primary btn-block"
+              onClick$={() => (noLinkModalOpen.value = false)}
+            >
               Got it
             </button>
           </div>
@@ -272,7 +300,9 @@ export default component$(() => {
         <section>
           <h2 class="text-lg font-semibold mb-3">Screenshots & videos</h2>
           <div class="flex gap-3 overflow-x-auto">
-            {a.screenshots?.map((src) => <img key={src} src={src} alt="" class="h-48 rounded-box shrink-0" />)}
+            {a.screenshots?.map((src) => (
+              <img key={src} src={src} alt="" class="h-48 rounded-box shrink-0" />
+            ))}
             {a.videos?.map((src) => (
               <video key={src} src={src} controls class="h-48 rounded-box shrink-0">
                 <track kind="captions" label="No captions available" />

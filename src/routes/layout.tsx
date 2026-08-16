@@ -29,7 +29,13 @@ export default component$(() => {
           <form action="/" method="get" class="w-full max-w-xs">
             <label class="input input-sm flex items-center gap-2">
               <LuSearch class="text-base-content/50" />
-              <input type="search" name="q" placeholder="Search…" aria-label="Search for an app" class="grow" />
+              <input
+                type="search"
+                name="q"
+                placeholder="Search…"
+                aria-label="Search for an app"
+                class="grow"
+              />
             </label>
           </form>
         </div>

@@ -30,7 +30,9 @@ export default component$(() => {
             <h3 class="font-medium mb-1">Individuals</h3>
             <ul class="list-disc list-inside text-base-content/80 flex flex-col gap-1">
               <li>Use, read, and study the code freely.</li>
-              <li>Modify it for your own use — no obligation to share anything you never distribute.</li>
+              <li>
+                Modify it for your own use — no obligation to share anything you never distribute.
+              </li>
               <li>Share a modified copy with someone — the source has to come with it.</li>
             </ul>
           </div>
@@ -39,8 +41,8 @@ export default component$(() => {
             <ul class="list-disc list-inside text-base-content/80 flex flex-col gap-1">
               <li>Run your own instance, fork it for your community, adapt it freely.</li>
               <li>
-                If people use your modified version over a network (a hosted instance, not just
-                your own machine), you have to offer them its source.
+                If people use your modified version over a network (a hosted instance, not just your
+                own machine), you have to offer them its source.
               </li>
             </ul>
           </div>
@@ -95,16 +97,16 @@ export default component$(() => {
       <section class="border border-primary/30 bg-primary/5 rounded-box p-4">
         <p class="text-base-content/80">
           <span class="font-medium">The one thing worth remembering:</span> fork Tuxery and run it
-          as a service other people can reach — even privately, even without ever shipping a
-          binary — and AGPL requires making that version's source available to them. That's the
-          whole point of choosing AGPL over plain GPL for a web app.
+          as a service other people can reach — even privately, even without ever shipping a binary
+          — and AGPL requires making that version's source available to them. That's the whole point
+          of choosing AGPL over plain GPL for a web app.
         </p>
       </section>
 
       <section>
         <p class="text-sm text-base-content/60">
-          This page is a plain-language summary for convenience, not legal advice — the license
-          text in each repository is what actually governs. Full text:{" "}
+          This page is a plain-language summary for convenience, not legal advice — the license text
+          in each repository is what actually governs. Full text:{" "}
           <a
             href="https://www.gnu.org/licenses/agpl-3.0.html"
             class="link link-primary"

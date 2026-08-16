@@ -32,7 +32,9 @@ export default component$(() => {
     <div class="flex flex-col gap-6">
       <div>
         <h1 class="text-3xl font-bold mb-2">Browse</h1>
-        <p class="text-base-content/70">Every app and game in the catalog, {BROWSE_PAGE_SIZE} at a time.</p>
+        <p class="text-base-content/70">
+          Every app and game in the catalog, {BROWSE_PAGE_SIZE} at a time.
+        </p>
       </div>
 
       <form
@@ -88,12 +90,14 @@ export default component$(() => {
       </form>
 
       <p class="text-sm text-base-content/60">
-        Type, interface, and category filters are coming soon — they need classification and taxonomy work
-        that isn't done yet (tracked on the Tuxery GitHub Project).
+        Type, interface, and category filters are coming soon — they need classification and
+        taxonomy work that isn't done yet (tracked on the Tuxery GitHub Project).
       </p>
 
       {browse.value.apps.length === 0 ? (
-        <p class="text-center text-base-content/60 mt-4">No apps found{query ? ` for "${query}"` : ""}.</p>
+        <p class="text-center text-base-content/60 mt-4">
+          No apps found{query ? ` for "${query}"` : ""}.
+        </p>
       ) : (
         <>
           <p class="text-sm text-base-content/60">
@@ -119,7 +123,11 @@ export default component$(() => {
                 <LuChevronLeft />
               </a>
             ) : (
-              <span class="btn btn-sm join-item btn-disabled" aria-disabled="true" aria-label="Previous page">
+              <span
+                class="btn btn-sm join-item btn-disabled"
+                aria-disabled="true"
+                aria-label="Previous page"
+              >
                 <LuChevronLeft />
               </span>
             )}
@@ -131,7 +139,11 @@ export default component$(() => {
                 <LuChevronRight />
               </a>
             ) : (
-              <span class="btn btn-sm join-item btn-disabled" aria-disabled="true" aria-label="Next page">
+              <span
+                class="btn btn-sm join-item btn-disabled"
+                aria-disabled="true"
+                aria-label="Next page"
+              >
                 <LuChevronRight />
               </span>
             )}

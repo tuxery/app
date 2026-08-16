@@ -29,14 +29,29 @@ const PLACEHOLDER_SECTIONS: { title: string; note: string }[] = [
   { title: "Must-have apps", note: "Editorially curated must-haves are coming soon." },
   { title: "Monthly events", note: "A monthly events feature is still being defined." },
   { title: "Productivity apps", note: "Coming soon — needs the category taxonomy to exist first." },
-  { title: "New games", note: "Coming soon — needs apps/games classification and the category taxonomy." },
+  {
+    title: "New games",
+    note: "Coming soon — needs apps/games classification and the category taxonomy.",
+  },
   { title: "Music apps", note: "Coming soon — needs the category taxonomy to exist first." },
   { title: "Creativity apps", note: "Coming soon — needs the category taxonomy to exist first." },
   { title: "Learning apps", note: "Coming soon — needs the category taxonomy to exist first." },
-  { title: "Movies & streaming apps", note: "Coming soon — needs the category taxonomy to exist first." },
-  { title: "Casual games", note: "Coming soon — needs apps/games classification and the category taxonomy." },
-  { title: "Social network apps", note: "Coming soon — needs the category taxonomy to exist first." },
-  { title: "Puzzle games", note: "Coming soon — needs apps/games classification and the category taxonomy." },
+  {
+    title: "Movies & streaming apps",
+    note: "Coming soon — needs the category taxonomy to exist first.",
+  },
+  {
+    title: "Casual games",
+    note: "Coming soon — needs apps/games classification and the category taxonomy.",
+  },
+  {
+    title: "Social network apps",
+    note: "Coming soon — needs the category taxonomy to exist first.",
+  },
+  {
+    title: "Puzzle games",
+    note: "Coming soon — needs apps/games classification and the category taxonomy.",
+  },
   { title: "Collections", note: "Curated collections are coming soon." },
 ];
 
@@ -44,13 +59,20 @@ const PLACEHOLDER_SECTIONS: { title: string; note: string }[] = [
 const ComingSoonSection = component$<{ title: string; note: string }>(({ title, note }) => (
   <section>
     <h2 class="text-lg font-semibold mb-2">{title}</h2>
-    <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">{note}</div>
+    <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
+      {note}
+    </div>
   </section>
 ));
 
 const AppCardLink = component$<{ app: AppSummary }>(({ app }) => (
   <a href={`/app/${encodeURIComponent(app.id)}/`} class="block w-64 shrink-0">
-    <AppCard iconUrl={app.iconUrl} name={app.name} description={app.shortDescription} sources={app.sources} />
+    <AppCard
+      iconUrl={app.iconUrl}
+      name={app.name}
+      description={app.shortDescription}
+      sources={app.sources}
+    />
   </a>
 ));
 
@@ -82,8 +104,8 @@ export default component$(() => {
             <section>
               <h2 class="text-lg font-semibold mb-1">Apps & games trends</h2>
               <p class="text-sm text-base-content/60 mb-3">
-                Ranking criteria still TBD (recent updates, novelty, or a combination) — paginated by{" "}
-                {TRENDS_PAGE_SIZE} for now.
+                Ranking criteria still TBD (recent updates, novelty, or a combination) — paginated
+                by {TRENDS_PAGE_SIZE} for now.
               </p>
               <div class="flex gap-4 overflow-x-auto pb-1">
                 {trendsSlice.map((app) => (
@@ -154,7 +176,8 @@ export default component$(() => {
       {stats.value.total === 0 && (
         <p class="text-center text-base-content/60">
           No catalog data loaded — run <code class="font-mono">pnpm seed</code> then{" "}
-          <code class="font-mono">pnpm serve</code> in <code class="font-mono">tuxery/catalog</code> first.
+          <code class="font-mono">pnpm serve</code> in <code class="font-mono">tuxery/catalog</code>{" "}
+          first.
         </p>
       )}
     </div>
