@@ -13,18 +13,16 @@ export default component$(() => {
             🐧 Tux<span class="text-primary">ery</span>
           </a>
 
-          {/* Apps/Games/Categories: the data model doesn't distinguish apps from
-              games or carry a category taxonomy yet (see the "Apps vs games
-              classification is missing from the data model" and "Define the
-              category taxonomy and how it's populated" cards) — inert
-              placeholders here rather than links that would silently do
-              nothing, same treatment as the account icon below. */}
-          <span class="btn btn-ghost btn-disabled hidden md:inline-flex" aria-disabled="true" aria-label="Apps (coming soon)">
+          <a href="/apps" class="btn btn-ghost hidden md:inline-flex">
             Apps
-          </span>
-          <span class="btn btn-ghost btn-disabled hidden md:inline-flex" aria-disabled="true" aria-label="Games (coming soon)">
+          </a>
+          <a href="/games" class="btn btn-ghost hidden md:inline-flex">
             Games
-          </span>
+          </a>
+          {/* Categories: no taxonomy exists yet (see "Define the category
+              taxonomy and how it's populated") — inert placeholder here
+              rather than a link that would silently do nothing, same
+              treatment as the account icon below. */}
           <span
             class="btn btn-ghost btn-disabled hidden lg:inline-flex gap-1"
             aria-disabled="true"
