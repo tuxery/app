@@ -14,6 +14,10 @@ export default component$(() => {
         yet (tracked on the Tuxery GitHub Project). Once it lands, this page will list every app, browsable and
         searchable on its own.
       </div>
+
+      <a href="/browse" class="link link-primary">
+        In the meantime, browse the full catalog
+      </a>
     </div>
   );
 });

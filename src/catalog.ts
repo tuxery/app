@@ -191,6 +191,38 @@ export async function searchApps(query: string): Promise<AppSummary[]> {
   return result.rows.map((row) => toSummary(row as unknown as Row));
 }
 
+export const BROWSE_PAGE_SIZE = 30;
+
+export interface BrowseResult {
+  apps: AppSummary[];
+  total: number;
+}
+
+/**
+ * Paginated listing for the /browse page — needs an exact filtered count for
+ * "page N of M", unlike `getStats()`'s precomputed total (that one covers the
+ * whole unfiltered table; a `WHERE`-scoped count can't be precomputed).
+ */
+export async function browseApps(query: string, page: number): Promise<BrowseResult> {
+  const db = getClient();
+  if (!db) return { apps: [], total: 0 };
+
+  const trimmed = query.trim();
+  const where = trimmed ? "WHERE id LIKE ? OR name LIKE ? OR short_description LIKE ?" : "";
+  const whereArgs = trimmed ? [`%${trimmed}%`, `%${trimmed}%`, `%${trimmed}%`] : [];
+
+  const countResult = await db.execute({ sql: `SELECT COUNT(*) as count FROM apps ${where}`, args: whereArgs });
+  const total = Number(countResult.rows[0]?.count ?? 0);
+
+  const offset = Math.max(0, page) * BROWSE_PAGE_SIZE;
+  const listResult = await db.execute({
+    sql: `SELECT ${SUMMARY_COLUMNS} FROM apps ${where} ORDER BY name LIMIT ? OFFSET ?`,
+    args: [...whereArgs, BROWSE_PAGE_SIZE, offset],
+  });
+
+  return { apps: listResult.rows.map((row) => toSummary(row as unknown as Row)), total };
+}
+
 export async function getAppById(id: string): Promise<CatalogApp | null> {
   const db = getClient();
   if (!db) return null;
