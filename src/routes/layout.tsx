@@ -1,5 +1,5 @@
 import { component$, Slot } from "@builder.io/qwik";
-import { LuSettings, LuUser } from "@qwikest/icons/lucide";
+import { LuLayoutGrid, LuSearch, LuSettings, LuUser } from "@qwikest/icons/lucide";
 import { useProvideSettings } from "~/settings";
 
 export default component$(() => {
@@ -7,11 +7,41 @@ export default component$(() => {
 
   return (
     <>
-      <header class="navbar bg-base-200 border-b border-base-300 px-4 md:px-6">
-        <div class="navbar-start">
+      <header class="navbar bg-base-200 border-b border-base-300 px-4 md:px-6 sticky top-0 z-40">
+        <div class="navbar-start gap-1">
           <a href="/" class="btn btn-ghost text-xl px-2">
             🐧 Tux<span class="text-primary">ery</span>
           </a>
+
+          {/* Apps/Games/Categories: the data model doesn't distinguish apps from
+              games or carry a category taxonomy yet (see the "Apps vs games
+              classification is missing from the data model" and "Define the
+              category taxonomy and how it's populated" cards) — inert
+              placeholders here rather than links that would silently do
+              nothing, same treatment as the account icon below. */}
+          <span class="btn btn-ghost btn-disabled hidden md:inline-flex" aria-disabled="true" aria-label="Apps (coming soon)">
+            Apps
+          </span>
+          <span class="btn btn-ghost btn-disabled hidden md:inline-flex" aria-disabled="true" aria-label="Games (coming soon)">
+            Games
+          </span>
+          <span
+            class="btn btn-ghost btn-disabled hidden lg:inline-flex gap-1"
+            aria-disabled="true"
+            aria-label="Categories (coming soon)"
+          >
+            <LuLayoutGrid class="text-base" />
+            Categories
+          </span>
+        </div>
+
+        <div class="navbar-center hidden sm:flex">
+          <form action="/" method="get" class="w-full max-w-xs">
+            <label class="input input-sm flex items-center gap-2">
+              <LuSearch class="text-base-content/50" />
+              <input type="search" name="q" placeholder="Search…" aria-label="Search for an app" class="grow" />
+            </label>
+          </form>
         </div>
 
         <div class="navbar-end gap-1">

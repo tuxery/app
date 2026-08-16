@@ -1,12 +1,12 @@
 import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
-import { routeLoader$ } from "@builder.io/qwik-city";
+import { routeLoader$, useLocation } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { AppCard } from "~/components/app-card/app-card";
 import { SearchBar } from "~/components/search-bar/search-bar";
 import { searchApps, getStats, type AppSummary } from "~/catalog";
 
-export const useInitialApps = routeLoader$(async () => {
-  return searchApps("");
+export const useInitialApps = routeLoader$(async ({ url }) => {
+  return searchApps(url.searchParams.get("q") ?? "");
 });
 
 export const useStats = routeLoader$(async () => {
@@ -16,9 +16,10 @@ export const useStats = routeLoader$(async () => {
 const DEBOUNCE_MS = 200;
 
 export default component$(() => {
+  const location = useLocation();
   const initialApps = useInitialApps();
   const stats = useStats();
-  const query = useSignal("");
+  const query = useSignal(location.url.searchParams.get("q") ?? "");
   const results = useSignal<AppSummary[]>(initialApps.value);
   const searching = useSignal(false);
 
