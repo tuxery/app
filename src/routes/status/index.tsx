@@ -1,136 +1,67 @@
 import { component$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 
-type RowStatus = "complete" | "partial" | "planned" | "deferred";
+type RowStatus = "complete" | "partial" | "planned";
 
 interface SourceRow {
   type: string;
-  source: string;
+  source?: string;
   status: RowStatus;
-  desc: string;
+  desc?: string;
   count?: string;
-  x86?: boolean;
-  x64?: boolean;
-  arm64?: boolean;
-  /** Card title(s) on the Tuxery GitHub Project — no per-card link exists (draft cards, not repo issues), so shown as text rather than a URL we'd have to guess. */
-  roadmap?: string[];
+  arch?: string;
 }
 
 const STATUS_LABEL: Record<RowStatus, string> = {
   complete: "Complete",
   partial: "Partial",
   planned: "Planned",
-  deferred: "Deferred",
 };
 
 const STATUS_BADGE: Record<RowStatus, string> = {
   complete: "badge-success",
   partial: "badge-warning",
   planned: "badge-info",
-  deferred: "badge-ghost",
 };
 
-// Kept in sync by hand with catalog's docs/sources.md and the Tuxery
-// GitHub Project — no cross-repo import (separate repos), same
-// convention as catalog.ts itself.
+// Kept in sync by hand with catalog's docs/sources.md — no cross-repo
+// import (separate repos), same convention as catalog.ts itself.
 const ROWS: SourceRow[] = [
-  {
-    type: "Flatpak",
-    source: "Flathub",
-    status: "complete",
-    desc: "Canonical catalog, single appstream dump",
-    count: "~3,300",
-    x64: true,
-  },
-  {
-    type: "Flatpak",
-    source: "Other remotes",
-    status: "planned",
-    desc: "GNOME nightly, KDE kdeapps, Fedora's own — mostly testing builds, not curated apps",
-    roadmap: ["Evaluate other Flatpak remotes beyond Flathub"],
-  },
-  {
-    type: "Snap",
-    source: "Snap Store",
-    status: "partial",
-    desc: "Capped category sweep, 100 results/category",
-    count: "~1,500",
-    roadmap: ["Fix Snapcraft exhaustiveness"],
-  },
+  { type: "Flatpak", source: "Flathub", status: "complete", desc: "Canonical catalog", count: "~3,300", arch: "x64" },
+  { type: "Flatpak", source: "GNOME nightly", status: "planned" },
+  { type: "Flatpak", source: "KDE kdeapps", status: "planned" },
+  { type: "Flatpak", source: "Fedora's remote", status: "planned" },
+  { type: "Snap", source: "Snap Store", status: "partial", desc: "Capped sweep, 100/category", count: "~1,500" },
   {
     type: "AppImage",
     source: "AppImageHub",
     status: "partial",
-    desc: "Community list; ~22% skipped (no resolvable GitHub link); no version numbers yet",
+    desc: "~22% skipped, no version numbers yet",
     count: "~1,100",
-    roadmap: ["Fix AppImage exhaustiveness and veracity", "AppImage version resolution via GitHub Releases"],
   },
+  { type: "Ubuntu", source: "Main", status: "partial", desc: "resolute only", count: "~6,500", arch: "x64" },
+  { type: "Ubuntu", source: "Universe", status: "partial", desc: "resolute only", count: "~66,700", arch: "x64" },
+  { type: "Debian", source: "Main", status: "partial", desc: "stable only", count: "~68,800", arch: "x64" },
+  { type: "Fedora", source: "Everything", status: "partial", desc: "Release 44 only", count: "~76,400", arch: "x64" },
+  { type: "Arch Linux", source: "AUR", status: "complete", desc: "Full dump", count: "~117,500" },
   {
-    type: "Native",
-    source: "Arch Linux — AUR",
-    status: "complete",
-    desc: "Full community-package dump, regenerated every ~5 min upstream",
-    count: "~117,500",
-  },
-  {
-    type: "Native",
-    source: "Arch Linux — Official",
+    type: "Arch Linux",
+    source: "Official",
     status: "partial",
-    desc: "core + extra only, multilib skipped",
+    desc: "core + extra, no multilib",
     count: "~15,200",
-    x64: true,
+    arch: "x64",
   },
-  {
-    type: "Native",
-    source: "Debian — Main",
-    status: "partial",
-    desc: "stable/main only — contrib/non-free not fetched",
-    count: "~68,800",
-    x64: true,
-  },
-  {
-    type: "Native",
-    source: "Ubuntu — Main",
-    status: "partial",
-    desc: "resolute/main only",
-    count: "~6,500",
-    x64: true,
-  },
-  {
-    type: "Native",
-    source: "Ubuntu — Universe",
-    status: "partial",
-    desc: "resolute/universe only — restricted/multiverse not fetched",
-    count: "~66,700",
-    x64: true,
-  },
-  {
-    type: "Native",
-    source: "Fedora — Everything",
-    status: "partial",
-    desc: "Release 44 only",
-    count: "~76,400",
-    x64: true,
-  },
-  {
-    type: "Native",
-    source: "Other distros",
-    status: "planned",
-    desc: "openSUSE, Alpine, NixOS/nixpkgs, Void, Gentoo, Solus, Clear Linux, Slackware",
-    roadmap: ["Other native package managers: openSUSE, Alpine, NixOS/nixpkgs, Void, Gentoo, Solus, Clear Linux, Slackware"],
-  },
-  {
-    type: "Any",
-    source: "GitHub Releases",
-    status: "deferred",
-    desc: "Not exhaustive by nature (no catalog exists) — needs a curated scope before it's worth building",
-    roadmap: ["GitHub Releases connector: source discovery + normalization"],
-  },
+  { type: "openSUSE", status: "planned" },
+  { type: "Alpine", status: "planned" },
+  { type: "NixOS/nixpkgs", status: "planned", desc: "Different paradigm" },
+  { type: "Void", status: "planned" },
+  { type: "Gentoo", status: "planned", desc: "Low priority" },
+  { type: "Solus", status: "planned", desc: "Low priority" },
+  { type: "Clear Linux", status: "planned", desc: "Low priority" },
+  { type: "Slackware", status: "planned", desc: "Low priority" },
+  { type: "GitHub Releases", status: "planned", desc: "TBD" },
 ];
-
-function Check({ value }: { value?: boolean }) {
-  return <span class={value ? "text-success" : "text-base-content/20"}>{value ? "✓" : "–"}</span>;
-}
 
 export default component$(() => {
   return (
@@ -138,8 +69,8 @@ export default component$(() => {
       <div>
         <h1 class="text-3xl font-bold mb-2">Source status</h1>
         <p class="text-base-content/70 max-w-2xl">
-          Every source Tuxery pulls from or plans to, what's actually implemented today, and the
-          architectures each fetch covers. Card titles below match cards on the{" "}
+          Every source Tuxery pulls from or plans to, and what's actually implemented today. See
+          the{" "}
           <a
             href="https://github.com/orgs/tuxery/projects/1"
             class="link link-primary"
@@ -148,8 +79,7 @@ export default component$(() => {
           >
             Tuxery GitHub Project
           </a>{" "}
-          — draft cards there have no individual URL to link to directly, so titles are shown as
-          plain text.
+          for how this maps to tracked work.
         </p>
       </div>
 
@@ -162,34 +92,20 @@ export default component$(() => {
               <th>Status</th>
               <th>Description</th>
               <th>Apps/games</th>
-              <th class="text-center">x86</th>
-              <th class="text-center">x64</th>
-              <th class="text-center">ARM64</th>
-              <th>Roadmap</th>
+              <th>Architecture</th>
             </tr>
           </thead>
           <tbody>
             {ROWS.map((row) => (
-              <tr key={`${row.type}-${row.source}`}>
-                <td class="whitespace-nowrap">{row.type}</td>
-                <td class="whitespace-nowrap font-medium">{row.source}</td>
+              <tr key={`${row.type}-${row.source ?? ""}`}>
+                <td class="whitespace-nowrap font-medium">{row.type}</td>
+                <td class="whitespace-nowrap text-base-content/70">{row.source ?? "–"}</td>
                 <td>
                   <span class={["badge badge-sm", STATUS_BADGE[row.status]]}>{STATUS_LABEL[row.status]}</span>
                 </td>
-                <td class="text-base-content/70 min-w-56">{row.desc}</td>
+                <td class="text-base-content/70">{row.desc ?? "–"}</td>
                 <td class="whitespace-nowrap">{row.count ?? "–"}</td>
-                <td class="text-center">
-                  <Check value={row.x86} />
-                </td>
-                <td class="text-center">
-                  <Check value={row.x64} />
-                </td>
-                <td class="text-center">
-                  <Check value={row.arm64} />
-                </td>
-                <td class="text-base-content/60 text-sm min-w-48">
-                  {row.roadmap?.map((title) => <div key={title}>"{title}"</div>)}
-                </td>
+                <td class="whitespace-nowrap">{row.arch ?? "–"}</td>
               </tr>
             ))}
           </tbody>
@@ -204,7 +120,7 @@ export const head: DocumentHead = {
   meta: [
     {
       name: "description",
-      content: "Detailed status per source: what's implemented, architecture coverage, and what's on the roadmap.",
+      content: "Detailed status per source: what's implemented, coverage, and what's planned.",
     },
   ],
 };
