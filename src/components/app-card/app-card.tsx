@@ -1,6 +1,6 @@
 import { component$ } from "@builder.io/qwik";
 import { LuPackage } from "@qwikest/icons/lucide";
-import { SOURCE_LABELS, type PackageSourceId } from "~/catalog";
+import { SOURCE_LABELS, type PackageSourceId } from "~/catalog-types";
 
 export interface AppCardProps {
   iconUrl?: string;

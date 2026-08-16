@@ -1,89 +1,19 @@
 import { createClient, type Client } from "@libsql/client";
+import {
+  BROWSE_PAGE_SIZE,
+  EMPTY_STATS,
+  type AppSummary,
+  type BrowseResult,
+  type CatalogApp,
+  type CatalogStats,
+  type SourcedPackage,
+} from "~/catalog-types";
 
-// Mirrors `tuxery/catalog`'s dataset shape — packages/sources/src/types.ts
-// (`PackageSourceId`, `SourcedPackage`) and packages/curator/src/enrich/types.ts
-// (`CatalogApp`) plus packages/store/src/turso-client.ts (the `apps` table
-// columns). No cross-repo import exists (separate repos, not a monorepo), so
-// this is kept in sync by hand — see those files for field-by-field notes on
-// what's actually populated today vs. typed for later.
-
-// One id per connector folder under catalog's packages/sources/src/.
-export type PackageSourceId =
-  | "flathub"
-  | "snapcraft"
-  | "appimage"
-  | "aur"
-  | "debian"
-  | "ubuntu"
-  | "fedora"
-  | "arch";
-
-export const SOURCE_LABELS: Record<PackageSourceId, string> = {
-  flathub: "Flathub (Flatpak)",
-  snapcraft: "Snap Store",
-  appimage: "AppImage",
-  aur: "AUR",
-  debian: "Debian",
-  ubuntu: "Ubuntu",
-  fedora: "Fedora",
-  arch: "Arch Linux",
-};
-
-export interface SourcedPackage {
-  source: PackageSourceId;
-  name: string;
-  description: string;
-  version: string;
-  appId?: string;
-  iconFilename?: string;
-  channel?: string;
-  homepage?: string;
-}
-
-export interface CatalogApp {
-  id: string;
-  name: string;
-  shortDescription: string;
-  homepage?: string;
-  packages: SourcedPackage[];
-  iconUrl?: string;
-  longDescription?: string;
-  category?: string;
-  developer?: string;
-  publisher?: string;
-  license?: string;
-  languages?: string[];
-  approxSizeBytes?: number;
-  screenshots?: string[];
-  videos?: string[];
-  rating?: { average: number; count: number };
-  reviews?: Array<{ author: string; text: string; rating: number }>;
-  features?: string[];
-  changelog?: string;
-  requirements?: string;
-  permissions?: string[];
-  ageRating?: { system: string; value: string };
-  aiFeatures?: boolean;
-  inAppPurchases?: boolean;
-  gdprCompliant?: boolean;
-  editorialTags?: string[];
-}
-
-/** The subset of `CatalogApp` a search result card needs — cheap to select and stream in bulk, unlike the full row. */
-export interface AppSummary {
-  id: string;
-  name: string;
-  shortDescription: string;
-  iconUrl?: string;
-  sources: PackageSourceId[];
-}
-
-export interface CatalogStats {
-  total: number;
-  generatedAt: string;
-}
-
-export const EMPTY_STATS: CatalogStats = { total: 0, generatedAt: "" };
+// Server-only half of the catalog layer — everything here touches the DB
+// (`@libsql/client`, a Node-only driver), so it must only ever be referenced
+// inside a routeLoader$/RequestHandler `$` callback. Pure types/constants
+// safe to import from client-rendered components live in `~/catalog-types`
+// instead — see that file's header comment for why the split exists.
 
 const MAX_RESULTS = 60;
 
@@ -191,13 +121,6 @@ export async function searchApps(query: string): Promise<AppSummary[]> {
   return result.rows.map((row) => toSummary(row as unknown as Row));
 }
 
-export const BROWSE_PAGE_SIZE = 30;
-
-export interface BrowseResult {
-  apps: AppSummary[];
-  total: number;
-}
-
 /**
  * Paginated listing for the /browse page — needs an exact filtered count for
  * "page N of M", unlike `getStats()`'s precomputed total (that one covers the
@@ -240,16 +163,4 @@ export async function getStats(): Promise<CatalogStats> {
   const result = await db.execute(`SELECT key, value FROM meta`);
   const meta = Object.fromEntries(result.rows.map((row) => [row.key, row.value])) as Record<string, string>;
   return { total: Number(meta.totalApps ?? 0), generatedAt: meta.generatedAt ?? "" };
-}
-
-export function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  const units = ["KB", "MB", "GB"];
-  let value = bytes / 1024;
-  let unitIndex = 0;
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024;
-    unitIndex++;
-  }
-  return `${value.toFixed(1)} ${units[unitIndex]}`;
 }

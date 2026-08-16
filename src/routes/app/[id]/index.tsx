@@ -2,15 +2,14 @@ import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { LuFlag, LuPackage } from "@qwikest/icons/lucide";
+import { getAppById, getStats } from "~/catalog";
 import {
   formatBytes,
-  getAppById,
-  getStats,
   SOURCE_LABELS,
   type CatalogApp,
   type PackageSourceId,
   type SourcedPackage,
-} from "~/catalog";
+} from "~/catalog-types";
 import { useSettings, type InstallFormatGroup } from "~/settings";
 
 export const useApp = routeLoader$(async (requestEvent): Promise<CatalogApp | null> => {

@@ -3,7 +3,8 @@ import { routeLoader$, useLocation } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { LuChevronLeft, LuChevronRight } from "@qwikest/icons/lucide";
 import { AppCard } from "~/components/app-card/app-card";
-import { browseApps, BROWSE_PAGE_SIZE } from "~/catalog";
+import { browseApps } from "~/catalog";
+import { BROWSE_PAGE_SIZE } from "~/catalog-types";
 
 export const useBrowse = routeLoader$(async ({ url }) => {
   const query = url.searchParams.get("q") ?? "";

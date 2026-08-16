@@ -3,7 +3,8 @@ import { routeLoader$, useLocation } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { LuChevronLeft, LuChevronRight } from "@qwikest/icons/lucide";
 import { AppCard } from "~/components/app-card/app-card";
-import { searchApps, getStats, type AppSummary } from "~/catalog";
+import { searchApps, getStats } from "~/catalog";
+import type { AppSummary } from "~/catalog-types";
 
 export const useInitialApps = routeLoader$(async ({ url }) => {
   return searchApps(url.searchParams.get("q") ?? "");
