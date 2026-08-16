@@ -19,6 +19,9 @@ export default component$(() => {
           <a href="/games" class="btn btn-ghost hidden md:inline-flex">
             Games
           </a>
+          <a href="/utils" class="btn btn-ghost hidden md:inline-flex">
+            Utils
+          </a>
           <a href="/categories" class="btn btn-ghost hidden lg:inline-flex gap-1">
             <LuLayoutGrid class="text-base" />
             Categories
