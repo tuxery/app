@@ -15,6 +15,9 @@ export default component$(() => {
         </div>
 
         <div class="navbar-end gap-1">
+          <a href="/status" class="btn btn-ghost">
+            Status
+          </a>
           <a href="/about" class="btn btn-ghost">
             About
           </a>
