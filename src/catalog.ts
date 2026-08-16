@@ -30,6 +30,16 @@ function getClient(): Client | null {
   return client;
 }
 
+/** A reachable-but-not-actually-running local `turso dev` server (connection refused, etc.) degrades the same way as no TURSO_DB_URL at all, rather than 500ing the page. */
+async function safely<T>(fallback: T, fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    console.error("[catalog] query failed, degrading to empty:", error);
+    return fallback;
+  }
+}
+
 type Row = Record<string, unknown>;
 
 function toSummary(row: Row): AppSummary {
@@ -110,18 +120,20 @@ export async function searchApps(query: string): Promise<AppSummary[]> {
   const db = getClient();
   if (!db) return [];
 
-  const trimmed = query.trim();
-  const result = trimmed
-    ? await db.execute({
-        sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE name LIKE ? OR short_description LIKE ? LIMIT ?`,
-        args: [`%${trimmed}%`, `%${trimmed}%`, MAX_RESULTS],
-      })
-    : await db.execute({
-        sql: `SELECT ${SUMMARY_COLUMNS} FROM apps ORDER BY name LIMIT ?`,
-        args: [MAX_RESULTS],
-      });
+  return safely([], async () => {
+    const trimmed = query.trim();
+    const result = trimmed
+      ? await db.execute({
+          sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE name LIKE ? OR short_description LIKE ? LIMIT ?`,
+          args: [`%${trimmed}%`, `%${trimmed}%`, MAX_RESULTS],
+        })
+      : await db.execute({
+          sql: `SELECT ${SUMMARY_COLUMNS} FROM apps ORDER BY name LIMIT ?`,
+          args: [MAX_RESULTS],
+        });
 
-  return result.rows.map((row) => toSummary(row as unknown as Row));
+    return result.rows.map((row) => toSummary(row as unknown as Row));
+  });
 }
 
 /**
@@ -135,32 +147,36 @@ export async function browseApps(query: string, page: number): Promise<BrowseRes
   const db = getClient();
   if (!db) return { apps: [], total: 0 };
 
-  const trimmed = query.trim();
-  const where = trimmed ? "WHERE id LIKE ? OR name LIKE ? OR short_description LIKE ?" : "";
-  const whereArgs = trimmed ? [`%${trimmed}%`, `%${trimmed}%`, `%${trimmed}%`] : [];
+  return safely({ apps: [], total: 0 }, async () => {
+    const trimmed = query.trim();
+    const where = trimmed ? "WHERE id LIKE ? OR name LIKE ? OR short_description LIKE ?" : "";
+    const whereArgs = trimmed ? [`%${trimmed}%`, `%${trimmed}%`, `%${trimmed}%`] : [];
 
-  const total = trimmed
-    ? await db
-        .execute({ sql: `SELECT COUNT(*) as count FROM apps ${where}`, args: whereArgs })
-        .then((result) => Number(result.rows[0]?.count ?? 0))
-    : await getStats().then((stats) => stats.total);
+    const total = trimmed
+      ? await db
+          .execute({ sql: `SELECT COUNT(*) as count FROM apps ${where}`, args: whereArgs })
+          .then((result) => Number(result.rows[0]?.count ?? 0))
+      : await getStats().then((stats) => stats.total);
 
-  const offset = Math.max(0, page) * BROWSE_PAGE_SIZE;
-  const listResult = await db.execute({
-    sql: `SELECT ${SUMMARY_COLUMNS} FROM apps ${where} ORDER BY name LIMIT ? OFFSET ?`,
-    args: [...whereArgs, BROWSE_PAGE_SIZE, offset],
+    const offset = Math.max(0, page) * BROWSE_PAGE_SIZE;
+    const listResult = await db.execute({
+      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps ${where} ORDER BY name LIMIT ? OFFSET ?`,
+      args: [...whereArgs, BROWSE_PAGE_SIZE, offset],
+    });
+
+    return { apps: listResult.rows.map((row) => toSummary(row as unknown as Row)), total };
   });
-
-  return { apps: listResult.rows.map((row) => toSummary(row as unknown as Row)), total };
 }
 
 export async function getAppById(id: string): Promise<CatalogApp | null> {
   const db = getClient();
   if (!db) return null;
 
-  const result = await db.execute({ sql: `SELECT * FROM apps WHERE id = ?`, args: [id] });
-  const row = result.rows[0];
-  return row ? toCatalogApp(row as unknown as Row) : null;
+  return safely(null, async () => {
+    const result = await db.execute({ sql: `SELECT * FROM apps WHERE id = ?`, args: [id] });
+    const row = result.rows[0];
+    return row ? toCatalogApp(row as unknown as Row) : null;
+  });
 }
 
 /** Reads precomputed totals from the `meta` table — never `COUNT(*)` on `apps` at request time. */
@@ -168,10 +184,12 @@ export async function getStats(): Promise<CatalogStats> {
   const db = getClient();
   if (!db) return EMPTY_STATS;
 
-  const result = await db.execute(`SELECT key, value FROM meta`);
-  const meta = Object.fromEntries(result.rows.map((row) => [row.key, row.value])) as Record<
-    string,
-    string
-  >;
-  return { total: Number(meta.totalApps ?? 0), generatedAt: meta.generatedAt ?? "" };
+  return safely(EMPTY_STATS, async () => {
+    const result = await db.execute(`SELECT key, value FROM meta`);
+    const meta = Object.fromEntries(result.rows.map((row) => [row.key, row.value])) as Record<
+      string,
+      string
+    >;
+    return { total: Number(meta.totalApps ?? 0), generatedAt: meta.generatedAt ?? "" };
+  });
 }

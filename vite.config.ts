@@ -16,6 +16,10 @@ import tailwindcss from "@tailwindcss/vite";
 // root — no custom sync script needed.
 const SHARED_ENV_DIR = "../.dev";
 
+// catalog's `pnpm serve` (a local `turso dev` server) is the default target
+// for local dev — must match its LOCAL_DB_PORT in catalog/scripts/serve.ts.
+const LOCAL_TURSO_URL = "http://localhost:8080";
+
 /**
  * Note that Vite normally starts from `index.html` but the qwikCity plugin makes start at `src/entry.ssr.tsx` instead.
  */
@@ -24,9 +28,23 @@ export default defineConfig(({ mode }): UserConfig => {
   // ones never meant to reach the client bundle. Assigning to process.env
   // is what makes them readable as plain env vars in server-only code
   // (routeLoader$, etc.) — loadEnv() alone only returns them.
-  const sharedEnv = loadEnv(mode, SHARED_ENV_DIR, "");
-  process.env.TURSO_DB_URL ??= sharedEnv.TURSO_DB_URL;
-  process.env.TURSO_DB_AUTH_TOKEN ??= sharedEnv.TURSO_DB_AUTH_TOKEN;
+  //
+  // `dev`/`start` scripts are locked to exactly "vite --mode ssr" (see
+  // package.json), and Vite's own CLI rejects any unrecognized flag, so a
+  // `--remote` CLI flag (as catalog's plain Node scripts use) can't work
+  // here — TUXERY_REMOTE is an env var instead: `TUXERY_REMOTE=1 pnpm dev`.
+  // Without it, TURSO_DB_URL defaults to the local turso dev server rather
+  // than the shared .dev/.env's real hosted DB, which was always winning
+  // before (nothing ever set TURSO_DB_URL locally) — every query paying a
+  // real network round-trip to aws-eu-west-1 on every request, the actual
+  // cause of "pnpm dev is extremely slow".
+  if (process.env.TUXERY_REMOTE) {
+    const sharedEnv = loadEnv(mode, SHARED_ENV_DIR, "");
+    process.env.TURSO_DB_URL ??= sharedEnv.TURSO_DB_URL;
+    process.env.TURSO_DB_AUTH_TOKEN ??= sharedEnv.TURSO_DB_AUTH_TOKEN;
+  } else {
+    process.env.TURSO_DB_URL ??= LOCAL_TURSO_URL;
+  }
 
   return {
     envDir: SHARED_ENV_DIR,
