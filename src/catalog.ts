@@ -125,9 +125,11 @@ export async function searchApps(query: string): Promise<AppSummary[]> {
 }
 
 /**
- * Paginated listing for the /browse page — needs an exact filtered count for
- * "page N of M", unlike `getStats()`'s precomputed total (that one covers the
- * whole unfiltered table; a `WHERE`-scoped count can't be precomputed).
+ * Paginated listing for the /browse page. A `WHERE`-scoped count can't be
+ * precomputed, so a filtered request pays for one `COUNT(*)` scan — but the
+ * unfiltered (no name query) case, which is the common one, reuses
+ * `getStats()`'s precomputed total instead of re-scanning all ~227k rows on
+ * every page load.
  */
 export async function browseApps(query: string, page: number): Promise<BrowseResult> {
   const db = getClient();
@@ -137,11 +139,11 @@ export async function browseApps(query: string, page: number): Promise<BrowseRes
   const where = trimmed ? "WHERE id LIKE ? OR name LIKE ? OR short_description LIKE ?" : "";
   const whereArgs = trimmed ? [`%${trimmed}%`, `%${trimmed}%`, `%${trimmed}%`] : [];
 
-  const countResult = await db.execute({
-    sql: `SELECT COUNT(*) as count FROM apps ${where}`,
-    args: whereArgs,
-  });
-  const total = Number(countResult.rows[0]?.count ?? 0);
+  const total = trimmed
+    ? await db
+        .execute({ sql: `SELECT COUNT(*) as count FROM apps ${where}`, args: whereArgs })
+        .then((result) => Number(result.rows[0]?.count ?? 0))
+    : await getStats().then((stats) => stats.total);
 
   const offset = Math.max(0, page) * BROWSE_PAGE_SIZE;
   const listResult = await db.execute({
