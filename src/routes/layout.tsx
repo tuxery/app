@@ -19,18 +19,10 @@ export default component$(() => {
           <a href="/games" class="btn btn-ghost hidden md:inline-flex">
             Games
           </a>
-          {/* Categories: no taxonomy exists yet (see "Define the category
-              taxonomy and how it's populated") — inert placeholder here
-              rather than a link that would silently do nothing, same
-              treatment as the account icon below. */}
-          <span
-            class="btn btn-ghost btn-disabled hidden lg:inline-flex gap-1"
-            aria-disabled="true"
-            aria-label="Categories (coming soon)"
-          >
+          <a href="/categories" class="btn btn-ghost hidden lg:inline-flex gap-1">
             <LuLayoutGrid class="text-base" />
             Categories
-          </span>
+          </a>
         </div>
 
         <div class="navbar-center hidden sm:flex">
