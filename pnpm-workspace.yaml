@@ -2,3 +2,11 @@ allowBuilds:
   '@parcel/watcher': false
   esbuild: true
   sharp: false
+
+# vite-imagetools (a qwik-city dependency, pinned to ^9.0.0 — the fix only
+# landed in vite-imagetools@12) pulls a sharp version below the patched
+# libvips CVE fixes. sharp's build is disabled above (unused here — this
+# app doesn't use Qwik's <Image> transform), so forcing a patched version
+# is a safe, low-risk way to clear `pnpm audit --audit-level high`.
+overrides:
+  sharp: '>=0.35.0'
