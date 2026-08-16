@@ -73,18 +73,10 @@ export default component$(() => {
       {browsing ? (
         stats.value.total > 0 && (
           <>
-            <section>
-              <h2 class="text-lg font-semibold mb-1">Events</h2>
-              <p class="text-sm text-base-content/60 mb-3">
-                A carousel of influencers, distros, and sources worth following is coming soon — sample cards
-                shown for layout.
-              </p>
-              <div class="flex gap-4 overflow-x-auto pb-1">
-                {initialApps.value.slice(0, 4).map((app) => (
-                  <AppCardLink key={app.id} app={app} />
-                ))}
-              </div>
-            </section>
+            <ComingSoonSection
+              title="Events"
+              note="A carousel of influencer, distro, and source pages worth following is coming soon."
+            />
 
             <section>
               <h2 class="text-lg font-semibold mb-1">Apps & games trends</h2>

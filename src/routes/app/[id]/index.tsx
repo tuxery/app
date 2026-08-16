@@ -353,6 +353,12 @@ export default component$(() => {
                 <dd>{a.license}</dd>
               </>
             )}
+            {a.category && (
+              <>
+                <dt class="text-base-content/60">Category</dt>
+                <dd>{a.category}</dd>
+              </>
+            )}
             {a.languages?.length && (
               <>
                 <dt class="text-base-content/60">Languages</dt>
