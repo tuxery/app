@@ -15,11 +15,11 @@ export default component$(() => {
         </div>
 
         <div class="navbar-end gap-1">
-          <a href="/status" class="btn btn-ghost">
-            Status
-          </a>
           <a href="/about" class="btn btn-ghost">
             About
+          </a>
+          <a href="/status" class="btn btn-ghost">
+            Status
           </a>
           <a href="/settings" class="btn btn-ghost btn-square" aria-label="Settings">
             <LuSettings class="text-lg" />
