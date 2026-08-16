@@ -44,6 +44,16 @@ export default component$(() => {
           page.
         </p>
       </section>
+
+      <section>
+        <p class="text-base-content/70">
+          Tuxery is licensed{" "}
+          <a href="/license/" class="link link-primary">
+            AGPL-3.0-or-later
+          </a>
+          .
+        </p>
+      </section>
     </div>
   );
 });

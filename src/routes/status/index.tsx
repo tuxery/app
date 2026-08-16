@@ -127,8 +127,12 @@ export default component$(() => {
           </li>
         </ul>
         <p class="text-sm text-base-content/60 mt-3">
-          Bonus reminder: Tuxery is licensed AGPL-3.0-or-later — worth knowing if you're planning
-          to build on it or run a modified version as a public service.
+          Bonus reminder: Tuxery is licensed{" "}
+          <a href="/license/" class="link link-primary">
+            AGPL-3.0-or-later
+          </a>{" "}
+          — worth knowing if you're planning to build on it or run a modified version as a public
+          service.
         </p>
       </section>
 
