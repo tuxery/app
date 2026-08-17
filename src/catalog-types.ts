@@ -81,6 +81,8 @@ export interface CatalogApp {
   packages: SourcedPackage[];
   /** "gui" when the catalog has positive evidence of a launchable GUI app — never "cli" by default, see `tuxery/catalog`'s `CatalogApp.kind` doc comment. */
   kind?: "gui";
+  /** "game" when the catalog has positive evidence of being a game — never assumed "app" by default, see `tuxery/catalog`'s `CatalogApp.contentType` doc comment. */
+  contentType?: "game";
   iconUrl?: string;
   longDescription?: string;
   category?: string;
@@ -111,6 +113,7 @@ export interface AppSummary {
   shortDescription: string;
   iconUrl?: string;
   kind?: "gui";
+  contentType?: "game";
   sources: PackageSourceId[];
 }
 

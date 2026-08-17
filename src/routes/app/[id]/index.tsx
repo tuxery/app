@@ -180,6 +180,7 @@ export default component$(() => {
 
           <div class="flex flex-wrap gap-2 mt-3">
             {a.kind === "gui" && <span class="badge badge-secondary">GUI</span>}
+            {a.contentType === "game" && <span class="badge badge-accent">Game</span>}
             {a.developer && <span class="badge badge-ghost">{a.developer}</span>}
             {a.category && <span class="badge badge-outline">{a.category}</span>}
             {a.rating && (

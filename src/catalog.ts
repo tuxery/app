@@ -50,6 +50,7 @@ function toSummary(row: Row): AppSummary {
     shortDescription: row.short_description as string,
     iconUrl: (row.icon_url as string | null) ?? undefined,
     kind: row.kind === "gui" ? "gui" : undefined,
+    contentType: row.content_type === "game" ? "game" : undefined,
     sources: packages.map((pkg) => pkg.source),
   };
 }
@@ -78,6 +79,7 @@ function toCatalogApp(row: Row): CatalogApp {
     longDescription: str(row.long_description),
     homepage: str(row.homepage),
     kind: row.kind === "gui" ? "gui" : undefined,
+    contentType: row.content_type === "game" ? "game" : undefined,
     category: str(row.category),
     developer: str(row.developer),
     publisher: str(row.publisher),
@@ -111,7 +113,7 @@ function toCatalogApp(row: Row): CatalogApp {
   };
 }
 
-const SUMMARY_COLUMNS = "id, name, short_description, icon_url, kind, packages_json";
+const SUMMARY_COLUMNS = "id, name, short_description, icon_url, kind, content_type, packages_json";
 
 /**
  * "gui" is the only real option today — `kind` is positive-evidence-only
@@ -120,6 +122,14 @@ const SUMMARY_COLUMNS = "id, name, short_description, icon_url, kind, packages_j
  * unconfirmed GUI apps alongside real CLI tools).
  */
 export type InterfaceFilter = "all" | "gui";
+
+/**
+ * "game" is the only real option today — `contentType` is
+ * positive-evidence-only (see `~/catalog-types`'s doc comment), so
+ * there's no confirmed "app" (not-a-game) to filter by yet, only
+ * "confirmed game" vs. "everything".
+ */
+export type TypeFilter = "all" | "game";
 
 /**
  * Empty `query` returns a stable default listing (alphabetical) rather
@@ -157,6 +167,7 @@ export async function browseApps(
   query: string,
   page: number,
   interfaceFilter: InterfaceFilter = "all",
+  typeFilter: TypeFilter = "all",
 ): Promise<BrowseResult> {
   const db = getClient();
   if (!db) return { apps: [], total: 0 };
@@ -171,6 +182,9 @@ export async function browseApps(
     }
     if (interfaceFilter === "gui") {
       conditions.push("kind = 'gui'");
+    }
+    if (typeFilter === "game") {
+      conditions.push("content_type = 'game'");
     }
     const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
