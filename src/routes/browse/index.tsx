@@ -3,18 +3,23 @@ import { routeLoader$, useLocation } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { LuChevronLeft, LuChevronRight } from "@qwikest/icons/lucide";
 import { AppCard } from "~/components/app-card/app-card";
-import { browseApps, type InterfaceFilter } from "~/catalog";
+import { browseApps, type InterfaceFilter, type TypeFilter } from "~/catalog";
 import { BROWSE_PAGE_SIZE } from "~/catalog-types";
 
 function parseInterfaceFilter(value: string | null): InterfaceFilter {
   return value === "gui" ? "gui" : "all";
 }
 
+function parseTypeFilter(value: string | null): TypeFilter {
+  return value === "game" ? "game" : "all";
+}
+
 export const useBrowse = routeLoader$(async ({ url }) => {
   const query = url.searchParams.get("q") ?? "";
   const page = Math.max(0, Number(url.searchParams.get("page") ?? "1") - 1);
   const interfaceFilter = parseInterfaceFilter(url.searchParams.get("interface"));
-  return browseApps(query, page, interfaceFilter);
+  const typeFilter = parseTypeFilter(url.searchParams.get("type"));
+  return browseApps(query, page, interfaceFilter, typeFilter);
 });
 
 export default component$(() => {
@@ -24,11 +29,13 @@ export default component$(() => {
   const query = location.url.searchParams.get("q") ?? "";
   const page = Math.max(1, Number(location.url.searchParams.get("page") ?? "1"));
   const interfaceFilter = parseInterfaceFilter(location.url.searchParams.get("interface"));
+  const typeFilter = parseTypeFilter(location.url.searchParams.get("type"));
   const totalPages = Math.max(1, Math.ceil(browse.value.total / BROWSE_PAGE_SIZE));
 
   const pageHref = (targetPage: number) => {
     const params = new URLSearchParams();
     if (query) params.set("q", query);
+    if (typeFilter === "game") params.set("type", "game");
     if (interfaceFilter === "gui") params.set("interface", "gui");
     if (targetPage > 1) params.set("page", String(targetPage));
     const qs = params.toString();
@@ -61,13 +68,14 @@ export default component$(() => {
         </label>
 
         <label class="form-control min-w-[9rem]">
-          <span class="label-text text-sm mb-1" aria-label="Type (coming soon)">
-            Type
-          </span>
-          <select class="select select-sm w-full" disabled aria-disabled="true">
-            <option>All</option>
-            <option>Software</option>
-            <option>Game</option>
+          <span class="label-text text-sm mb-1">Type</span>
+          <select name="type" class="select select-sm w-full">
+            <option value="all" selected={typeFilter === "all"}>
+              All
+            </option>
+            <option value="game" selected={typeFilter === "game"}>
+              Games
+            </option>
           </select>
         </label>
 
@@ -98,9 +106,9 @@ export default component$(() => {
       </form>
 
       <p class="text-sm text-base-content/60">
-        "GUI apps" only shows confirmed GUI apps — the catalog has no reliable way yet to say a
-        package is CLI-only, so "All" still includes both. Type and category filters are coming soon
-        (tracked on the Tuxery GitHub Project).
+        "Games" and "GUI apps" only show confirmed matches — the catalog has no reliable way yet to
+        say a package is definitely not a game or CLI-only, so "All" still includes both. Category
+        filters are coming soon (tracked on the Tuxery GitHub Project).
       </p>
 
       {browse.value.apps.length === 0 ? (
@@ -122,6 +130,7 @@ export default component$(() => {
                   description={app.shortDescription}
                   sources={app.sources}
                   kind={app.kind}
+                  contentType={app.contentType}
                 />
               </a>
             ))}
