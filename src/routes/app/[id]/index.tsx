@@ -25,15 +25,15 @@ export const useDetailStats = routeLoader$(async () => getStats());
 // (e.g. Ubuntu's "Universe" component vs. AUR/official being two distinct
 // Arch sources) — this maps each leaf to the source id it actually installs.
 const SOURCE_ID_TO_PACKAGE_SOURCE: Record<string, PackageSourceId> = {
-  flathub: "flathub",
-  "snap-store": "snapcraft",
+  flathub: "flatpak-flathub",
+  "snap-store": "snap-snapcraft",
   appimagehub: "appimage",
-  "arch-aur": "aur",
-  "arch-official": "arch",
-  "debian-main": "debian",
-  "ubuntu-main": "ubuntu",
-  "ubuntu-universe": "ubuntu",
-  "fedora-everything": "fedora",
+  "arch-aur": "pacman-aur",
+  "arch-official": "pacman-arch",
+  "debian-main": "deb-debian",
+  "ubuntu-main": "deb-ubuntu",
+  "ubuntu-universe": "deb-ubuntu",
+  "fedora-everything": "rpm-fedora",
 };
 
 /** Packages sorted by the user's install-source preference order from settings; sources the settings don't cover sort last, in their original order. */
