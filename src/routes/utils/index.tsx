@@ -12,9 +12,10 @@ export default component$(() => {
       </div>
 
       <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
-        Tuxery's catalog doesn't distinguish GUI apps from CLI tools yet — that classification isn't
-        in the data model yet (tracked on the Tuxery GitHub Project). Once it lands, this page will
-        list every CLI tool, browsable and searchable on its own.
+        Tuxery's catalog can now confirm when a package <em>is</em> a GUI app (see the "GUI apps"
+        filter on Browse), but there's still no reliable way to confirm the opposite — most CLI
+        tools just don't carry positive evidence either way, so a dedicated, accurate CLI-only
+        listing isn't possible yet (tracked on the Tuxery GitHub Project).
       </div>
 
       <a href="/browse" class="link link-primary">

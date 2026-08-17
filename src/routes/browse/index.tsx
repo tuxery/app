@@ -3,13 +3,18 @@ import { routeLoader$, useLocation } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { LuChevronLeft, LuChevronRight } from "@qwikest/icons/lucide";
 import { AppCard } from "~/components/app-card/app-card";
-import { browseApps } from "~/catalog";
+import { browseApps, type InterfaceFilter } from "~/catalog";
 import { BROWSE_PAGE_SIZE } from "~/catalog-types";
+
+function parseInterfaceFilter(value: string | null): InterfaceFilter {
+  return value === "gui" ? "gui" : "all";
+}
 
 export const useBrowse = routeLoader$(async ({ url }) => {
   const query = url.searchParams.get("q") ?? "";
   const page = Math.max(0, Number(url.searchParams.get("page") ?? "1") - 1);
-  return browseApps(query, page);
+  const interfaceFilter = parseInterfaceFilter(url.searchParams.get("interface"));
+  return browseApps(query, page, interfaceFilter);
 });
 
 export default component$(() => {
@@ -18,11 +23,13 @@ export default component$(() => {
 
   const query = location.url.searchParams.get("q") ?? "";
   const page = Math.max(1, Number(location.url.searchParams.get("page") ?? "1"));
+  const interfaceFilter = parseInterfaceFilter(location.url.searchParams.get("interface"));
   const totalPages = Math.max(1, Math.ceil(browse.value.total / BROWSE_PAGE_SIZE));
 
   const pageHref = (targetPage: number) => {
     const params = new URLSearchParams();
     if (query) params.set("q", query);
+    if (interfaceFilter === "gui") params.set("interface", "gui");
     if (targetPage > 1) params.set("page", String(targetPage));
     const qs = params.toString();
     return qs ? `/browse/?${qs}` : "/browse/";
@@ -65,13 +72,14 @@ export default component$(() => {
         </label>
 
         <label class="form-control min-w-[9rem]">
-          <span class="label-text text-sm mb-1" aria-label="Interface (coming soon)">
-            Interface
-          </span>
-          <select class="select select-sm w-full" disabled aria-disabled="true">
-            <option>All</option>
-            <option>GUI</option>
-            <option>CLI</option>
+          <span class="label-text text-sm mb-1">Interface</span>
+          <select name="interface" class="select select-sm w-full">
+            <option value="all" selected={interfaceFilter === "all"}>
+              All
+            </option>
+            <option value="gui" selected={interfaceFilter === "gui"}>
+              GUI apps
+            </option>
           </select>
         </label>
 
@@ -90,8 +98,9 @@ export default component$(() => {
       </form>
 
       <p class="text-sm text-base-content/60">
-        Type, interface, and category filters are coming soon — they need classification and
-        taxonomy work that isn't done yet (tracked on the Tuxery GitHub Project).
+        "GUI apps" only shows confirmed GUI apps — the catalog has no reliable way yet to say a
+        package is CLI-only, so "All" still includes both. Type and category filters are coming soon
+        (tracked on the Tuxery GitHub Project).
       </p>
 
       {browse.value.apps.length === 0 ? (
@@ -112,6 +121,7 @@ export default component$(() => {
                   name={app.name}
                   description={app.shortDescription}
                   sources={app.sources}
+                  kind={app.kind}
                 />
               </a>
             ))}
