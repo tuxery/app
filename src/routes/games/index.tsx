@@ -12,13 +12,13 @@ export default component$(() => {
       </div>
 
       <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
-        Tuxery's catalog doesn't distinguish apps from games yet — that classification isn't in the
-        data model yet (tracked on the Tuxery GitHub Project). Once it lands, this page will list
-        every game, browsable and searchable on its own.
+        Tuxery's catalog can now confirm when a package <em>is</em> a game (see the "Games" filter
+        on Browse), but a dedicated page with genre browsing, trending, and editorial picks still
+        needs the fuller category taxonomy to exist first (tracked on the Tuxery GitHub Project).
       </div>
 
-      <a href="/browse" class="link link-primary">
-        In the meantime, browse the full catalog
+      <a href="/browse/?type=game" class="link link-primary">
+        In the meantime, browse confirmed games
       </a>
     </div>
   );
