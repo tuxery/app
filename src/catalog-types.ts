@@ -13,26 +13,53 @@
 // this is kept in sync by hand — see those files for field-by-field notes on
 // what's actually populated today vs. typed for later.
 
-// One id per connector folder under catalog's packages/sources/src/.
+// One id per connector folder under catalog's packages/sources/src/ —
+// `<format>-<provider>` (e.g. "deb-debian"), except appimage/slackware
+// which keep a bare name (single format+provider today) — see catalog's
+// "Normalize source identifiers by package format" card.
 export type PackageSourceId =
-  | "flathub"
-  | "snapcraft"
+  | "flatpak-flathub"
+  | "flatpak-appcenter"
+  | "snap-snapcraft"
   | "appimage"
-  | "aur"
-  | "debian"
-  | "ubuntu"
-  | "fedora"
-  | "arch";
+  | "pacman-aur"
+  | "deb-debian"
+  | "deb-ubuntu"
+  | "rpm-fedora"
+  | "pacman-arch"
+  | "nix-nixpkgs"
+  | "rpm-opensuse"
+  | "apk-alpine"
+  | "xbps-void"
+  | "slackware"
+  | "eopkg-solus"
+  | "ebuild-gentoo"
+  | "deb-mint"
+  | "deb-popos"
+  | "deb-deepin"
+  | "deb-mxlinux";
 
 export const SOURCE_LABELS: Record<PackageSourceId, string> = {
-  flathub: "Flathub (Flatpak)",
-  snapcraft: "Snap Store",
+  "flatpak-flathub": "Flathub (Flatpak)",
+  "flatpak-appcenter": "elementary AppCenter (Flatpak)",
+  "snap-snapcraft": "Snap Store",
   appimage: "AppImage",
-  aur: "AUR",
-  debian: "Debian",
-  ubuntu: "Ubuntu",
-  fedora: "Fedora",
-  arch: "Arch Linux",
+  "pacman-aur": "AUR",
+  "deb-debian": "Debian",
+  "deb-ubuntu": "Ubuntu",
+  "rpm-fedora": "Fedora",
+  "pacman-arch": "Arch Linux",
+  "nix-nixpkgs": "Nixpkgs",
+  "rpm-opensuse": "openSUSE",
+  "apk-alpine": "Alpine Linux",
+  "xbps-void": "Void Linux",
+  slackware: "Slackware",
+  "eopkg-solus": "Solus",
+  "ebuild-gentoo": "Gentoo",
+  "deb-mint": "Linux Mint",
+  "deb-popos": "Pop!_OS",
+  "deb-deepin": "Deepin",
+  "deb-mxlinux": "MX Linux",
 };
 
 export interface SourcedPackage {
