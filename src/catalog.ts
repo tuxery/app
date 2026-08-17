@@ -49,6 +49,7 @@ function toSummary(row: Row): AppSummary {
     name: row.name as string,
     shortDescription: row.short_description as string,
     iconUrl: (row.icon_url as string | null) ?? undefined,
+    kind: row.kind === "gui" ? "gui" : undefined,
     sources: packages.map((pkg) => pkg.source),
   };
 }
@@ -76,6 +77,7 @@ function toCatalogApp(row: Row): CatalogApp {
     shortDescription: row.short_description as string,
     longDescription: str(row.long_description),
     homepage: str(row.homepage),
+    kind: row.kind === "gui" ? "gui" : undefined,
     category: str(row.category),
     developer: str(row.developer),
     publisher: str(row.publisher),
@@ -109,7 +111,15 @@ function toCatalogApp(row: Row): CatalogApp {
   };
 }
 
-const SUMMARY_COLUMNS = "id, name, short_description, icon_url, packages_json";
+const SUMMARY_COLUMNS = "id, name, short_description, icon_url, kind, packages_json";
+
+/**
+ * "gui" is the only real option today — `kind` is positive-evidence-only
+ * (see `~/catalog-types`'s doc comment), so there's no "cli" to filter by
+ * yet, only "confirmed gui" vs. "everything" (which still includes
+ * unconfirmed GUI apps alongside real CLI tools).
+ */
+export type InterfaceFilter = "all" | "gui";
 
 /**
  * Empty `query` returns a stable default listing (alphabetical) rather
@@ -139,29 +149,42 @@ export async function searchApps(query: string): Promise<AppSummary[]> {
 /**
  * Paginated listing for the /browse page. A `WHERE`-scoped count can't be
  * precomputed, so a filtered request pays for one `COUNT(*)` scan — but the
- * unfiltered (no name query) case, which is the common one, reuses
- * `getStats()`'s precomputed total instead of re-scanning all ~227k rows on
- * every page load.
+ * fully-unfiltered case (no name query, no interface filter), which is the
+ * common one, reuses `getStats()`'s precomputed total instead of
+ * re-scanning all ~227k rows on every page load.
  */
-export async function browseApps(query: string, page: number): Promise<BrowseResult> {
+export async function browseApps(
+  query: string,
+  page: number,
+  interfaceFilter: InterfaceFilter = "all",
+): Promise<BrowseResult> {
   const db = getClient();
   if (!db) return { apps: [], total: 0 };
 
   return safely({ apps: [], total: 0 }, async () => {
     const trimmed = query.trim();
-    const where = trimmed ? "WHERE id LIKE ? OR name LIKE ? OR short_description LIKE ?" : "";
-    const whereArgs = trimmed ? [`%${trimmed}%`, `%${trimmed}%`, `%${trimmed}%`] : [];
+    const conditions: string[] = [];
+    const conditionArgs: string[] = [];
+    if (trimmed) {
+      conditions.push("(id LIKE ? OR name LIKE ? OR short_description LIKE ?)");
+      conditionArgs.push(`%${trimmed}%`, `%${trimmed}%`, `%${trimmed}%`);
+    }
+    if (interfaceFilter === "gui") {
+      conditions.push("kind = 'gui'");
+    }
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    const total = trimmed
-      ? await db
-          .execute({ sql: `SELECT COUNT(*) as count FROM apps ${where}`, args: whereArgs })
-          .then((result) => Number(result.rows[0]?.count ?? 0))
-      : await getStats().then((stats) => stats.total);
+    const total =
+      conditions.length > 0
+        ? await db
+            .execute({ sql: `SELECT COUNT(*) as count FROM apps ${where}`, args: conditionArgs })
+            .then((result) => Number(result.rows[0]?.count ?? 0))
+        : await getStats().then((stats) => stats.total);
 
     const offset = Math.max(0, page) * BROWSE_PAGE_SIZE;
     const listResult = await db.execute({
       sql: `SELECT ${SUMMARY_COLUMNS} FROM apps ${where} ORDER BY name LIMIT ? OFFSET ?`,
-      args: [...whereArgs, BROWSE_PAGE_SIZE, offset],
+      args: [...conditionArgs, BROWSE_PAGE_SIZE, offset],
     });
 
     return { apps: listResult.rows.map((row) => toSummary(row as unknown as Row)), total };
