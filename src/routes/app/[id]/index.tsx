@@ -179,6 +179,7 @@ export default component$(() => {
           <p class="text-base-content/70 mt-1">{a.shortDescription}</p>
 
           <div class="flex flex-wrap gap-2 mt-3">
+            {a.kind === "gui" && <span class="badge badge-secondary">GUI</span>}
             {a.developer && <span class="badge badge-ghost">{a.developer}</span>}
             {a.category && <span class="badge badge-outline">{a.category}</span>}
             {a.rating && (
