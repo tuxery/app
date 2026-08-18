@@ -426,6 +426,21 @@ export default component$(() => {
             )}
             <dt class="text-base-content/60">Available via</dt>
             <dd>{a.packages.map((pkg) => SOURCE_LABELS[pkg.source]).join(", ")}</dd>
+            {a.packages.some((pkg) => pkg.rating) && (
+              <>
+                <dt class="text-base-content/60">Ratings by source</dt>
+                <dd>
+                  {a.packages
+                    .filter((pkg) => pkg.rating)
+                    .map((pkg) => (
+                      <span key={pkg.source} class="mr-3 whitespace-nowrap">
+                        {SOURCE_LABELS[pkg.source]}: ★ {pkg.rating?.average.toFixed(1)} (
+                        {pkg.rating?.count})
+                      </span>
+                    ))}
+                </dd>
+              </>
+            )}
             {stats.value.generatedAt && (
               <>
                 <dt class="text-base-content/60">Catalog data as of</dt>
