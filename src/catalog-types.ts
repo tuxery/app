@@ -14,9 +14,10 @@
 // what's actually populated today vs. typed for later.
 
 // One id per connector folder under catalog's packages/sources/src/ —
-// `<format>-<provider>` (e.g. "deb-debian"), except appimage/slackware
-// which keep a bare name (single format+provider today) — see catalog's
-// "Normalize source identifiers by package format" card.
+// `<format>-<provider>` (e.g. "deb-debian"), except appimage/slackware/
+// gog/lutris which keep a bare name (single format+provider today, or —
+// for gog/lutris — no package format at all) — see catalog's "Normalize
+// source identifiers by package format" card.
 export type PackageSourceId =
   | "flatpak-flathub"
   | "flatpak-appcenter"
@@ -37,7 +38,9 @@ export type PackageSourceId =
   | "deb-mint"
   | "deb-popos"
   | "deb-deepin"
-  | "deb-mxlinux";
+  | "deb-mxlinux"
+  | "gog"
+  | "lutris";
 
 export const SOURCE_LABELS: Record<PackageSourceId, string> = {
   "flatpak-flathub": "Flathub (Flatpak)",
@@ -60,6 +63,8 @@ export const SOURCE_LABELS: Record<PackageSourceId, string> = {
   "deb-popos": "Pop!_OS",
   "deb-deepin": "Deepin",
   "deb-mxlinux": "MX Linux",
+  gog: "GOG",
+  lutris: "Lutris",
 };
 
 export interface SourcedPackage {
@@ -71,6 +76,8 @@ export interface SourcedPackage {
   iconFilename?: string;
   channel?: string;
   homepage?: string;
+  /** A crowd rating from this specific source, when it has one — see `tuxery/catalog`'s `SourcedPackage.rating` doc comment for which sources populate this. */
+  rating?: { average: number; count: number };
 }
 
 export interface CatalogApp {
