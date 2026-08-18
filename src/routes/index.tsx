@@ -3,7 +3,7 @@ import { routeLoader$, useLocation } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { LuChevronLeft, LuChevronRight } from "@qwikest/icons/lucide";
 import { AppCard } from "~/components/app-card/app-card";
-import { searchApps, getStats } from "~/catalog";
+import { searchApps, getStats, getTrendingApps } from "~/catalog";
 import type { AppSummary } from "~/catalog-types";
 
 export const useInitialApps = routeLoader$(async ({ url }) => {
@@ -12,6 +12,10 @@ export const useInitialApps = routeLoader$(async ({ url }) => {
 
 export const useStats = routeLoader$(async () => {
   return getStats();
+});
+
+export const useTrendingApps = routeLoader$(async () => {
+  return getTrendingApps();
 });
 
 const TRENDS_PAGE_SIZE = 6;
@@ -80,13 +84,14 @@ export default component$(() => {
   const location = useLocation();
   const initialApps = useInitialApps();
   const stats = useStats();
+  const trendingApps = useTrendingApps();
   const trendsPage = useSignal(0);
 
   const query = location.url.searchParams.get("q") ?? "";
   const browsing = query.trim() === "";
 
-  const trendsTotalPages = Math.max(1, Math.ceil(initialApps.value.length / TRENDS_PAGE_SIZE));
-  const trendsSlice = initialApps.value.slice(
+  const trendsTotalPages = Math.max(1, Math.ceil(trendingApps.value.length / TRENDS_PAGE_SIZE));
+  const trendsSlice = trendingApps.value.slice(
     trendsPage.value * TRENDS_PAGE_SIZE,
     trendsPage.value * TRENDS_PAGE_SIZE + TRENDS_PAGE_SIZE,
   );
@@ -104,14 +109,21 @@ export default component$(() => {
             <section>
               <h2 class="text-lg font-semibold mb-1">Apps & games trends</h2>
               <p class="text-sm text-base-content/60 mb-3">
-                Ranking criteria still TBD (recent updates, novelty, or a combination) — paginated
-                by {TRENDS_PAGE_SIZE} for now.
+                Ranked by a popularity score averaged across sources that expose one (AUR usage
+                ranking, Flathub's own Popular collection) — apps with no signal from any source
+                aren't shown here.
               </p>
-              <div class="flex gap-4 overflow-x-auto pb-1">
-                {trendsSlice.map((app) => (
-                  <AppCardLink key={app.id} app={app} />
-                ))}
-              </div>
+              {trendingApps.value.length === 0 ? (
+                <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
+                  No trending data available yet.
+                </div>
+              ) : (
+                <div class="flex gap-4 overflow-x-auto pb-1">
+                  {trendsSlice.map((app) => (
+                    <AppCardLink key={app.id} app={app} />
+                  ))}
+                </div>
+              )}
               {trendsTotalPages > 1 && (
                 <div class="join mt-3">
                   <button

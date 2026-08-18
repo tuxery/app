@@ -216,6 +216,29 @@ export async function getAppById(id: string): Promise<CatalogApp | null> {
   });
 }
 
+const TRENDING_PAGE_SIZE = 60;
+
+/**
+ * Apps with a real cross-source popularity score, highest first — see
+ * `tuxery/catalog`'s `CatalogApp.popularity` doc comment for how that
+ * score is computed (AUR's usage-frequency ranking, Flathub's own
+ * "Popular" collection, averaged when an app has both). Apps with no
+ * score at all are excluded entirely rather than sorted to the bottom —
+ * "no signal" isn't "unpopular".
+ */
+export async function getTrendingApps(): Promise<AppSummary[]> {
+  const db = getClient();
+  if (!db) return [];
+
+  return safely([], async () => {
+    const result = await db.execute({
+      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE popularity IS NOT NULL ORDER BY popularity DESC LIMIT ?`,
+      args: [TRENDING_PAGE_SIZE],
+    });
+    return result.rows.map((row) => toSummary(row as unknown as Row));
+  });
+}
+
 /** Reads precomputed totals from the `meta` table — never `COUNT(*)` on `apps` at request time. */
 export async function getStats(): Promise<CatalogStats> {
   const db = getClient();
