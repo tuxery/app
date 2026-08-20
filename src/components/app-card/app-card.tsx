@@ -19,25 +19,28 @@ export interface AppCardProps {
 export const AppCard = component$<AppCardProps>(
   ({ iconUrl, name, description, sources, kind, contentType }) => {
     return (
-      <article class="card bg-base-100 border border-base-300 h-full">
+      <article class="card bg-base-100 border border-base-300 h-full transition-shadow hover:shadow-md hover:border-primary/40">
         <div class="card-body gap-2 p-5">
-          <div class="w-10 h-10 rounded-field bg-base-200 flex items-center justify-center overflow-hidden shrink-0">
+          <div class="w-14 h-14 rounded-field bg-base-200 flex items-center justify-center overflow-hidden shrink-0">
             {iconUrl ? (
-              <img src={iconUrl} alt="" width={40} height={40} class="w-full h-full object-cover" />
+              <img src={iconUrl} alt="" width={56} height={56} class="w-full h-full object-cover" />
             ) : (
-              <LuPackage class="text-xl text-base-content/40" />
+              <LuPackage class="text-2xl text-base-content/40" />
             )}
           </div>
-          <h3 class="card-title text-base">{name}</h3>
-          <p class="text-sm text-base-content/70">{description}</p>
+          <h3 class="card-title text-base line-clamp-1">{name}</h3>
+          <p class="text-sm text-base-content/70 line-clamp-2">{description}</p>
           <div class="flex flex-wrap gap-1.5 mt-1">
             {kind === "gui" && <span class="badge badge-secondary badge-sm">GUI</span>}
             {contentType === "game" && <span class="badge badge-accent badge-sm">Game</span>}
-            {sources.map((source) => (
+            {sources.slice(0, 3).map((source) => (
               <span key={source} class="badge badge-outline badge-primary badge-sm">
                 {SOURCE_LABELS[source]}
               </span>
             ))}
+            {sources.length > 3 && (
+              <span class="badge badge-ghost badge-sm">+{sources.length - 3}</span>
+            )}
           </div>
         </div>
       </article>
