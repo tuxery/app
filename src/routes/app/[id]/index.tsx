@@ -183,6 +183,14 @@ export default component$(() => {
             {a.contentType === "game" && <span class="badge badge-accent">Game</span>}
             {a.developer && <span class="badge badge-ghost">{a.developer}</span>}
             {a.category && <span class="badge badge-outline">{a.category}</span>}
+            {a.suite?.role === "component" && a.suite.mainApp && (
+              <a
+                href={`/app/${encodeURIComponent(a.suite.mainApp.id)}/`}
+                class="badge badge-outline hover:badge-primary"
+              >
+                Part of {a.suite.mainApp.name}
+              </a>
+            )}
             {a.rating && (
               <span class="badge badge-outline">
                 ★ {a.rating.average.toFixed(1)} ({a.rating.count})
@@ -234,6 +242,28 @@ export default component$(() => {
           )}
         </div>
       </section>
+
+      {/* Suite main app: link out to each separately-installable component. */}
+      {a.suite?.role === "main" && a.suite.components && a.suite.components.length > 0 && (
+        <section>
+          <h2 class="text-lg font-semibold mb-1">Suite components</h2>
+          <p class="text-sm text-base-content/60 mb-3">
+            {a.name} bundles these into one install where a source offers it — each is also
+            separately installable on its own.
+          </p>
+          <div class="flex flex-wrap gap-2">
+            {a.suite.components.map((component) => (
+              <a
+                key={component.id}
+                href={`/app/${encodeURIComponent(component.id)}/`}
+                class="btn btn-outline btn-sm"
+              >
+                {component.name}
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Exhaustive mode: every install method, right-side drawer, sorted by settings preference. */}
       {drawerOpen.value && (
