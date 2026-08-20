@@ -1,27 +1,21 @@
 // Client-safe half of the catalog layer: pure types/constants only, no
-// `@libsql/client` import. Components rendered on the client (AppCard, the
-// detail page's badges, ...) must import from here, never from `~/catalog`
-// directly — that file's top-level `createClient` import drags the Node-only
-// libsql driver into the client bundle the moment anything in it is
-// referenced outside a routeLoader$/RequestHandler `$` boundary (this split
-// exists because that exact mistake broke `pnpm build`).
+// `@libsql/client` import. Components rendered on the client must import
+// from here, never from `~/catalog` — that file's top-level `createClient`
+// import drags the Node-only libsql driver into the client bundle, which
+// breaks `pnpm build`.
 //
-// Mirrors `tuxery/catalog`'s dataset shape — packages/sources/src/types.ts
-// (`PackageSourceId`, `SourcedPackage`) and packages/curator/src/enrich/types.ts
-// (`CatalogApp`) plus packages/store/src/turso-client.ts (the `apps` table
-// columns). No cross-repo import exists (separate repos, not a monorepo), so
-// this is kept in sync by hand — see those files for field-by-field notes on
-// what's actually populated today vs. typed for later.
+// Mirrors `tuxery/catalog`'s dataset shape (packages/sources/src/types.ts,
+// packages/curator/src/enrich/types.ts, packages/store/src/turso-client.ts's
+// `apps` table). No cross-repo import (separate repos, not a monorepo), so
+// this is kept in sync by hand.
 
 // One id per connector folder under catalog's packages/sources/src/ —
 // `<format>-<provider>` (e.g. "deb-debian"), except appimage/slackware/
-// gog/lutris which keep a bare name (single format+provider today, or —
-// for gog/lutris — no package format at all) — see catalog's "Normalize
-// source identifiers by package format" card. appimage-manual is the one
-// deliberate exception to that same convention: catalog's own
-// `PackageSourceId` doc comment explains why the original `appimage`
-// keeps its bare historical name instead of becoming `appimage-github`
-// now that a second AppImage source exists.
+// gog/lutris, which keep a bare name (single format+provider today, or,
+// for gog/lutris, no package format at all). `appimage-manual` is a
+// deliberate exception: the original `appimage` keeps its historical bare
+// name instead of becoming `appimage-github` now that a second AppImage
+// source exists.
 export type PackageSourceId =
   | "flatpak-flathub"
   | "flatpak-appcenter"

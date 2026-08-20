@@ -1,26 +1,83 @@
 import { component$ } from "@builder.io/qwik";
+import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
+import { AppCard } from "~/components/app-card/app-card";
+import { getCategories, getTrendingApps } from "~/catalog";
+
+export const useTrending = routeLoader$(async () => getTrendingApps());
+export const useCategories = routeLoader$(async () => getCategories());
 
 export default component$(() => {
+  const trending = useTrending();
+  const categories = useCategories();
+
   return (
-    <div class="flex flex-col gap-6 max-w-2xl">
+    <div class="flex flex-col gap-10">
       <div>
         <h1 class="text-3xl font-bold mb-2">Apps</h1>
         <p class="text-base-content/70">
-          A dedicated, apps-only view of the catalog is coming soon.
+          Every kind of Linux app, deduplicated across sources. There's no reliable way yet to
+          confirm a package is <em>not</em> a game, so this includes anything not already tagged as
+          one — see{" "}
+          <a href="/games/" class="link link-primary">
+            Games
+          </a>{" "}
+          for confirmed games only.
         </p>
       </div>
 
-      <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
-        Tuxery's catalog can now confirm when a package <em>is</em> a game (see the "Games" filter
-        on Browse), but there's still no reliable way to confirm the opposite — most non-game apps
-        just don't carry positive evidence either way, so a dedicated, accurate apps-only listing
-        isn't possible yet (tracked on the Tuxery GitHub Project).
-      </div>
+      {trending.value.length > 0 && (
+        <section>
+          <div class="flex items-baseline justify-between mb-3">
+            <h2 class="text-lg font-semibold">Trending apps</h2>
+            <a href="/browse/" class="link link-primary text-sm">
+              Browse all →
+            </a>
+          </div>
+          <div class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
+            {trending.value.slice(0, 12).map((app) => (
+              <a key={app.id} href={`/app/${encodeURIComponent(app.id)}/`} class="block">
+                <AppCard
+                  iconUrl={app.iconUrl}
+                  name={app.name}
+                  description={app.shortDescription}
+                  sources={app.sources}
+                  kind={app.kind}
+                  contentType={app.contentType}
+                />
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
 
-      <a href="/browse" class="link link-primary">
-        In the meantime, browse the full catalog
-      </a>
+      {categories.value.length > 0 && (
+        <section>
+          <h2 class="text-lg font-semibold mb-3">Browse by category</h2>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {categories.value.map((c) => (
+              <a
+                key={c.category}
+                href={`/browse/?category=${encodeURIComponent(c.category)}`}
+                aria-label={`Browse ${c.category} (${c.count} apps)`}
+                class="card bg-base-100 border border-base-300 hover:border-primary/40 hover:shadow-md transition-shadow"
+              >
+                <div class="card-body p-4 flex-row items-center justify-between">
+                  <span class="font-medium">{c.category}</span>
+                  <span class="badge badge-ghost">{c.count.toLocaleString()}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section>
+        <h2 class="text-lg font-semibold mb-2">Editorial picks</h2>
+        <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
+          Staff-curated "must-have" collections are coming soon.
+        </div>
+      </section>
     </div>
   );
 });
@@ -30,7 +87,7 @@ export const head: DocumentHead = {
   meta: [
     {
       name: "description",
-      content: "Browse Linux apps on Tuxery — dedicated apps-only browsing is coming soon.",
+      content: "Browse Linux apps on Tuxery — trending picks and category browsing.",
     },
   ],
 };
