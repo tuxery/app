@@ -6,6 +6,7 @@ import {
   type BrowseResult,
   type CatalogApp,
   type CatalogStats,
+  type PackageSourceId,
   type SourcedPackage,
 } from "~/catalog-types";
 
@@ -159,20 +160,27 @@ export async function searchApps(query: string): Promise<AppSummary[]> {
 }
 
 /**
- * Paginated listing for the /browse page. A `WHERE`-scoped count can't be
- * precomputed, so a filtered request pays for one `COUNT(*)` scan — but the
- * fully-unfiltered case (no name query, no interface filter), which is the
- * common one, reuses `getStats()`'s precomputed total instead of
- * re-scanning all ~227k rows on every page load.
+ * Paginated listing for the /browse page. A filtered request pays for one
+ * `COUNT(*)` scan (a `WHERE`-scoped count can't be precomputed) — but the
+ * common unfiltered case reuses `getStats()`'s precomputed total instead
+ * of re-scanning the whole table on every page load.
  */
+export interface BrowseOptions {
+  interfaceFilter?: InterfaceFilter;
+  typeFilter?: TypeFilter;
+  category?: string;
+  /** Restricts to apps with at least one package from this source — matched against the packages_json blob, the only place per-package sources live. */
+  source?: PackageSourceId;
+}
+
 export async function browseApps(
   query: string,
   page: number,
-  interfaceFilter: InterfaceFilter = "all",
-  typeFilter: TypeFilter = "all",
+  options: BrowseOptions = {},
 ): Promise<BrowseResult> {
   const db = getClient();
   if (!db) return { apps: [], total: 0 };
+  const { interfaceFilter = "all", typeFilter = "all", category, source } = options;
 
   return safely({ apps: [], total: 0 }, async () => {
     const trimmed = query.trim();
@@ -187,6 +195,14 @@ export async function browseApps(
     }
     if (typeFilter === "game") {
       conditions.push("content_type = 'game'");
+    }
+    if (category) {
+      conditions.push("category = ?");
+      conditionArgs.push(category);
+    }
+    if (source) {
+      conditions.push("packages_json LIKE ?");
+      conditionArgs.push(`%"source":"${source}"%`);
     }
     const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
@@ -207,6 +223,21 @@ export async function browseApps(
   });
 }
 
+/** Looks up several apps by id at once, in whatever order the DB returns them — callers that need a specific order (e.g. an editorial block referencing ids in a chosen sequence) should re-sort client-side. Missing ids are silently dropped rather than erroring, since editorial content referencing a since-removed app shouldn't break the whole page. */
+export async function getAppsByIds(ids: string[]): Promise<AppSummary[]> {
+  const db = getClient();
+  if (!db || ids.length === 0) return [];
+
+  return safely([], async () => {
+    const placeholders = ids.map(() => "?").join(", ");
+    const result = await db.execute({
+      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE id IN (${placeholders})`,
+      args: ids,
+    });
+    return result.rows.map((row) => toSummary(row as unknown as Row));
+  });
+}
+
 export async function getAppById(id: string): Promise<CatalogApp | null> {
   const db = getClient();
   if (!db) return null;
@@ -222,22 +253,45 @@ const TRENDING_PAGE_SIZE = 60;
 
 /**
  * Apps with a real cross-source popularity score, highest first — see
- * `tuxery/catalog`'s `CatalogApp.popularity` doc comment for how that
- * score is computed (AUR's usage-frequency ranking, Flathub's own
- * "Popular" collection, averaged when an app has both). Apps with no
- * score at all are excluded entirely rather than sorted to the bottom —
- * "no signal" isn't "unpopular".
+ * `tuxery/catalog`'s `CatalogApp.popularity` doc comment for how it's
+ * computed. Apps with no score are excluded entirely rather than sorted
+ * to the bottom — "no signal" isn't "unpopular". `typeFilter: "game"`
+ * scopes to confirmed games (for the Games page); there's no equivalent
+ * "confirmed not a game" filter, so the Apps page reuses the unfiltered
+ * list rather than pretending to exclude games it can't actually rule out.
  */
-export async function getTrendingApps(): Promise<AppSummary[]> {
+export async function getTrendingApps(typeFilter: TypeFilter = "all"): Promise<AppSummary[]> {
   const db = getClient();
   if (!db) return [];
 
   return safely([], async () => {
+    const where = typeFilter === "game" ? "AND content_type = 'game'" : "";
     const result = await db.execute({
-      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE popularity IS NOT NULL ORDER BY popularity DESC LIMIT ?`,
+      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE popularity IS NOT NULL ${where} ORDER BY popularity DESC LIMIT ?`,
       args: [TRENDING_PAGE_SIZE],
     });
     return result.rows.map((row) => toSummary(row as unknown as Row));
+  });
+}
+
+export interface CategoryCount {
+  category: string;
+  count: number;
+}
+
+/** Every real category with at least one app, most populated first — powers the /categories listing. */
+export async function getCategories(): Promise<CategoryCount[]> {
+  const db = getClient();
+  if (!db) return [];
+
+  return safely([], async () => {
+    const result = await db.execute(
+      `SELECT category, COUNT(*) as count FROM apps WHERE category IS NOT NULL GROUP BY category ORDER BY count DESC`,
+    );
+    return result.rows.map((row) => ({
+      category: row.category as string,
+      count: Number(row.count),
+    }));
   });
 }
 
