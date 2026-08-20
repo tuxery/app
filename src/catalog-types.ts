@@ -17,12 +17,17 @@
 // `<format>-<provider>` (e.g. "deb-debian"), except appimage/slackware/
 // gog/lutris which keep a bare name (single format+provider today, or —
 // for gog/lutris — no package format at all) — see catalog's "Normalize
-// source identifiers by package format" card.
+// source identifiers by package format" card. appimage-manual is the one
+// deliberate exception to that same convention: catalog's own
+// `PackageSourceId` doc comment explains why the original `appimage`
+// keeps its bare historical name instead of becoming `appimage-github`
+// now that a second AppImage source exists.
 export type PackageSourceId =
   | "flatpak-flathub"
   | "flatpak-appcenter"
   | "snap-snapcraft"
   | "appimage"
+  | "appimage-manual"
   | "pacman-aur"
   | "deb-debian"
   | "deb-ubuntu"
@@ -47,6 +52,7 @@ export const SOURCE_LABELS: Record<PackageSourceId, string> = {
   "flatpak-appcenter": "elementary AppCenter (Flatpak)",
   "snap-snapcraft": "Snap Store",
   appimage: "AppImage",
+  "appimage-manual": "AppImage (direct download)",
   "pacman-aur": "AUR",
   "deb-debian": "Debian",
   "deb-ubuntu": "Ubuntu",
@@ -101,6 +107,8 @@ export interface CatalogApp {
   screenshots?: string[];
   videos?: string[];
   rating?: { average: number; count: number };
+  /** Trending/popularity signal (0-1), when at least one source has one — see `tuxery/catalog`'s `CatalogApp.popularity` doc comment. */
+  popularity?: number;
   reviews?: Array<{ author: string; text: string; rating: number }>;
   features?: string[];
   changelog?: string;
@@ -111,6 +119,14 @@ export interface CatalogApp {
   inAppPurchases?: boolean;
   gdprCompliant?: boolean;
   editorialTags?: string[];
+  /** Software-suite membership — see `tuxery/catalog`'s `CatalogApp.suite` doc comment. */
+  suite?: {
+    id: string;
+    name: string;
+    role: "main" | "component";
+    components?: { id: string; name: string }[];
+    mainApp?: { id: string; name: string };
+  };
 }
 
 /** The subset of `CatalogApp` a search result card needs — cheap to select and stream in bulk, unlike the full row. */

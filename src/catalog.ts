@@ -102,6 +102,7 @@ function toCatalogApp(row: Row): CatalogApp {
       row.age_rating_system === null || row.age_rating_system === undefined
         ? undefined
         : { system: row.age_rating_system as string, value: row.age_rating_value as string },
+    popularity: num(row.popularity),
     languages: json(row.languages_json),
     screenshots: json(row.screenshots_json),
     videos: json(row.videos_json),
@@ -109,6 +110,7 @@ function toCatalogApp(row: Row): CatalogApp {
     features: json(row.features_json),
     permissions: json(row.permissions_json),
     editorialTags: json(row.editorial_tags_json),
+    suite: json(row.suite_json),
     packages: json(row.packages_json) ?? [],
   };
 }
