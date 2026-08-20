@@ -68,11 +68,21 @@ export default defineConfig(({ mode }): UserConfig => {
         "Cache-Control": "public, max-age=600",
       },
     },
-    // No test files exist yet (the monorepo's unit-tested `matcher` package
-    // moved to `catalog`) — vitest exits 1 on an empty suite by default,
-    // which would otherwise fail CI for no real reason.
+    // No unit test files exist yet (the monorepo's unit-tested `matcher`
+    // package moved to `catalog`) — vitest exits 1 on an empty suite by
+    // default, which would otherwise fail CI for no real reason. e2e/ and
+    // e2e-degraded/ are excluded since those are Playwright specs, run via
+    // `pnpm test.e2e` instead — vitest's own default include glob would
+    // otherwise try (and fail) to run them as unit tests too.
     test: {
       passWithNoTests: true,
+      exclude: [
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/.{idea,git,cache,output,temp}/**",
+        "**/e2e/**",
+        "**/e2e-degraded/**",
+      ],
     },
   };
 });
