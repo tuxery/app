@@ -52,7 +52,10 @@ function toSummary(row: Row): AppSummary {
     iconUrl: (row.icon_url as string | null) ?? undefined,
     kind: row.kind === "gui" ? "gui" : undefined,
     contentType: row.content_type === "game" ? "game" : undefined,
-    sources: packages.map((pkg) => pkg.source),
+    // Deduplicated — a merged app can carry two packages from the same
+    // source now (e.g. AUR's official + -git build), and a summary card
+    // only needs to say "AUR" once, not distinguish the channel.
+    sources: [...new Set(packages.map((pkg) => pkg.source))],
   };
 }
 

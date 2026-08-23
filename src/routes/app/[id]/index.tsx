@@ -52,7 +52,7 @@ const SOURCE_ID_TO_PACKAGE_SOURCE: Record<string, PackageSourceId> = {
   "lutris-main": "lutris",
 };
 
-/** Packages sorted by the user's install-source preference order from settings; sources the settings don't cover sort last, in their original order. */
+/** Packages sorted by the user's install-source preference order from settings; sources the settings don't cover sort last, in their original order. A package with a `channel` (currently only AUR's git/svn/hg/bzr/cvs rolling-release builds) always sorts after its channel-less twin from the same source, so "automatic" mode never silently picks a dev build over the official one. */
 function orderPackagesByPreference(
   packages: SourcedPackage[],
   installGroups: InstallFormatGroup[],
@@ -71,9 +71,18 @@ function orderPackagesByPreference(
   copy.sort((a, b) => {
     const ai = preferenceOrder.indexOf(a.source);
     const bi = preferenceOrder.indexOf(b.source);
-    return (ai === -1 ? preferenceOrder.length : ai) - (bi === -1 ? preferenceOrder.length : bi);
+    if (ai !== bi) {
+      return (ai === -1 ? preferenceOrder.length : ai) - (bi === -1 ? preferenceOrder.length : bi);
+    }
+    return (a.channel ? 1 : 0) - (b.channel ? 1 : 0);
   });
   return copy;
+}
+
+/** A source label, qualified with its channel when it has one (currently only AUR's -git/-svn/-hg/-bzr/-cvs rolling-release builds) — so a merged "official + dev build" pair reads as two distinct install options, not a duplicate. */
+function formatSourceLabel(pkg: SourcedPackage): string {
+  const label = SOURCE_LABELS[pkg.source];
+  return pkg.channel ? `${label} (${pkg.channel} build)` : label;
 }
 
 export default component$(() => {
@@ -227,7 +236,7 @@ export default component$(() => {
             bestPkg ? (
               bestPkgLink ? (
                 <a href={bestPkgLink} class="btn btn-primary btn-sm" target="_blank" rel="noopener">
-                  Install via {SOURCE_LABELS[bestPkg.source]}
+                  Install via {formatSourceLabel(bestPkg)}
                 </a>
               ) : (
                 <button
@@ -235,7 +244,7 @@ export default component$(() => {
                   class="btn btn-primary btn-sm"
                   onClick$={() => (noLinkModalOpen.value = true)}
                 >
-                  Install via {SOURCE_LABELS[bestPkg.source]}
+                  Install via {formatSourceLabel(bestPkg)}
                 </button>
               )
             ) : (
@@ -304,13 +313,13 @@ export default component$(() => {
             </div>
             {orderedPackages.map((pkg) => (
               <a
-                key={pkg.source}
+                key={`${pkg.source}:${pkg.name}`}
                 href={pkg.homepage ?? a.homepage ?? "#"}
                 class="btn btn-outline btn-block justify-start"
                 target="_blank"
                 rel="noopener"
               >
-                Install via {SOURCE_LABELS[pkg.source]}
+                Install via {formatSourceLabel(pkg)}
               </a>
             ))}
           </div>
@@ -330,7 +339,7 @@ export default component$(() => {
             <h2 class="text-lg font-semibold mb-2">No direct install link</h2>
             <p class="text-sm text-base-content/70 mb-4">
               {bestPkg
-                ? `"${a.name}" is available via ${SOURCE_LABELS[bestPkg.source]}, but that source doesn't expose a direct link yet — search for it there instead.`
+                ? `"${a.name}" is available via ${formatSourceLabel(bestPkg)}, but that source doesn't expose a direct link yet — search for it there instead.`
                 : "No package source is available for this app yet."}
             </p>
             <button
@@ -471,7 +480,7 @@ export default component$(() => {
               </>
             )}
             <dt class="text-base-content/60">Available via</dt>
-            <dd>{a.packages.map((pkg) => SOURCE_LABELS[pkg.source]).join(", ")}</dd>
+            <dd>{a.packages.map((pkg) => formatSourceLabel(pkg)).join(", ")}</dd>
             {a.packages.some((pkg) => pkg.rating) && (
               <>
                 <dt class="text-base-content/60">Ratings by source</dt>
@@ -479,8 +488,8 @@ export default component$(() => {
                   {a.packages
                     .filter((pkg) => pkg.rating)
                     .map((pkg) => (
-                      <span key={pkg.source} class="mr-3 whitespace-nowrap">
-                        {SOURCE_LABELS[pkg.source]}: ★ {pkg.rating?.average.toFixed(1)} (
+                      <span key={`${pkg.source}:${pkg.name}`} class="mr-3 whitespace-nowrap">
+                        {formatSourceLabel(pkg)}: ★ {pkg.rating?.average.toFixed(1)} (
                         {pkg.rating?.count})
                       </span>
                     ))}
