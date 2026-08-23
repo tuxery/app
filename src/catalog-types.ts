@@ -29,6 +29,7 @@ export type PackageSourceId =
   | "pacman-arch"
   | "nix-nixpkgs"
   | "rpm-opensuse"
+  | "rpm-rpmfusion"
   | "apk-alpine"
   | "xbps-void"
   | "slackware"
@@ -54,6 +55,7 @@ export const SOURCE_LABELS: Record<PackageSourceId, string> = {
   "pacman-arch": "Arch Linux",
   "nix-nixpkgs": "Nixpkgs",
   "rpm-opensuse": "openSUSE",
+  "rpm-rpmfusion": "RPM Fusion",
   "apk-alpine": "Alpine Linux",
   "xbps-void": "Void Linux",
   slackware: "Slackware",

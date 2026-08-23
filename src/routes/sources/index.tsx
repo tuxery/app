@@ -47,6 +47,11 @@ const SOURCES: SourceCredit[] = [
   { id: "deb-mxlinux", name: "MX Linux", method: "MX Linux's own package index." },
   { id: "rpm-fedora", name: "Fedora", method: "Fedora's Everything + updates repodata." },
   { id: "rpm-opensuse", name: "openSUSE", method: "openSUSE's oss/non-oss repodata." },
+  {
+    id: "rpm-rpmfusion",
+    name: "RPM Fusion",
+    method: "RPM Fusion's free + nonfree repodata, addon repos for Fedora.",
+  },
   { id: "nix-nixpkgs", name: "Nixpkgs", method: "The Nixpkgs package set." },
   { id: "apk-alpine", name: "Alpine Linux", method: "Alpine's APKINDEX." },
   { id: "xbps-void", name: "Void Linux", method: "Void's own package index." },

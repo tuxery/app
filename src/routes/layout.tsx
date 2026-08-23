@@ -35,7 +35,9 @@ export default component$(() => {
           </div>
 
           <a href="/" class="btn btn-ghost text-xl px-2">
-            🐧 Tux<span class="text-primary">ery</span>
+            <span>
+              🐧 Tux<span class="text-primary">ery</span>
+            </span>
           </a>
 
           {NAV_LINKS.map((link) => (

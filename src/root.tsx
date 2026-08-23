@@ -12,7 +12,7 @@ const ANTI_FOUC_SCRIPT = `(function(){
     var raw = localStorage.getItem('tuxery:settings');
     var theme = raw ? JSON.parse(raw).theme : null;
     var dark = theme === 'dark' || ((!theme || theme === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', dark ? 'dim' : 'nord');
   } catch (e) {}
 })();`;
 

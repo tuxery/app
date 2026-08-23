@@ -13,12 +13,9 @@ export default component$(() => {
       <div>
         <h1 class="text-3xl font-bold mb-2">Categories</h1>
         <p class="text-base-content/70">
-          Sourced from each app's own AppStream metadata, mapped to a small set of display
-          categories — "Game" is deliberately excluded here, see{" "}
-          <a href="/games/" class="link link-primary">
-            Games
-          </a>{" "}
-          instead.
+          Sourced from each app's own AppStream metadata, mapped to a small, deliberately
+          conservative set of display categories (freedesktop.org's Main Categories only) — more
+          will show up here as the catalog's category coverage grows.
         </p>
       </div>
 
@@ -41,6 +38,26 @@ export default component$(() => {
           ))}
         </div>
       )}
+
+      <div class="grid gap-3 sm:grid-cols-2">
+        <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
+          <span class="font-medium text-base-content">Games</span> aren't in the grid above —
+          AppStream's own taxonomy excludes genre for anything tagged "Game", so genre-level
+          browsing needs its own taxonomy, still coming. See{" "}
+          <a href="/games/" class="link link-primary">
+            Games
+          </a>{" "}
+          in the meantime.
+        </div>
+        <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
+          <span class="font-medium text-base-content">CLI tools</span> aren't reliably
+          distinguishable from GUI apps yet either — see{" "}
+          <a href="/utils/" class="link link-primary">
+            Utils
+          </a>{" "}
+          for why.
+        </div>
+      </div>
     </div>
   );
 });

@@ -13,7 +13,7 @@ const GROUPS: { title: string; sources: PackageSourceId[] }[] = [
     title: "Debian family (.deb)",
     sources: ["deb-debian", "deb-ubuntu", "deb-mint", "deb-popos", "deb-deepin", "deb-mxlinux"],
   },
-  { title: "RPM", sources: ["rpm-fedora", "rpm-opensuse"] },
+  { title: "RPM", sources: ["rpm-fedora", "rpm-opensuse", "rpm-rpmfusion"] },
   { title: "Arch (pacman)", sources: ["pacman-arch", "pacman-aur"] },
   {
     title: "Other native package managers",
