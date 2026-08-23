@@ -40,15 +40,20 @@ interface PersistedSettings {
 const STORAGE_KEY = "tuxery:settings";
 
 // Kept in sync by hand with catalog's docs/sources.md — no cross-repo
-// import (separate repos), same convention as catalog.ts itself. Not
-// wired into search filtering yet (tracked on the Tuxery GitHub
-// Project); this is the preference the UI will read once it is.
+// import (separate repos), same convention as catalog.ts itself. One
+// leaf per real PackageSourceId (see app/[id]/index.tsx's
+// SOURCE_ID_TO_PACKAGE_SOURCE for the mapping) — a source missing here
+// can never be picked in "automatic" install mode or excluded by the
+// user, it just silently sorts last.
 const defaultInstallGroups = (): InstallFormatGroup[] => [
   {
     id: "flatpak",
     label: "Flatpak",
     enabled: true,
-    sources: [{ id: "flathub", label: "Flathub", enabled: true }],
+    sources: [
+      { id: "flathub", label: "Flathub", enabled: true },
+      { id: "elementary-appcenter", label: "elementary AppCenter", enabled: true },
+    ],
   },
   {
     id: "snap",
@@ -60,7 +65,10 @@ const defaultInstallGroups = (): InstallFormatGroup[] => [
     id: "appimage",
     label: "AppImage",
     enabled: true,
-    sources: [{ id: "appimagehub", label: "AppImageHub", enabled: true }],
+    sources: [
+      { id: "appimagehub", label: "Community feed", enabled: true },
+      { id: "appimage-manual", label: "Direct download", enabled: true },
+    ],
   },
   {
     id: "arch",
@@ -87,10 +95,94 @@ const defaultInstallGroups = (): InstallFormatGroup[] => [
     ],
   },
   {
+    id: "mint",
+    label: "Linux Mint",
+    enabled: true,
+    sources: [{ id: "mint-main", label: "Main", enabled: true }],
+  },
+  {
+    id: "popos",
+    label: "Pop!_OS",
+    enabled: true,
+    sources: [{ id: "popos-main", label: "Main", enabled: true }],
+  },
+  {
+    id: "deepin",
+    label: "Deepin",
+    enabled: true,
+    sources: [{ id: "deepin-main", label: "Main", enabled: true }],
+  },
+  {
+    id: "mxlinux",
+    label: "MX Linux",
+    enabled: true,
+    sources: [{ id: "mxlinux-main", label: "Main", enabled: true }],
+  },
+  {
     id: "fedora",
     label: "Fedora",
     enabled: true,
     sources: [{ id: "fedora-everything", label: "Everything", enabled: true }],
+  },
+  {
+    id: "opensuse",
+    label: "openSUSE",
+    enabled: true,
+    sources: [{ id: "opensuse-oss", label: "oss + non-oss", enabled: true }],
+  },
+  {
+    id: "rpmfusion",
+    label: "RPM Fusion",
+    enabled: true,
+    sources: [{ id: "rpmfusion-main", label: "free + nonfree", enabled: true }],
+  },
+  {
+    id: "alpine",
+    label: "Alpine Linux",
+    enabled: true,
+    sources: [{ id: "alpine-main", label: "main + community", enabled: true }],
+  },
+  {
+    id: "void",
+    label: "Void Linux",
+    enabled: true,
+    sources: [{ id: "void-main", label: "main + nonfree + multilib", enabled: true }],
+  },
+  {
+    id: "slackware",
+    label: "Slackware",
+    enabled: true,
+    sources: [{ id: "slackware-main", label: "Main", enabled: true }],
+  },
+  {
+    id: "solus",
+    label: "Solus",
+    enabled: true,
+    sources: [{ id: "solus-shannon", label: "Shannon", enabled: true }],
+  },
+  {
+    id: "gentoo",
+    label: "Gentoo",
+    enabled: true,
+    sources: [{ id: "gentoo-portage", label: "Portage", enabled: true }],
+  },
+  {
+    id: "nixpkgs",
+    label: "Nixpkgs",
+    enabled: true,
+    sources: [{ id: "nixpkgs-main", label: "Main", enabled: true }],
+  },
+  {
+    id: "gog",
+    label: "GOG",
+    enabled: true,
+    sources: [{ id: "gog-main", label: "Linux-compatible titles", enabled: true }],
+  },
+  {
+    id: "lutris",
+    label: "Lutris",
+    enabled: true,
+    sources: [{ id: "lutris-main", label: "Native Linux installers", enabled: true }],
   },
 ];
 
@@ -144,7 +236,10 @@ export const useProvideSettings = (): SettingsState => {
 
     const apply = () => {
       const isDark = current === "system" ? media.matches : current === "dark";
-      document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+      // The daisyUI theme names configured in global.css are "nord"/"dim",
+      // not the generic "light"/"dark" — data-theme has to match one of
+      // those or the browser silently keeps the --default theme.
+      document.documentElement.setAttribute("data-theme", isDark ? "dim" : "nord");
     };
 
     apply();

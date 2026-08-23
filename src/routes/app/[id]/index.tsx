@@ -26,14 +26,30 @@ export const useDetailStats = routeLoader$(async () => getStats());
 // Arch sources) — this maps each leaf to the source id it actually installs.
 const SOURCE_ID_TO_PACKAGE_SOURCE: Record<string, PackageSourceId> = {
   flathub: "flatpak-flathub",
+  "elementary-appcenter": "flatpak-appcenter",
   "snap-store": "snap-snapcraft",
   appimagehub: "appimage",
+  "appimage-manual": "appimage-manual",
   "arch-aur": "pacman-aur",
   "arch-official": "pacman-arch",
   "debian-main": "deb-debian",
   "ubuntu-main": "deb-ubuntu",
   "ubuntu-universe": "deb-ubuntu",
+  "mint-main": "deb-mint",
+  "popos-main": "deb-popos",
+  "deepin-main": "deb-deepin",
+  "mxlinux-main": "deb-mxlinux",
   "fedora-everything": "rpm-fedora",
+  "opensuse-oss": "rpm-opensuse",
+  "rpmfusion-main": "rpm-rpmfusion",
+  "alpine-main": "apk-alpine",
+  "void-main": "xbps-void",
+  "slackware-main": "slackware",
+  "solus-shannon": "eopkg-solus",
+  "gentoo-portage": "ebuild-gentoo",
+  "nixpkgs-main": "nix-nixpkgs",
+  "gog-main": "gog",
+  "lutris-main": "lutris",
 };
 
 /** Packages sorted by the user's install-source preference order from settings; sources the settings don't cover sort last, in their original order. */
