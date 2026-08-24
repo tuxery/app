@@ -1,6 +1,9 @@
 import { component$ } from "@builder.io/qwik";
+import { useHeroBackground } from "~/routes/layout";
 
 export const Footer = component$(() => {
+  const bg = useHeroBackground().value;
+
   return (
     <footer class="border-t border-base-300 bg-base-200/50 mt-16">
       <div class="max-w-6xl mx-auto px-4 md:px-6 py-10">
@@ -58,6 +61,29 @@ export const Footer = component$(() => {
           </p>
           <p>AGPL-3.0-or-later</p>
         </div>
+
+        {bg && (
+          <p class="text-xs text-base-content/40 mt-3">
+            Background photo by{" "}
+            <a href={bg.photographerUrl} target="_blank" rel="noopener" class="link link-hover">
+              {bg.photographerName}
+            </a>{" "}
+            on{" "}
+            <a href={bg.photoUrl} target="_blank" rel="noopener" class="link link-hover">
+              Unsplash
+            </a>
+            , used under the{" "}
+            <a
+              href="https://unsplash.com/license"
+              target="_blank"
+              rel="noopener"
+              class="link link-hover"
+            >
+              Unsplash License
+            </a>
+            .
+          </p>
+        )}
       </div>
     </footer>
   );

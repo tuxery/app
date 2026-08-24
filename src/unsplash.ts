@@ -13,12 +13,13 @@ const HERO_QUERY = "abstract technology dark";
 
 interface UnsplashRandomPhotoResponse {
   urls: { regular: string };
-  links: { download_location: string };
+  links: { html: string; download_location: string };
   user: { name: string; links: { html: string } };
 }
 
 export interface HeroBackgroundPhoto {
   imageUrl: string;
+  photoUrl: string;
   photographerName: string;
   photographerUrl: string;
 }
@@ -79,11 +80,14 @@ async function fetchHeroBackgroundPhoto(): Promise<HeroBackgroundPhoto | null> {
     // awaited, so a slow/failed call never delays the page.
     fetch(`${photo.links.download_location}&client_id=${accessKey}`).catch(() => {});
 
+    // utm params per Unsplash's attribution guidelines, on both the photo
+    // and the photographer link.
+    const utm = "utm_source=tuxery&utm_medium=referral";
     return {
       imageUrl: photo.urls.regular,
+      photoUrl: `${photo.links.html}?${utm}`,
       photographerName: photo.user.name,
-      // utm params per Unsplash's attribution guidelines.
-      photographerUrl: `${photo.user.links.html}?utm_source=tuxery&utm_medium=referral`,
+      photographerUrl: `${photo.user.links.html}?${utm}`,
     };
   } catch {
     return null;
