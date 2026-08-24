@@ -16,3 +16,36 @@
   --color-primary: oklch(86.133% 0.141 254.027);
   --color-primary-content: oklch(17.226% 0.028 254.027);
 }
+
+/* Glassmorphism experiment for AppCard, tried in place of neumorphism —
+   neumorphism's soft same-hue shadows read poorly for contrast/a11y and
+   assume a flat monochrome page background, which conflicts with the
+   Unsplash hero photo. This adapts the generator recipe (originally fixed
+   white rgba(), so it only ever looked right in light mode) onto daisyUI's
+   own base-100/base-content tokens via color-mix, so the tint is light
+   glass in the light theme and dark glass in the dark theme automatically —
+   no separate dark-mode block needed. */
+.glass-card {
+  background: color-mix(in srgb, var(--color-base-100) 55%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid color-mix(in srgb, var(--color-base-content) 15%, transparent);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 color-mix(in srgb, var(--color-base-content) 10%, transparent);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-base-content) 30%, transparent),
+    transparent
+  );
+}

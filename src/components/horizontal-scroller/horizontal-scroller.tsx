@@ -18,7 +18,7 @@ export const HorizontalScroller = component$<{ ariaLabel: string }>(({ ariaLabel
       <div
         ref={trackRef}
         aria-label={ariaLabel}
-        class="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-1"
+        class="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4"
       >
         <Slot />
       </div>

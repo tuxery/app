@@ -16,9 +16,13 @@ export interface AppCardProps {
 /**
  * A source dot-map: one small square per known source (`ALL_PACKAGE_SOURCE_IDS`),
  * always at the same grid position across every card, colored when this app
- * has that source and grayed out otherwise — 3 rows, as many columns as
- * `ALL_PACKAGE_SOURCE_IDS` needs. One tooltip over the whole grid rather than
- * per-square, listing the sources this app actually has.
+ * has that source and grayed out otherwise — 2 rows, as many columns as
+ * `ALL_PACKAGE_SOURCE_IDS` needs. A native `title` (not daisyUI's CSS
+ * tooltip) over the whole grid rather than per-square, listing the sources
+ * this app actually has — a CSS tooltip's popup gets clipped by the
+ * horizontal-scroll card row it lives in (an `overflow-x-auto` ancestor
+ * clips any absolutely-positioned popup that would escape it, not just the
+ * scroll axis), so the browser's own tooltip is the reliable option here.
  */
 const SourceDotMap = component$<{ sources: PackageSourceId[] }>(({ sources }) => {
   const sourceSet = new Set(sources);
@@ -27,12 +31,12 @@ const SourceDotMap = component$<{ sources: PackageSourceId[] }>(({ sources }) =>
     : "No sources available";
 
   return (
-    <div class="tooltip tooltip-top" data-tip={tip} aria-label={tip}>
-      <div class="grid grid-rows-3 grid-flow-col gap-px" aria-hidden="true">
+    <div title={tip} aria-label={tip}>
+      <div class="grid grid-rows-2 grid-flow-col gap-0.5" aria-hidden="true">
         {ALL_PACKAGE_SOURCE_IDS.map((source) => (
           <span
             key={source}
-            class={`w-1 h-1 rounded-[1px] ${sourceSet.has(source) ? "bg-primary" : "bg-base-300"}`}
+            class={`w-1.5 h-1.5 rounded-[1px] ${sourceSet.has(source) ? "bg-primary" : "bg-base-300"}`}
           />
         ))}
       </div>
@@ -52,7 +56,7 @@ const SourceDotMap = component$<{ sources: PackageSourceId[] }>(({ sources }) =>
 export const AppCard = component$<AppCardProps>(
   ({ iconUrl, name, description, sources, kind, contentType, category, rating }) => {
     return (
-      <article class="card bg-base-100 border border-base-300 h-full transition-shadow hover:shadow-md hover:border-primary/40">
+      <article class="glass-card card h-full transition-shadow hover:shadow-lg">
         <div class="card-body gap-2 p-5">
           <div class="flex items-center gap-3">
             <div class="w-14 h-14 rounded-field bg-base-200 flex items-center justify-center overflow-hidden shrink-0">
