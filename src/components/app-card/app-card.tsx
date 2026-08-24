@@ -1,5 +1,5 @@
 import { component$ } from "@builder.io/qwik";
-import { LuPackage } from "@qwikest/icons/lucide";
+import { LuInfo, LuPackage } from "@qwikest/icons/lucide";
 import { ALL_SOURCE_GROUPS, SOURCE_GROUP_MEMBERS, type PackageSourceId } from "~/catalog-types";
 
 export interface AppCardProps {
@@ -24,6 +24,13 @@ export interface AppCardProps {
  * horizontal-scroll card row it lives in (an `overflow-x-auto` ancestor
  * clips any absolutely-positioned popup that would escape it, not just the
  * scroll axis), so the browser's own tooltip is the reliable option here.
+ *
+ * A small circled-i sits next to the grid as a discoverability affordance
+ * (a bare dot grid doesn't read as "hover me" the way a labeled icon does)
+ * — it carries daisyUI's CSS tooltip (instant, no native-title hover
+ * delay) *in addition to* the same native `title`, not instead of it: if
+ * the CSS bubble gets clipped by the same horizontal-scroll ancestor,
+ * hovering a moment longer still surfaces the always-reliable native one.
  */
 const SourceDotMap = component$<{ sources: PackageSourceId[] }>(({ sources }) => {
   const sourceSet = new Set(sources);
@@ -33,7 +40,7 @@ const SourceDotMap = component$<{ sources: PackageSourceId[] }>(({ sources }) =>
   const tip = presentGroups.length ? presentGroups.join(", ") : "No sources available";
 
   return (
-    <div title={tip} aria-label={tip}>
+    <div title={tip} aria-label={tip} class="flex items-center gap-1">
       <div class="grid grid-rows-2 grid-flow-col gap-0.5" aria-hidden="true">
         {ALL_SOURCE_GROUPS.map((group) => (
           <span
@@ -41,6 +48,14 @@ const SourceDotMap = component$<{ sources: PackageSourceId[] }>(({ sources }) =>
             class={`w-1.5 h-1.5 rounded-[1px] ${presentGroups.includes(group) ? "bg-primary" : "bg-base-300"}`}
           />
         ))}
+      </div>
+      <div class="tooltip tooltip-top" data-tip={tip}>
+        <span
+          class="w-3.5 h-3.5 rounded-full border border-base-content/30 flex items-center justify-center text-base-content/50 cursor-help"
+          aria-hidden="true"
+        >
+          <LuInfo class="text-[9px]" />
+        </span>
       </div>
     </div>
   );
