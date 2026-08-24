@@ -45,7 +45,7 @@ test("a native-package-only app shows a copy-paste command, even when it has an 
   await expect(page.getByText("yay -S 0cc-famitracker")).toBeVisible();
 });
 
-test("a source with more than one channel (AUR's official/-bin/-git builds) shows a channel button group, not stacked rows", async ({
+test("a source with more than one channel (AUR's official/-bin/-git builds) shows a channel tab group, not stacked rows", async ({
   page,
 }) => {
   await page.goto("/app/flatpak-flathub%3Aai.jan.Jan/");
@@ -54,9 +54,9 @@ test("a source with more than one channel (AUR's official/-bin/-git builds) show
 
   // One AUR heading, not three separate rows.
   await expect(page.getByText("AUR", { exact: true })).toHaveCount(1);
-  const stable = page.getByRole("button", { name: "Stable" });
-  const bin = page.getByRole("button", { name: "Bin" });
-  const git = page.getByRole("button", { name: "Git" });
+  const stable = page.getByRole("tab", { name: "Stable" });
+  const bin = page.getByRole("tab", { name: "Bin" });
+  const git = page.getByRole("tab", { name: "Git" });
   await expect(stable).toBeVisible();
   await expect(bin).toBeVisible();
   await expect(git).toBeVisible();

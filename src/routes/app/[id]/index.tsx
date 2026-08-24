@@ -105,6 +105,20 @@ function channelLabel(channel: string | undefined): string {
 }
 
 /**
+ * A source's channel tabs, falling back to the raw package name when two
+ * packages would otherwise render the same label — real bug, found live:
+ * Snap's `channel` field is a release track (stable/candidate/beta/edge),
+ * not a build variant, so Discord and Discord Canary (both merged under
+ * one app, both on Snap's "stable" track) rendered as two identical
+ * "Stable" tabs with no way to tell them apart.
+ */
+function tabLabel(pkg: SourcedPackage, packages: SourcedPackage[]): string {
+  const label = channelLabel(pkg.channel);
+  const collides = packages.some((p) => p !== pkg && channelLabel(p.channel) === label);
+  return collides ? pkg.name : label;
+}
+
+/**
  * One packaging source's install info, e.g. "AUR" within "Arch Linux" —
  * a direct link when the source has a real install/store page
  * (`INSTALL_METHODS[source].kind === "link"`), otherwise a copy-paste
@@ -140,29 +154,26 @@ const SourceInstallUnit = component$<{
 
   return (
     <div class="flex flex-col gap-2">
-      <div class="flex items-center justify-between gap-2 flex-wrap">
-        <span class="text-sm font-medium">{SOURCE_LABELS[pkg.source]}</span>
-        {packages.length > 1 && (
-          <div class="join">
-            {packages.map((p, i) => (
-              <button
-                key={`${p.source}:${p.name}`}
-                type="button"
-                class={[
-                  "btn btn-xs join-item",
-                  i === selectedIndex.value ? "btn-active" : "btn-outline",
-                ]}
-                onClick$={() => {
-                  selectedIndex.value = i;
-                  copied.value = false;
-                }}
-              >
-                {channelLabel(p.channel)}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      <span class="text-sm font-medium">{SOURCE_LABELS[pkg.source]}</span>
+
+      {packages.length > 1 && (
+        <div role="tablist" class="tabs tabs-box tabs-sm w-fit">
+          {packages.map((p, i) => (
+            <button
+              key={`${p.source}:${p.name}`}
+              type="button"
+              role="tab"
+              class={["tab", i === selectedIndex.value && "tab-active"]}
+              onClick$={() => {
+                selectedIndex.value = i;
+                copied.value = false;
+              }}
+            >
+              {tabLabel(p, packages)}
+            </button>
+          ))}
+        </div>
+      )}
 
       {warning && (
         <div
