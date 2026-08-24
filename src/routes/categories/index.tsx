@@ -14,8 +14,12 @@ export default component$(() => {
         <h1 class="text-3xl font-bold mb-2">Categories</h1>
         <p class="text-base-content/70">
           Sourced from each app's own AppStream metadata, mapped to a small, deliberately
-          conservative set of display categories (freedesktop.org's Main Categories only) — more
-          will show up here as the catalog's category coverage grows.
+          conservative set of display categories (freedesktop.org's Main Categories only) — apps,
+          games, and CLI utilities alike, whenever the source data actually carries one. Coverage is
+          uneven: games rarely carry a Main Category upstream (freedesktop's own convention drops it
+          once something is tagged "Game"), and there's no reliable way yet to tell a CLI tool apart
+          from a GUI app in the first place — so both are under-represented here, not excluded, and
+          will fill in as the catalog's own signal improves.
         </p>
       </div>
 
@@ -39,24 +43,13 @@ export default component$(() => {
         </div>
       )}
 
-      <div class="grid gap-3 sm:grid-cols-2">
-        <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
-          <span class="font-medium text-base-content">Games</span> aren't in the grid above —
-          AppStream's own taxonomy excludes genre for anything tagged "Game", so genre-level
-          browsing needs its own taxonomy, still coming. See{" "}
-          <a href="/games/" class="link link-primary">
-            Games
-          </a>{" "}
-          in the meantime.
-        </div>
-        <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
-          <span class="font-medium text-base-content">CLI tools</span> aren't reliably
-          distinguishable from GUI apps yet either — see{" "}
-          <a href="/utils/" class="link link-primary">
-            Utils
-          </a>{" "}
-          for why.
-        </div>
+      <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
+        Looking for games specifically? A genre-level taxonomy (Puzzle, Casual, Strategy, ...) isn't
+        built yet, but{" "}
+        <a href="/games/" class="link link-primary">
+          Games
+        </a>{" "}
+        lists every confirmed game regardless of category.
       </div>
     </div>
   );
