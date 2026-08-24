@@ -1,7 +1,18 @@
 import { component$, Slot } from "@builder.io/qwik";
+import { routeLoader$ } from "@builder.io/qwik-city";
 import { LuLayoutGrid, LuMenu, LuSearch, LuSettings, LuUser } from "@qwikest/icons/lucide";
 import { Footer } from "~/components/footer/footer";
 import { useProvideSettings } from "~/settings";
+import { getHeroBackgroundPhoto } from "~/unsplash";
+
+// Defined at the layout level (not routes/index.tsx) so every page gets the
+// background, not just the homepage — a route can still reuse this exact
+// loader (see routes/index.tsx's own, taller hero treatment) without a
+// second fetch, since Qwik City resolves one loader instance per request
+// regardless of how many components call it.
+export const useHeroBackground = routeLoader$(async () => {
+  return getHeroBackgroundPhoto();
+});
 
 const NAV_LINKS = [
   { href: "/apps/", label: "Apps" },
@@ -12,6 +23,7 @@ const NAV_LINKS = [
 
 export default component$(() => {
   useProvideSettings();
+  const bg = useHeroBackground().value;
 
   return (
     <>
@@ -83,6 +95,27 @@ export default component$(() => {
           </span>
         </div>
       </header>
+
+      {bg && (
+        // Site-wide, every route — not just the homepage's own taller hero
+        // treatment (routes/index.tsx). `position: fixed` so it stays
+        // pinned behind the sticky header on every page rather than
+        // needing a per-page height. Deliberately short and fully resolved
+        // to base-100 by the time <main>'s own top padding ends (py-10
+        // md:py-14 below the header), so it can never sit behind actual
+        // heading text on any route — text contrast on non-homepage pages
+        // was never designed around a photo background.
+        <div
+          class="fixed inset-x-0 top-0 h-[168px] -z-10"
+          style={{
+            backgroundImage: `url(${bg.imageUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          <div class="absolute inset-0 bg-gradient-to-b from-black/50 to-base-100" />
+        </div>
+      )}
 
       <main class="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-14 min-h-[60vh]">
         <Slot />

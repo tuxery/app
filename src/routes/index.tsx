@@ -5,15 +5,11 @@ import { LuSearch } from "@qwikest/icons/lucide";
 import { AppCard } from "~/components/app-card/app-card";
 import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-scroller";
 import { getStats, getTrendingApps, getCategories } from "~/catalog";
-import { getHeroBackgroundPhoto } from "~/unsplash";
+import { useHeroBackground } from "~/routes/layout";
 import type { AppSummary } from "~/catalog-types";
 
 export const useStats = routeLoader$(async () => {
   return getStats();
-});
-
-export const useHeroBackground = routeLoader$(async () => {
-  return getHeroBackgroundPhoto();
 });
 
 export const useTrendingApps = routeLoader$(async () => {

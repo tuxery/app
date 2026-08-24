@@ -27,22 +27,34 @@ export interface HeroBackgroundPhoto {
 // quota almost immediately (50 requests/hour total, shared across every
 // visitor) — confirmed live while testing this feature (x-ratelimit-
 // remaining: 0 after a handful of reloads). One reused photo per process
-// for this long instead, same "cheap for the process's lifetime" pattern
-// as ~/catalog's own DB client. Won't survive a Cloudflare Workers cold
+// per day instead ("un par jour pour tout le serveur") — comfortably
+// inside quota regardless of traffic, same "cheap for the process's
+// lifetime" pattern as ~/catalog's own DB client, and it doubles as a
+// "today's background" feature. Won't survive a Cloudflare Workers cold
 // start/multiple isolates in production (no shared memory across them) —
 // fine for now (single long-lived dev/preview process), needs a durable
-// store (KV, or persisting the URL in Turso) once this ships for real.
-const CACHE_TTL_MS = 30 * 60 * 1000;
+// store (KV, or persisting the URL + day in Turso) once this ships for
+// real.
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+// A failed/rate-limited fetch gets a much shorter TTL than a real photo —
+// caching "no background" for a full day over one transient blip (or the
+// rate limit resetting within the hour, as it does) would be worse than
+// just trying again soon.
+const FAILURE_CACHE_TTL_MS = 5 * 60 * 1000;
 let cached: { photo: HeroBackgroundPhoto | null; fetchedAt: number } | undefined;
 
 /**
  * One random photo for the homepage hero background, reused across
- * requests for `CACHE_TTL_MS`. Degrades to `null` (no
- * `UNSPLASH_ACCESS_KEY`, network error, rate limit) rather than breaking
- * the page — a background image is a decoration, never load-bearing.
+ * requests for a day (much less on failure — see `FAILURE_CACHE_TTL_MS`).
+ * Degrades to `null` (no `UNSPLASH_ACCESS_KEY`, network error, rate limit)
+ * rather than breaking the page — a background image is a decoration,
+ * never load-bearing.
  */
 export async function getHeroBackgroundPhoto(): Promise<HeroBackgroundPhoto | null> {
-  if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) return cached.photo;
+  if (cached) {
+    const ttl = cached.photo ? CACHE_TTL_MS : FAILURE_CACHE_TTL_MS;
+    if (Date.now() - cached.fetchedAt < ttl) return cached.photo;
+  }
 
   const photo = await fetchHeroBackgroundPhoto();
   cached = { photo, fetchedAt: Date.now() };
