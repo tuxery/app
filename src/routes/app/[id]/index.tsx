@@ -415,13 +415,15 @@ export default component$(() => {
 
         <div class="flex flex-wrap gap-2 md:flex-col">
           {visiblePackages.length ? (
-            <button
-              type="button"
-              class="btn btn-primary btn-sm"
-              onClick$={() => (drawerOpen.value = true)}
-            >
-              Install options ({visiblePackages.length})
-            </button>
+            <div class="aura aura-sm w-fit">
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+                onClick$={() => (drawerOpen.value = true)}
+              >
+                Install options ({visiblePackages.length})
+              </button>
+            </div>
           ) : (
             <span class="btn btn-disabled btn-sm" aria-disabled="true">
               No install source available
