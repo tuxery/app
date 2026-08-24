@@ -69,8 +69,45 @@ export const SOURCE_LABELS: Record<PackageSourceId, string> = {
   lutris: "Lutris",
 };
 
-/** Every known source, in a fixed order — powers the app-card dot-map (`components/app-card`), where each source always renders at the same grid position regardless of which sources a given app actually has. Derived from `SOURCE_LABELS` so it can never drift out of sync with `PackageSourceId`. */
+/** Every known source, in a fixed order. Derived from `SOURCE_LABELS` so it can never drift out of sync with `PackageSourceId`. */
 export const ALL_PACKAGE_SOURCE_IDS = Object.keys(SOURCE_LABELS) as PackageSourceId[];
+
+/**
+ * A platform/distro identity, one step coarser than `PackageSourceId` —
+ * "Flatpak" regardless of remote (Flathub vs. elementary AppCenter),
+ * "AppImage" regardless of feed (community vs. the hand-curated manual
+ * seed), "Arch Linux" regardless of repo (AUR vs. official core/extra),
+ * "Fedora" including its RPM Fusion addon repo. Everything else is
+ * already one source per platform, so it's a 1:1 passthrough. Powers the
+ * app-card dot-map (`components/app-card`) — one square per platform a
+ * user would actually think of as distinct, not one per packaging
+ * backend variant.
+ */
+export const SOURCE_GROUP_MEMBERS: Record<string, PackageSourceId[]> = {
+  Flatpak: ["flatpak-flathub", "flatpak-appcenter"],
+  Snap: ["snap-snapcraft"],
+  AppImage: ["appimage", "appimage-manual"],
+  "Arch Linux": ["pacman-aur", "pacman-arch"],
+  Debian: ["deb-debian"],
+  Ubuntu: ["deb-ubuntu"],
+  Fedora: ["rpm-fedora", "rpm-rpmfusion"],
+  openSUSE: ["rpm-opensuse"],
+  "Alpine Linux": ["apk-alpine"],
+  "Void Linux": ["xbps-void"],
+  Slackware: ["slackware"],
+  Solus: ["eopkg-solus"],
+  Gentoo: ["ebuild-gentoo"],
+  Nixpkgs: ["nix-nixpkgs"],
+  "Linux Mint": ["deb-mint"],
+  "Pop!_OS": ["deb-popos"],
+  Deepin: ["deb-deepin"],
+  "MX Linux": ["deb-mxlinux"],
+  GOG: ["gog"],
+  Lutris: ["lutris"],
+};
+
+/** Every source group, in a fixed order — see `SOURCE_GROUP_MEMBERS`. */
+export const ALL_SOURCE_GROUPS = Object.keys(SOURCE_GROUP_MEMBERS);
 
 export interface SourcedPackage {
   source: PackageSourceId;
