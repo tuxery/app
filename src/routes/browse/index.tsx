@@ -65,11 +65,7 @@ export default component$(() => {
         </p>
       </div>
 
-      <form
-        action="/browse"
-        method="get"
-        class="flex flex-wrap gap-3 items-end bg-base-200/50 border border-base-300 rounded-box p-4"
-      >
+      <form action="/browse" method="get" class="glass-card flex flex-wrap gap-3 items-end p-4">
         <label class="form-control flex-1 min-w-[12rem]">
           <span class="label-text text-sm mb-1">Name</span>
           <input
