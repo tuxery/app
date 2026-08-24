@@ -23,8 +23,14 @@ test("automatic mode (set via /settings) shows a single direct install button in
   // The setting writes to localStorage from a client-side effect, not
   // synchronously with the click — wait for it to actually land before
   // navigating away, or the next page loads with the still-default value.
+  // Default 5s poll timeout proved flaky under the full suite's 8 parallel
+  // workers (observed live, repeatedly) — the settings page's persisted
+  // payload got bigger once settings.ts grew from 7 to 21 install-source
+  // groups, and 8 cold dev-server compiles contending at once is enough to
+  // occasionally miss a 5s window. 15s has real margin without masking a
+  // genuine break (the write normally lands in well under 1s).
   await expect
-    .poll(() => page.evaluate(() => localStorage.getItem("tuxery:settings")))
+    .poll(() => page.evaluate(() => localStorage.getItem("tuxery:settings")), { timeout: 15_000 })
     .toContain('"ctaBehavior":"automatic"');
 
   await page.goto(FIREFOX);
