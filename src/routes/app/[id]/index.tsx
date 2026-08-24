@@ -122,7 +122,8 @@ function channelLabel(channel: string | undefined): string {
 const SourceInstallUnit = component$<{
   packages: SourcedPackage[];
   appHomepage: string | undefined;
-}>(({ packages, appHomepage }) => {
+  compatWarnings: CatalogApp["compatibilityWarnings"];
+}>(({ packages, appHomepage, compatWarnings }) => {
   const selectedIndex = useSignal(0);
   const copied = useSignal(false);
   const settings = useSettings();
@@ -135,6 +136,7 @@ const SourceInstallUnit = component$<{
   const sourceOption = leafId ? findSourceOption(settings.installGroups.value, leafId) : undefined;
   const command = installCommand(pkg);
   const needsSetup = method.setup && !sourceOption?.activated;
+  const warning = compatWarnings?.find((w) => w.source === pkg.source);
 
   return (
     <div class="flex flex-col gap-2">
@@ -161,6 +163,20 @@ const SourceInstallUnit = component$<{
           </div>
         )}
       </div>
+
+      {warning && (
+        <div
+          class={[
+            "text-xs rounded-field p-2 flex flex-col gap-1",
+            warning.severity === "warning"
+              ? "bg-warning/15 text-warning-content"
+              : "bg-info/15 text-info-content",
+          ]}
+        >
+          <p>{warning.issue}</p>
+          {warning.fix && <code class="font-mono break-all">{warning.fix}</code>}
+        </div>
+      )}
 
       {method.kind === "link" ? (
         (pkg.homepage ?? appHomepage) ? (
@@ -231,7 +247,8 @@ const SourceGroupSection = component$<{
   group: string;
   packages: SourcedPackage[];
   appHomepage: string | undefined;
-}>(({ group, packages, appHomepage }) => (
+  compatWarnings: CatalogApp["compatibilityWarnings"];
+}>(({ group, packages, appHomepage, compatWarnings }) => (
   <details class="collapse collapse-arrow bg-base-100 border border-base-300">
     <summary class="collapse-title min-h-0 py-3 font-medium text-sm">
       {group} <span class="text-base-content/50 font-normal">({packages.length})</span>
@@ -239,7 +256,12 @@ const SourceGroupSection = component$<{
     <div class="collapse-content">
       <div class="flex flex-col gap-4">
         {groupBySource(packages).map(([source, sourcePackages]) => (
-          <SourceInstallUnit key={source} packages={sourcePackages} appHomepage={appHomepage} />
+          <SourceInstallUnit
+            key={source}
+            packages={sourcePackages}
+            appHomepage={appHomepage}
+            compatWarnings={compatWarnings}
+          />
         ))}
       </div>
     </div>
@@ -439,6 +461,7 @@ export default component$(() => {
                 group={group}
                 packages={packages}
                 appHomepage={a.homepage}
+                compatWarnings={a.compatibilityWarnings}
               />
             ))}
           </div>

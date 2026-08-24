@@ -117,6 +117,7 @@ function toCatalogApp(row: Row): CatalogApp {
     permissions: json(row.permissions_json),
     editorialTags: json(row.editorial_tags_json),
     suite: json(row.suite_json),
+    compatibilityWarnings: json(row.compat_warnings_json),
     packages: json(row.packages_json) ?? [],
   };
 }

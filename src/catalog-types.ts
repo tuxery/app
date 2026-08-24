@@ -163,6 +163,13 @@ export interface CatalogApp {
     components?: { id: string; name: string }[];
     mainApp?: { id: string; name: string };
   };
+  /** Known packaging-format compatibility issues, each scoped to the specific `source` (a `PackageSourceId`) it affects — see `tuxery/catalog`'s `CatalogApp.compatibilityWarnings` doc comment. Rendered inline next to that source's row in the install drawer, not as a separate app-level banner. */
+  compatibilityWarnings?: {
+    source: PackageSourceId;
+    severity: "warning" | "info";
+    issue: string;
+    fix?: string;
+  }[];
 }
 
 /** The subset of `CatalogApp` a search result card needs — cheap to select and stream in bulk, unlike the full row. */
