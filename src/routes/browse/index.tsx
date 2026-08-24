@@ -1,21 +1,46 @@
-import { component$ } from "@builder.io/qwik";
-import { routeLoader$, useLocation } from "@builder.io/qwik-city";
+import { $, component$, Fragment, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import { routeLoader$, server$, useLocation } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { LuChevronLeft, LuChevronRight } from "@qwikest/icons/lucide";
+import { LuLoader2 } from "@qwikest/icons/lucide";
 import { AppCard } from "~/components/app-card/app-card";
-import { browseApps, getCategories, type InterfaceFilter, type TypeFilter } from "~/catalog";
-import { BROWSE_PAGE_SIZE, SOURCE_LABELS, type PackageSourceId } from "~/catalog-types";
+import {
+  browseApps,
+  getCategories,
+  type BrowseOptions,
+  type InterfaceFilter,
+  type SortOption,
+  type TypeFilter,
+} from "~/catalog";
+import { SOURCE_LABELS, type AppSummary, type PackageSourceId } from "~/catalog-types";
+
+/**
+ * RPC endpoint the client calls directly (no full navigation) as the user
+ * scrolls — thin wrapper around the same `browseApps` the initial
+ * `routeLoader$` uses, so paginated batches stay consistent with the
+ * server-rendered first page.
+ */
+const loadBrowsePage = server$(async function (
+  query: string,
+  page: number,
+  options: BrowseOptions,
+) {
+  return browseApps(query, page, options);
+});
 
 function parseInterfaceFilter(value: string | null): InterfaceFilter {
-  return value === "gui" ? "gui" : "all";
+  return value === "gui" || value === "cli" ? value : "all";
 }
 
 function parseTypeFilter(value: string | null): TypeFilter {
-  return value === "game" ? "game" : "all";
+  return value === "game" || value === "app" || value === "utility" ? value : "all";
 }
 
 function parseSource(value: string | null): PackageSourceId | undefined {
   return value && value in SOURCE_LABELS ? (value as PackageSourceId) : undefined;
+}
+
+function parseSort(value: string | null): SortOption {
+  return value === "name-asc" || value === "name-desc" ? value : "relevance";
 }
 
 export const useBrowse = routeLoader$(async ({ url }) => {
@@ -26,6 +51,7 @@ export const useBrowse = routeLoader$(async ({ url }) => {
     typeFilter: parseTypeFilter(url.searchParams.get("type")),
     category: url.searchParams.get("category") ?? undefined,
     source: parseSource(url.searchParams.get("source")),
+    sort: parseSort(url.searchParams.get("sort")),
   });
 });
 
@@ -37,32 +63,54 @@ export default component$(() => {
   const categories = useBrowseCategories();
 
   const query = location.url.searchParams.get("q") ?? "";
-  const page = Math.max(1, Number(location.url.searchParams.get("page") ?? "1"));
+  const startPage = Math.max(0, Number(location.url.searchParams.get("page") ?? "1") - 1);
   const interfaceFilter = parseInterfaceFilter(location.url.searchParams.get("interface"));
   const typeFilter = parseTypeFilter(location.url.searchParams.get("type"));
   const category = location.url.searchParams.get("category") ?? undefined;
   const source = parseSource(location.url.searchParams.get("source"));
-  const totalPages = Math.max(1, Math.ceil(browse.value.total / BROWSE_PAGE_SIZE));
+  const sort = parseSort(location.url.searchParams.get("sort"));
+  const options: BrowseOptions = { interfaceFilter, typeFilter, category, source, sort };
 
-  const pageHref = (targetPage: number) => {
-    const params = new URLSearchParams();
-    if (query) params.set("q", query);
-    if (typeFilter === "game") params.set("type", "game");
-    if (interfaceFilter === "gui") params.set("interface", "gui");
-    if (category) params.set("category", category);
-    if (source) params.set("source", source);
-    if (targetPage > 1) params.set("page", String(targetPage));
-    const qs = params.toString();
-    return qs ? `/browse/?${qs}` : "/browse/";
-  };
+  // One entry per loaded page, kept separate (rather than one flat array)
+  // purely so a divider can be rendered between batches — the actual grid
+  // below flattens them back into one continuous layout.
+  const batches = useSignal<AppSummary[][]>([browse.value.apps]);
+  const loadedCount = useSignal(browse.value.apps.length);
+  const nextPage = useSignal(startPage + 1);
+  const loading = useSignal(false);
+  const sentinelRef = useSignal<HTMLElement>();
+
+  const loadMore = $(async () => {
+    if (loading.value || loadedCount.value >= browse.value.total) return;
+    loading.value = true;
+    const result = await loadBrowsePage(query, nextPage.value, options);
+    if (result.apps.length > 0) {
+      batches.value = [...batches.value, result.apps];
+      loadedCount.value += result.apps.length;
+      nextPage.value += 1;
+    } else {
+      // Server disagrees with the client's `total` (data changed
+      // mid-scroll) — stop rather than looping on empty pages forever.
+      loadedCount.value = browse.value.total;
+    }
+    loading.value = false;
+  });
+
+  useVisibleTask$(({ cleanup }) => {
+    const el = sentinelRef.value;
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) loadMore();
+    });
+    observer.observe(el);
+    cleanup(() => observer.disconnect());
+  });
 
   return (
     <div class="flex flex-col gap-6">
       <div>
         <h1 class="text-3xl font-bold mb-2">Browse</h1>
-        <p class="text-base-content/70">
-          Every app and game in the catalog, {BROWSE_PAGE_SIZE} at a time.
-        </p>
+        <p class="text-base-content/70">Every app and game in the catalog.</p>
       </div>
 
       <form action="/browse" method="get" class="glass-card flex flex-wrap gap-3 items-end p-4">
@@ -83,8 +131,14 @@ export default component$(() => {
             <option value="all" selected={typeFilter === "all"}>
               All
             </option>
+            <option value="app" selected={typeFilter === "app"}>
+              Apps
+            </option>
             <option value="game" selected={typeFilter === "game"}>
               Games
+            </option>
+            <option value="utility" selected={typeFilter === "utility"}>
+              Utils
             </option>
           </select>
         </label>
@@ -96,7 +150,10 @@ export default component$(() => {
               All
             </option>
             <option value="gui" selected={interfaceFilter === "gui"}>
-              GUI apps
+              GUI
+            </option>
+            <option value="cli" selected={interfaceFilter === "cli"}>
+              CLI
             </option>
           </select>
         </label>
@@ -112,6 +169,21 @@ export default component$(() => {
                 {`${c.category} (${c.count.toLocaleString()})`}
               </option>
             ))}
+          </select>
+        </label>
+
+        <label class="form-control min-w-[9rem]">
+          <span class="label-text text-sm mb-1">Sort</span>
+          <select name="sort" class="select select-sm w-full">
+            <option value="relevance" selected={sort === "relevance"}>
+              Relevance
+            </option>
+            <option value="name-asc" selected={sort === "name-asc"}>
+              Name (A–Z)
+            </option>
+            <option value="name-desc" selected={sort === "name-desc"}>
+              Name (Z–A)
+            </option>
           </select>
         </label>
 
@@ -136,8 +208,8 @@ export default component$(() => {
       )}
 
       <p class="text-sm text-base-content/60">
-        "Games" and "GUI apps" only show confirmed matches — the catalog has no reliable way yet to
-        say a package is definitely not a game or CLI-only, so "All" still includes both.
+        "Games" is a confirmed match; "Apps"/"Utils" and "GUI"/"CLI" are a best-effort split by
+        category/desktop-file detection, not a guarantee — a few will land in the wrong bucket.
       </p>
 
       {browse.value.apps.length === 0 ? (
@@ -147,57 +219,42 @@ export default component$(() => {
       ) : (
         <>
           <p class="text-sm text-base-content/60">
-            {browse.value.total.toLocaleString()} apps — page {page} of {totalPages}
+            Showing {loadedCount.value.toLocaleString()} of {browse.value.total.toLocaleString()}{" "}
+            apps
           </p>
 
           <div class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
-            {browse.value.apps.map((app) => (
-              <a key={app.id} href={`/app/${encodeURIComponent(app.id)}/`} class="block">
-                <AppCard
-                  iconUrl={app.iconUrl}
-                  name={app.name}
-                  description={app.shortDescription}
-                  sources={app.sources}
-                  kind={app.kind}
-                  contentType={app.contentType}
-                  category={app.category}
-                  rating={app.rating}
-                />
-              </a>
+            {batches.value.map((batch, batchIndex) => (
+              <Fragment key={`page-${startPage + batchIndex}`}>
+                {batchIndex > 0 && (
+                  <div class="col-span-full flex items-center gap-3 text-xs text-base-content/40 my-1">
+                    <span class="flex-1 border-t border-base-300" />
+                    Page {startPage + batchIndex + 1}
+                    <span class="flex-1 border-t border-base-300" />
+                  </div>
+                )}
+                {batch.map((app) => (
+                  <a key={app.id} href={`/app/${encodeURIComponent(app.id)}/`} class="block">
+                    <AppCard
+                      iconUrl={app.iconUrl}
+                      name={app.name}
+                      description={app.shortDescription}
+                      sources={app.sources}
+                      contentType={app.contentType}
+                      category={app.category}
+                      rating={app.rating}
+                    />
+                  </a>
+                ))}
+              </Fragment>
             ))}
           </div>
 
-          <div class="join self-center">
-            {page > 1 ? (
-              <a href={pageHref(page - 1)} class="btn btn-sm join-item" aria-label="Previous page">
-                <LuChevronLeft />
-              </a>
-            ) : (
-              <span
-                class="btn btn-sm join-item btn-disabled"
-                aria-disabled="true"
-                aria-label="Previous page"
-              >
-                <LuChevronLeft />
-              </span>
-            )}
-            <span class="btn btn-sm join-item btn-disabled" aria-disabled="true">
-              {page} / {totalPages}
-            </span>
-            {page < totalPages ? (
-              <a href={pageHref(page + 1)} class="btn btn-sm join-item" aria-label="Next page">
-                <LuChevronRight />
-              </a>
-            ) : (
-              <span
-                class="btn btn-sm join-item btn-disabled"
-                aria-disabled="true"
-                aria-label="Next page"
-              >
-                <LuChevronRight />
-              </span>
-            )}
-          </div>
+          {loadedCount.value < browse.value.total && (
+            <div ref={sentinelRef} class="flex justify-center py-6 text-base-content/50">
+              <LuLoader2 class="animate-spin text-xl" aria-label="Loading more apps" />
+            </div>
+          )}
         </>
       )}
     </div>

@@ -1,26 +1,67 @@
 import { component$ } from "@builder.io/qwik";
+import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
+import { AppCard } from "~/components/app-card/app-card";
+import { getTrendingApps } from "~/catalog";
+
+export const useTrendingUtils = routeLoader$(async () => getTrendingApps("utility"));
 
 export default component$(() => {
+  const trending = useTrendingUtils();
+
   return (
-    <div class="flex flex-col gap-6 max-w-2xl">
+    <div class="flex flex-col gap-10">
       <div>
         <h1 class="text-3xl font-bold mb-2">Utils</h1>
         <p class="text-base-content/70">
-          A dedicated, CLI-tools-only view of the catalog is coming soon.
+          System tools, settings panels, and developer tooling — a best-effort split by category
+          (not a guarantee), separate from{" "}
+          <a href="/apps/" class="link link-primary">
+            Apps
+          </a>
+          . See{" "}
+          <a href="/browse/?type=utility" class="link link-primary">
+            the full utils list
+          </a>{" "}
+          for everything, not just what's trending.
         </p>
       </div>
 
-      <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
-        Tuxery's catalog can now confirm when a package <em>is</em> a GUI app (see the "GUI apps"
-        filter on Browse), but there's still no reliable way to confirm the opposite — most CLI
-        tools just don't carry positive evidence either way, so a dedicated, accurate CLI-only
-        listing isn't possible yet (tracked on the Tuxery GitHub Project).
-      </div>
+      {trending.value.length > 0 && (
+        <section>
+          <div class="flex items-baseline justify-between mb-3">
+            <h2 class="text-lg font-semibold">Trending utils</h2>
+            <a href="/browse/?type=utility" class="link link-primary text-sm">
+              Browse all utils →
+            </a>
+          </div>
+          <div class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
+            {trending.value.slice(0, 12).map((app) => (
+              <a key={app.id} href={`/app/${encodeURIComponent(app.id)}/`} class="block">
+                <AppCard
+                  iconUrl={app.iconUrl}
+                  name={app.name}
+                  description={app.shortDescription}
+                  sources={app.sources}
+                  contentType={app.contentType}
+                  category={app.category}
+                  rating={app.rating}
+                />
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
 
-      <a href="/browse" class="link link-primary">
-        In the meantime, browse the full catalog
-      </a>
+      <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
+        Apps/Games/Utils today is split by category (Development, System tools, Settings, and
+        Utilities count as "Utils") — a rough first cut, not a confirmed CLI-tools-only signal. The
+        "GUI"/"CLI" filter on{" "}
+        <a href="/browse/" class="link link-primary">
+          Browse
+        </a>{" "}
+        is the same kind of best-effort split, independent of this one.
+      </div>
     </div>
   );
 });
@@ -30,7 +71,7 @@ export const head: DocumentHead = {
   meta: [
     {
       name: "description",
-      content: "Browse Linux CLI tools on Tuxery — dedicated CLI-only browsing is coming soon.",
+      content: "Browse Linux system tools and utilities on Tuxery, including what's trending.",
     },
   ],
 };
