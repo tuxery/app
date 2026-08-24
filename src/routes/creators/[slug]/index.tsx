@@ -7,7 +7,7 @@ import { getInfluencerPage, type InfluencerBlock } from "~/data/influencer-pages
 import type { AppSummary } from "~/catalog-types";
 
 export const usePage = routeLoader$(async (requestEvent) => {
-  const page = getInfluencerPage(requestEvent.params.slug ?? "");
+  const page = await getInfluencerPage(requestEvent.params.slug ?? "");
   if (!page) {
     requestEvent.status(404);
     return null;
