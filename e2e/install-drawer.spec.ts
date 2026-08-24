@@ -93,7 +93,10 @@ test("activating a source's setup persists and hides the setup step on future vi
 test("Snap's setup step links to Snapcraft's own install guide instead of an apt-only command", async ({
   page,
 }) => {
-  await page.goto("/app/snap-snapcraft%3Adiscord-canary/");
+  // Discord Canary is merged into the main Discord app as a Snap channel
+  // variant (see AUR_CHANNEL_WORD) — there's no standalone
+  // snap-snapcraft:discord-canary app id to link to directly.
+  await page.goto("/app/flatpak-flathub%3Acom.discordapp.Discord/");
   await page.getByRole("button", { name: /Install options/ }).click();
   await page.locator("summary", { hasText: "Snap" }).click();
 
