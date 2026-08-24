@@ -5,6 +5,10 @@
     dim --prefersdark;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 /* daisyUI's stock dim theme ships a green primary (hue ~139) against
    nord's blue (hue ~254) — the accent color would silently flip hue when
    the theme switches. Same lightness/chroma dim already used for its own
