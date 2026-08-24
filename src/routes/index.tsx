@@ -1,8 +1,9 @@
-import { component$, useSignal } from "@builder.io/qwik";
+import { component$ } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { LuChevronLeft, LuChevronRight, LuSearch } from "@qwikest/icons/lucide";
+import { LuSearch } from "@qwikest/icons/lucide";
 import { AppCard } from "~/components/app-card/app-card";
+import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-scroller";
 import { getStats, getTrendingApps, getCategories } from "~/catalog";
 import type { AppSummary } from "~/catalog-types";
 
@@ -17,8 +18,6 @@ export const useTrendingApps = routeLoader$(async () => {
 export const useCategories = routeLoader$(async () => {
   return getCategories();
 });
-
-const TRENDS_PAGE_SIZE = 6;
 
 // Sections with no real data/logic behind them yet (editorial system, events,
 // collections — all tracked as their own cards on the Tuxery GitHub Project).
@@ -43,7 +42,7 @@ const ComingSoonSection = component$<{ title: string; note: string }>(({ title, 
 ));
 
 const AppCardLink = component$<{ app: AppSummary }>(({ app }) => (
-  <a href={`/app/${encodeURIComponent(app.id)}/`} class="block w-64 shrink-0">
+  <a href={`/app/${encodeURIComponent(app.id)}/`} class="block w-64 shrink-0 snap-start">
     <AppCard
       iconUrl={app.iconUrl}
       name={app.name}
@@ -59,13 +58,6 @@ export default component$(() => {
   const stats = useStats();
   const trendingApps = useTrendingApps();
   const categories = useCategories();
-  const trendsPage = useSignal(0);
-
-  const trendsTotalPages = Math.max(1, Math.ceil(trendingApps.value.length / TRENDS_PAGE_SIZE));
-  const trendsSlice = trendingApps.value.slice(
-    trendsPage.value * TRENDS_PAGE_SIZE,
-    trendsPage.value * TRENDS_PAGE_SIZE + TRENDS_PAGE_SIZE,
-  );
 
   return (
     <div class="flex flex-col gap-14">
@@ -125,36 +117,11 @@ export default component$(() => {
                 No trending data available yet.
               </div>
             ) : (
-              <div class="flex gap-4 overflow-x-auto pb-1">
-                {trendsSlice.map((app) => (
+              <HorizontalScroller ariaLabel="Trending apps">
+                {trendingApps.value.map((app) => (
                   <AppCardLink key={app.id} app={app} />
                 ))}
-              </div>
-            )}
-            {trendsTotalPages > 1 && (
-              <div class="join mt-3">
-                <button
-                  type="button"
-                  class="btn btn-sm join-item"
-                  disabled={trendsPage.value === 0}
-                  aria-label="Previous trends page"
-                  onClick$={() => trendsPage.value--}
-                >
-                  <LuChevronLeft />
-                </button>
-                <span class="btn btn-sm join-item btn-disabled" aria-disabled="true">
-                  {trendsPage.value + 1} / {trendsTotalPages}
-                </span>
-                <button
-                  type="button"
-                  class="btn btn-sm join-item"
-                  disabled={trendsPage.value >= trendsTotalPages - 1}
-                  aria-label="Next trends page"
-                  onClick$={() => trendsPage.value++}
-                >
-                  <LuChevronRight />
-                </button>
-              </div>
+              </HorizontalScroller>
             )}
           </section>
 

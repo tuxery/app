@@ -4,3 +4,15 @@
     nord --default,
     dim --prefersdark;
 }
+
+/* daisyUI's stock dim theme ships a green primary (hue ~139) against
+   nord's blue (hue ~254) — the accent color would silently flip hue when
+   the theme switches. Same lightness/chroma dim already used for its own
+   primary (a light, saturated color for contrast against dim's dark
+   base), just rotated onto nord's blue hue instead, so the accent color
+   is recognizably "the same blue" in both themes rather than two
+   unrelated colors. */
+[data-theme="dim"] {
+  --color-primary: oklch(86.133% 0.141 254.027);
+  --color-primary-content: oklch(17.226% 0.028 254.027);
+}
