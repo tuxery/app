@@ -29,7 +29,7 @@ export default component$(() => {
 
   return (
     <>
-      <header class="navbar glass-card rounded-none! px-4 md:px-6 sticky top-0 z-40">
+      <header class="navbar glass-card rounded-none! h-16 px-4 md:px-6 sticky! top-0 z-40">
         <div class="navbar-start gap-1">
           <div class="dropdown lg:hidden">
             <button type="button" class="btn btn-ghost btn-square" aria-label="Menu">
