@@ -280,6 +280,29 @@ export async function getTrendingApps(typeFilter: TypeFilter = "all"): Promise<A
   });
 }
 
+const CATEGORY_PREVIEW_SIZE = 12;
+
+/**
+ * A small preview of apps from one category — powers the homepage's
+ * per-category rows (Productivity, Creativity, ...). Popularity-scored
+ * apps surface first (only ~10% of the catalog has a score — see
+ * `getTrendingApps`'s doc comment), alphabetical after that so every
+ * category still shows something even with zero scored apps in it,
+ * rather than an empty row.
+ */
+export async function getAppsByCategory(category: string, limit = CATEGORY_PREVIEW_SIZE) {
+  const db = getClient();
+  if (!db) return [];
+
+  return safely<AppSummary[]>([], async () => {
+    const result = await db.execute({
+      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE category = ? ORDER BY popularity IS NULL, popularity DESC, name ASC LIMIT ?`,
+      args: [category, limit],
+    });
+    return result.rows.map((row) => toSummary(row as unknown as Row));
+  });
+}
+
 export interface CategoryCount {
   category: string;
   count: number;

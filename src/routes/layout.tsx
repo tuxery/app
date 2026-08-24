@@ -1,5 +1,5 @@
 import { component$, Slot } from "@builder.io/qwik";
-import { routeLoader$ } from "@builder.io/qwik-city";
+import { routeLoader$, useLocation } from "@builder.io/qwik-city";
 import { LuLayoutGrid, LuMenu, LuSearch, LuSettings, LuUser } from "@qwikest/icons/lucide";
 import { Footer } from "~/components/footer/footer";
 import { useProvideSettings } from "~/settings";
@@ -24,6 +24,8 @@ const NAV_LINKS = [
 export default component$(() => {
   useProvideSettings();
   const bg = useHeroBackground().value;
+  const location = useLocation();
+  const isHome = location.url.pathname === "/";
 
   return (
     <>
@@ -97,23 +99,38 @@ export default component$(() => {
       </header>
 
       {bg && (
-        // Site-wide, every route — not just the homepage's own taller hero
-        // treatment (routes/index.tsx). `position: fixed` so it stays
-        // pinned behind the sticky header on every page rather than
-        // needing a per-page height. Deliberately short and fully resolved
-        // to base-100 by the time <main>'s own top padding ends (py-10
-        // md:py-14 below the header), so it can never sit behind actual
-        // heading text on any route — text contrast on non-homepage pages
-        // was never designed around a photo background.
+        // One element, rendered here (not inside <main>) so it's a sibling
+        // of <main>, not a descendant — <main> has its own max-w-6xl
+        // mx-auto, which would cap the background's width to the content
+        // column instead of the real viewport if it were nested inside
+        // (that was the actual bug: a homepage-only version nested in
+        // routes/index.tsx negative-margined its way past <main>'s own
+        // padding but was still bounded by <main>'s max-width, so it never
+        // reached the true page edges). `position: fixed` covers the full
+        // viewport width and stays pinned behind the sticky header on
+        // every route. Taller and more dramatic on the homepage (its hero
+        // is built for it — white text, centered) than the short band
+        // every other route gets, fully resolved to base-100 well before
+        // <main>'s own top padding ends either way, so it can never sit
+        // behind a page's actual heading text.
         <div
-          class="fixed inset-x-0 top-0 h-[168px] -z-10"
+          class="fixed inset-x-0 top-0 -z-10"
           style={{
+            height: isHome ? "640px" : "168px",
             backgroundImage: `url(${bg.imageUrl})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
         >
-          <div class="absolute inset-0 bg-gradient-to-b from-black/50 to-base-100" />
+          <div class="absolute inset-0 bg-gradient-to-b from-black/60 to-base-100" />
+          <a
+            href={bg.photographerUrl}
+            target="_blank"
+            rel="noopener"
+            class="absolute bottom-2 right-3 text-xs text-white/50 hover:text-white/80"
+          >
+            Photo by {bg.photographerName} on Unsplash
+          </a>
         </div>
       )}
 
