@@ -336,6 +336,19 @@ export async function getAppById(id: string): Promise<CatalogApp | null> {
 
 const TRENDING_PAGE_SIZE = 60;
 
+// Icon-only or screenshot-only both count — either is enough to not read
+// as a bare placeholder card. Scoped to homepage/trending surfaces only
+// (not Browse or search, which stay exhaustive/findable) — a curated
+// showcase reading as polished is worth the cut, verified live: only
+// 1,396 of the 21,844 popularity-scored apps have either (mostly AUR's
+// own usage-frequency signal, a source with no icon/screenshot data at
+// all) — still comfortably enough for every trending bucket (232 games,
+// 807 apps, 357 utils) and every homepage category row (off by at most 1
+// app per row — category itself is Flathub/AppCenter-only data, the same
+// sources that carry icons/screenshots, so the two already correlate
+// almost perfectly).
+const HAS_VISUAL_ASSET = "(icon_url IS NOT NULL OR (screenshots_json IS NOT NULL AND screenshots_json != '[]'))";
+
 /**
  * Apps with a real cross-source popularity score, highest first — see
  * `tuxery/catalog`'s `CatalogApp.popularity` doc comment for how it's
@@ -343,7 +356,8 @@ const TRENDING_PAGE_SIZE = 60;
  * to the bottom — "no signal" isn't "unpopular". `typeFilter: "game"` is
  * real positive evidence; "app"/"utility" are the same best-effort
  * category split `browseApps` uses (see `UTILITY_CATEGORIES`) — good
- * enough for a trending row, not a claim of certainty.
+ * enough for a trending row, not a claim of certainty. Also requires an
+ * icon or screenshot — see `HAS_VISUAL_ASSET`.
  */
 export async function getTrendingApps(typeFilter: TypeFilter = "all"): Promise<AppSummary[]> {
   const db = getClient();
@@ -364,7 +378,7 @@ export async function getTrendingApps(typeFilter: TypeFilter = "all"): Promise<A
       args.push(...UTILITY_CATEGORIES);
     }
     const result = await db.execute({
-      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE popularity IS NOT NULL ${where} ORDER BY popularity DESC LIMIT ?`,
+      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE popularity IS NOT NULL AND ${HAS_VISUAL_ASSET} ${where} ORDER BY popularity DESC LIMIT ?`,
       args: [...args, TRENDING_PAGE_SIZE],
     });
     return result.rows.map((row) => toSummary(row as unknown as Row));
@@ -379,7 +393,8 @@ const CATEGORY_PREVIEW_SIZE = 12;
  * apps surface first (only ~10% of the catalog has a score — see
  * `getTrendingApps`'s doc comment), alphabetical after that so every
  * category still shows something even with zero scored apps in it,
- * rather than an empty row.
+ * rather than an empty row. Also requires an icon or screenshot — see
+ * `HAS_VISUAL_ASSET`.
  */
 export async function getAppsByCategory(category: string, limit = CATEGORY_PREVIEW_SIZE) {
   const db = getClient();
@@ -387,7 +402,7 @@ export async function getAppsByCategory(category: string, limit = CATEGORY_PREVI
 
   return safely<AppSummary[]>([], async () => {
     const result = await db.execute({
-      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE category = ? ORDER BY popularity IS NULL, popularity DESC, name ASC LIMIT ?`,
+      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE category = ? AND ${HAS_VISUAL_ASSET} ORDER BY popularity IS NULL, popularity DESC, name ASC LIMIT ?`,
       args: [category, limit],
     });
     return result.rows.map((row) => toSummary(row as unknown as Row));
