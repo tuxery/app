@@ -1,7 +1,7 @@
 import { $, component$, Fragment, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { routeLoader$, server$, useLocation } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { LuLoader2 } from "@qwikest/icons/lucide";
+import { LuArrowUp, LuLoader2 } from "@qwikest/icons/lucide";
 import { AppCard } from "~/components/app-card/app-card";
 import {
   browseApps,
@@ -11,7 +11,12 @@ import {
   type SortOption,
   type TypeFilter,
 } from "~/catalog";
-import { SOURCE_LABELS, type AppSummary, type PackageSourceId } from "~/catalog-types";
+import {
+  BROWSE_PAGE_SIZE,
+  SOURCE_LABELS,
+  type AppSummary,
+  type PackageSourceId,
+} from "~/catalog-types";
 
 /**
  * RPC endpoint the client calls directly (no full navigation) as the user
@@ -107,7 +112,7 @@ export default component$(() => {
   });
 
   return (
-    <div class="flex flex-col gap-6">
+    <div id="top" class="flex flex-col gap-6">
       <div>
         <h1 class="text-3xl font-bold mb-2">Browse</h1>
         <p class="text-base-content/70">Every app and game in the catalog.</p>
@@ -218,10 +223,21 @@ export default component$(() => {
         </p>
       ) : (
         <>
-          <p class="text-sm text-base-content/60">
-            Showing {loadedCount.value.toLocaleString()} of {browse.value.total.toLocaleString()}{" "}
-            apps
-          </p>
+          <div class="flex items-center justify-between gap-3 flex-wrap">
+            <p class="text-sm text-base-content/60">
+              Showing {loadedCount.value.toLocaleString()} of{" "}
+              {browse.value.total.toLocaleString()} apps — page{" "}
+              {startPage + batches.value.length} of{" "}
+              {Math.max(1, Math.ceil(browse.value.total / BROWSE_PAGE_SIZE))}
+            </p>
+            <a
+              href="#top"
+              class="link link-hover text-sm text-base-content/60 flex items-center gap-1"
+            >
+              <LuArrowUp aria-hidden="true" />
+              Top
+            </a>
+          </div>
 
           <div class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
             {batches.value.map((batch, batchIndex) => (
