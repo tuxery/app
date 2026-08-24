@@ -1,10 +1,17 @@
 /**
- * Static, free-form influencer pages — a block schema referencing apps by
- * id rather than duplicating their info, per the "Influencer page" card.
- * No authoring UI exists yet (needs an admin/auth system that doesn't
- * exist either), so pages are hand-added here for now — each entry is a
- * real page once added, just added by editing this file instead of a CMS.
+ * Free-form influencer pages — a block schema referencing apps by id
+ * rather than duplicating their info, per the "Influencer page" card.
+ *
+ * Config lives in `influencer-pages.json` (this file is just types + the
+ * loader), a deliberate seam: `getInfluencerPage` is `async` and reads
+ * from a config source even though that source is a static JSON import
+ * today — no route loader calling it needs to change when this moves to
+ * a real database later, only this file's implementation does. No
+ * authoring UI exists yet either way (needs an admin/auth system that
+ * doesn't exist) — pages are hand-edited in the JSON file for now.
  */
+
+import rawPages from "./influencer-pages.json";
 
 export type InfluencerBlock =
   | { type: "text"; heading?: string; body: string }
@@ -18,102 +25,12 @@ export interface InfluencerPage {
   blocks: InfluencerBlock[];
 }
 
-export const INFLUENCER_PAGES: InfluencerPage[] = [
-  {
-    slug: "baxyz",
-    name: "baxyz",
-    tagline: "What I actually run day to day, by category — a real, static first cut.",
-    blocks: [
-      {
-        type: "text",
-        body: "A snapshot of my own installed apps (deb/snap/flatpak), grouped by category. No authoring UI yet, so this is hand-maintained for now — see the Tuxery GitHub Project's influencer-page card.",
-      },
-      {
-        type: "apps",
-        heading: "Browsers",
-        appIds: ["flatpak-flathub:org.mozilla.firefox", "flatpak-flathub:app.zen_browser.zen"],
-      },
-      {
-        type: "apps",
-        heading: "Communication",
-        appIds: [
-          "flatpak-flathub:com.discordapp.Discord",
-          "flatpak-flathub:org.signal.Signal",
-          "flatpak-flathub:me.proton.Mail",
-          "flatpak-flathub:com.tutanota.Tutanota",
-          "pacman-aur:olvid",
-        ],
-      },
-      {
-        type: "apps",
-        heading: "Productivity & notes",
-        appIds: [
-          "flatpak-flathub:org.libreoffice.LibreOffice",
-          "flatpak-flathub:org.standardnotes.standardnotes",
-          "flatpak-flathub:com.todoist.Todoist",
-          "flatpak-flathub:io.typora.Typora",
-          "flatpak-flathub:org.gnome.World.Iotas",
-          "flatpak-flathub:re.sonny.Eloquent",
-        ],
-      },
-      {
-        type: "apps",
-        heading: "Media",
-        appIds: [
-          "flatpak-flathub:com.spotify.Client",
-          "flatpak-flathub:org.videolan.VLC",
-          "snap-snapcraft:noson",
-        ],
-      },
-      {
-        type: "apps",
-        heading: "Gaming",
-        appIds: [
-          "flatpak-flathub:com.valvesoftware.Steam",
-          "flatpak-flathub:com.heroicgameslauncher.hgl",
-        ],
-      },
-      {
-        type: "apps",
-        heading: "System & utilities",
-        appIds: [
-          "flatpak-flathub:io.github.kolunmi.Bazaar",
-          "flatpak-flathub:io.github.pwr_solaar.solaar",
-          "flatpak-flathub:it.mijorus.gearlever",
-          "snap-snapcraft:gnome-boxes",
-          "flatpak-flathub:com.adilhanney.no_more_background",
-        ],
-      },
-      {
-        type: "apps",
-        heading: "Privacy & AI",
-        appIds: ["flatpak-flathub:me.proton.Pass", "snap-snapcraft:proton-lumo-ai"],
-      },
-    ],
-  },
-  {
-    slug: "example",
-    name: "Example Creator",
-    tagline: "A demo page showing what an influencer page can look like.",
-    blocks: [
-      {
-        type: "text",
-        heading: "Welcome",
-        body: "This is a placeholder page demonstrating the influencer-page block schema — a real author will replace this once the authoring flow exists. Blocks reference real apps by id, so this list always reflects the catalog's current data.",
-      },
-      {
-        type: "apps",
-        heading: "My daily drivers",
-        appIds: [
-          "flatpak-flathub:org.mozilla.firefox",
-          "flatpak-flathub:org.gimp.GIMP",
-          "gog:firewatch",
-        ],
-      },
-    ],
-  },
-];
+// JSON imports don't carry the discriminated-union literal types
+// (`block.type` infers as `string`, not `"text" | "apps"`) — asserted
+// once here rather than re-validated on every read, since this is a
+// trusted, hand-edited config file, not user input.
+const INFLUENCER_PAGES = rawPages as InfluencerPage[];
 
-export function getInfluencerPage(slug: string): InfluencerPage | undefined {
+export async function getInfluencerPage(slug: string): Promise<InfluencerPage | undefined> {
   return INFLUENCER_PAGES.find((page) => page.slug === slug);
 }
