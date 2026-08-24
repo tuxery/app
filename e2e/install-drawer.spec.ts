@@ -1,15 +1,23 @@
 import { test, expect } from "@playwright/test";
 
-test("groups packages by platform, one <details> per group, native package managers show a copy-paste command", async ({
+test("groups packages by platform, one collapsible per group (closed by default), native package managers show a copy-paste command", async ({
   page,
 }) => {
   await page.goto("/app/pacman-aur%3A0ad-data-git/");
   await page.getByRole("button", { name: /Install options/ }).click();
 
   // Debian and Ubuntu are two different packaging groups, each its own
-  // <details> — not flattened into one raw source-per-row list.
-  await expect(page.getByText("Debian", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("Ubuntu", { exact: true }).first()).toBeVisible();
+  // collapsible — not flattened into one raw source-per-row list. Closed
+  // by default, so the command text isn't visible until expanded.
+  const debianSummary = page.locator("summary", { hasText: "Debian" });
+  const ubuntuSummary = page.locator("summary", { hasText: "Ubuntu" });
+  const fedoraSummary = page.locator("summary", { hasText: "Fedora" });
+  await expect(debianSummary).toBeVisible();
+  await expect(page.getByText("sudo apt install 0ad-data").first()).not.toBeVisible();
+
+  await debianSummary.click();
+  await ubuntuSummary.click();
+  await fedoraSummary.click();
   await expect(page.getByText("sudo apt install 0ad-data").first()).toBeVisible();
   await expect(page.getByText("sudo dnf install 0ad-data")).toBeVisible();
 });
@@ -19,25 +27,45 @@ test("a source with a real store page (Flathub) shows a direct install button, n
 }) => {
   await page.goto("/app/flatpak-flathub%3Aorg.mozilla.firefox/");
   await page.getByRole("button", { name: /Install options/ }).click();
+  await page.locator("summary", { hasText: "Flatpak" }).click();
 
-  await expect(page.getByRole("link", { name: /Install via Flathub/ })).toBeVisible();
+  await expect(page.getByText("Flathub", { exact: false }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Install" })).toBeVisible();
 });
 
-test("automatic mode's no-direct-link fallback shows a copy-paste command, even when the package has an informational homepage", async ({
+test("a native-package-only app shows a copy-paste command, even when it has an informational homepage", async ({
   page,
 }) => {
-  await page.goto("/settings/");
-  await page.getByRole("radio", { name: /Automatic/ }).check();
-  await expect
-    .poll(() => page.evaluate(() => localStorage.getItem("tuxery:settings")), { timeout: 15_000 })
-    .toContain('"ctaBehavior":"automatic"');
-
   // 0cc-famitracker is AUR-only and has a real project homepage (not an
-  // install link) — real bug, found live: automatic mode used to treat
-  // any homepage as a clickable install action.
+  // install link) — real bug, found live: an earlier "automatic mode"
+  // used to treat any homepage as a clickable install action.
   await page.goto("/app/pacman-aur%3A0cc-famitracker/");
-  await page.getByRole("button", { name: "Install" }).click();
+  await page.getByRole("button", { name: /Install options/ }).click();
+  await page.locator("summary", { hasText: "Arch Linux" }).click();
   await expect(page.getByText("yay -S 0cc-famitracker")).toBeVisible();
+});
+
+test("a source with more than one channel (AUR's official/-bin/-git builds) shows a channel button group, not stacked rows", async ({
+  page,
+}) => {
+  await page.goto("/app/flatpak-flathub%3Aai.jan.Jan/");
+  await page.getByRole("button", { name: /Install options/ }).click();
+  await page.locator("summary", { hasText: "Arch Linux" }).click();
+
+  // One AUR heading, not three separate rows.
+  await expect(page.getByText("AUR", { exact: true })).toHaveCount(1);
+  const stable = page.getByRole("button", { name: "Stable" });
+  const bin = page.getByRole("button", { name: "Bin" });
+  const git = page.getByRole("button", { name: "Git" });
+  await expect(stable).toBeVisible();
+  await expect(bin).toBeVisible();
+  await expect(git).toBeVisible();
+
+  await expect(page.getByText("yay -S jan", { exact: true })).toBeVisible();
+  await bin.click();
+  await expect(page.getByText("yay -S jan-bin", { exact: true })).toBeVisible();
+  await git.click();
+  await expect(page.getByText("yay -S jan-git", { exact: true })).toBeVisible();
 });
 
 test("activating a source's setup persists and hides the setup step on future visits", async ({
@@ -45,19 +73,31 @@ test("activating a source's setup persists and hides the setup step on future vi
 }) => {
   await page.goto("/app/pacman-aur%3A0cc-famitracker/");
   await page.getByRole("button", { name: /Install options/ }).click();
+  await page.locator("summary", { hasText: "Arch Linux" }).click();
   await expect(page.getByText("One-time — the AUR itself needs a helper")).toBeVisible();
 
   await page.getByRole("button", { name: "I've already done this" }).click();
   await expect(page.getByText("One-time — the AUR itself needs a helper")).toHaveCount(0);
 
   const stored = await page.evaluate(() => localStorage.getItem("tuxery:settings"));
-  expect(stored).toContain(
-    '"id":"arch-aur","label":"AUR (community)","enabled":true,"activated":true',
-  );
+  expect(stored).toContain('"id":"arch-aur","label":"AUR","activated":true');
 
   // Reload — the setup step should stay hidden (persisted, not just in-memory).
   await page.reload();
   await page.getByRole("button", { name: /Install options/ }).click();
+  await page.locator("summary", { hasText: "Arch Linux" }).click();
   await expect(page.getByText("One-time — the AUR itself needs a helper")).toHaveCount(0);
   await expect(page.getByText("yay -S 0cc-famitracker")).toBeVisible();
+});
+
+test("Snap's setup step links to Snapcraft's own install guide instead of an apt-only command", async ({
+  page,
+}) => {
+  await page.goto("/app/snap-snapcraft%3Adiscord-canary/");
+  await page.getByRole("button", { name: /Install options/ }).click();
+  await page.locator("summary", { hasText: "Snap" }).click();
+
+  await expect(
+    page.getByRole("link", { name: "https://snapcraft.io/docs/installing-snapd" }),
+  ).toBeVisible();
 });

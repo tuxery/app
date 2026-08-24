@@ -16,15 +16,26 @@ import type { PackageSourceId, SourcedPackage } from "~/catalog-types";
  * usable at all (adding a Flatpak remote, installing an AUR helper,
  * installing snapd) — distinct from installing this one app. Paired
  * with `settings.ts`'s per-leaf `activated` flag: once a user confirms
- * they've done it, the drawer stops showing it for every app.
+ * they've done it, the drawer stops showing it for every app. Two shapes,
+ * same idea as `InstallMethod.kind` itself: a `"command"` step is a
+ * single copy-paste shell command; a `"link"` step hands off to an
+ * upstream page instead — real bug, found live: snapd's install step used
+ * to hardcode `sudo apt install snapd`, which is wrong on every distro
+ * that isn't Debian/Ubuntu (Fedora/Arch/openSUSE/... all need a different
+ * command) — Snapcraft's own install docs already cover every distro
+ * correctly, so linking there is more honest than picking one distro's
+ * command and calling it universal.
  */
 export interface InstallMethod {
   kind: "link" | "command";
   command?: (pkg: SourcedPackage) => string;
-  setup?: { command: string; note: string };
+  setup?:
+    | { kind: "command"; command: string; note: string }
+    | { kind: "link"; url: string; note: string };
 }
 
 const FLATHUB_SETUP = {
+  kind: "command" as const,
   command:
     "flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo",
   note: "One-time — adds the Flathub remote to Flatpak.",
@@ -35,6 +46,7 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
   "flatpak-appcenter": {
     kind: "link",
     setup: {
+      kind: "command",
       command:
         "flatpak remote-add --if-not-exists appcenter https://flatpak.elementary.io/repo.flatpakrepo",
       note: "One-time — adds elementary's own Flatpak remote.",
@@ -44,8 +56,9 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
     kind: "command",
     command: (pkg) => `sudo snap install ${pkg.name}`,
     setup: {
-      command: "sudo apt install snapd",
-      note: "One-time — installs snapd if it isn't already (pre-installed on Ubuntu).",
+      kind: "link",
+      url: "https://snapcraft.io/docs/installing-snapd",
+      note: "One-time — installs snapd if it isn't already. The exact command depends on your distro (Snapcraft's own guide covers all of them, not just apt-based ones).",
     },
   },
   appimage: { kind: "link" },
@@ -54,6 +67,7 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
     kind: "command",
     command: (pkg) => `yay -S ${pkg.name}`,
     setup: {
+      kind: "command",
       command: "# install an AUR helper first, e.g.: https://github.com/Jguer/yay#installation",
       note: "One-time — the AUR itself needs a helper (yay, paru, ...), pacman alone can't reach it.",
     },
@@ -71,6 +85,7 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
     kind: "command",
     command: (pkg) => `sudo dnf install ${pkg.name}`,
     setup: {
+      kind: "command",
       command:
         "sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm",
       note: "One-time — RPM Fusion is an addon repo, not enabled by default on Fedora.",
