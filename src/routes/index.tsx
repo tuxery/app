@@ -108,9 +108,8 @@ export default component$(() => {
               Search <span class="text-primary">every</span> Linux app.
             </h1>
             <p class={`py-4 ${bg ? "text-white/80" : "text-base-content/70"}`}>
-              Tuxery aggregates Flathub, the Snap Store, AppImage, and every major distro's own
-              package repositories into one deduplicated catalog — search once, install from
-              wherever it's actually shipped.
+              Tuxery aggregates Flathub, the Snap Store, AppImage, and every distro's own repos into
+              one catalog — search once, install from wherever it's shipped.
             </p>
             <form action="/browse" method="get" class="flex justify-center">
               <label class="input input-lg w-full max-w-md flex items-center gap-2">
