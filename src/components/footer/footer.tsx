@@ -8,6 +8,15 @@ export const Footer = component$(() => {
     <footer class="border-t border-base-300 bg-base-200/50 mt-16">
       <div class="max-w-6xl mx-auto px-4 md:px-6 py-10">
         <div class="footer sm:footer-horizontal">
+          <aside>
+            <p class="text-lg font-bold">
+              🐧 Tux<span class="text-primary">ery</span>
+            </p>
+            <p class="text-sm text-base-content/60">
+              Never installs anything itself, every button hands off to the real source.
+            </p>
+            <p class="text-sm text-base-content/60">AGPL-3.0-or-later</p>
+          </aside>
           <nav>
             <h6 class="footer-title">Catalog</h6>
             <a href="/apps/" class="link link-hover">
@@ -50,16 +59,6 @@ export const Footer = component$(() => {
               Third-party licenses
             </a>
           </nav>
-        </div>
-
-        <div class="divider" />
-
-        <div class="flex flex-col sm:flex-row justify-between items-center gap-3 text-sm text-base-content/60">
-          <p>
-            🐧 Tux<span class="text-primary">ery</span> — never installs anything itself, every
-            button hands off to the real source.
-          </p>
-          <p>AGPL-3.0-or-later</p>
         </div>
 
         {bg && (
