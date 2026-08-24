@@ -186,6 +186,37 @@ const defaultInstallGroups = (): InstallFormatGroup[] => [
   },
 ];
 
+/**
+ * A user's persisted `installGroups` unconditionally overrode the fresh
+ * default on load — real bug, found live: anyone who'd visited /settings
+ * before `defaultInstallGroups` grew from 7 to 21 groups (or any future
+ * addition) stayed stuck on their old, incomplete persisted list forever,
+ * since the stored value always won outright with no reconciliation.
+ * Preserves the user's own order/enabled state for groups (and, within
+ * them, sources) they already have, and appends whatever's new in
+ * `defaults` that their stored copy predates.
+ */
+function mergeInstallGroups(
+  stored: InstallFormatGroup[],
+  defaults: InstallFormatGroup[],
+): InstallFormatGroup[] {
+  const defaultsById = new Map(defaults.map((group) => [group.id, group]));
+
+  const merged = stored.map((group) => {
+    const def = defaultsById.get(group.id);
+    if (!def) return group;
+    const storedSourceIds = new Set(group.sources.map((source) => source.id));
+    const missingSources = def.sources.filter((source) => !storedSourceIds.has(source.id));
+    return missingSources.length
+      ? { ...group, sources: [...group.sources, ...missingSources] }
+      : group;
+  });
+
+  const mergedIds = new Set(merged.map((group) => group.id));
+  const missingGroups = defaults.filter((group) => !mergedIds.has(group.id));
+  return [...merged, ...missingGroups];
+}
+
 export const SettingsContext = createContextId<SettingsState>("tuxery.settings");
 
 /** Call once, at the layout root. Provides + persists the settings store. */
@@ -213,7 +244,9 @@ export const useProvideSettings = (): SettingsState => {
           const stored = JSON.parse(raw) as Partial<PersistedSettings>;
           if (stored.theme) theme.value = stored.theme;
           if (stored.ctaBehavior) ctaBehavior.value = stored.ctaBehavior;
-          if (stored.installGroups) installGroups.value = stored.installGroups;
+          if (stored.installGroups) {
+            installGroups.value = mergeInstallGroups(stored.installGroups, defaultInstallGroups());
+          }
         }
       } catch {
         // malformed/unavailable storage — keep defaults
