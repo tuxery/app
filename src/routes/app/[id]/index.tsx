@@ -1,16 +1,24 @@
 import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { LuFlag, LuPackage } from "@qwikest/icons/lucide";
+import { LuCheck, LuCopy, LuFlag, LuPackage } from "@qwikest/icons/lucide";
 import { getAppById, getStats } from "~/catalog";
 import {
+  ALL_SOURCE_GROUPS,
   formatBytes,
+  SOURCE_GROUP_MEMBERS,
   SOURCE_LABELS,
   type CatalogApp,
   type PackageSourceId,
   type SourcedPackage,
 } from "~/catalog-types";
-import { useSettings, type InstallFormatGroup } from "~/settings";
+import { INSTALL_METHODS, installCommand } from "~/install-methods";
+import {
+  setSourceActivated,
+  useSettings,
+  type InstallFormatGroup,
+  type InstallSourceOption,
+} from "~/settings";
 
 export const useApp = routeLoader$(async (requestEvent): Promise<CatalogApp | null> => {
   const id = decodeURIComponent(requestEvent.params.id ?? "");
@@ -84,6 +92,130 @@ function formatSourceLabel(pkg: SourcedPackage): string {
   const label = SOURCE_LABELS[pkg.source];
   return pkg.channel ? `${label} (${pkg.channel} build)` : label;
 }
+
+// Reverse of SOURCE_ID_TO_PACKAGE_SOURCE — only meaningfully used for the
+// handful of sources with a real InstallMethod.setup step (Flathub,
+// AppCenter, AUR, Snap, RPM Fusion), each of which maps from exactly one
+// leaf id; the ambiguous cases (deb-ubuntu from two leaves) never have a
+// setup step, so picking "whichever mapped last" for those is harmless.
+const PACKAGE_SOURCE_TO_LEAF_ID: Partial<Record<PackageSourceId, string>> = Object.fromEntries(
+  Object.entries(SOURCE_ID_TO_PACKAGE_SOURCE).map(([leaf, source]) => [source, leaf]),
+);
+
+function findSourceOption(
+  installGroups: InstallFormatGroup[],
+  leafId: string,
+): InstallSourceOption | undefined {
+  for (const group of installGroups) {
+    const found = group.sources.find((source) => source.id === leafId);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+/** Packages bucketed by platform/distro group (same grouping as the app-card dot-map), in the order their first member appears — i.e. still respecting the caller's own preference sort. */
+function groupPackagesBySourceGroup(packages: SourcedPackage[]): Map<string, SourcedPackage[]> {
+  const byGroup = new Map<string, SourcedPackage[]>();
+  for (const pkg of packages) {
+    const group = ALL_SOURCE_GROUPS.find((g) => SOURCE_GROUP_MEMBERS[g]?.includes(pkg.source));
+    const key = group ?? "Other";
+    const list = byGroup.get(key) ?? [];
+    list.push(pkg);
+    byGroup.set(key, list);
+  }
+  return byGroup;
+}
+
+/**
+ * One package's row inside the install drawer — a direct link when the
+ * source has a real install/store page (`INSTALL_METHODS[source].kind ===
+ * "link"`), otherwise a copy-paste shell command, since no `apt://`-style
+ * link reliably works across distros/desktops today. When the source
+ * needs a one-time remote/helper setup first and the user hasn't
+ * confirmed it yet, that step shows above the regular command with a
+ * button to mark it done — persisted, so it only shows once per source.
+ */
+const PackageInstallRow = component$<{
+  pkg: SourcedPackage;
+  appHomepage: string | undefined;
+}>(({ pkg, appHomepage }) => {
+  const copied = useSignal(false);
+  const settings = useSettings();
+  const method = INSTALL_METHODS[pkg.source];
+  const leafId = PACKAGE_SOURCE_TO_LEAF_ID[pkg.source];
+  const sourceOption = leafId ? findSourceOption(settings.installGroups.value, leafId) : undefined;
+
+  if (method.kind === "link") {
+    const link = pkg.homepage ?? appHomepage;
+    return link ? (
+      <a href={link} class="btn btn-outline btn-block justify-start" target="_blank" rel="noopener">
+        Install via {formatSourceLabel(pkg)}
+      </a>
+    ) : (
+      <div class="border border-base-300 rounded-box p-3 text-sm text-base-content/60">
+        {formatSourceLabel(pkg)}: no direct link available yet.
+      </div>
+    );
+  }
+
+  const command = installCommand(pkg);
+  const needsSetup = method.setup && !sourceOption?.activated;
+
+  return (
+    <div class="border border-base-300 rounded-box p-3 flex flex-col gap-2">
+      <span class="text-sm font-medium">{formatSourceLabel(pkg)}</span>
+
+      {needsSetup && method.setup && (
+        <div class="bg-base-200 rounded-field p-2 flex flex-col gap-2">
+          <p class="text-xs text-base-content/60">{method.setup.note}</p>
+          <code class="text-xs font-mono break-all">{method.setup.command}</code>
+          {leafId && (
+            <button
+              type="button"
+              class="btn btn-xs btn-outline self-start"
+              onClick$={() => setSourceActivated(settings.installGroups, leafId, true)}
+            >
+              I've already done this
+            </button>
+          )}
+        </div>
+      )}
+
+      {command && (
+        <div class="flex items-center gap-2">
+          <code class="text-xs font-mono break-all flex-1">{command}</code>
+          <button
+            type="button"
+            class="btn btn-xs btn-square btn-ghost"
+            aria-label="Copy install command"
+            onClick$={() => {
+              navigator.clipboard.writeText(command);
+              copied.value = true;
+            }}
+          >
+            {copied.value ? <LuCheck /> : <LuCopy />}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+});
+
+/** One `<details>` per platform/distro group — collapsed by default so the drawer reads as a scannable list of sources, not a wall of commands. */
+const SourceGroupSection = component$<{
+  group: string;
+  packages: SourcedPackage[];
+  appHomepage: string | undefined;
+}>(({ group, packages, appHomepage }) => (
+  <details class="border border-base-300 rounded-box" open={packages.length === 1}>
+    <summary class="cursor-pointer select-none px-3 py-2 font-medium text-sm">{group}</summary>
+    <div class="flex flex-col gap-2 p-3 pt-0">
+      {packages.map((pkg) => (
+        <PackageInstallRow key={`${pkg.source}:${pkg.name}`} pkg={pkg} appHomepage={appHomepage} />
+      ))}
+    </div>
+  </details>
+));
 
 export default component$(() => {
   const app = useApp();
@@ -299,7 +431,7 @@ export default component$(() => {
             aria-label="Close install options"
             onClick$={() => (drawerOpen.value = false)}
           />
-          <div class="relative w-full max-w-xs bg-base-100 h-full shadow-xl p-5 flex flex-col gap-3 overflow-y-auto">
+          <div class="relative w-full max-w-sm bg-base-100 h-full shadow-xl p-5 flex flex-col gap-3 overflow-y-auto">
             <div class="flex items-center justify-between mb-1">
               <h2 class="text-lg font-semibold">Install options</h2>
               <button
@@ -311,16 +443,13 @@ export default component$(() => {
                 ✕
               </button>
             </div>
-            {orderedPackages.map((pkg) => (
-              <a
-                key={`${pkg.source}:${pkg.name}`}
-                href={pkg.homepage ?? a.homepage ?? "#"}
-                class="btn btn-outline btn-block justify-start"
-                target="_blank"
-                rel="noopener"
-              >
-                Install via {formatSourceLabel(pkg)}
-              </a>
+            {[...groupPackagesBySourceGroup(orderedPackages)].map(([group, packages]) => (
+              <SourceGroupSection
+                key={group}
+                group={group}
+                packages={packages}
+                appHomepage={a.homepage}
+              />
             ))}
           </div>
         </div>
