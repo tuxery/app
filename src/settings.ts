@@ -15,6 +15,15 @@ export interface InstallSourceOption {
   id: string;
   label: string;
   enabled: boolean;
+  /**
+   * Whether the user has confirmed the one-time remote/helper setup this
+   * source needs is already done (adding a Flatpak remote, installing an
+   * AUR helper, ...) — see `~/install-methods`'s `InstallMethod.setup`.
+   * Meaningless (never read) for sources with no such step; defaults to
+   * `false` for every source regardless, since checking is cheap and
+   * this is the safe default either way.
+   */
+  activated: boolean;
 }
 
 /** A "big line" the settings page groups sources under — a packaging format (Flatpak, Snap, AppImage) or a distro (Ubuntu, Debian, ...), each with one or more concrete sources/components as children. */
@@ -51,23 +60,28 @@ const defaultInstallGroups = (): InstallFormatGroup[] => [
     label: "Flatpak",
     enabled: true,
     sources: [
-      { id: "flathub", label: "Flathub", enabled: true },
-      { id: "elementary-appcenter", label: "elementary AppCenter", enabled: true },
+      { id: "flathub", label: "Flathub", enabled: true, activated: false },
+      {
+        id: "elementary-appcenter",
+        label: "elementary AppCenter",
+        enabled: true,
+        activated: false,
+      },
     ],
   },
   {
     id: "snap",
     label: "Snap",
     enabled: true,
-    sources: [{ id: "snap-store", label: "Snap Store", enabled: true }],
+    sources: [{ id: "snap-store", label: "Snap Store", enabled: true, activated: false }],
   },
   {
     id: "appimage",
     label: "AppImage",
     enabled: true,
     sources: [
-      { id: "appimagehub", label: "Community feed", enabled: true },
-      { id: "appimage-manual", label: "Direct download", enabled: true },
+      { id: "appimagehub", label: "Community feed", enabled: true, activated: false },
+      { id: "appimage-manual", label: "Direct download", enabled: true, activated: false },
     ],
   },
   {
@@ -75,114 +89,120 @@ const defaultInstallGroups = (): InstallFormatGroup[] => [
     label: "Arch Linux",
     enabled: true,
     sources: [
-      { id: "arch-aur", label: "AUR (community)", enabled: true },
-      { id: "arch-official", label: "Official (core + extra)", enabled: true },
+      { id: "arch-aur", label: "AUR (community)", enabled: true, activated: false },
+      { id: "arch-official", label: "Official (core + extra)", enabled: true, activated: false },
     ],
   },
   {
     id: "debian",
     label: "Debian",
     enabled: true,
-    sources: [{ id: "debian-main", label: "Main", enabled: true }],
+    sources: [{ id: "debian-main", label: "Main", enabled: true, activated: false }],
   },
   {
     id: "ubuntu",
     label: "Ubuntu",
     enabled: true,
     sources: [
-      { id: "ubuntu-main", label: "Main", enabled: true },
-      { id: "ubuntu-universe", label: "Universe", enabled: true },
+      { id: "ubuntu-main", label: "Main", enabled: true, activated: false },
+      { id: "ubuntu-universe", label: "Universe", enabled: true, activated: false },
     ],
   },
   {
     id: "mint",
     label: "Linux Mint",
     enabled: true,
-    sources: [{ id: "mint-main", label: "Main", enabled: true }],
+    sources: [{ id: "mint-main", label: "Main", enabled: true, activated: false }],
   },
   {
     id: "popos",
     label: "Pop!_OS",
     enabled: true,
-    sources: [{ id: "popos-main", label: "Main", enabled: true }],
+    sources: [{ id: "popos-main", label: "Main", enabled: true, activated: false }],
   },
   {
     id: "deepin",
     label: "Deepin",
     enabled: true,
-    sources: [{ id: "deepin-main", label: "Main", enabled: true }],
+    sources: [{ id: "deepin-main", label: "Main", enabled: true, activated: false }],
   },
   {
     id: "mxlinux",
     label: "MX Linux",
     enabled: true,
-    sources: [{ id: "mxlinux-main", label: "Main", enabled: true }],
+    sources: [{ id: "mxlinux-main", label: "Main", enabled: true, activated: false }],
   },
   {
     id: "fedora",
     label: "Fedora",
     enabled: true,
-    sources: [{ id: "fedora-everything", label: "Everything", enabled: true }],
+    sources: [{ id: "fedora-everything", label: "Everything", enabled: true, activated: false }],
   },
   {
     id: "opensuse",
     label: "openSUSE",
     enabled: true,
-    sources: [{ id: "opensuse-oss", label: "oss + non-oss", enabled: true }],
+    sources: [{ id: "opensuse-oss", label: "oss + non-oss", enabled: true, activated: false }],
   },
   {
     id: "rpmfusion",
     label: "RPM Fusion",
     enabled: true,
-    sources: [{ id: "rpmfusion-main", label: "free + nonfree", enabled: true }],
+    sources: [{ id: "rpmfusion-main", label: "free + nonfree", enabled: true, activated: false }],
   },
   {
     id: "alpine",
     label: "Alpine Linux",
     enabled: true,
-    sources: [{ id: "alpine-main", label: "main + community", enabled: true }],
+    sources: [{ id: "alpine-main", label: "main + community", enabled: true, activated: false }],
   },
   {
     id: "void",
     label: "Void Linux",
     enabled: true,
-    sources: [{ id: "void-main", label: "main + nonfree + multilib", enabled: true }],
+    sources: [
+      { id: "void-main", label: "main + nonfree + multilib", enabled: true, activated: false },
+    ],
   },
   {
     id: "slackware",
     label: "Slackware",
     enabled: true,
-    sources: [{ id: "slackware-main", label: "Main", enabled: true }],
+    sources: [{ id: "slackware-main", label: "Main", enabled: true, activated: false }],
   },
   {
     id: "solus",
     label: "Solus",
     enabled: true,
-    sources: [{ id: "solus-shannon", label: "Shannon", enabled: true }],
+    sources: [{ id: "solus-shannon", label: "Shannon", enabled: true, activated: false }],
   },
   {
     id: "gentoo",
     label: "Gentoo",
     enabled: true,
-    sources: [{ id: "gentoo-portage", label: "Portage", enabled: true }],
+    sources: [{ id: "gentoo-portage", label: "Portage", enabled: true, activated: false }],
   },
   {
     id: "nixpkgs",
     label: "Nixpkgs",
     enabled: true,
-    sources: [{ id: "nixpkgs-main", label: "Main", enabled: true }],
+    sources: [{ id: "nixpkgs-main", label: "Main", enabled: true, activated: false }],
   },
   {
     id: "gog",
     label: "GOG",
     enabled: true,
-    sources: [{ id: "gog-main", label: "Linux-compatible titles", enabled: true }],
+    sources: [
+      { id: "gog-main", label: "Linux-compatible titles", enabled: true, activated: false },
+    ],
   },
   {
     id: "lutris",
     label: "Lutris",
     enabled: true,
-    sources: [{ id: "lutris-main", label: "Native Linux installers", enabled: true }],
+    sources: [
+      { id: "lutris-main", label: "Native Linux installers", enabled: true, activated: false },
+    ],
   },
 ];
 
@@ -326,4 +346,24 @@ export const toggleInstallSource = (
         }
       : group,
   );
+};
+
+/**
+ * Marks one install-source leaf as activated (the user has confirmed its
+ * one-time remote/helper setup is done) — looked up by the leaf's own
+ * `id` rather than group/source indices, since callers like the install
+ * drawer work from a `PackageSourceId`, not a position in the settings
+ * list. A no-op if the id isn't found (stale/renamed source).
+ */
+export const setSourceActivated = (
+  installGroups: Signal<InstallFormatGroup[]>,
+  sourceId: string,
+  activated: boolean,
+) => {
+  installGroups.value = installGroups.value.map((group) => ({
+    ...group,
+    sources: group.sources.map((source) =>
+      source.id === sourceId ? { ...source, activated } : source,
+    ),
+  }));
 };
