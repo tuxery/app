@@ -20,6 +20,78 @@ export interface InfluencerPage {
 
 export const INFLUENCER_PAGES: InfluencerPage[] = [
   {
+    slug: "baxyz",
+    name: "baxyz",
+    tagline: "What I actually run day to day, by category — a real, static first cut.",
+    blocks: [
+      {
+        type: "text",
+        body: "A snapshot of my own installed apps (deb/snap/flatpak), grouped by category. No authoring UI yet, so this is hand-maintained for now — see the Tuxery GitHub Project's influencer-page card.",
+      },
+      {
+        type: "apps",
+        heading: "Browsers",
+        appIds: ["flatpak-flathub:org.mozilla.firefox", "flatpak-flathub:app.zen_browser.zen"],
+      },
+      {
+        type: "apps",
+        heading: "Communication",
+        appIds: [
+          "flatpak-flathub:com.discordapp.Discord",
+          "flatpak-flathub:org.signal.Signal",
+          "flatpak-flathub:me.proton.Mail",
+          "flatpak-flathub:com.tutanota.Tutanota",
+          "pacman-aur:olvid",
+        ],
+      },
+      {
+        type: "apps",
+        heading: "Productivity & notes",
+        appIds: [
+          "flatpak-flathub:org.libreoffice.LibreOffice",
+          "flatpak-flathub:org.standardnotes.standardnotes",
+          "flatpak-flathub:com.todoist.Todoist",
+          "flatpak-flathub:io.typora.Typora",
+          "flatpak-flathub:org.gnome.World.Iotas",
+          "flatpak-flathub:re.sonny.Eloquent",
+        ],
+      },
+      {
+        type: "apps",
+        heading: "Media",
+        appIds: [
+          "flatpak-flathub:com.spotify.Client",
+          "flatpak-flathub:org.videolan.VLC",
+          "snap-snapcraft:noson",
+        ],
+      },
+      {
+        type: "apps",
+        heading: "Gaming",
+        appIds: [
+          "flatpak-flathub:com.valvesoftware.Steam",
+          "flatpak-flathub:com.heroicgameslauncher.hgl",
+        ],
+      },
+      {
+        type: "apps",
+        heading: "System & utilities",
+        appIds: [
+          "flatpak-flathub:io.github.kolunmi.Bazaar",
+          "flatpak-flathub:io.github.pwr_solaar.solaar",
+          "flatpak-flathub:it.mijorus.gearlever",
+          "snap-snapcraft:gnome-boxes",
+          "flatpak-flathub:com.adilhanney.no_more_background",
+        ],
+      },
+      {
+        type: "apps",
+        heading: "Privacy & AI",
+        appIds: ["flatpak-flathub:me.proton.Pass", "snap-snapcraft:proton-lumo-ai"],
+      },
+    ],
+  },
+  {
     slug: "example",
     name: "Example Creator",
     tagline: "A demo page showing what an influencer page can look like.",
