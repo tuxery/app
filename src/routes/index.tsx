@@ -69,111 +69,122 @@ export default component$(() => {
   const bg = heroBackground.value;
 
   return (
-    <div class="flex flex-col gap-14">
-      <section
-        class={`hero rounded-box -mx-4 md:-mx-6 px-4 md:px-6 relative overflow-hidden ${bg ? "" : "bg-base-200/60"}`}
-        style={bg ? { backgroundImage: `url(${bg.imageUrl})`, backgroundSize: "cover" } : {}}
-      >
-        {bg && <div class="hero-overlay bg-black/60" />}
-        <div class={`hero-content text-center py-14 ${bg ? "text-white" : ""}`}>
-          <div class="max-w-2xl">
-            <h1 class="text-4xl md:text-5xl font-bold">
-              One search bar. <span class="text-primary">Every</span> Linux app.
-            </h1>
-            <p class={`py-4 ${bg ? "text-white/80" : "text-base-content/70"}`}>
-              Tuxery aggregates Flathub, the Snap Store, AppImage, and every major distro's own
-              package repositories into one deduplicated catalog — search once, install from
-              wherever it's actually shipped.
-            </p>
-            <form action="/browse" method="get" class="flex justify-center">
-              <label class="input input-lg w-full max-w-md flex items-center gap-2">
-                <LuSearch class="text-base-content/50" />
-                <input
-                  type="search"
-                  name="q"
-                  placeholder="Search for an app or game…"
-                  aria-label="Search for an app"
-                  class="grow"
-                />
-              </label>
-            </form>
-            {stats.value.total > 0 && (
-              <p class={`text-sm mt-4 ${bg ? "text-white/60" : "text-base-content/50"}`}>
-                {stats.value.total.toLocaleString()} apps and games catalogued
-              </p>
-            )}
-          </div>
+    <div class="relative">
+      {bg && (
+        <div
+          class="absolute inset-x-0 top-0 h-[640px] -mx-4 md:-mx-6 -z-10 overflow-hidden"
+          style={{
+            backgroundImage: `url(${bg.imageUrl})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-base-100" />
         </div>
-        {bg && (
-          <a
-            href={bg.photographerUrl}
-            target="_blank"
-            rel="noopener"
-            class="absolute bottom-2 right-3 text-xs text-white/50 hover:text-white/80"
-          >
-            Photo by {bg.photographerName} on Unsplash
-          </a>
-        )}
-      </section>
-
-      {stats.value.total === 0 ? (
-        <p class="text-center text-base-content/60">
-          No catalog data loaded — run <code class="font-mono">pnpm seed</code> then{" "}
-          <code class="font-mono">pnpm serve</code> in <code class="font-mono">tuxery/catalog</code>{" "}
-          first.
-        </p>
-      ) : (
-        <>
-          <section>
-            <div class="flex items-baseline justify-between mb-1">
-              <h2 class="text-lg font-semibold">Trending</h2>
-              <a href="/browse/" class="link link-primary text-sm">
-                Browse everything →
-              </a>
-            </div>
-            <p class="text-sm text-base-content/60 mb-3">
-              Ranked by a popularity score averaged across sources that expose one (AUR usage
-              ranking, Flathub's own Popular collection).
-            </p>
-            {trendingApps.value.length === 0 ? (
-              <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
-                No trending data available yet.
-              </div>
-            ) : (
-              <HorizontalScroller ariaLabel="Trending apps">
-                {trendingApps.value.map((app) => (
-                  <AppCardLink key={app.id} app={app} />
-                ))}
-              </HorizontalScroller>
-            )}
-          </section>
-
-          {categories.value.length > 0 && (
-            <section>
-              <h2 class="text-lg font-semibold mb-3">Browse by category</h2>
-              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {categories.value.map((c) => (
-                  <a
-                    key={c.category}
-                    href={`/browse/?category=${encodeURIComponent(c.category)}`}
-                    aria-label={`Browse ${c.category} (${c.count} apps)`}
-                    class="card bg-base-100 border border-base-300 hover:border-primary/40 hover:shadow-md transition-shadow"
-                  >
-                    <div class="card-body p-4 flex-row items-center justify-between">
-                      <span class="font-medium">{c.category}</span>
-                      <span class="badge badge-ghost">{c.count.toLocaleString()}</span>
-                    </div>
-                  </a>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {PLACEHOLDER_SECTIONS.map((section) => (
-            <ComingSoonSection key={section.title} title={section.title} note={section.note} />
-          ))}
-        </>
       )}
+      {bg && (
+        <a
+          href={bg.photographerUrl}
+          target="_blank"
+          rel="noopener"
+          class="absolute top-2 right-3 text-xs text-white/50 hover:text-white/80"
+        >
+          Photo by {bg.photographerName} on Unsplash
+        </a>
+      )}
+
+      <div class="flex flex-col gap-14">
+        <section class="hero rounded-box px-4 md:px-6">
+          <div class={`hero-content text-center py-14 ${bg ? "text-white" : ""}`}>
+            <div class="max-w-2xl">
+              <h1 class="text-4xl md:text-5xl font-bold">
+                One search bar. <span class="text-primary">Every</span> Linux app.
+              </h1>
+              <p class={`py-4 ${bg ? "text-white/80" : "text-base-content/70"}`}>
+                Tuxery aggregates Flathub, the Snap Store, AppImage, and every major distro's own
+                package repositories into one deduplicated catalog — search once, install from
+                wherever it's actually shipped.
+              </p>
+              <form action="/browse" method="get" class="flex justify-center">
+                <label class="input input-lg w-full max-w-md flex items-center gap-2">
+                  <LuSearch class="text-base-content/50" />
+                  <input
+                    type="search"
+                    name="q"
+                    placeholder="Search for an app or game…"
+                    aria-label="Search for an app"
+                    class="grow"
+                  />
+                </label>
+              </form>
+              {stats.value.total > 0 && (
+                <p class={`text-sm mt-4 ${bg ? "text-white/60" : "text-base-content/50"}`}>
+                  {stats.value.total.toLocaleString()} apps and games catalogued
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {stats.value.total === 0 ? (
+          <p class="text-center text-base-content/60">
+            No catalog data loaded — run <code class="font-mono">pnpm seed</code> then{" "}
+            <code class="font-mono">pnpm serve</code> in{" "}
+            <code class="font-mono">tuxery/catalog</code> first.
+          </p>
+        ) : (
+          <>
+            <section>
+              <div class="flex items-baseline justify-between mb-1">
+                <h2 class="text-lg font-semibold">Trending</h2>
+                <a href="/browse/" class="link link-primary text-sm">
+                  Browse everything →
+                </a>
+              </div>
+              <p class="text-sm text-base-content/60 mb-3">
+                Ranked by a popularity score averaged across sources that expose one (AUR usage
+                ranking, Flathub's own Popular collection).
+              </p>
+              {trendingApps.value.length === 0 ? (
+                <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
+                  No trending data available yet.
+                </div>
+              ) : (
+                <HorizontalScroller ariaLabel="Trending apps">
+                  {trendingApps.value.map((app) => (
+                    <AppCardLink key={app.id} app={app} />
+                  ))}
+                </HorizontalScroller>
+              )}
+            </section>
+
+            {categories.value.length > 0 && (
+              <section>
+                <h2 class="text-lg font-semibold mb-3">Browse by category</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {categories.value.map((c) => (
+                    <a
+                      key={c.category}
+                      href={`/browse/?category=${encodeURIComponent(c.category)}`}
+                      aria-label={`Browse ${c.category} (${c.count} apps)`}
+                      class="card bg-base-100 border border-base-300 hover:border-primary/40 hover:shadow-md transition-shadow"
+                    >
+                      <div class="card-body p-4 flex-row items-center justify-between">
+                        <span class="font-medium">{c.category}</span>
+                        <span class="badge badge-ghost">{c.count.toLocaleString()}</span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {PLACEHOLDER_SECTIONS.map((section) => (
+              <ComingSoonSection key={section.title} title={section.title} note={section.note} />
+            ))}
+          </>
+        )}
+      </div>
     </div>
   );
 });
