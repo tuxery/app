@@ -40,6 +40,8 @@ export default component$(() => {
                   sources={game.sources}
                   kind={game.kind}
                   contentType={game.contentType}
+                  category={game.category}
+                  rating={game.rating}
                 />
               </a>
             ))}
