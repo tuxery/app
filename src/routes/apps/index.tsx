@@ -44,6 +44,8 @@ export default component$(() => {
                   sources={app.sources}
                   kind={app.kind}
                   contentType={app.contentType}
+                  category={app.category}
+                  rating={app.rating}
                 />
               </a>
             ))}

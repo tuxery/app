@@ -43,6 +43,12 @@ async function safely<T>(fallback: T, fn: () => Promise<T>): Promise<T> {
 
 type Row = Record<string, unknown>;
 
+function parseRating(row: Row): { average: number; count: number } | undefined {
+  return row.rating_average === null || row.rating_average === undefined
+    ? undefined
+    : { average: row.rating_average as number, count: (row.rating_count as number | null) ?? 0 };
+}
+
 function toSummary(row: Row): AppSummary {
   const packages = JSON.parse(row.packages_json as string) as SourcedPackage[];
   return {
@@ -52,6 +58,8 @@ function toSummary(row: Row): AppSummary {
     iconUrl: (row.icon_url as string | null) ?? undefined,
     kind: row.kind === "gui" ? "gui" : undefined,
     contentType: row.content_type === "game" ? "game" : undefined,
+    category: (row.category as string | null) ?? undefined,
+    rating: parseRating(row),
     // Deduplicated — a merged app can carry two packages from the same
     // source now (e.g. AUR's official + -git build), and a summary card
     // only needs to say "AUR" once, not distinguish the channel.
@@ -92,13 +100,7 @@ function toCatalogApp(row: Row): CatalogApp {
     approxSizeBytes: num(row.approx_size_bytes),
     changelog: str(row.changelog),
     requirements: str(row.requirements),
-    rating:
-      row.rating_average === null || row.rating_average === undefined
-        ? undefined
-        : {
-            average: row.rating_average as number,
-            count: (row.rating_count as number | null) ?? 0,
-          },
+    rating: parseRating(row),
     aiFeatures: bool(row.ai_features),
     inAppPurchases: bool(row.in_app_purchases),
     gdprCompliant: bool(row.gdpr_compliant),
@@ -119,7 +121,8 @@ function toCatalogApp(row: Row): CatalogApp {
   };
 }
 
-const SUMMARY_COLUMNS = "id, name, short_description, icon_url, kind, content_type, packages_json";
+const SUMMARY_COLUMNS =
+  "id, name, short_description, icon_url, kind, content_type, category, rating_average, rating_count, packages_json";
 
 /**
  * "gui" is the only real option today — `kind` is positive-evidence-only

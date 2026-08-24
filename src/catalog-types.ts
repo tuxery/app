@@ -69,6 +69,9 @@ export const SOURCE_LABELS: Record<PackageSourceId, string> = {
   lutris: "Lutris",
 };
 
+/** Every known source, in a fixed order — powers the app-card dot-map (`components/app-card`), where each source always renders at the same grid position regardless of which sources a given app actually has. Derived from `SOURCE_LABELS` so it can never drift out of sync with `PackageSourceId`. */
+export const ALL_PACKAGE_SOURCE_IDS = Object.keys(SOURCE_LABELS) as PackageSourceId[];
+
 export interface SourcedPackage {
   source: PackageSourceId;
   name: string;
@@ -133,6 +136,8 @@ export interface AppSummary {
   iconUrl?: string;
   kind?: "gui";
   contentType?: "game";
+  category?: string;
+  rating?: { average: number; count: number };
   sources: PackageSourceId[];
 }
 
