@@ -52,7 +52,6 @@ const AppsBlockView = component$<{
               name={app.name}
               description={app.shortDescription}
               sources={app.sources}
-              kind={app.kind}
               contentType={app.contentType}
               category={app.category}
               rating={app.rating}

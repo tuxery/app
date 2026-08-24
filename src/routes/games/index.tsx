@@ -38,7 +38,6 @@ export default component$(() => {
                   name={game.name}
                   description={game.shortDescription}
                   sources={game.sources}
-                  kind={game.kind}
                   contentType={game.contentType}
                   category={game.category}
                   rating={game.rating}

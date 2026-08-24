@@ -7,7 +7,6 @@ export interface AppCardProps {
   name: string;
   description: string;
   sources: PackageSourceId[];
-  kind?: "gui";
   contentType?: "game";
   category?: string;
   rating?: { average: number; count: number };
@@ -57,7 +56,7 @@ const SourceDotMap = component$<{ sources: PackageSourceId[] }>(({ sources }) =>
  * `mt-auto` so it lines up across cards regardless of description length.
  */
 export const AppCard = component$<AppCardProps>(
-  ({ iconUrl, name, description, sources, kind, contentType, category, rating }) => {
+  ({ iconUrl, name, description, sources, contentType, category, rating }) => {
     return (
       <article class="glass-card card h-full transition-shadow hover:shadow-lg">
         <div class="card-body gap-2 p-5">
@@ -91,7 +90,6 @@ export const AppCard = component$<AppCardProps>(
           <p class="text-sm text-base-content/70 line-clamp-2">{description}</p>
           <div class="flex flex-wrap items-center gap-2 mt-auto pt-1">
             <SourceDotMap sources={sources} />
-            {kind === "gui" && <span class="badge badge-secondary badge-sm">GUI</span>}
             {contentType === "game" && <span class="badge badge-accent badge-sm">Game</span>}
           </div>
         </div>

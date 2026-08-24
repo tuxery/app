@@ -125,20 +125,81 @@ const SUMMARY_COLUMNS =
   "id, name, short_description, icon_url, kind, content_type, category, rating_average, rating_count, packages_json";
 
 /**
- * "gui" is the only real option today — `kind` is positive-evidence-only
- * (see `~/catalog-types`'s doc comment), so there's no "cli" to filter by
- * yet, only "confirmed gui" vs. "everything" (which still includes
- * unconfirmed GUI apps alongside real CLI tools).
+ * "cli" is best-effort, not positive-evidence like the rest of this file's
+ * signals: `kind` only ever confirms "gui" (see `~/catalog-types`'s doc
+ * comment), so "cli" here really means "not confirmed gui" — which still
+ * includes plenty of real GUI apps the catalog just hasn't detected yet
+ * (most of AUR/Arch, in particular — see the catalog repo's own
+ * filter-effectiveness notes). Deliberately approximate anyway, per
+ * explicit product direction: ship an imperfect split now, refine the
+ * underlying signal later, rather than block the filter on it.
  */
-export type InterfaceFilter = "all" | "gui";
+export type InterfaceFilter = "all" | "gui" | "cli";
 
 /**
- * "game" is the only real option today — `contentType` is
- * positive-evidence-only (see `~/catalog-types`'s doc comment), so
- * there's no confirmed "app" (not-a-game) to filter by yet, only
- * "confirmed game" vs. "everything".
+ * "game" is real positive evidence (`contentType`, see `~/catalog-types`'s
+ * doc comment); "app"/"utility" are a best-effort split of everything
+ * else by `category` (see `UTILITY_CATEGORIES` below) — not a confirmed
+ * signal the way "game" is, just a reasonable first cut to refine later.
  */
-export type TypeFilter = "all" | "game";
+export type TypeFilter = "all" | "game" | "app" | "utility";
+
+/** `category` values that read as a power-user/system tool rather than a general-purpose app — the "Utils" side of the best-effort Apps/Utils split. Deliberately coarse (see `TypeFilter`'s doc comment) — refine by splintering `~/tuxery/catalog`'s own category taxonomy later, not by tuning this list in isolation. */
+const UTILITY_CATEGORIES = ["System tools", "Settings", "Utilities", "Developer tools"];
+
+export type SortOption = "relevance" | "name-asc" | "name-desc";
+
+/**
+ * One clause covering both text-search inclusion and ranking, shared by
+ * `searchApps` and `browseApps` so they can't drift. Splits the query into
+ * words and ORs them across name/short_description/id — a query no longer
+ * has to appear as one literal contiguous phrase (real bug, found live:
+ * searching "zen browser" for the real "Zen" browser app returned
+ * nothing, since neither field contains that exact phrase). Ranks an
+ * exact name match highest, then a name that starts with the query, then
+ * per-word name/description hits — length-normalized (matched words as a
+ * fraction of the name's own length), so a short, close match like "Zen"
+ * outranks a long compound name that happens to contain the same words
+ * (e.g. "zen-browser-bitwarden", a real Zen browser *extension* package —
+ * matches both "zen" and "browser" too, but shouldn't outrank the browser
+ * itself). Plain flat per-word points were tried first and verified live
+ * to get this backwards — every "zen-browser-*" extension outscored "Zen"
+ * itself on "zen browser" since they literally contain both query words
+ * and "Zen"'s own description doesn't contain the substring "browser" at
+ * all (only "browse"), just one "zen" hit.
+ */
+function buildSearchClause(trimmed: string): {
+  where: string;
+  whereArgs: string[];
+  orderBy: string;
+  orderArgs: string[];
+} {
+  if (!trimmed) return { where: "", whereArgs: [], orderBy: "name ASC", orderArgs: [] };
+
+  const words = trimmed.split(/\s+/).filter(Boolean).slice(0, 8);
+  const where = `(${words.map(() => "(id LIKE ? OR name LIKE ? OR short_description LIKE ?)").join(" OR ")})`;
+  const whereArgs = words.flatMap((word) => [`%${word}%`, `%${word}%`, `%${word}%`]);
+
+  const scoreParts = ["(CASE WHEN name = ? COLLATE NOCASE THEN 1000 ELSE 0 END)"];
+  const orderArgs = [trimmed];
+  scoreParts.push("(CASE WHEN name LIKE ? THEN 200 ELSE 0 END)");
+  orderArgs.push(`${trimmed}%`);
+  for (const word of words) {
+    scoreParts.push("(CASE WHEN name LIKE ? THEN (300.0 / LENGTH(name)) ELSE 0 END)");
+    orderArgs.push(`%${word}%`);
+    scoreParts.push(
+      "(CASE WHEN short_description LIKE ? THEN (50.0 / LENGTH(short_description)) ELSE 0 END)",
+    );
+    orderArgs.push(`%${word}%`);
+  }
+  return { where, whereArgs, orderBy: `(${scoreParts.join(" + ")}) DESC, name ASC`, orderArgs };
+}
+
+function sortClause(sort: SortOption, searchOrderBy: string): string {
+  if (sort === "name-asc") return "name ASC";
+  if (sort === "name-desc") return "name DESC";
+  return searchOrderBy;
+}
 
 /**
  * Empty `query` returns a stable default listing (alphabetical) rather
@@ -151,15 +212,11 @@ export async function searchApps(query: string): Promise<AppSummary[]> {
 
   return safely([], async () => {
     const trimmed = query.trim();
-    const result = trimmed
-      ? await db.execute({
-          sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE name LIKE ? OR short_description LIKE ? LIMIT ?`,
-          args: [`%${trimmed}%`, `%${trimmed}%`, MAX_RESULTS],
-        })
-      : await db.execute({
-          sql: `SELECT ${SUMMARY_COLUMNS} FROM apps ORDER BY name LIMIT ?`,
-          args: [MAX_RESULTS],
-        });
+    const { where, whereArgs, orderBy, orderArgs } = buildSearchClause(trimmed);
+    const result = await db.execute({
+      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps ${where ? `WHERE ${where}` : ""} ORDER BY ${orderBy} LIMIT ?`,
+      args: [...whereArgs, ...orderArgs, MAX_RESULTS],
+    });
 
     return result.rows.map((row) => toSummary(row as unknown as Row));
   });
@@ -177,6 +234,7 @@ export interface BrowseOptions {
   category?: string;
   /** Restricts to apps with at least one package from this source — matched against the packages_json blob, the only place per-package sources live. */
   source?: PackageSourceId;
+  sort?: SortOption;
 }
 
 export async function browseApps(
@@ -186,21 +244,38 @@ export async function browseApps(
 ): Promise<BrowseResult> {
   const db = getClient();
   if (!db) return { apps: [], total: 0 };
-  const { interfaceFilter = "all", typeFilter = "all", category, source } = options;
+  const {
+    interfaceFilter = "all",
+    typeFilter = "all",
+    category,
+    source,
+    sort = "relevance",
+  } = options;
 
   return safely({ apps: [], total: 0 }, async () => {
     const trimmed = query.trim();
+    const { where: searchWhere, whereArgs, orderBy, orderArgs } = buildSearchClause(trimmed);
+
     const conditions: string[] = [];
     const conditionArgs: string[] = [];
-    if (trimmed) {
-      conditions.push("(id LIKE ? OR name LIKE ? OR short_description LIKE ?)");
-      conditionArgs.push(`%${trimmed}%`, `%${trimmed}%`, `%${trimmed}%`);
-    }
+    if (searchWhere) conditions.push(searchWhere);
     if (interfaceFilter === "gui") {
       conditions.push("kind = 'gui'");
+    } else if (interfaceFilter === "cli") {
+      conditions.push("(kind IS NULL OR kind != 'gui')");
     }
     if (typeFilter === "game") {
       conditions.push("content_type = 'game'");
+    } else if (typeFilter === "utility") {
+      const placeholders = UTILITY_CATEGORIES.map(() => "?").join(", ");
+      conditions.push(`(content_type IS NOT 'game' AND category IN (${placeholders}))`);
+      conditionArgs.push(...UTILITY_CATEGORIES);
+    } else if (typeFilter === "app") {
+      const placeholders = UTILITY_CATEGORIES.map(() => "?").join(", ");
+      conditions.push(
+        `(content_type IS NOT 'game' AND (category IS NULL OR category NOT IN (${placeholders})))`,
+      );
+      conditionArgs.push(...UTILITY_CATEGORIES);
     }
     if (category) {
       conditions.push("category = ?");
@@ -211,18 +286,22 @@ export async function browseApps(
       conditionArgs.push(`%"source":"${source}"%`);
     }
     const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const fullConditionArgs = [...whereArgs, ...conditionArgs];
 
     const total =
       conditions.length > 0
         ? await db
-            .execute({ sql: `SELECT COUNT(*) as count FROM apps ${where}`, args: conditionArgs })
+            .execute({
+              sql: `SELECT COUNT(*) as count FROM apps ${where}`,
+              args: fullConditionArgs,
+            })
             .then((result) => Number(result.rows[0]?.count ?? 0))
         : await getStats().then((stats) => stats.total);
 
     const offset = Math.max(0, page) * BROWSE_PAGE_SIZE;
     const listResult = await db.execute({
-      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps ${where} ORDER BY name LIMIT ? OFFSET ?`,
-      args: [...conditionArgs, BROWSE_PAGE_SIZE, offset],
+      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps ${where} ORDER BY ${sortClause(sort, orderBy)} LIMIT ? OFFSET ?`,
+      args: [...fullConditionArgs, ...(sort === "relevance" ? orderArgs : []), BROWSE_PAGE_SIZE, offset],
     });
 
     return { apps: listResult.rows.map((row) => toSummary(row as unknown as Row)), total };
@@ -261,20 +340,32 @@ const TRENDING_PAGE_SIZE = 60;
  * Apps with a real cross-source popularity score, highest first — see
  * `tuxery/catalog`'s `CatalogApp.popularity` doc comment for how it's
  * computed. Apps with no score are excluded entirely rather than sorted
- * to the bottom — "no signal" isn't "unpopular". `typeFilter: "game"`
- * scopes to confirmed games (for the Games page); there's no equivalent
- * "confirmed not a game" filter, so the Apps page reuses the unfiltered
- * list rather than pretending to exclude games it can't actually rule out.
+ * to the bottom — "no signal" isn't "unpopular". `typeFilter: "game"` is
+ * real positive evidence; "app"/"utility" are the same best-effort
+ * category split `browseApps` uses (see `UTILITY_CATEGORIES`) — good
+ * enough for a trending row, not a claim of certainty.
  */
 export async function getTrendingApps(typeFilter: TypeFilter = "all"): Promise<AppSummary[]> {
   const db = getClient();
   if (!db) return [];
 
   return safely([], async () => {
-    const where = typeFilter === "game" ? "AND content_type = 'game'" : "";
+    const args: string[] = [];
+    let where = "";
+    if (typeFilter === "game") {
+      where = "AND content_type = 'game'";
+    } else if (typeFilter === "utility") {
+      const placeholders = UTILITY_CATEGORIES.map(() => "?").join(", ");
+      where = `AND content_type IS NOT 'game' AND category IN (${placeholders})`;
+      args.push(...UTILITY_CATEGORIES);
+    } else if (typeFilter === "app") {
+      const placeholders = UTILITY_CATEGORIES.map(() => "?").join(", ");
+      where = `AND content_type IS NOT 'game' AND (category IS NULL OR category NOT IN (${placeholders}))`;
+      args.push(...UTILITY_CATEGORIES);
+    }
     const result = await db.execute({
       sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE popularity IS NOT NULL ${where} ORDER BY popularity DESC LIMIT ?`,
-      args: [TRENDING_PAGE_SIZE],
+      args: [...args, TRENDING_PAGE_SIZE],
     });
     return result.rows.map((row) => toSummary(row as unknown as Row));
   });

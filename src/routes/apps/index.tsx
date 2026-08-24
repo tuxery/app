@@ -4,7 +4,7 @@ import type { DocumentHead } from "@builder.io/qwik-city";
 import { AppCard } from "~/components/app-card/app-card";
 import { getCategories, getTrendingApps } from "~/catalog";
 
-export const useTrending = routeLoader$(async () => getTrendingApps());
+export const useTrending = routeLoader$(async () => getTrendingApps("app"));
 export const useCategories = routeLoader$(async () => getCategories());
 
 export default component$(() => {
@@ -16,13 +16,16 @@ export default component$(() => {
       <div>
         <h1 class="text-3xl font-bold mb-2">Apps</h1>
         <p class="text-base-content/70">
-          Every kind of Linux app, deduplicated across sources. There's no reliable way yet to
-          confirm a package is <em>not</em> a game, so this includes anything not already tagged as
-          one — see{" "}
+          General-purpose Linux apps, deduplicated across sources — a best-effort split by category
+          (not a guarantee), separate from{" "}
           <a href="/games/" class="link link-primary">
             Games
           </a>{" "}
-          for confirmed games only.
+          and{" "}
+          <a href="/utils/" class="link link-primary">
+            Utils
+          </a>
+          .
         </p>
       </div>
 
@@ -30,7 +33,7 @@ export default component$(() => {
         <section>
           <div class="flex items-baseline justify-between mb-3">
             <h2 class="text-lg font-semibold">Trending apps</h2>
-            <a href="/browse/" class="link link-primary text-sm">
+            <a href="/browse/?type=app" class="link link-primary text-sm">
               Browse all →
             </a>
           </div>
@@ -42,7 +45,6 @@ export default component$(() => {
                   name={app.name}
                   description={app.shortDescription}
                   sources={app.sources}
-                  kind={app.kind}
                   contentType={app.contentType}
                   category={app.category}
                   rating={app.rating}
