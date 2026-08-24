@@ -23,13 +23,33 @@ export interface HeroBackgroundPhoto {
   photographerUrl: string;
 }
 
+// A fresh photo per page load would blow through Unsplash's demo-tier
+// quota almost immediately (50 requests/hour total, shared across every
+// visitor) — confirmed live while testing this feature (x-ratelimit-
+// remaining: 0 after a handful of reloads). One reused photo per process
+// for this long instead, same "cheap for the process's lifetime" pattern
+// as ~/catalog's own DB client. Won't survive a Cloudflare Workers cold
+// start/multiple isolates in production (no shared memory across them) —
+// fine for now (single long-lived dev/preview process), needs a durable
+// store (KV, or persisting the URL in Turso) once this ships for real.
+const CACHE_TTL_MS = 30 * 60 * 1000;
+let cached: { photo: HeroBackgroundPhoto | null; fetchedAt: number } | undefined;
+
 /**
- * One random photo for the homepage hero background. Degrades to `null`
- * (no `UNSPLASH_ACCESS_KEY`, network error, rate limit) rather than
- * breaking the page — a background image is a decoration, never load-
- * bearing.
+ * One random photo for the homepage hero background, reused across
+ * requests for `CACHE_TTL_MS`. Degrades to `null` (no
+ * `UNSPLASH_ACCESS_KEY`, network error, rate limit) rather than breaking
+ * the page — a background image is a decoration, never load-bearing.
  */
 export async function getHeroBackgroundPhoto(): Promise<HeroBackgroundPhoto | null> {
+  if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) return cached.photo;
+
+  const photo = await fetchHeroBackgroundPhoto();
+  cached = { photo, fetchedAt: Date.now() };
+  return photo;
+}
+
+async function fetchHeroBackgroundPhoto(): Promise<HeroBackgroundPhoto | null> {
   const accessKey = process.env.UNSPLASH_ACCESS_KEY;
   if (!accessKey) return null;
 
