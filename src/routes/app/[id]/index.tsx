@@ -227,6 +227,7 @@ export default component$(() => {
   const showStickyBar = useSignal(false);
   const drawerOpen = useSignal(false);
   const noLinkModalOpen = useSignal(false);
+  const noLinkCommandCopied = useSignal(false);
 
   useVisibleTask$(({ cleanup }) => {
     const el = jumboRef.value;
@@ -259,7 +260,17 @@ export default component$(() => {
 
   const orderedPackages = orderPackagesByPreference(a.packages, settings.installGroups.value);
   const bestPkg = orderedPackages[0];
-  const bestPkgLink = bestPkg ? (bestPkg.homepage ?? a.homepage) : undefined;
+  // A homepage is only a genuine install action for "link"-kind sources
+  // (Flathub's own app page, GOG's, ...) — for every native package
+  // manager it's just the project's informational homepage, not
+  // something that installs anything when clicked. Real bug, found live
+  // testing: automatic mode used to treat any homepage as installable,
+  // so an AUR-only app with a real project homepage never triggered the
+  // copy-paste-command fallback at all.
+  const bestPkgLink =
+    bestPkg && INSTALL_METHODS[bestPkg.source]?.kind === "link"
+      ? (bestPkg.homepage ?? a.homepage)
+      : undefined;
   const automatic = settings.ctaBehavior.value === "automatic";
 
   return (
@@ -468,9 +479,30 @@ export default component$(() => {
             <h2 class="text-lg font-semibold mb-2">No direct install link</h2>
             <p class="text-sm text-base-content/70 mb-4">
               {bestPkg
-                ? `"${a.name}" is available via ${formatSourceLabel(bestPkg)}, but that source doesn't expose a direct link yet — search for it there instead.`
+                ? `"${a.name}" is available via ${formatSourceLabel(bestPkg)}, but that source has no clickable install link — no browser protocol handler (apt://, dnf://, ...) reliably works across distros/desktops today, so here's the command instead.`
                 : "No package source is available for this app yet."}
             </p>
+            {bestPkg &&
+              installCommand(bestPkg) &&
+              (() => {
+                const command = installCommand(bestPkg) as string;
+                return (
+                  <div class="flex items-center gap-2 bg-base-200 rounded-field p-2 mb-4">
+                    <code class="text-xs font-mono break-all flex-1">{command}</code>
+                    <button
+                      type="button"
+                      class="btn btn-xs btn-square btn-ghost"
+                      aria-label="Copy install command"
+                      onClick$={() => {
+                        navigator.clipboard.writeText(command);
+                        noLinkCommandCopied.value = true;
+                      }}
+                    >
+                      {noLinkCommandCopied.value ? <LuCheck /> : <LuCopy />}
+                    </button>
+                  </div>
+                );
+              })()}
             <button
               type="button"
               class="btn btn-primary btn-block"

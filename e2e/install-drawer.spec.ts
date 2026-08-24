@@ -23,6 +23,23 @@ test("a source with a real store page (Flathub) shows a direct install button, n
   await expect(page.getByRole("link", { name: /Install via Flathub/ })).toBeVisible();
 });
 
+test("automatic mode's no-direct-link fallback shows a copy-paste command, even when the package has an informational homepage", async ({
+  page,
+}) => {
+  await page.goto("/settings/");
+  await page.getByRole("radio", { name: /Automatic/ }).check();
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem("tuxery:settings")), { timeout: 15_000 })
+    .toContain('"ctaBehavior":"automatic"');
+
+  // 0cc-famitracker is AUR-only and has a real project homepage (not an
+  // install link) — real bug, found live: automatic mode used to treat
+  // any homepage as a clickable install action.
+  await page.goto("/app/pacman-aur%3A0cc-famitracker/");
+  await page.getByRole("button", { name: "Install" }).click();
+  await expect(page.getByText("yay -S 0cc-famitracker")).toBeVisible();
+});
+
 test("activating a source's setup persists and hides the setup step on future visits", async ({
   page,
 }) => {
