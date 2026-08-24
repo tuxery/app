@@ -29,7 +29,7 @@ export default component$(() => {
 
   return (
     <>
-      <header class="navbar bg-base-200 border-b border-base-300 px-4 md:px-6 sticky top-0 z-40">
+      <header class="navbar glass-card rounded-none! px-4 md:px-6 sticky top-0 z-40">
         <div class="navbar-start gap-1">
           <div class="dropdown lg:hidden">
             <button type="button" class="btn btn-ghost btn-square" aria-label="Menu">
@@ -123,14 +123,6 @@ export default component$(() => {
           }}
         >
           <div class="absolute inset-0 bg-gradient-to-b from-black/60 to-base-100" />
-          <a
-            href={bg.photographerUrl}
-            target="_blank"
-            rel="noopener"
-            class="absolute bottom-2 right-3 text-xs text-white/50 hover:text-white/80"
-          >
-            Photo by {bg.photographerName} on Unsplash
-          </a>
         </div>
       )}
 
