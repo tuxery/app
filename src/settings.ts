@@ -8,213 +8,204 @@ import {
 } from "@builder.io/qwik";
 
 export type Theme = "light" | "dark" | "system";
-export type CtaBehavior = "exhaustive" | "automatic";
 
-/** One toggleable leaf under a format/distro group — not always a `PackageSourceId` 1:1 (e.g. Ubuntu's "Universe" is a repo component within the single "ubuntu" source, not a separate one). */
-export interface InstallSourceOption {
+/**
+ * A one-time setup step some of a category's packages need before they'll
+ * actually install — adding a Flatpak remote, installing an AUR helper,
+ * enabling a distro's non-default repo component (Ubuntu's Universe,
+ * openSUSE's non-oss, ...). Checking it here and confirming "I've already
+ * done this" in an app's install drawer (for the handful precise enough to
+ * show it there — see `~/install-methods`) are the same flag; unchecked by
+ * default since nobody's done the setup yet.
+ */
+export interface SpecialRepoOption {
   id: string;
   label: string;
-  enabled: boolean;
-  /**
-   * Whether the user has confirmed the one-time remote/helper setup this
-   * source needs is already done (adding a Flatpak remote, installing an
-   * AUR helper, ...) — see `~/install-methods`'s `InstallMethod.setup`.
-   * Meaningless (never read) for sources with no such step; defaults to
-   * `false` for every source regardless, since checking is cheap and
-   * this is the safe default either way.
-   */
   activated: boolean;
+  setup:
+    | { kind: "command"; command: string; note: string }
+    | { kind: "link"; url: string; note: string };
 }
 
-/** A "big line" the settings page groups sources under — a packaging format (Flatpak, Snap, AppImage) or a distro (Ubuntu, Debian, ...), each with one or more concrete sources/components as children. */
+/** One packaging format or distro shown on an app's page — `id` matches a `~/catalog-types` `SOURCE_GROUP_MEMBERS` key 1:1, so Show/Hide can look it up directly without a separate mapping. */
 export interface InstallFormatGroup {
   id: string;
   label: string;
-  enabled: boolean;
-  sources: InstallSourceOption[];
+  shown: boolean;
+  specialRepos: SpecialRepoOption[];
 }
 
 export interface SettingsState {
   theme: Signal<Theme>;
-  ctaBehavior: Signal<CtaBehavior>;
   installGroups: Signal<InstallFormatGroup[]>;
 }
 
 interface PersistedSettings {
   theme: Theme;
-  ctaBehavior: CtaBehavior;
   installGroups: InstallFormatGroup[];
 }
 
 const STORAGE_KEY = "tuxery:settings";
 
-// Kept in sync by hand with catalog's docs/sources.md — no cross-repo
-// import (separate repos), same convention as catalog.ts itself. One
-// leaf per real PackageSourceId (see app/[id]/index.tsx's
-// SOURCE_ID_TO_PACKAGE_SOURCE for the mapping) — a source missing here
-// can never be picked in "automatic" install mode or excluded by the
-// user, it just silently sorts last.
+// Kept in sync by hand with catalog's docs/sources.md and, 1:1 by id, with
+// catalog-types.ts's SOURCE_GROUP_MEMBERS — no cross-repo import (separate
+// repos), same convention as catalog.ts itself. Only sources with a real
+// one-time setup step get a `specialRepos` entry (see
+// app/[id]/index.tsx's SOURCE_ID_TO_PACKAGE_SOURCE for which ones are also
+// precise enough to surface in a specific app's install drawer, vs. ones
+// like Universe/non-oss that only apply to *some* packages from a shared
+// source and so only ever show here, generically, not per-app).
 const defaultInstallGroups = (): InstallFormatGroup[] => [
   {
-    id: "flatpak",
+    id: "Flatpak",
     label: "Flatpak",
-    enabled: true,
-    sources: [
-      { id: "flathub", label: "Flathub", enabled: true, activated: false },
+    shown: true,
+    specialRepos: [
+      {
+        id: "flathub",
+        label: "Flathub",
+        activated: false,
+        setup: {
+          kind: "command",
+          command:
+            "flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo",
+          note: "One-time — adds the Flathub remote to Flatpak.",
+        },
+      },
       {
         id: "elementary-appcenter",
         label: "elementary AppCenter",
-        enabled: true,
         activated: false,
+        setup: {
+          kind: "command",
+          command:
+            "flatpak remote-add --if-not-exists appcenter https://flatpak.elementary.io/repo.flatpakrepo",
+          note: "One-time — adds elementary's own Flatpak remote.",
+        },
       },
     ],
   },
   {
-    id: "snap",
+    id: "Snap",
     label: "Snap",
-    enabled: true,
-    sources: [{ id: "snap-store", label: "Snap Store", enabled: true, activated: false }],
-  },
-  {
-    id: "appimage",
-    label: "AppImage",
-    enabled: true,
-    sources: [
-      { id: "appimagehub", label: "Community feed", enabled: true, activated: false },
-      { id: "appimage-manual", label: "Direct download", enabled: true, activated: false },
+    shown: true,
+    specialRepos: [
+      {
+        id: "snap-store",
+        label: "Snap Store",
+        activated: false,
+        setup: {
+          kind: "link",
+          url: "https://snapcraft.io/docs/installing-snapd",
+          note: "One-time — installs snapd if it isn't already. The exact command depends on your distro, so this links to Snapcraft's own install guide rather than assuming apt.",
+        },
+      },
     ],
   },
+  { id: "AppImage", label: "AppImage", shown: true, specialRepos: [] },
   {
-    id: "arch",
+    id: "Arch Linux",
     label: "Arch Linux",
-    enabled: true,
-    sources: [
-      { id: "arch-aur", label: "AUR (community)", enabled: true, activated: false },
-      { id: "arch-official", label: "Official (core + extra)", enabled: true, activated: false },
+    shown: true,
+    specialRepos: [
+      {
+        id: "arch-aur",
+        label: "AUR",
+        activated: false,
+        setup: {
+          kind: "command",
+          command: "# install an AUR helper first, e.g.: https://github.com/Jguer/yay#installation",
+          note: "One-time — the AUR itself needs a helper (yay, paru, ...), pacman alone can't reach it.",
+        },
+      },
     ],
   },
+  { id: "Debian", label: "Debian", shown: true, specialRepos: [] },
   {
-    id: "debian",
-    label: "Debian",
-    enabled: true,
-    sources: [{ id: "debian-main", label: "Main", enabled: true, activated: false }],
-  },
-  {
-    id: "ubuntu",
+    id: "Ubuntu",
     label: "Ubuntu",
-    enabled: true,
-    sources: [
-      { id: "ubuntu-main", label: "Main", enabled: true, activated: false },
-      { id: "ubuntu-universe", label: "Universe", enabled: true, activated: false },
+    shown: true,
+    specialRepos: [
+      {
+        id: "ubuntu-universe",
+        label: "Universe",
+        activated: false,
+        setup: {
+          kind: "command",
+          command: "sudo add-apt-repository universe && sudo apt update",
+          note: "One-time — Universe (community-maintained) isn't enabled by default. Applies to some Ubuntu packages, not all — the catalog can't tell which yet.",
+        },
+      },
     ],
   },
   {
-    id: "mint",
-    label: "Linux Mint",
-    enabled: true,
-    sources: [{ id: "mint-main", label: "Main", enabled: true, activated: false }],
-  },
-  {
-    id: "popos",
-    label: "Pop!_OS",
-    enabled: true,
-    sources: [{ id: "popos-main", label: "Main", enabled: true, activated: false }],
-  },
-  {
-    id: "deepin",
-    label: "Deepin",
-    enabled: true,
-    sources: [{ id: "deepin-main", label: "Main", enabled: true, activated: false }],
-  },
-  {
-    id: "mxlinux",
-    label: "MX Linux",
-    enabled: true,
-    sources: [{ id: "mxlinux-main", label: "Main", enabled: true, activated: false }],
-  },
-  {
-    id: "fedora",
+    id: "Fedora",
     label: "Fedora",
-    enabled: true,
-    sources: [{ id: "fedora-everything", label: "Everything", enabled: true, activated: false }],
+    shown: true,
+    specialRepos: [
+      {
+        id: "rpmfusion",
+        label: "RPM Fusion",
+        activated: false,
+        setup: {
+          kind: "command",
+          command:
+            "sudo dnf install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm",
+          note: "One-time — RPM Fusion is an addon repo, not enabled by default on Fedora.",
+        },
+      },
+    ],
   },
   {
-    id: "opensuse",
+    id: "openSUSE",
     label: "openSUSE",
-    enabled: true,
-    sources: [{ id: "opensuse-oss", label: "oss + non-oss", enabled: true, activated: false }],
-  },
-  {
-    id: "rpmfusion",
-    label: "RPM Fusion",
-    enabled: true,
-    sources: [{ id: "rpmfusion-main", label: "free + nonfree", enabled: true, activated: false }],
-  },
-  {
-    id: "alpine",
-    label: "Alpine Linux",
-    enabled: true,
-    sources: [{ id: "alpine-main", label: "main + community", enabled: true, activated: false }],
-  },
-  {
-    id: "void",
-    label: "Void Linux",
-    enabled: true,
-    sources: [
-      { id: "void-main", label: "main + nonfree + multilib", enabled: true, activated: false },
+    shown: true,
+    specialRepos: [
+      {
+        id: "opensuse-non-oss",
+        label: "non-oss",
+        activated: false,
+        setup: {
+          kind: "command",
+          command: "sudo zypper mr -e repo-non-oss repo-update-non-oss",
+          note: "One-time — oss and update are enabled by default, non-oss and update-non-oss aren't. Applies to some openSUSE packages, not all — the catalog can't tell which yet. Repo alias can vary by version; run zypper lr if this doesn't match.",
+        },
+      },
     ],
   },
-  {
-    id: "slackware",
-    label: "Slackware",
-    enabled: true,
-    sources: [{ id: "slackware-main", label: "Main", enabled: true, activated: false }],
-  },
-  {
-    id: "solus",
-    label: "Solus",
-    enabled: true,
-    sources: [{ id: "solus-shannon", label: "Shannon", enabled: true, activated: false }],
-  },
-  {
-    id: "gentoo",
-    label: "Gentoo",
-    enabled: true,
-    sources: [{ id: "gentoo-portage", label: "Portage", enabled: true, activated: false }],
-  },
-  {
-    id: "nixpkgs",
-    label: "Nixpkgs",
-    enabled: true,
-    sources: [{ id: "nixpkgs-main", label: "Main", enabled: true, activated: false }],
-  },
-  {
-    id: "gog",
-    label: "GOG",
-    enabled: true,
-    sources: [
-      { id: "gog-main", label: "Linux-compatible titles", enabled: true, activated: false },
-    ],
-  },
-  {
-    id: "lutris",
-    label: "Lutris",
-    enabled: true,
-    sources: [
-      { id: "lutris-main", label: "Native Linux installers", enabled: true, activated: false },
-    ],
-  },
+  { id: "Alpine Linux", label: "Alpine Linux", shown: true, specialRepos: [] },
+  { id: "Void Linux", label: "Void Linux", shown: true, specialRepos: [] },
+  { id: "Slackware", label: "Slackware", shown: true, specialRepos: [] },
+  { id: "Solus", label: "Solus", shown: true, specialRepos: [] },
+  { id: "Gentoo", label: "Gentoo", shown: true, specialRepos: [] },
+  { id: "Nixpkgs", label: "Nixpkgs", shown: true, specialRepos: [] },
+  { id: "Linux Mint", label: "Linux Mint", shown: true, specialRepos: [] },
+  { id: "Pop!_OS", label: "Pop!_OS", shown: true, specialRepos: [] },
+  { id: "Deepin", label: "Deepin", shown: true, specialRepos: [] },
+  { id: "MX Linux", label: "MX Linux", shown: true, specialRepos: [] },
+  { id: "GOG", label: "GOG", shown: true, specialRepos: [] },
+  { id: "Lutris", label: "Lutris", shown: true, specialRepos: [] },
 ];
+
+/** True only for a value shaped like the current `InstallFormatGroup[]` — guards against a pre-redesign persisted payload (old `enabled`/`sources` shape), which gets discarded in favor of fresh defaults rather than merged field-by-field into a schema it doesn't match. */
+function isCurrentShape(value: unknown): value is InstallFormatGroup[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (group) =>
+        group && typeof group.shown === "boolean" && Array.isArray(group.specialRepos),
+    )
+  );
+}
 
 /**
  * A user's persisted `installGroups` unconditionally overrode the fresh
  * default on load — real bug, found live: anyone who'd visited /settings
- * before `defaultInstallGroups` grew from 7 to 21 groups (or any future
- * addition) stayed stuck on their old, incomplete persisted list forever,
- * since the stored value always won outright with no reconciliation.
- * Preserves the user's own order/enabled state for groups (and, within
- * them, sources) they already have, and appends whatever's new in
- * `defaults` that their stored copy predates.
+ * before `defaultInstallGroups` grew stayed stuck on their old, incomplete
+ * persisted list forever, since the stored value always won outright with
+ * no reconciliation. Preserves the user's own `shown`/`activated` state for
+ * groups (and, within them, special repos) they already have, and appends
+ * whatever's new in `defaults` that their stored copy predates.
  */
 function mergeInstallGroups(
   stored: InstallFormatGroup[],
@@ -225,10 +216,10 @@ function mergeInstallGroups(
   const merged = stored.map((group) => {
     const def = defaultsById.get(group.id);
     if (!def) return group;
-    const storedSourceIds = new Set(group.sources.map((source) => source.id));
-    const missingSources = def.sources.filter((source) => !storedSourceIds.has(source.id));
-    return missingSources.length
-      ? { ...group, sources: [...group.sources, ...missingSources] }
+    const storedRepoIds = new Set(group.specialRepos.map((repo) => repo.id));
+    const missingRepos = def.specialRepos.filter((repo) => !storedRepoIds.has(repo.id));
+    return missingRepos.length
+      ? { ...group, specialRepos: [...group.specialRepos, ...missingRepos] }
       : group;
   });
 
@@ -242,10 +233,9 @@ export const SettingsContext = createContextId<SettingsState>("tuxery.settings")
 /** Call once, at the layout root. Provides + persists the settings store. */
 export const useProvideSettings = (): SettingsState => {
   const theme = useSignal<Theme>("system");
-  const ctaBehavior = useSignal<CtaBehavior>("exhaustive");
   const installGroups = useSignal<InstallFormatGroup[]>(defaultInstallGroups());
 
-  const state: SettingsState = { theme, ctaBehavior, installGroups };
+  const state: SettingsState = { theme, installGroups };
   useContextProvider(SettingsContext, state);
 
   const hydrated = useSignal(false);
@@ -253,7 +243,6 @@ export const useProvideSettings = (): SettingsState => {
   // Load persisted state on mount, then persist on every subsequent change.
   useVisibleTask$(({ track }) => {
     track(() => theme.value);
-    track(() => ctaBehavior.value);
     track(() => JSON.stringify(installGroups.value));
 
     if (!hydrated.value) {
@@ -263,8 +252,7 @@ export const useProvideSettings = (): SettingsState => {
         if (raw) {
           const stored = JSON.parse(raw) as Partial<PersistedSettings>;
           if (stored.theme) theme.value = stored.theme;
-          if (stored.ctaBehavior) ctaBehavior.value = stored.ctaBehavior;
-          if (stored.installGroups) {
+          if (isCurrentShape(stored.installGroups)) {
             installGroups.value = mergeInstallGroups(stored.installGroups, defaultInstallGroups());
           }
         }
@@ -276,7 +264,6 @@ export const useProvideSettings = (): SettingsState => {
 
     const payload: PersistedSettings = {
       theme: theme.value,
-      ctaBehavior: ctaBehavior.value,
       installGroups: installGroups.value,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -308,52 +295,18 @@ export const useProvideSettings = (): SettingsState => {
 
 export const useSettings = () => useContext(SettingsContext);
 
-/** Move the group at `index` up (-1) or down (+1) in preference order. */
-export const reorderInstallGroup = (
-  installGroups: Signal<InstallFormatGroup[]>,
-  index: number,
-  direction: -1 | 1,
-) => {
-  const target = index + direction;
-  const list = installGroups.value;
-  if (target < 0 || target >= list.length) return;
-  const next = [...list];
-  const item = next[index];
-  if (!item) return;
-  next.splice(index, 1);
-  next.splice(target, 0, item);
-  installGroups.value = next;
-};
-
-export const toggleInstallGroup = (installGroups: Signal<InstallFormatGroup[]>, index: number) => {
+export const toggleGroupShown = (installGroups: Signal<InstallFormatGroup[]>, index: number) => {
   installGroups.value = installGroups.value.map((group, i) =>
-    i === index ? { ...group, enabled: !group.enabled } : group,
-  );
-};
-
-export const toggleInstallSource = (
-  installGroups: Signal<InstallFormatGroup[]>,
-  groupIndex: number,
-  sourceIndex: number,
-) => {
-  installGroups.value = installGroups.value.map((group, i) =>
-    i === groupIndex
-      ? {
-          ...group,
-          sources: group.sources.map((source, j) =>
-            j === sourceIndex ? { ...source, enabled: !source.enabled } : source,
-          ),
-        }
-      : group,
+    i === index ? { ...group, shown: !group.shown } : group,
   );
 };
 
 /**
- * Marks one install-source leaf as activated (the user has confirmed its
- * one-time remote/helper setup is done) — looked up by the leaf's own
- * `id` rather than group/source indices, since callers like the install
- * drawer work from a `PackageSourceId`, not a position in the settings
- * list. A no-op if the id isn't found (stale/renamed source).
+ * Marks one special-repo leaf as activated — looked up by its own `id`
+ * rather than group/index, since callers like the install drawer work from
+ * a `PackageSourceId`, not a position in the settings list. The same
+ * mutator backs both the Settings page's checkbox and the drawer's "I've
+ * already done this" button; a no-op if the id isn't found.
  */
 export const setSourceActivated = (
   installGroups: Signal<InstallFormatGroup[]>,
@@ -362,8 +315,8 @@ export const setSourceActivated = (
 ) => {
   installGroups.value = installGroups.value.map((group) => ({
     ...group,
-    sources: group.sources.map((source) =>
-      source.id === sourceId ? { ...source, activated } : source,
+    specialRepos: group.specialRepos.map((repo) =>
+      repo.id === sourceId ? { ...repo, activated } : repo,
     ),
   }));
 };

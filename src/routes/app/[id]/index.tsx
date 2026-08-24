@@ -17,7 +17,7 @@ import {
   setSourceActivated,
   useSettings,
   type InstallFormatGroup,
-  type InstallSourceOption,
+  type SpecialRepoOption,
 } from "~/settings";
 
 export const useApp = routeLoader$(async (requestEvent): Promise<CatalogApp | null> => {
@@ -29,63 +29,19 @@ export const useApp = routeLoader$(async (requestEvent): Promise<CatalogApp | nu
 
 export const useDetailStats = routeLoader$(async () => getStats());
 
-// Settings' install-source leaves are more granular than PackageSourceId
-// (e.g. Ubuntu's "Universe" component vs. AUR/official being two distinct
-// Arch sources) — this maps each leaf to the source id it actually installs.
+// Only the special repos precise enough to know exactly which package
+// needs them — each has its own distinct PackageSourceId, so showing the
+// setup step on that source's install row is never a guess. Universe/
+// non-oss aren't here: they apply to *some* packages from a source shared
+// with packages that don't need them (deb-ubuntu, rpm-opensuse), so they
+// only ever show generically on the Settings page — see settings.ts.
 const SOURCE_ID_TO_PACKAGE_SOURCE: Record<string, PackageSourceId> = {
   flathub: "flatpak-flathub",
   "elementary-appcenter": "flatpak-appcenter",
   "snap-store": "snap-snapcraft",
-  appimagehub: "appimage",
-  "appimage-manual": "appimage-manual",
   "arch-aur": "pacman-aur",
-  "arch-official": "pacman-arch",
-  "debian-main": "deb-debian",
-  "ubuntu-main": "deb-ubuntu",
-  "ubuntu-universe": "deb-ubuntu",
-  "mint-main": "deb-mint",
-  "popos-main": "deb-popos",
-  "deepin-main": "deb-deepin",
-  "mxlinux-main": "deb-mxlinux",
-  "fedora-everything": "rpm-fedora",
-  "opensuse-oss": "rpm-opensuse",
-  "rpmfusion-main": "rpm-rpmfusion",
-  "alpine-main": "apk-alpine",
-  "void-main": "xbps-void",
-  "slackware-main": "slackware",
-  "solus-shannon": "eopkg-solus",
-  "gentoo-portage": "ebuild-gentoo",
-  "nixpkgs-main": "nix-nixpkgs",
-  "gog-main": "gog",
-  "lutris-main": "lutris",
+  rpmfusion: "rpm-rpmfusion",
 };
-
-/** Packages sorted by the user's install-source preference order from settings; sources the settings don't cover sort last, in their original order. A package with a `channel` (currently only AUR's git/svn/hg/bzr/cvs rolling-release builds) always sorts after its channel-less twin from the same source, so "automatic" mode never silently picks a dev build over the official one. */
-function orderPackagesByPreference(
-  packages: SourcedPackage[],
-  installGroups: InstallFormatGroup[],
-): SourcedPackage[] {
-  const preferenceOrder: PackageSourceId[] = [];
-  for (const group of installGroups) {
-    if (!group.enabled) continue;
-    for (const source of group.sources) {
-      if (!source.enabled) continue;
-      const mapped = SOURCE_ID_TO_PACKAGE_SOURCE[source.id];
-      if (mapped && !preferenceOrder.includes(mapped)) preferenceOrder.push(mapped);
-    }
-  }
-  const copy = [...packages];
-  // oxlint-disable-next-line unicorn/no-array-sort -- `copy` is a fresh array; toSorted needs ES2023 lib
-  copy.sort((a, b) => {
-    const ai = preferenceOrder.indexOf(a.source);
-    const bi = preferenceOrder.indexOf(b.source);
-    if (ai !== bi) {
-      return (ai === -1 ? preferenceOrder.length : ai) - (bi === -1 ? preferenceOrder.length : bi);
-    }
-    return (a.channel ? 1 : 0) - (b.channel ? 1 : 0);
-  });
-  return copy;
-}
 
 /** A source label, qualified with its channel when it has one (currently only AUR's -git/-svn/-hg/-bzr/-cvs rolling-release builds) — so a merged "official + dev build" pair reads as two distinct install options, not a duplicate. */
 function formatSourceLabel(pkg: SourcedPackage): string {
@@ -93,11 +49,7 @@ function formatSourceLabel(pkg: SourcedPackage): string {
   return pkg.channel ? `${label} (${pkg.channel} build)` : label;
 }
 
-// Reverse of SOURCE_ID_TO_PACKAGE_SOURCE — only meaningfully used for the
-// handful of sources with a real InstallMethod.setup step (Flathub,
-// AppCenter, AUR, Snap, RPM Fusion), each of which maps from exactly one
-// leaf id; the ambiguous cases (deb-ubuntu from two leaves) never have a
-// setup step, so picking "whichever mapped last" for those is harmless.
+// Reverse of SOURCE_ID_TO_PACKAGE_SOURCE — each entry maps from exactly one leaf id.
 const PACKAGE_SOURCE_TO_LEAF_ID: Partial<Record<PackageSourceId, string>> = Object.fromEntries(
   Object.entries(SOURCE_ID_TO_PACKAGE_SOURCE).map(([leaf, source]) => [source, leaf]),
 );
@@ -105,16 +57,23 @@ const PACKAGE_SOURCE_TO_LEAF_ID: Partial<Record<PackageSourceId, string>> = Obje
 function findSourceOption(
   installGroups: InstallFormatGroup[],
   leafId: string,
-): InstallSourceOption | undefined {
+): SpecialRepoOption | undefined {
   for (const group of installGroups) {
-    const found = group.sources.find((source) => source.id === leafId);
+    const found = group.specialRepos.find((repo) => repo.id === leafId);
     if (found) return found;
   }
   return undefined;
 }
 
-/** Packages bucketed by platform/distro group (same grouping as the app-card dot-map), in the order their first member appears — i.e. still respecting the caller's own preference sort. */
-function groupPackagesBySourceGroup(packages: SourcedPackage[]): Map<string, SourcedPackage[]> {
+/** True unless the user hid this source's platform/distro group in Settings — everything's shown by default. */
+function isSourceVisible(source: PackageSourceId, installGroups: InstallFormatGroup[]): boolean {
+  const group = ALL_SOURCE_GROUPS.find((g) => SOURCE_GROUP_MEMBERS[g]?.includes(source));
+  if (!group) return true;
+  return installGroups.find((g) => g.id === group)?.shown ?? true;
+}
+
+/** Packages bucketed by platform/distro group (same grouping as the app-card dot-map), in `ALL_SOURCE_GROUPS`' fixed canonical order rather than array-arrival order. */
+function groupPackagesBySourceGroup(packages: SourcedPackage[]): [string, SourcedPackage[]][] {
   const byGroup = new Map<string, SourcedPackage[]>();
   for (const pkg of packages) {
     const group = ALL_SOURCE_GROUPS.find((g) => SOURCE_GROUP_MEMBERS[g]?.includes(pkg.source));
@@ -123,96 +82,166 @@ function groupPackagesBySourceGroup(packages: SourcedPackage[]): Map<string, Sou
     list.push(pkg);
     byGroup.set(key, list);
   }
-  return byGroup;
+  return [...ALL_SOURCE_GROUPS, "Other"]
+    .filter((key) => byGroup.has(key))
+    .map((key) => [key, byGroup.get(key) as SourcedPackage[]]);
+}
+
+/** One platform group's packages, bucketed by their exact packaging source (e.g. AUR vs Official within "Arch Linux") — packages sharing a source are channel variants of the same build (see `SourceInstallUnit`), in first-seen order. */
+function groupBySource(packages: SourcedPackage[]): [PackageSourceId, SourcedPackage[]][] {
+  const bySource = new Map<PackageSourceId, SourcedPackage[]>();
+  for (const pkg of packages) {
+    const list = bySource.get(pkg.source) ?? [];
+    list.push(pkg);
+    bySource.set(pkg.source, list);
+  }
+  return [...bySource.entries()];
+}
+
+/** Human label for a build channel — `undefined` is the default/stable build, everything else (AUR's git/svn/hg/bzr/cvs/bin) gets its raw value capitalized. */
+function channelLabel(channel: string | undefined): string {
+  if (!channel) return "Stable";
+  return channel.charAt(0).toUpperCase() + channel.slice(1);
 }
 
 /**
- * One package's row inside the install drawer — a direct link when the
- * source has a real install/store page (`INSTALL_METHODS[source].kind ===
- * "link"`), otherwise a copy-paste shell command, since no `apt://`-style
- * link reliably works across distros/desktops today. When the source
- * needs a one-time remote/helper setup first and the user hasn't
- * confirmed it yet, that step shows above the regular command with a
- * button to mark it done — persisted, so it only shows once per source.
+ * One packaging source's install info, e.g. "AUR" within "Arch Linux" —
+ * a direct link when the source has a real install/store page
+ * (`INSTALL_METHODS[source].kind === "link"`), otherwise a copy-paste
+ * shell command, since no `apt://`-style link reliably works across
+ * distros/desktops today. When more than one package shares this source
+ * (AUR's official/`-bin`/`-git` builds of the same app, merged into one
+ * app but still genuinely different installs), a small button group picks
+ * which channel's command/link shows — real bug, found live: these used
+ * to render as separate flat rows differing only in a "(git build)"
+ * parenthetical, easy to miss scanning a long list. When the source needs
+ * a one-time remote/helper setup first and the user hasn't confirmed it
+ * yet, that step shows above the regular command with a button to mark it
+ * done — persisted, so it only shows once per source.
  */
-const PackageInstallRow = component$<{
-  pkg: SourcedPackage;
+const SourceInstallUnit = component$<{
+  packages: SourcedPackage[];
   appHomepage: string | undefined;
-}>(({ pkg, appHomepage }) => {
+}>(({ packages, appHomepage }) => {
+  const selectedIndex = useSignal(0);
   const copied = useSignal(false);
   const settings = useSettings();
+
+  const pkg = packages[selectedIndex.value] ?? packages[0];
+  if (!pkg) return null;
+
   const method = INSTALL_METHODS[pkg.source];
   const leafId = PACKAGE_SOURCE_TO_LEAF_ID[pkg.source];
   const sourceOption = leafId ? findSourceOption(settings.installGroups.value, leafId) : undefined;
-
-  if (method.kind === "link") {
-    const link = pkg.homepage ?? appHomepage;
-    return link ? (
-      <a href={link} class="btn btn-outline btn-block justify-start" target="_blank" rel="noopener">
-        Install via {formatSourceLabel(pkg)}
-      </a>
-    ) : (
-      <div class="border border-base-300 rounded-box p-3 text-sm text-base-content/60">
-        {formatSourceLabel(pkg)}: no direct link available yet.
-      </div>
-    );
-  }
-
   const command = installCommand(pkg);
   const needsSetup = method.setup && !sourceOption?.activated;
 
   return (
-    <div class="border border-base-300 rounded-box p-3 flex flex-col gap-2">
-      <span class="text-sm font-medium">{formatSourceLabel(pkg)}</span>
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center justify-between gap-2 flex-wrap">
+        <span class="text-sm font-medium">{SOURCE_LABELS[pkg.source]}</span>
+        {packages.length > 1 && (
+          <div class="join">
+            {packages.map((p, i) => (
+              <button
+                key={`${p.source}:${p.name}`}
+                type="button"
+                class={[
+                  "btn btn-xs join-item",
+                  i === selectedIndex.value ? "btn-active" : "btn-outline",
+                ]}
+                onClick$={() => {
+                  selectedIndex.value = i;
+                  copied.value = false;
+                }}
+              >
+                {channelLabel(p.channel)}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
-      {needsSetup && method.setup && (
-        <div class="bg-base-200 rounded-field p-2 flex flex-col gap-2">
-          <p class="text-xs text-base-content/60">{method.setup.note}</p>
-          <code class="text-xs font-mono break-all">{method.setup.command}</code>
-          {leafId && (
-            <button
-              type="button"
-              class="btn btn-xs btn-outline self-start"
-              onClick$={() => setSourceActivated(settings.installGroups, leafId, true)}
-            >
-              I've already done this
-            </button>
-          )}
-        </div>
-      )}
-
-      {command && (
-        <div class="flex items-center gap-2">
-          <code class="text-xs font-mono break-all flex-1">{command}</code>
-          <button
-            type="button"
-            class="btn btn-xs btn-square btn-ghost"
-            aria-label="Copy install command"
-            onClick$={() => {
-              navigator.clipboard.writeText(command);
-              copied.value = true;
-            }}
+      {method.kind === "link" ? (
+        (pkg.homepage ?? appHomepage) ? (
+          <a
+            href={pkg.homepage ?? appHomepage}
+            class="btn btn-outline btn-block btn-sm justify-start"
+            target="_blank"
+            rel="noopener"
           >
-            {copied.value ? <LuCheck /> : <LuCopy />}
-          </button>
-        </div>
+            Install
+          </a>
+        ) : (
+          <p class="text-sm text-base-content/60">No direct link available yet.</p>
+        )
+      ) : (
+        <>
+          {needsSetup && method.setup && (
+            <div class="bg-base-200 rounded-field p-2 flex flex-col gap-2">
+              <p class="text-xs text-base-content/60">{method.setup.note}</p>
+              {method.setup.kind === "link" ? (
+                <a
+                  href={method.setup.url}
+                  class="link link-primary text-xs"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  {method.setup.url}
+                </a>
+              ) : (
+                <code class="text-xs font-mono break-all">{method.setup.command}</code>
+              )}
+              {leafId && (
+                <button
+                  type="button"
+                  class="btn btn-xs btn-outline self-start"
+                  onClick$={() => setSourceActivated(settings.installGroups, leafId, true)}
+                >
+                  I've already done this
+                </button>
+              )}
+            </div>
+          )}
+
+          {command && (
+            <div class="flex items-center gap-2">
+              <code class="text-xs font-mono break-all flex-1">{command}</code>
+              <button
+                type="button"
+                class="btn btn-xs btn-square btn-ghost"
+                aria-label="Copy install command"
+                onClick$={() => {
+                  navigator.clipboard.writeText(command);
+                  copied.value = true;
+                }}
+              >
+                {copied.value ? <LuCheck /> : <LuCopy />}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 });
 
-/** One `<details>` per platform/distro group — collapsed by default so the drawer reads as a scannable list of sources, not a wall of commands. */
+/** One collapsible per platform/distro group, closed by default (a popular app can have a dozen-plus groups — open by default would be a wall of commands, not a scannable list) using daisyUI's `collapse` on a native `<details>` for real keyboard/accessibility support rather than a hand-rolled toggle. */
 const SourceGroupSection = component$<{
   group: string;
   packages: SourcedPackage[];
   appHomepage: string | undefined;
 }>(({ group, packages, appHomepage }) => (
-  <details class="border border-base-300 rounded-box" open={packages.length === 1}>
-    <summary class="cursor-pointer select-none px-3 py-2 font-medium text-sm">{group}</summary>
-    <div class="flex flex-col gap-2 p-3 pt-0">
-      {packages.map((pkg) => (
-        <PackageInstallRow key={`${pkg.source}:${pkg.name}`} pkg={pkg} appHomepage={appHomepage} />
-      ))}
+  <details class="collapse collapse-arrow bg-base-100 border border-base-300">
+    <summary class="collapse-title min-h-0 py-3 font-medium text-sm">
+      {group} <span class="text-base-content/50 font-normal">({packages.length})</span>
+    </summary>
+    <div class="collapse-content">
+      <div class="flex flex-col gap-4">
+        {groupBySource(packages).map(([source, sourcePackages]) => (
+          <SourceInstallUnit key={source} packages={sourcePackages} appHomepage={appHomepage} />
+        ))}
+      </div>
     </div>
   </details>
 ));
@@ -226,8 +255,6 @@ export default component$(() => {
   const jumboRef = useSignal<HTMLElement>();
   const showStickyBar = useSignal(false);
   const drawerOpen = useSignal(false);
-  const noLinkModalOpen = useSignal(false);
-  const noLinkCommandCopied = useSignal(false);
 
   useVisibleTask$(({ cleanup }) => {
     const el = jumboRef.value;
@@ -258,25 +285,14 @@ export default component$(() => {
     );
   }
 
-  const orderedPackages = orderPackagesByPreference(a.packages, settings.installGroups.value);
-  const bestPkg = orderedPackages[0];
-  // A homepage is only a genuine install action for "link"-kind sources
-  // (Flathub's own app page, GOG's, ...) — for every native package
-  // manager it's just the project's informational homepage, not
-  // something that installs anything when clicked. Real bug, found live
-  // testing: automatic mode used to treat any homepage as installable,
-  // so an AUR-only app with a real project homepage never triggered the
-  // copy-paste-command fallback at all.
-  const bestPkgLink =
-    bestPkg && INSTALL_METHODS[bestPkg.source]?.kind === "link"
-      ? (bestPkg.homepage ?? a.homepage)
-      : undefined;
-  const automatic = settings.ctaBehavior.value === "automatic";
+  const visiblePackages = a.packages.filter((pkg) =>
+    isSourceVisible(pkg.source, settings.installGroups.value),
+  );
 
   return (
     <div class="flex flex-col gap-10">
       {showStickyBar.value && (
-        <div class="fixed top-16 inset-x-0 z-30 bg-base-200/95 backdrop-blur border-b border-base-300">
+        <div class="fixed! top-16 inset-x-0 z-30 glass-card rounded-none!">
           <div class="max-w-6xl mx-auto px-4 md:px-6 py-2 flex items-center gap-3">
             <div class="w-8 h-8 rounded-field bg-base-300 flex items-center justify-center overflow-hidden shrink-0">
               {a.iconUrl ? (
@@ -292,29 +308,13 @@ export default component$(() => {
               )}
             </div>
             <span class="font-medium truncate flex-1">{a.name}</span>
-            {automatic ? (
-              bestPkgLink ? (
-                <a href={bestPkgLink} class="btn btn-primary btn-sm" target="_blank" rel="noopener">
-                  Install
-                </a>
-              ) : (
-                <button
-                  type="button"
-                  class="btn btn-primary btn-sm"
-                  onClick$={() => (noLinkModalOpen.value = true)}
-                >
-                  Install
-                </button>
-              )
-            ) : (
-              <button
-                type="button"
-                class="btn btn-primary btn-sm"
-                onClick$={() => (drawerOpen.value = true)}
-              >
-                Install
-              </button>
-            )}
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              onClick$={() => (drawerOpen.value = true)}
+            >
+              Install
+            </button>
           </div>
         </div>
       )}
@@ -347,7 +347,6 @@ export default component$(() => {
           <p class="text-base-content/70 mt-1">{a.shortDescription}</p>
 
           <div class="flex flex-wrap gap-2 mt-3">
-            {a.kind === "gui" && <span class="badge badge-secondary">GUI</span>}
             {a.contentType === "game" && <span class="badge badge-accent">Game</span>}
             {a.developer && <span class="badge badge-ghost">{a.developer}</span>}
             {a.category && <span class="badge badge-outline">{a.category}</span>}
@@ -375,33 +374,13 @@ export default component$(() => {
         </div>
 
         <div class="flex flex-wrap gap-2 md:flex-col">
-          {automatic ? (
-            bestPkg ? (
-              bestPkgLink ? (
-                <a href={bestPkgLink} class="btn btn-primary btn-sm" target="_blank" rel="noopener">
-                  Install via {formatSourceLabel(bestPkg)}
-                </a>
-              ) : (
-                <button
-                  type="button"
-                  class="btn btn-primary btn-sm"
-                  onClick$={() => (noLinkModalOpen.value = true)}
-                >
-                  Install via {formatSourceLabel(bestPkg)}
-                </button>
-              )
-            ) : (
-              <span class="btn btn-disabled btn-sm" aria-disabled="true">
-                No install source available
-              </span>
-            )
-          ) : orderedPackages.length ? (
+          {visiblePackages.length ? (
             <button
               type="button"
               class="btn btn-primary btn-sm"
               onClick$={() => (drawerOpen.value = true)}
             >
-              Install options ({orderedPackages.length})
+              Install options ({visiblePackages.length})
             </button>
           ) : (
             <span class="btn btn-disabled btn-sm" aria-disabled="true">
@@ -442,7 +421,7 @@ export default component$(() => {
             aria-label="Close install options"
             onClick$={() => (drawerOpen.value = false)}
           />
-          <div class="relative w-full max-w-sm bg-base-100 h-full shadow-xl p-5 flex flex-col gap-3 overflow-y-auto">
+          <div class="relative w-full max-w-sm sm:max-w-md lg:max-w-xl bg-base-100 h-full shadow-xl p-5 flex flex-col gap-3 overflow-y-auto">
             <div class="flex items-center justify-between mb-1">
               <h2 class="text-lg font-semibold">Install options</h2>
               <button
@@ -454,7 +433,7 @@ export default component$(() => {
                 ✕
               </button>
             </div>
-            {[...groupPackagesBySourceGroup(orderedPackages)].map(([group, packages]) => (
+            {groupPackagesBySourceGroup(visiblePackages).map(([group, packages]) => (
               <SourceGroupSection
                 key={group}
                 group={group}
@@ -462,54 +441,6 @@ export default component$(() => {
                 appHomepage={a.homepage}
               />
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Automatic mode fallback: chosen source has no direct link to hand off to. */}
-      {noLinkModalOpen.value && (
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <button
-            type="button"
-            class="absolute inset-0 bg-black/40"
-            aria-label="Close"
-            onClick$={() => (noLinkModalOpen.value = false)}
-          />
-          <div class="relative bg-base-100 rounded-box shadow-xl p-5 max-w-sm">
-            <h2 class="text-lg font-semibold mb-2">No direct install link</h2>
-            <p class="text-sm text-base-content/70 mb-4">
-              {bestPkg
-                ? `"${a.name}" is available via ${formatSourceLabel(bestPkg)}, but that source has no clickable install link — no browser protocol handler (apt://, dnf://, ...) reliably works across distros/desktops today, so here's the command instead.`
-                : "No package source is available for this app yet."}
-            </p>
-            {bestPkg &&
-              installCommand(bestPkg) &&
-              (() => {
-                const command = installCommand(bestPkg) as string;
-                return (
-                  <div class="flex items-center gap-2 bg-base-200 rounded-field p-2 mb-4">
-                    <code class="text-xs font-mono break-all flex-1">{command}</code>
-                    <button
-                      type="button"
-                      class="btn btn-xs btn-square btn-ghost"
-                      aria-label="Copy install command"
-                      onClick$={() => {
-                        navigator.clipboard.writeText(command);
-                        noLinkCommandCopied.value = true;
-                      }}
-                    >
-                      {noLinkCommandCopied.value ? <LuCheck /> : <LuCopy />}
-                    </button>
-                  </div>
-                );
-              })()}
-            <button
-              type="button"
-              class="btn btn-primary btn-block"
-              onClick$={() => (noLinkModalOpen.value = false)}
-            >
-              Got it
-            </button>
           </div>
         </div>
       )}
