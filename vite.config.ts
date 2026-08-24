@@ -46,6 +46,12 @@ export default defineConfig(({ mode }): UserConfig => {
     process.env.TURSO_DB_URL ??= LOCAL_TURSO_URL;
   }
 
+  // Unrelated to the local/remote DB toggle above — always loaded, same
+  // shared .dev/.env, server-only (never a VITE_-prefixed var, so it never
+  // reaches the client bundle).
+  const sharedEnv = loadEnv(mode, SHARED_ENV_DIR, "");
+  process.env.UNSPLASH_ACCESS_KEY ??= sharedEnv.UNSPLASH_ACCESS_KEY;
+
   return {
     envDir: SHARED_ENV_DIR,
     plugins: [qwikCity(), qwikVite(), tsconfigPaths({ root: "." }), tailwindcss()],

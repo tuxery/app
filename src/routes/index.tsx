@@ -5,10 +5,15 @@ import { LuSearch } from "@qwikest/icons/lucide";
 import { AppCard } from "~/components/app-card/app-card";
 import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-scroller";
 import { getStats, getTrendingApps, getCategories } from "~/catalog";
+import { getHeroBackgroundPhoto } from "~/unsplash";
 import type { AppSummary } from "~/catalog-types";
 
 export const useStats = routeLoader$(async () => {
   return getStats();
+});
+
+export const useHeroBackground = routeLoader$(async () => {
+  return getHeroBackgroundPhoto();
 });
 
 export const useTrendingApps = routeLoader$(async () => {
@@ -60,16 +65,22 @@ export default component$(() => {
   const stats = useStats();
   const trendingApps = useTrendingApps();
   const categories = useCategories();
+  const heroBackground = useHeroBackground();
+  const bg = heroBackground.value;
 
   return (
     <div class="flex flex-col gap-14">
-      <section class="hero bg-base-200/60 rounded-box -mx-4 md:-mx-6 px-4 md:px-6">
-        <div class="hero-content text-center py-14">
+      <section
+        class={`hero rounded-box -mx-4 md:-mx-6 px-4 md:px-6 relative overflow-hidden ${bg ? "" : "bg-base-200/60"}`}
+        style={bg ? { backgroundImage: `url(${bg.imageUrl})`, backgroundSize: "cover" } : {}}
+      >
+        {bg && <div class="hero-overlay bg-black/60" />}
+        <div class={`hero-content text-center py-14 ${bg ? "text-white" : ""}`}>
           <div class="max-w-2xl">
             <h1 class="text-4xl md:text-5xl font-bold">
               One search bar. <span class="text-primary">Every</span> Linux app.
             </h1>
-            <p class="py-4 text-base-content/70">
+            <p class={`py-4 ${bg ? "text-white/80" : "text-base-content/70"}`}>
               Tuxery aggregates Flathub, the Snap Store, AppImage, and every major distro's own
               package repositories into one deduplicated catalog — search once, install from
               wherever it's actually shipped.
@@ -87,12 +98,22 @@ export default component$(() => {
               </label>
             </form>
             {stats.value.total > 0 && (
-              <p class="text-sm text-base-content/50 mt-4">
+              <p class={`text-sm mt-4 ${bg ? "text-white/60" : "text-base-content/50"}`}>
                 {stats.value.total.toLocaleString()} apps and games catalogued
               </p>
             )}
           </div>
         </div>
+        {bg && (
+          <a
+            href={bg.photographerUrl}
+            target="_blank"
+            rel="noopener"
+            class="absolute bottom-2 right-3 text-xs text-white/50 hover:text-white/80"
+          >
+            Photo by {bg.photographerName} on Unsplash
+          </a>
+        )}
       </section>
 
       {stats.value.total === 0 ? (
