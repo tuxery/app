@@ -191,14 +191,21 @@ const SourceInstallUnit = component$<{
 
       {method.kind === "link" ? (
         (pkg.homepage ?? appHomepage) ? (
-          <a
-            href={pkg.homepage ?? appHomepage}
-            class="btn btn-outline btn-block btn-sm justify-start"
-            target="_blank"
-            rel="noopener"
-          >
-            Install
-          </a>
+          <>
+            <a
+              href={pkg.homepage ?? appHomepage}
+              class="btn btn-outline btn-block btn-sm justify-start"
+              target="_blank"
+              rel="noopener"
+            >
+              Install
+            </a>
+            {SOURCE_GROUP_MEMBERS.Flatpak?.includes(pkg.source) && pkg.appId && (
+              <a href={`appstream://${pkg.appId}`} class="link link-hover text-xs">
+                Or open directly in GNOME Software / KDE Discover
+              </a>
+            )}
+          </>
         ) : (
           <p class="text-sm text-base-content/60">No direct link available yet.</p>
         )
