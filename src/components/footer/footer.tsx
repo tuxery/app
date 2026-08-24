@@ -4,7 +4,7 @@ export const Footer = component$(() => {
   return (
     <footer class="border-t border-base-300 bg-base-200/50 mt-16">
       <div class="max-w-6xl mx-auto px-4 md:px-6 py-10">
-        <div class="footer">
+        <div class="footer sm:footer-horizontal">
           <nav>
             <h6 class="footer-title">Catalog</h6>
             <a href="/apps/" class="link link-hover">
