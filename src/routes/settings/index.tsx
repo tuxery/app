@@ -1,6 +1,12 @@
 import { component$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { setSourceActivated, toggleGroupShown, useSettings, type Theme } from "~/settings";
+import {
+  setSourceActivated,
+  toggleGroupShown,
+  useSettings,
+  type InstallFormatGroup,
+  type Theme,
+} from "~/settings";
 
 const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "system", label: "Match system" },
@@ -8,11 +14,84 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "dark", label: "Dark" },
 ];
 
+// Cross-distro packaging formats (install once, works the same on any
+// distro) vs. a single distro's own native package manager — same split
+// the user thinks in, not a data-model concept from `~/catalog-types`.
+const COMPOSITE_GROUP_IDS = new Set(["Flatpak", "Snap", "AppImage", "GOG", "Lutris"]);
+
+interface InstallGroupListProps {
+  title: string;
+  groups: { group: InstallFormatGroup; index: number }[];
+}
+
+const InstallGroupList = component$<InstallGroupListProps>(({ title, groups }) => {
+  const settings = useSettings();
+
+  return (
+    <div>
+      <h3 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
+        {title}
+      </h3>
+      <ul class="list bg-base-100 border border-base-300 rounded-box">
+        {groups.map(({ group, index }) => (
+          <li key={group.id} class="list-row items-center">
+            <span class="font-medium text-sm">{group.label}</span>
+            <input
+              type="checkbox"
+              class="toggle toggle-primary justify-self-end"
+              checked={group.shown}
+              onChange$={() => toggleGroupShown(settings.installGroups, index)}
+              aria-label={`Show ${group.label}`}
+            />
+
+            {group.shown && group.specialRepos.length > 0 && (
+              <div class="list-col-wrap flex flex-col gap-2 pt-2">
+                {group.specialRepos.map((repo) => (
+                  <div key={repo.id} class="flex flex-col gap-1">
+                    <label class="flex items-center justify-between gap-2 cursor-pointer text-sm">
+                      {repo.label}
+                      <input
+                        type="checkbox"
+                        class="toggle toggle-sm toggle-secondary"
+                        checked={repo.activated}
+                        onChange$={() =>
+                          setSourceActivated(settings.installGroups, repo.id, !repo.activated)
+                        }
+                      />
+                    </label>
+                    {!repo.activated && (
+                      <div class="flex flex-col gap-1 bg-base-200 rounded-field p-2">
+                        <p class="text-xs text-base-content/60">{repo.setup.note}</p>
+                        {repo.setup.kind === "link" ? (
+                          <a
+                            href={repo.setup.url}
+                            class="link link-primary text-xs"
+                            target="_blank"
+                            rel="noopener"
+                          >
+                            {repo.setup.url}
+                          </a>
+                        ) : (
+                          <code class="text-xs font-mono break-all">{repo.setup.command}</code>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+});
+
 export default component$(() => {
   const settings = useSettings();
 
   return (
-    <div class="flex flex-col gap-10 max-w-xl">
+    <div class="flex flex-col gap-10 max-w-3xl">
       <h1 class="text-3xl font-bold">Settings</h1>
 
       <section>
@@ -43,59 +122,20 @@ export default component$(() => {
           before it's usable — check it off once you've done that (or confirm it from an app's own
           install drawer, wherever it shows there too).
         </p>
-        <ul class="flex flex-col gap-2">
-          {settings.installGroups.value.map((group, groupIndex) => (
-            <li key={group.id} class="border border-base-300 rounded-box px-3 py-2">
-              <label class="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  class="checkbox checkbox-primary"
-                  checked={group.shown}
-                  onChange$={() => toggleGroupShown(settings.installGroups, groupIndex)}
-                  aria-label={`Show ${group.label}`}
-                />
-                <span class="flex-1 font-medium">{group.label}</span>
-              </label>
-
-              {group.shown && group.specialRepos.length > 0 && (
-                <ul class="flex flex-col gap-2 mt-2 pl-8">
-                  {group.specialRepos.map((repo) => (
-                    <li key={repo.id}>
-                      <label class="flex items-center gap-2 cursor-pointer text-sm">
-                        <input
-                          type="checkbox"
-                          class="checkbox checkbox-sm checkbox-primary"
-                          checked={repo.activated}
-                          onChange$={() =>
-                            setSourceActivated(settings.installGroups, repo.id, !repo.activated)
-                          }
-                        />
-                        {repo.label}
-                      </label>
-                      {!repo.activated && (
-                        <div class="mt-1 flex flex-col gap-1 bg-base-200 rounded-field p-2">
-                          <p class="text-xs text-base-content/60">{repo.setup.note}</p>
-                          {repo.setup.kind === "link" ? (
-                            <a
-                              href={repo.setup.url}
-                              class="link link-primary text-xs"
-                              target="_blank"
-                              rel="noopener"
-                            >
-                              {repo.setup.url}
-                            </a>
-                          ) : (
-                            <code class="text-xs font-mono break-all">{repo.setup.command}</code>
-                          )}
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
-        </ul>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InstallGroupList
+            title="Cross-distro formats"
+            groups={settings.installGroups.value
+              .map((group, index) => ({ group, index }))
+              .filter(({ group }) => COMPOSITE_GROUP_IDS.has(group.id))}
+          />
+          <InstallGroupList
+            title="Distro packages"
+            groups={settings.installGroups.value
+              .map((group, index) => ({ group, index }))
+              .filter(({ group }) => !COMPOSITE_GROUP_IDS.has(group.id))}
+          />
+        </div>
       </section>
     </div>
   );
