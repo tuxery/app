@@ -143,11 +143,11 @@ function tabLabel(pkg: SourcedPackage, packages: SourcedPackage[]): string {
   return collides ? pkg.name : label;
 }
 
-/** A bare "i" (not the daisyUI info-icon glyph, which is a circled i — a circle around an already-circular icon reads as a mistake, see `SourceDotMap` in app-card.tsx for the same call) with an instant CSS tooltip, pinned to the far right of whatever row it's in via the caller's own `justify-between`. */
+/** A bare "i" (not the daisyUI info-icon glyph, which is a circled i — a circle around an already-circular icon reads as a mistake, see `SourceDotMap` in app-card.tsx for the same call) with an instant CSS tooltip — sized up from the dot-map's own (`text-sm` vs `text-xs`) since it sits next to a full-size button here, not a row of 1.5px dots. */
 const InfoTooltip = component$<{ text: string }>(({ text }) => (
-  <div class="tooltip tooltip-left shrink-0" data-tip={text}>
+  <div class="tooltip tooltip-top shrink-0" data-tip={text}>
     <span
-      class="text-xs italic font-serif text-base-content/50 cursor-help leading-none"
+      class="text-sm italic font-serif text-base-content/50 cursor-help leading-none"
       aria-hidden="true"
     >
       i
@@ -155,9 +155,9 @@ const InfoTooltip = component$<{ text: string }>(({ text }) => (
   </div>
 ));
 
-/** One install action's row: content on the left sized to itself (never a full-width button — a page full of edge-to-edge buttons of wildly different purposes reads as one undifferentiated wall), its explanatory tooltip pinned to the row's own far right. */
+/** One install action's row: a fixed-size button on the left (every row's button shares the same size/shape, so the list reads as one group of equal choices, not a ranked list) with its explanatory tooltip right next to it — not pinned to the row's far right, which read as disconnected from the button it was actually about. */
 const ActionRow = component$<{ tooltip: string }>(({ tooltip }) => (
-  <div class="flex items-center justify-between gap-3">
+  <div class="flex items-center gap-2">
     <Slot />
     <InfoTooltip text={tooltip} />
   </div>
@@ -259,8 +259,16 @@ const SourceInstallUnit = component$<{
         </span>
       )}
 
+      {/* Classic underlined tabs, not the tabs-box pill group this had before
+          — the channel-selector state (`selectedIndex`) lives here, one
+          level below the group's own `<summary>` in SourceGroupSection, so
+          moving it up into the summary itself (replacing its "(N)" count)
+          would need that state lifted a level up and shared across every
+          source in the group, not just this one — a real restructure, not
+          a style tweak, and still ambiguous for a group where more than one
+          source has its own channels. Left as a classic tab row instead. */}
       {packages.length > 1 && (
-        <div role="tablist" class="tabs tabs-box tabs-sm w-fit">
+        <div role="tablist" class="tabs tabs-border tabs-sm w-fit">
           {packages.map((p, i) => (
             <button
               key={`${p.source}:${p.name}`}
@@ -356,10 +364,10 @@ const SourceInstallUnit = component$<{
         )
       )}
 
-      {/* (2) The terminal command — the fallback when no button exists (the common case) or an addition alongside one. Command text stays visible next to the button rather than hidden behind a copy-only action — worth reading before pasting, especially the `sudo` ones. */}
+      {/* (2) The terminal command — the fallback when no button exists (the common case) or an addition alongside one. Deliberately two ways to copy it, not one: the button in the row above (consistent with every other action here) and the small icon button on the terminal-prompt-styled line below (familiar from before this row-based layout existed, and worth keeping — the command itself needs to stay visible and readable before pasting, especially the `sudo` ones, not hidden behind a button alone). */}
       {command && (
-        <ActionRow tooltip="Copies a ready-to-paste command for your terminal. Nothing runs until you paste and confirm it yourself.">
-          <div class="flex flex-col gap-1">
+        <>
+          <ActionRow tooltip="Copies a ready-to-paste command for your terminal. Nothing runs until you paste and confirm it yourself.">
             <button
               type="button"
               class="btn btn-outline btn-sm w-fit"
@@ -368,19 +376,24 @@ const SourceInstallUnit = component$<{
                 copied.value = true;
               }}
             >
-              {copied.value ? (
-                <>
-                  <LuCheck class="text-sm" /> Copied
-                </>
-              ) : (
-                <>
-                  <LuCopy class="text-sm" /> Copy terminal command
-                </>
-              )}
+              Copy terminal command
             </button>
-            <code class="text-xs font-mono break-all">{command}</code>
+          </ActionRow>
+          <div class="flex items-center gap-2 bg-neutral text-neutral-content rounded-field px-3 py-2">
+            <code class="text-xs font-mono break-all flex-1">{command}</code>
+            <button
+              type="button"
+              class="btn btn-xs btn-square btn-ghost text-neutral-content"
+              aria-label="Copy install command"
+              onClick$={() => {
+                navigator.clipboard.writeText(command);
+                copied.value = true;
+              }}
+            >
+              {copied.value ? <LuCheck /> : <LuCopy />}
+            </button>
           </div>
-        </ActionRow>
+        </>
       )}
 
       {/* (3) The store/homepage page, last — a catch-all for when nothing above worked or applied. */}
