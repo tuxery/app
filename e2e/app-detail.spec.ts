@@ -14,17 +14,17 @@ test("an app page shows an install-options drawer listing every source, each gro
   await page.getByRole("button", { name: /Install options/ }).click();
   const flatpakSummary = page.locator("summary", { hasText: "Flatpak" });
   await expect(flatpakSummary).toBeVisible();
-  await expect(page.getByRole("link", { name: "Install" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Click to install" })).toHaveCount(0);
 
   await flatpakSummary.click();
-  await expect(page.getByRole("link", { name: "Install" }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Click to install" }).first()).toBeVisible();
 });
 
 test("a rated app shows both the aggregate badge and a per-source ratings breakdown", async ({
   page,
 }) => {
   await page.goto(FIREWATCH);
-  await expect(page.getByText(/★ \d\.\d \(\d/).first()).toBeVisible();
+  await expect(page.getByText(/\d\.\d \(\d/).first()).toBeVisible();
   await expect(page.getByText("Ratings by source")).toBeVisible();
   await expect(page.getByText(/GOG: ★/)).toBeVisible();
 });

@@ -49,6 +49,25 @@ function formatSourceLabel(pkg: SourcedPackage): string {
   return pkg.channel ? `${label} (${pkg.channel} build)` : label;
 }
 
+/**
+ * `SOURCE_LABELS` fully qualifies each source ("Flathub (Flatpak)", "AUR"
+ * ...) so it reads correctly standalone elsewhere (Settings, Browse's
+ * filter badge) — but inside a `SourceGroupSection`, the platform/distro
+ * group heading (e.g. "Flatpak", "Arch Linux") already says that part,
+ * so repeating it in `SourceInstallUnit`'s own label is pure redundancy.
+ * Only the sources that actually need disambiguating from a sibling in
+ * the same group get an entry here; everything else's `SOURCE_LABELS`
+ * value was already short/distinct enough (e.g. "AUR", "RPM Fusion").
+ */
+const SHORT_SOURCE_LABELS: Partial<Record<PackageSourceId, string>> = {
+  "flatpak-flathub": "Flathub",
+  "flatpak-appcenter": "elementary AppCenter",
+  appimage: "Community feed",
+  "appimage-manual": "Direct download",
+  "pacman-arch": "Official",
+  "rpm-fedora": "Official",
+};
+
 // Reverse of SOURCE_ID_TO_PACKAGE_SOURCE — each entry maps from exactly one leaf id.
 const PACKAGE_SOURCE_TO_LEAF_ID: Partial<Record<PackageSourceId, string>> = Object.fromEntries(
   Object.entries(SOURCE_ID_TO_PACKAGE_SOURCE).map(([leaf, source]) => [source, leaf]),
@@ -137,7 +156,9 @@ const SourceInstallUnit = component$<{
   packages: SourcedPackage[];
   appHomepage: string | undefined;
   compatWarnings: CatalogApp["compatibilityWarnings"];
-}>(({ packages, appHomepage, compatWarnings }) => {
+  /** Whether a sibling `SourceInstallUnit` shares this group — when it's the only one, the group heading above already names the source, so repeating it here would be pure redundancy. */
+  showLabel: boolean;
+}>(({ packages, appHomepage, compatWarnings, showLabel }) => {
   const selectedIndex = useSignal(0);
   const copied = useSignal(false);
   const settings = useSettings();
@@ -151,10 +172,15 @@ const SourceInstallUnit = component$<{
   const command = installCommand(pkg);
   const needsSetup = method.setup && !sourceOption?.activated;
   const warning = compatWarnings?.find((w) => w.source === pkg.source);
+  const link = method.kind === "link" ? (pkg.homepage ?? appHomepage) : undefined;
 
   return (
     <div class="flex flex-col gap-2">
-      <span class="text-sm font-medium">{SOURCE_LABELS[pkg.source]}</span>
+      {showLabel && (
+        <span class="text-sm font-medium">
+          {SHORT_SOURCE_LABELS[pkg.source] ?? SOURCE_LABELS[pkg.source]}
+        </span>
+      )}
 
       {packages.length > 1 && (
         <div role="tablist" class="tabs tabs-box tabs-sm w-fit">
@@ -189,16 +215,45 @@ const SourceInstallUnit = component$<{
         </div>
       )}
 
-      {method.kind === "link" ? (
-        (pkg.homepage ?? appHomepage) ? (
+      {/* (0) One-time setup/activation, before any install action — applies to link-kind sources (Flatpak's own remote) just as much as command-kind ones (the AUR helper, Universe, ...), so this no longer lives inside the command-only branch below. */}
+      {needsSetup && method.setup && (
+        <div class="bg-base-200 rounded-field p-2 flex flex-col gap-2">
+          <p class="text-xs text-base-content/60">{method.setup.note}</p>
+          {method.setup.kind === "link" ? (
+            <a
+              href={method.setup.url}
+              class="link link-primary text-xs"
+              target="_blank"
+              rel="noopener"
+            >
+              {method.setup.url}
+            </a>
+          ) : (
+            <code class="text-xs font-mono break-all">{method.setup.command}</code>
+          )}
+          {leafId && (
+            <button
+              type="button"
+              class="btn btn-xs btn-outline self-start"
+              onClick$={() => setSourceActivated(settings.installGroups, leafId, true)}
+            >
+              I've already done this
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* (1) A clickable install button, only when the source actually has one. */}
+      {method.kind === "link" &&
+        (link ? (
           <>
             <a
-              href={pkg.homepage ?? appHomepage}
+              href={link}
               class="btn btn-outline btn-block btn-sm justify-start"
               target="_blank"
               rel="noopener"
             >
-              Install
+              Click to install
             </a>
             {SOURCE_GROUP_MEMBERS.Flatpak?.includes(pkg.source) && pkg.appId && (
               <a href={`appstream://${pkg.appId}`} class="link link-hover text-xs">
@@ -208,53 +263,29 @@ const SourceInstallUnit = component$<{
           </>
         ) : (
           <p class="text-sm text-base-content/60">No direct link available yet.</p>
-        )
-      ) : (
-        <>
-          {needsSetup && method.setup && (
-            <div class="bg-base-200 rounded-field p-2 flex flex-col gap-2">
-              <p class="text-xs text-base-content/60">{method.setup.note}</p>
-              {method.setup.kind === "link" ? (
-                <a
-                  href={method.setup.url}
-                  class="link link-primary text-xs"
-                  target="_blank"
-                  rel="noopener"
-                >
-                  {method.setup.url}
-                </a>
-              ) : (
-                <code class="text-xs font-mono break-all">{method.setup.command}</code>
-              )}
-              {leafId && (
-                <button
-                  type="button"
-                  class="btn btn-xs btn-outline self-start"
-                  onClick$={() => setSourceActivated(settings.installGroups, leafId, true)}
-                >
-                  I've already done this
-                </button>
-              )}
-            </div>
-          )}
+        ))}
 
-          {command && (
-            <div class="flex items-center gap-2">
-              <code class="text-xs font-mono break-all flex-1">{command}</code>
-              <button
-                type="button"
-                class="btn btn-xs btn-square btn-ghost"
-                aria-label="Copy install command"
-                onClick$={() => {
-                  navigator.clipboard.writeText(command);
-                  copied.value = true;
-                }}
-              >
-                {copied.value ? <LuCheck /> : <LuCopy />}
-              </button>
-            </div>
+      {/* (2) The terminal command, as a fallback when no button exists (the common case) or an addition when one does. */}
+      {command && (
+        <div class="flex flex-col gap-1">
+          {method.kind === "link" && (
+            <span class="text-xs text-base-content/60">Or, from a terminal:</span>
           )}
-        </>
+          <div class="flex items-center gap-2">
+            <code class="text-xs font-mono break-all flex-1">{command}</code>
+            <button
+              type="button"
+              class="btn btn-xs btn-square btn-ghost"
+              aria-label="Copy install command"
+              onClick$={() => {
+                navigator.clipboard.writeText(command);
+                copied.value = true;
+              }}
+            >
+              {copied.value ? <LuCheck /> : <LuCopy />}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -266,25 +297,68 @@ const SourceGroupSection = component$<{
   packages: SourcedPackage[];
   appHomepage: string | undefined;
   compatWarnings: CatalogApp["compatibilityWarnings"];
-}>(({ group, packages, appHomepage, compatWarnings }) => (
-  <details class="collapse collapse-arrow bg-base-100 border border-base-300">
-    <summary class="collapse-title min-h-0 py-3 font-medium text-sm">
-      {group} <span class="text-base-content/50 font-normal">({packages.length})</span>
-    </summary>
-    <div class="collapse-content">
-      <div class="flex flex-col gap-4">
-        {groupBySource(packages).map(([source, sourcePackages]) => (
-          <SourceInstallUnit
-            key={source}
-            packages={sourcePackages}
-            appHomepage={appHomepage}
-            compatWarnings={compatWarnings}
+}>(({ group, packages, appHomepage, compatWarnings }) => {
+  const bySource = groupBySource(packages);
+
+  return (
+    <details class="collapse collapse-arrow bg-base-100 border border-base-300">
+      <summary class="collapse-title min-h-0 py-3 font-medium text-sm">
+        {group}
+        {packages.length > 1 && (
+          <span class="text-base-content/50 font-normal"> ({packages.length})</span>
+        )}
+      </summary>
+      <div class="collapse-content">
+        <div class="flex flex-col gap-4">
+          {bySource.map(([source, sourcePackages]) => (
+            <SourceInstallUnit
+              key={source}
+              packages={sourcePackages}
+              appHomepage={appHomepage}
+              compatWarnings={compatWarnings}
+              showLabel={bySource.length > 1}
+            />
+          ))}
+        </div>
+      </div>
+    </details>
+  );
+});
+
+// Half-star granularity (10 positions across 5 stars) — the finest
+// daisyUI's `rating-half` supports. `average` rarely lands on a clean
+// half itself (e.g. 4.23), so this rounds to the nearest one purely for
+// the *visual* stars; the exact figure stays next to them as text and in
+// the `title` tooltip, nothing is hidden by rounding.
+const STAR_HALVES = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+
+/** A rating shown as daisyUI's star widget instead of a badge/tag — badges are for discrete facts (category, AI features, ...), not a continuous score. */
+const RatingStars = component$<{ average: number; count: number }>(({ average, count }) => {
+  const rounded = Math.round(average * 2) / 2;
+
+  return (
+    <span
+      class="inline-flex items-center gap-1.5"
+      title={`${average.toFixed(1)} out of 5 (${count.toLocaleString()} ratings)`}
+    >
+      <div class="rating rating-xs rating-half" aria-hidden="true">
+        {STAR_HALVES.map((position, i) => (
+          <div
+            key={position}
+            class={[
+              "mask mask-star-2",
+              i % 2 === 0 ? "mask-half-1" : "mask-half-2",
+              position <= rounded ? "bg-warning" : "bg-base-300",
+            ]}
           />
         ))}
       </div>
-    </div>
-  </details>
-));
+      <span class="text-sm text-base-content/60">
+        {average.toFixed(1)} ({count.toLocaleString()})
+      </span>
+    </span>
+  );
+});
 
 export default component$(() => {
   const app = useApp();
@@ -385,10 +459,22 @@ export default component$(() => {
         <div class="flex-1 min-w-0">
           <h1 class="text-3xl font-bold">{a.name}</h1>
           <p class="text-base-content/70 mt-1">{a.shortDescription}</p>
+          {a.developer && (
+            <p class="text-sm text-base-content/60 mt-1">
+              by{" "}
+              {a.homepage ? (
+                <a href={a.homepage} class="link link-hover" target="_blank" rel="noopener">
+                  {a.developer}
+                </a>
+              ) : (
+                a.developer
+              )}
+            </p>
+          )}
 
-          <div class="flex flex-wrap gap-2 mt-3">
+          <div class="flex flex-wrap items-center gap-2 mt-3">
             {a.contentType === "game" && <span class="badge badge-accent">Game</span>}
-            {a.developer && <span class="badge badge-ghost">{a.developer}</span>}
+            {a.rating && <RatingStars average={a.rating.average} count={a.rating.count} />}
             {a.category && <span class="badge badge-outline">{a.category}</span>}
             {a.suite?.role === "component" && a.suite.mainApp && (
               <a
@@ -397,11 +483,6 @@ export default component$(() => {
               >
                 Part of {a.suite.mainApp.name}
               </a>
-            )}
-            {a.rating && (
-              <span class="badge badge-outline">
-                ★ {a.rating.average.toFixed(1)} ({a.rating.count})
-              </span>
             )}
             {a.ageRating && (
               <span class="badge badge-outline">
@@ -552,114 +633,123 @@ export default component$(() => {
         </section>
       ) : null}
 
-      <div class="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-8 items-start">
-        <section>
-          <h2 class="text-lg font-semibold mb-2">Additional information</h2>
-          <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-sm">
-            {a.developer && (
-              <>
-                <dt class="text-base-content/60">Developer</dt>
-                <dd>{a.developer}</dd>
-              </>
-            )}
-            {a.publisher && (
-              <>
-                <dt class="text-base-content/60">Publisher</dt>
-                <dd>{a.publisher}</dd>
-              </>
-            )}
-            {a.license && (
-              <>
-                <dt class="text-base-content/60">License</dt>
-                <dd>{a.license}</dd>
-              </>
-            )}
-            {a.category && (
-              <>
-                <dt class="text-base-content/60">Category</dt>
-                <dd>{a.category}</dd>
-              </>
-            )}
-            {a.languages?.length && (
-              <>
-                <dt class="text-base-content/60">Languages</dt>
-                <dd>{a.languages.join(", ")}</dd>
-              </>
-            )}
-            {a.approxSizeBytes && (
-              <>
-                <dt class="text-base-content/60">Size</dt>
-                <dd>{formatBytes(a.approxSizeBytes)}</dd>
-              </>
-            )}
-            {a.permissions?.length && (
-              <>
-                <dt class="text-base-content/60">Permissions</dt>
-                <dd>{a.permissions.join(", ")}</dd>
-              </>
-            )}
-            {a.gdprCompliant !== undefined && (
-              <>
-                <dt class="text-base-content/60">GDPR</dt>
-                <dd>{a.gdprCompliant ? "Compliant" : "Not stated"}</dd>
-              </>
-            )}
-            {a.homepage && (
-              <>
-                <dt class="text-base-content/60">Homepage</dt>
-                <dd>
-                  <a href={a.homepage} class="link link-primary" target="_blank" rel="noopener">
-                    {a.homepage}
+      <section>
+        <h2 class="text-lg font-semibold mb-2">Additional information</h2>
+        <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-sm">
+          {a.developer && (
+            <>
+              <dt class="text-base-content/60">Developer</dt>
+              <dd>
+                {a.homepage ? (
+                  <a href={a.homepage} class="link link-hover" target="_blank" rel="noopener">
+                    {a.developer}
                   </a>
-                </dd>
-              </>
-            )}
-            <dt class="text-base-content/60">Available via</dt>
-            <dd>{a.packages.map((pkg) => formatSourceLabel(pkg)).join(", ")}</dd>
-            {a.packages.some((pkg) => pkg.rating) && (
-              <>
-                <dt class="text-base-content/60">Ratings by source</dt>
-                <dd>
-                  {a.packages
-                    .filter((pkg) => pkg.rating)
-                    .map((pkg) => (
-                      <span key={`${pkg.source}:${pkg.name}`} class="mr-3 whitespace-nowrap">
-                        {formatSourceLabel(pkg)}: ★ {pkg.rating?.average.toFixed(1)} (
-                        {pkg.rating?.count})
-                      </span>
-                    ))}
-                </dd>
-              </>
-            )}
-            {stats.value.generatedAt && (
-              <>
-                <dt class="text-base-content/60">Catalog data as of</dt>
-                <dd>
-                  {new Date(stats.value.generatedAt).toLocaleDateString()}{" "}
-                  <span class="text-base-content/50">
-                    (dataset snapshot date — per-app update dates aren't tracked yet)
-                  </span>
-                </dd>
-              </>
-            )}
-          </dl>
+                ) : (
+                  a.developer
+                )}
+              </dd>
+            </>
+          )}
+          {a.publisher && (
+            <>
+              <dt class="text-base-content/60">Publisher</dt>
+              <dd>
+                {a.homepage ? (
+                  <a href={a.homepage} class="link link-hover" target="_blank" rel="noopener">
+                    {a.publisher}
+                  </a>
+                ) : (
+                  a.publisher
+                )}
+              </dd>
+            </>
+          )}
+          {a.license && (
+            <>
+              <dt class="text-base-content/60">License</dt>
+              <dd>{a.license}</dd>
+            </>
+          )}
+          {a.category && (
+            <>
+              <dt class="text-base-content/60">Category</dt>
+              <dd>{a.category}</dd>
+            </>
+          )}
+          {a.languages?.length && (
+            <>
+              <dt class="text-base-content/60">Languages</dt>
+              <dd>{a.languages.join(", ")}</dd>
+            </>
+          )}
+          {a.approxSizeBytes && (
+            <>
+              <dt class="text-base-content/60">Size</dt>
+              <dd>{formatBytes(a.approxSizeBytes)}</dd>
+            </>
+          )}
+          {a.permissions?.length && (
+            <>
+              <dt class="text-base-content/60">Permissions</dt>
+              <dd>{a.permissions.join(", ")}</dd>
+            </>
+          )}
+          {a.gdprCompliant !== undefined && (
+            <>
+              <dt class="text-base-content/60">GDPR</dt>
+              <dd>{a.gdprCompliant ? "Compliant" : "Not stated"}</dd>
+            </>
+          )}
+          {a.homepage && (
+            <>
+              <dt class="text-base-content/60">Homepage</dt>
+              <dd>
+                <a href={a.homepage} class="link link-primary" target="_blank" rel="noopener">
+                  {a.homepage}
+                </a>
+              </dd>
+            </>
+          )}
+          <dt class="text-base-content/60">Available via</dt>
+          <dd>{a.packages.map((pkg) => formatSourceLabel(pkg)).join(", ")}</dd>
+          {a.packages.some((pkg) => pkg.rating) && (
+            <>
+              <dt class="text-base-content/60">Ratings by source</dt>
+              <dd>
+                {a.packages
+                  .filter((pkg) => pkg.rating)
+                  .map((pkg) => (
+                    <span key={`${pkg.source}:${pkg.name}`} class="mr-3 whitespace-nowrap">
+                      {formatSourceLabel(pkg)}: ★ {pkg.rating?.average.toFixed(1)} (
+                      {pkg.rating?.count})
+                    </span>
+                  ))}
+              </dd>
+            </>
+          )}
+          {stats.value.generatedAt && (
+            <>
+              <dt class="text-base-content/60">Catalog data as of</dt>
+              <dd>
+                {new Date(stats.value.generatedAt).toLocaleDateString()}{" "}
+                <span class="text-base-content/50">
+                  (dataset snapshot date — per-app update dates aren't tracked yet)
+                </span>
+              </dd>
+            </>
+          )}
+        </dl>
 
-          <a
-            href={`https://github.com/tuxery/app/issues/new?title=${encodeURIComponent(`Report: ${a.name}`)}`}
-            class="btn btn-ghost btn-sm gap-1.5 mt-4"
-            target="_blank"
-            rel="noopener"
-          >
-            <LuFlag class="text-base" />
-            Report this app
-          </a>
-        </section>
-
-        <aside class="border border-base-300 rounded-box p-4 h-fit">
-          <h2 class="text-sm font-semibold mb-2">Alternatives</h2>
-          <p class="text-sm text-base-content/60">Similar app suggestions are coming soon.</p>
-        </aside>
-      </div>
+        <a
+          href={`https://github.com/tuxery/app/issues/new?title=${encodeURIComponent(`Report: ${a.name}`)}`}
+          class="btn btn-ghost btn-sm gap-1.5 mt-4"
+          target="_blank"
+          rel="noopener"
+        >
+          <LuFlag class="text-base" />
+          Report this app
+        </a>
+      </section>
     </div>
   );
 });

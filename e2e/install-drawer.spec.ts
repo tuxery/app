@@ -30,7 +30,7 @@ test("a source with a real store page (Flathub) shows a direct install button, n
   await page.locator("summary", { hasText: "Flatpak" }).click();
 
   await expect(page.getByText("Flathub", { exact: false }).first()).toBeVisible();
-  await expect(page.getByRole("link", { name: "Install" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Click to install" })).toBeVisible();
 });
 
 test("a native-package-only app shows a copy-paste command, even when it has an informational homepage", async ({
@@ -52,8 +52,9 @@ test("a source with more than one channel (AUR's official/-bin/-git builds) show
   await page.getByRole("button", { name: /Install options/ }).click();
   await page.locator("summary", { hasText: "Arch Linux" }).click();
 
-  // One AUR heading, not three separate rows.
-  await expect(page.getByText("AUR", { exact: true })).toHaveCount(1);
+  // One tab group, not three separate rows — AUR is the Arch Linux group's
+  // only source here, so its own label is omitted as redundant with the
+  // "Arch Linux" heading right above (see SourceInstallUnit's showLabel).
   const stable = page.getByRole("tab", { name: "Stable" });
   const bin = page.getByRole("tab", { name: "Bin" });
   const git = page.getByRole("tab", { name: "Git" });
