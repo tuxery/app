@@ -73,12 +73,13 @@ export interface InstallMethod {
   /**
    * The store/package page to hand off to when nothing above is available
    * or worked — deliberately *not* `pkg.homepage` (the developer's own
-   * site) by default, since "where do I get this" and "who made this" are
-   * different questions; `installWebsiteLink` falls back to
-   * `pkg.homepage`/the app's own homepage, labeled plain "Website", only
-   * for sources with no verified store page (see each entry's own comment
-   * for what was checked and, for AppCenter, why it isn't one of them).
-   * `label` names the source for the button text ("View on {label}").
+   * site): "where do I get this" and "who made this" are different
+   * questions, and a generic homepage link mislabeled as a store page
+   * read as clutter (real feedback, found live). Only set where a real
+   * store/package page was verified (see each entry's own comment for
+   * what was checked); no button at all otherwise — see
+   * `installWebsiteLink`. `label` names the source for the button text
+   * ("View on {label}").
    */
   websiteLink?: (pkg: SourcedPackage) => { url: string; label: string } | undefined;
   setup?:
@@ -118,8 +119,8 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
     // No websiteLink: elementary's own documented sharing-URL format
     // (appcenter.elementary.io/<app-id>, from their "New AppCenter Sharing
     // URLs" blog post) 404s live today — checked, not stale docs — so
-    // there's no verified store-page URL to construct here. Falls back to
-    // `pkg.homepage` (the plain per-source fallback) instead.
+    // there's no verified store-page URL to construct here, and no
+    // "View on ..." button shows for this source at all.
     setup: {
       kind: "command",
       command:
@@ -226,13 +227,15 @@ export function installDeepLink(pkg: SourcedPackage): string | undefined {
   return INSTALL_METHODS[pkg.source]?.deepLink?.url(pkg);
 }
 
+/**
+ * Deliberately *not* falling back to `pkg.homepage`/the app's own homepage
+ * when a source has no verified store-page override — real feedback,
+ * found live: a generic "Website" button pointing at the developer's own
+ * site (Void, openSUSE, Solus, ...) read as clutter, not a real install
+ * option. No button at all beats a fake one.
+ */
 export function installWebsiteLink(
   pkg: SourcedPackage,
-  appHomepage: string | undefined,
 ): { url: string; label: string } | undefined {
-  const override = INSTALL_METHODS[pkg.source]?.websiteLink?.(pkg);
-  if (override) return override;
-
-  const homepage = pkg.homepage ?? appHomepage;
-  return homepage ? { url: homepage, label: "Website" } : undefined;
+  return INSTALL_METHODS[pkg.source]?.websiteLink?.(pkg);
 }
