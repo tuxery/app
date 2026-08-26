@@ -1,7 +1,7 @@
-import { $, component$, Slot, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { LuCheck, LuCopy, LuFlag, LuPackage } from "@qwikest/icons/lucide";
+import { LuExternalLink, LuFlag, LuPackage } from "@qwikest/icons/lucide";
 import { getAppById, getStats } from "~/catalog";
 import {
   ALL_SOURCE_GROUPS,
@@ -143,40 +143,20 @@ function tabLabel(pkg: SourcedPackage, packages: SourcedPackage[]): string {
   return collides ? pkg.name : label;
 }
 
-/** A bare "i" (not the daisyUI info-icon glyph, which is a circled i — a circle around an already-circular icon reads as a mistake, see `SourceDotMap` in app-card.tsx for the same call) with an instant CSS tooltip — sized up from the dot-map's own (`text-sm` vs `text-xs`) since it sits next to a full-size button here, not a row of 1.5px dots. */
-const InfoTooltip = component$<{ text: string }>(({ text }) => (
-  <div class="tooltip tooltip-top shrink-0" data-tip={text}>
-    <span
-      class="text-sm italic font-serif text-base-content/50 cursor-help leading-none"
-      aria-hidden="true"
-    >
-      i
-    </span>
-  </div>
-));
-
-/** One install action's row: a fixed-size button on the left (every row's button shares the same size/shape, so the list reads as one group of equal choices, not a ranked list) with its explanatory tooltip right next to it — not pinned to the row's far right, which read as disconnected from the button it was actually about. */
-const ActionRow = component$<{ tooltip: string }>(({ tooltip }) => (
-  <div class="flex items-center gap-2">
-    <Slot />
-    <InfoTooltip text={tooltip} />
-  </div>
-));
-
 /**
  * One packaging source's install info, e.g. "AUR" within "Arch Linux" —
- * up to three independent actions, each its own `ActionRow`: a deep-link
- * button when this source has a real one, the terminal command (shown as
- * code, with its own copy button) when one exists, and a link to the
- * source's own store/package page as a last resort. When more than one
- * package shares this source (AUR's official/`-bin`/`-git` builds of the
- * same app, merged into one app but still genuinely different installs),
- * a small tab group picks which channel's actions show — real bug, found
- * live: these used to render as separate flat rows differing only in a
- * "(git build)" parenthetical, easy to miss scanning a long list. When
- * the source needs a one-time remote/helper setup first and the user
- * hasn't confirmed it yet, that step shows above every action with a
- * button to mark it done — persisted, so it only shows once per source.
+ * two labeled sub-sections: "Prerequisites" (only when this source needs
+ * a one-time remote/helper setup first and the user hasn't confirmed it
+ * yet — persisted, so it only shows once per source) and "Install
+ * options" (up to three independent actions: a deep-link button when
+ * this source has a real one, the terminal command with its own copy
+ * button, and a link to the source's own store/package page as a last
+ * resort). When more than one package shares this source (AUR's
+ * official/`-bin`/`-git` builds of the same app, merged into one app but
+ * still genuinely different installs), a small tab group picks which
+ * channel's actions show — real bug, found live: these used to render as
+ * separate flat rows differing only in a "(git build)" parenthetical,
+ * easy to miss scanning a long list.
  */
 const SourceInstallUnit = component$<{
   packages: SourcedPackage[];
@@ -186,7 +166,6 @@ const SourceInstallUnit = component$<{
   showLabel: boolean;
 }>(({ packages, appHomepage, compatWarnings, showLabel }) => {
   const selectedIndex = useSignal(0);
-  const copied = useSignal(false);
   const settings = useSettings();
 
   const snapAttemptFailed = useSignal(false);
@@ -275,10 +254,7 @@ const SourceInstallUnit = component$<{
               type="button"
               role="tab"
               class={["tab", i === selectedIndex.value && "tab-active"]}
-              onClick$={() => {
-                selectedIndex.value = i;
-                copied.value = false;
-              }}
+              onClick$={() => (selectedIndex.value = i)}
             >
               {tabLabel(p, packages)}
             </button>
@@ -302,118 +278,104 @@ const SourceInstallUnit = component$<{
 
       {/* (0) One-time setup/activation, before any install action — applies to link-kind sources (Flatpak's own remote) just as much as command-kind ones (the AUR helper, Universe, ...), so this no longer lives inside the command-only branch below. */}
       {needsSetup && method.setup && (
-        <div class="bg-base-200 rounded-field p-2 flex flex-col gap-2">
-          <p class="text-xs text-base-content/60">{method.setup.note}</p>
-          {method.setup.kind === "link" ? (
-            <a
-              href={method.setup.url}
-              class="link link-primary text-xs"
-              target="_blank"
-              rel="noopener"
-            >
-              {method.setup.url}
-            </a>
-          ) : (
-            <code class="text-xs font-mono break-all">{method.setup.command}</code>
-          )}
-          {leafId && (
-            <button
-              type="button"
-              class="btn btn-xs btn-outline self-start"
-              onClick$={() => setSourceActivated(settings.installGroups, leafId, true)}
-            >
-              I've already done this
-            </button>
-          )}
+        <div class="flex flex-col gap-1">
+          <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
+            Prerequisites
+          </span>
+          <div class="bg-base-200 rounded-field p-2 flex flex-col gap-2">
+            <p class="text-xs text-base-content/60">{method.setup.note}</p>
+            {method.setup.kind === "link" ? (
+              <a
+                href={method.setup.url}
+                class="link link-primary text-xs"
+                target="_blank"
+                rel="noopener"
+              >
+                {method.setup.url}
+              </a>
+            ) : (
+              <code class="text-xs font-mono break-all">{method.setup.command}</code>
+            )}
+            {leafId && (
+              <button
+                type="button"
+                class="btn btn-xs btn-outline self-start"
+                onClick$={() => setSourceActivated(settings.installGroups, leafId, true)}
+              >
+                I've already done this
+              </button>
+            )}
+          </div>
         </div>
       )}
 
-      {/* (1) A clickable install button — the deep link when this source has a real one, otherwise (link-kind sources only) the homepage itself. */}
-      {primaryLink ? (
-        <ActionRow tooltip="Tries to open your system's software center to install directly — may not work, depending on your setup.">
-          {method.deepLink?.needsIframeDetection && primaryLink === deepLinkUrl ? (
-            <div class="flex flex-col gap-1">
-              <button
-                type="button"
+      {(primaryLink || command || showWebsiteFallback) && (
+        <div class="flex flex-col gap-2">
+          <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
+            Install options
+          </span>
+
+          {/* (1) A clickable install button — the deep link when this source has a real one, otherwise (link-kind sources only) the homepage itself. */}
+          {primaryLink &&
+            (method.deepLink?.needsIframeDetection && primaryLink === deepLinkUrl ? (
+              <div class="flex flex-col gap-1">
+                <button
+                  type="button"
+                  class="btn btn-outline btn-sm w-fit"
+                  onClick$={() => tryDeepLink(primaryLink)}
+                >
+                  {primaryLabel}
+                  <LuExternalLink class="text-xs" />
+                </button>
+                {snapAttemptFailed.value && (
+                  <p class="text-xs text-warning">
+                    Couldn't open the Snap Store app — make sure snapd is installed and running, or
+                    use the command below instead.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <a
+                href={primaryLink}
                 class="btn btn-outline btn-sm w-fit"
-                onClick$={() => tryDeepLink(primaryLink)}
+                target="_blank"
+                rel="noopener"
               >
                 {primaryLabel}
+                <LuExternalLink class="text-xs" />
+              </a>
+            ))}
+          {!primaryLink && method.kind === "link" && (
+            <p class="text-sm text-base-content/60">No direct link available yet.</p>
+          )}
+
+          {/* (2) The terminal command, and its copy button, on one line — a shorter button label than before leaves more room for the command itself. */}
+          {command && (
+            <div class="flex items-center gap-2 bg-neutral text-neutral-content rounded-field px-3 py-2">
+              <code class="text-xs font-mono break-all flex-1">{command}</code>
+              <button
+                type="button"
+                class="btn btn-outline btn-sm w-fit shrink-0"
+                onClick$={() => navigator.clipboard.writeText(command)}
+              >
+                Copy Command
               </button>
-              {snapAttemptFailed.value && (
-                <p class="text-xs text-warning">
-                  Couldn't open the Snap Store app — make sure snapd is installed and running, or
-                  use the command below instead.
-                </p>
-              )}
             </div>
-          ) : (
+          )}
+
+          {/* (3) The store/homepage page, last — a catch-all for when nothing above worked or applied. */}
+          {showWebsiteFallback && (
             <a
-              href={primaryLink}
+              href={websiteLink.url}
               class="btn btn-outline btn-sm w-fit"
               target="_blank"
               rel="noopener"
             >
-              {primaryLabel}
+              {websiteLink.label === "Website" ? "Website" : `View on ${websiteLink.label}`}
+              <LuExternalLink class="text-xs" />
             </a>
           )}
-        </ActionRow>
-      ) : (
-        method.kind === "link" && (
-          <p class="text-sm text-base-content/60">No direct link available yet.</p>
-        )
-      )}
-
-      {/* (2) The terminal command — the fallback when no button exists (the common case) or an addition alongside one. Deliberately two ways to copy it, not one: the button in the row above (consistent with every other action here) and the small icon button on the terminal-prompt-styled line below (familiar from before this row-based layout existed, and worth keeping — the command itself needs to stay visible and readable before pasting, especially the `sudo` ones, not hidden behind a button alone). */}
-      {command && (
-        <>
-          <ActionRow tooltip="Copies a ready-to-paste command for your terminal. Nothing runs until you paste and confirm it yourself.">
-            <button
-              type="button"
-              class="btn btn-outline btn-sm w-fit"
-              onClick$={() => {
-                navigator.clipboard.writeText(command);
-                copied.value = true;
-              }}
-            >
-              Copy terminal command
-            </button>
-          </ActionRow>
-          <div class="flex items-center gap-2 bg-neutral text-neutral-content rounded-field px-3 py-2">
-            <code class="text-xs font-mono break-all flex-1">{command}</code>
-            <button
-              type="button"
-              class="btn btn-xs btn-square btn-ghost text-neutral-content"
-              aria-label="Copy install command"
-              onClick$={() => {
-                navigator.clipboard.writeText(command);
-                copied.value = true;
-              }}
-            >
-              {copied.value ? <LuCheck /> : <LuCopy />}
-            </button>
-          </div>
-        </>
-      )}
-
-      {/* (3) The store/homepage page, last — a catch-all for when nothing above worked or applied. */}
-      {showWebsiteFallback && (
-        <ActionRow
-          tooltip={
-            websiteLink.label === "Website"
-              ? "Opens the app's own homepage."
-              : `Opens ${websiteLink.label}'s own page for this app.`
-          }
-        >
-          <a
-            href={websiteLink.url}
-            class="btn btn-outline btn-sm w-fit"
-            target="_blank"
-            rel="noopener"
-          >
-            {websiteLink.label === "Website" ? "Website" : `View on ${websiteLink.label}`}
-          </a>
-        </ActionRow>
+        </div>
       )}
     </div>
   );
