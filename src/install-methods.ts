@@ -70,7 +70,15 @@ export interface InstallMethod {
   kind: "link" | "command";
   deepLink?: DeepLink;
   command?: (pkg: SourcedPackage) => string;
-  /** The page to hand off to when nothing more direct is available/worked — `pkg.homepage` (or the app's own homepage) by default; only overridden where a source-specific page is more useful (Snap's own Snapcraft Store listing beats a possibly-missing publisher homepage). */
+  /**
+   * The store/package page to hand off to when nothing above is available
+   * or worked — deliberately *not* `pkg.homepage` (the developer's own
+   * site) by default, since "where do I get this" and "who made this" are
+   * different questions; falls back to `pkg.homepage`/the app's own
+   * homepage only for sources with no verified store page (see each
+   * entry's own comment for what was checked and, for AppCenter, why it
+   * isn't one of them).
+   */
   websiteLink?: (pkg: SourcedPackage) => string | undefined;
   setup?:
     | { kind: "command"; command: string; note: string }
@@ -95,12 +103,21 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
     kind: "link",
     deepLink: { url: (pkg) => (pkg.appId ? `appstream://${pkg.appId}` : undefined) },
     command: (pkg) => `flatpak install flathub ${pkg.appId}`,
+    // The store page, not `pkg.homepage` (the developer's own site) — verified
+    // live: the bare, locale-less URL 200s and redirects to the visitor's own
+    // language (/en/, /fr/, ...) automatically, so no locale is hardcoded here.
+    websiteLink: (pkg) => (pkg.appId ? `https://flathub.org/apps/${pkg.appId}` : undefined),
     setup: FLATHUB_SETUP,
   },
   "flatpak-appcenter": {
     kind: "link",
     deepLink: { url: (pkg) => (pkg.appId ? `appstream://${pkg.appId}` : undefined) },
     command: (pkg) => `flatpak install appcenter ${pkg.appId}`,
+    // No websiteLink: elementary's own documented sharing-URL format
+    // (appcenter.elementary.io/<app-id>, from their "New AppCenter Sharing
+    // URLs" blog post) 404s live today — checked, not stale docs — so
+    // there's no verified store-page URL to construct here. Falls back to
+    // `pkg.homepage` (the plain per-source fallback) instead.
     setup: {
       kind: "command",
       command:
@@ -127,28 +144,43 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
   "pacman-aur": {
     kind: "command",
     command: (pkg) => `yay -S ${pkg.name}`,
+    websiteLink: (pkg) => `https://aur.archlinux.org/packages/${pkg.name}`,
     setup: {
       kind: "command",
       command: "# install an AUR helper first, e.g.: https://github.com/Jguer/yay#installation",
       note: "One-time — the AUR itself needs a helper (yay, paru, ...), pacman alone can't reach it.",
     },
   },
-  "pacman-arch": { kind: "command", command: (pkg) => `sudo pacman -S ${pkg.name}` },
+  "pacman-arch": {
+    kind: "command",
+    command: (pkg) => `sudo pacman -S ${pkg.name}`,
+    // A search results page, not a direct package page — archlinux.org's
+    // own package URLs need the repo (core/extra/multilib) and arch, which
+    // this connector doesn't capture per-package. Still a real, verified,
+    // always-correct link, just one click less direct.
+    websiteLink: (pkg) => `https://archlinux.org/packages/?q=${pkg.name}`,
+  },
   "deb-debian": {
     kind: "command",
     deepLink: { url: (pkg) => `apt:${pkg.name}` },
     command: (pkg) => `sudo apt install ${pkg.name}`,
+    websiteLink: (pkg) => `https://packages.debian.org/${pkg.name}`,
   },
   "deb-ubuntu": {
     kind: "command",
     deepLink: { url: (pkg) => `apt:${pkg.name}` },
     command: (pkg) => `sudo apt install ${pkg.name}`,
+    websiteLink: (pkg) => `https://packages.ubuntu.com/${pkg.name}`,
   },
   "deb-mint": { kind: "command", command: (pkg) => `sudo apt install ${pkg.name}` },
   "deb-popos": { kind: "command", command: (pkg) => `sudo apt install ${pkg.name}` },
   "deb-deepin": { kind: "command", command: (pkg) => `sudo apt install ${pkg.name}` },
   "deb-mxlinux": { kind: "command", command: (pkg) => `sudo apt install ${pkg.name}` },
-  "rpm-fedora": { kind: "command", command: (pkg) => `sudo dnf install ${pkg.name}` },
+  "rpm-fedora": {
+    kind: "command",
+    command: (pkg) => `sudo dnf install ${pkg.name}`,
+    websiteLink: (pkg) => `https://packages.fedoraproject.org/pkgs/${pkg.name}`,
+  },
   "rpm-opensuse": { kind: "command", command: (pkg) => `sudo zypper install ${pkg.name}` },
   "rpm-rpmfusion": {
     kind: "command",

@@ -35,7 +35,13 @@ test("Flatpak's install button is the appstream:// deep link, with a terminal co
     "appstream://org.mozilla.firefox",
   );
   await expect(page.getByText("flatpak install flathub org.mozilla.firefox")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Website" })).toBeVisible();
+  // The Flathub store page, not the developer's own homepage — real bug,
+  // found live: this used to fall back to `pkg.homepage` (mozilla.org),
+  // not the app's actual store listing.
+  await expect(page.getByRole("link", { name: "Website" })).toHaveAttribute(
+    "href",
+    "https://flathub.org/apps/org.mozilla.firefox",
+  );
 });
 
 test("a native distro package with a real apt: handler (Debian) shows it as the install button", async ({
