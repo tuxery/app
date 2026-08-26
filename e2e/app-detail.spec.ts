@@ -9,9 +9,9 @@ test("an app page shows an install-options drawer listing every source, each gro
   page,
 }) => {
   await page.goto(FIREFOX);
-  await expect(page.getByRole("button", { name: /Install options/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Install" })).toBeVisible();
 
-  await page.getByRole("button", { name: /Install options/ }).click();
+  await page.getByRole("button", { name: "Install" }).click();
   const flatpakSummary = page.locator("summary", { hasText: "Flatpak" });
   await expect(flatpakSummary).toBeVisible();
   await expect(page.getByRole("link", { name: "Click to install" })).toHaveCount(0);
