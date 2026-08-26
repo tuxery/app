@@ -1,6 +1,12 @@
 import { component$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { LuCode, LuFlag, LuGithub, LuPackage } from "@qwikest/icons/lucide";
+import { LuCode, LuFlag, LuGithub, LuHeartHandshake, LuPackage } from "@qwikest/icons/lucide";
+
+// No payment processor (GitHub Sponsors, Open Collective, ...) is set up
+// yet — direct email is the only channel until one is. Kept as a named
+// constant since it's the kind of thing likely to get reused (footer,
+// About) once financial support is a real, non-manual flow.
+const SPONSOR_EMAIL = "sponsoring@tuxery.store";
 
 const WAYS = [
   {
@@ -23,6 +29,13 @@ const WAYS = [
     body: "Know a Linux app store, repo, or distro Tuxery doesn't cover yet? Propose it as a new source on the catalog repo.",
     href: "https://github.com/tuxery/catalog/issues/new",
     cta: "Propose a source",
+  },
+  {
+    icon: LuHeartHandshake,
+    title: "Support financially",
+    body: "No sponsorship platform is set up yet — for now, reach out directly and we'll figure it out.",
+    href: `mailto:${SPONSOR_EMAIL}`,
+    cta: SPONSOR_EMAIL,
   },
 ];
 
