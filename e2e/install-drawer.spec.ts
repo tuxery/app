@@ -38,7 +38,7 @@ test("Flatpak's install button is the appstream:// deep link, with a terminal co
   // The Flathub store page, not the developer's own homepage — real bug,
   // found live: this used to fall back to `pkg.homepage` (mozilla.org),
   // not the app's actual store listing.
-  await expect(page.getByRole("link", { name: "Website" })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "View on Flathub" })).toHaveAttribute(
     "href",
     "https://flathub.org/apps/org.mozilla.firefox",
   );
