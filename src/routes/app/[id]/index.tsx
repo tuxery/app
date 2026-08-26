@@ -143,13 +143,18 @@ function tabLabel(pkg: SourcedPackage, packages: SourcedPackage[]): string {
   return collides ? pkg.name : label;
 }
 
-/** A small "or" divider between two install options — without it, a stack of buttons reads as a checklist ("do all of these"), not a choice ("pick whichever works for you"). Same divider styling as Browse's own "Page N" one. */
+/**
+ * A small "or" between two install options — without it, a stack of
+ * buttons reads as a checklist ("do all of these"), not a choice ("pick
+ * whichever works for you"). Left-aligned, no border lines (unlike
+ * Browse's own "Page N" divider) — the options themselves are narrow,
+ * left-hugging buttons, not full-width rows, so a line stretching the
+ * full row width would end up wider than anything it's dividing.
+ */
 const Or = component$(() => (
-  <div class="flex items-center gap-2 text-xs text-base-content/40" aria-hidden="true">
-    <span class="flex-1 border-t border-base-300" />
+  <span class="text-xs text-base-content/40" aria-hidden="true">
     or
-    <span class="flex-1 border-t border-base-300" />
-  </div>
+  </span>
 ));
 
 /**
@@ -290,13 +295,13 @@ const SourceInstallUnit = component$<{
         </div>
       )}
 
-      {/* (0) One-time setup/activation, before any install action — applies to link-kind sources (Flatpak's own remote) just as much as command-kind ones (the AUR helper, Universe, ...), so this no longer lives inside the command-only branch below. */}
+      {/* (0) One-time setup/activation, before any install action — applies to link-kind sources (Flatpak's own remote) just as much as command-kind ones (the AUR helper, Universe, ...), so this no longer lives inside the command-only branch below. Label flush left, content indented under it (pl-3) — the label-to-content gap (gap-1) stays tighter than the gap to whatever's above/below it, so it reads as "this belongs together" rather than one more item in a flat list. */}
       {needsSetup && method.setup && (
         <div class="flex flex-col gap-1">
           <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
             Prerequisites
           </span>
-          <div class="bg-base-200 rounded-field p-2 flex flex-col gap-2">
+          <div class="bg-base-200 rounded-field p-2 flex flex-col gap-2 ml-3">
             <p class="text-xs text-base-content/60">{method.setup.note}</p>
             {method.setup.kind === "link" ? (
               <a
@@ -324,79 +329,81 @@ const SourceInstallUnit = component$<{
       )}
 
       {(primaryLink || command || showWebsiteFallback) && (
-        <div class="flex flex-col gap-2">
+        <div class={["flex flex-col gap-1", needsSetup && method.setup && "mt-2"]}>
           {showInstallOptionsLabel && (
             <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
               Install options
             </span>
           )}
 
-          {/* (1) A clickable install button — the deep link when this source has a real one, otherwise (link-kind sources only) the homepage itself. */}
-          {primaryLink &&
-            (method.deepLink?.needsIframeDetection && primaryLink === deepLinkUrl ? (
-              <div class="flex flex-col gap-1">
-                <button
-                  type="button"
+          <div class="flex flex-col gap-2 ml-3">
+            {/* (1) A clickable install button — the deep link when this source has a real one, otherwise (link-kind sources only) the homepage itself. */}
+            {primaryLink &&
+              (method.deepLink?.needsIframeDetection && primaryLink === deepLinkUrl ? (
+                <div class="flex flex-col gap-1">
+                  <button
+                    type="button"
+                    class="btn btn-outline btn-sm w-fit"
+                    onClick$={() => tryDeepLink(primaryLink)}
+                  >
+                    {primaryLabel}
+                    <LuExternalLink class="text-xs" />
+                  </button>
+                  {snapAttemptFailed.value && (
+                    <p class="text-xs text-warning">
+                      Couldn't open the Snap Store app — make sure snapd is installed and running,
+                      or use the command below instead.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <a
+                  href={primaryLink}
                   class="btn btn-outline btn-sm w-fit"
-                  onClick$={() => tryDeepLink(primaryLink)}
+                  target="_blank"
+                  rel="noopener"
                 >
                   {primaryLabel}
                   <LuExternalLink class="text-xs" />
-                </button>
-                {snapAttemptFailed.value && (
-                  <p class="text-xs text-warning">
-                    Couldn't open the Snap Store app — make sure snapd is installed and running, or
-                    use the command below instead.
-                  </p>
-                )}
-              </div>
-            ) : (
-              <a
-                href={primaryLink}
-                class="btn btn-outline btn-sm w-fit"
-                target="_blank"
-                rel="noopener"
-              >
-                {primaryLabel}
-                <LuExternalLink class="text-xs" />
-              </a>
-            ))}
-          {!primaryLink && method.kind === "link" && (
-            <p class="text-sm text-base-content/60">No direct link available yet.</p>
-          )}
+                </a>
+              ))}
+            {!primaryLink && method.kind === "link" && (
+              <p class="text-sm text-base-content/60">No direct link available yet.</p>
+            )}
 
-          {/* (2) The terminal command, and its copy button, on one line — a shorter button label than before leaves more room for the command itself. */}
-          {command && (
-            <>
-              {primaryLink && <Or />}
-              <div class="flex items-center gap-2 bg-neutral text-neutral-content rounded-field px-3 py-2">
-                <code class="text-xs font-mono break-all flex-1">{command}</code>
-                <button
-                  type="button"
-                  class="btn btn-outline btn-sm w-fit shrink-0"
-                  onClick$={() => navigator.clipboard.writeText(command)}
+            {/* (2) The terminal command, and its copy button, on one line — a shorter button label than before leaves more room for the command itself. */}
+            {command && (
+              <>
+                {primaryLink && <Or />}
+                <div class="flex items-center gap-2 bg-neutral text-neutral-content rounded-field px-3 py-2">
+                  <code class="text-xs font-mono break-all flex-1">{command}</code>
+                  <button
+                    type="button"
+                    class="btn btn-outline btn-sm w-fit shrink-0"
+                    onClick$={() => navigator.clipboard.writeText(command)}
+                  >
+                    Copy Command
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* (3) The store/homepage page, last — a catch-all for when nothing above worked or applied. */}
+            {showWebsiteFallback && (
+              <>
+                {(primaryLink || command) && <Or />}
+                <a
+                  href={websiteLink.url}
+                  class="btn btn-outline btn-sm w-fit"
+                  target="_blank"
+                  rel="noopener"
                 >
-                  Copy Command
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* (3) The store/homepage page, last — a catch-all for when nothing above worked or applied. */}
-          {showWebsiteFallback && (
-            <>
-              {(primaryLink || command) && <Or />}
-              <a
-                href={websiteLink.url}
-                class="btn btn-outline btn-sm w-fit"
-                target="_blank"
-                rel="noopener"
-              >
-                {`View on ${websiteLink.label}`}
-                <LuExternalLink class="text-xs" />
-              </a>
-            </>
-          )}
+                  {`View on ${websiteLink.label}`}
+                  <LuExternalLink class="text-xs" />
+                </a>
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>
