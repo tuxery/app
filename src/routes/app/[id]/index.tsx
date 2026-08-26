@@ -499,10 +499,14 @@ const AppInstallSummary = component$<{ packages: SourcedPackage[] }>(({ packages
     SOURCE_GROUP_MEMBERS[group]?.some((source) => sourceSet.has(source)),
   );
   const sourcesTip = presentGroups.length ? presentGroups.join(", ") : "none";
-  const channelsTip = packages.map((pkg) => formatSourceLabel(pkg)).join(", ");
+  // The actual channel/build-type words (Stable, Bin, Git, Canary, ...),
+  // deduplicated — not `formatSourceLabel`, which repeats the source name
+  // per package ("AUR (bin build)") rather than naming the channel itself.
+  const channelsTip = [...new Set(packages.map((pkg) => channelLabel(pkg.channel)))].join(", ");
+  const tip = `sources: ${sourcesTip}\nchannels: ${channelsTip}`;
 
   return (
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2" title={tip}>
       <div class="grid grid-rows-2 grid-flow-col gap-0.5" aria-hidden="true">
         {ALL_SOURCE_GROUPS.map((group) => (
           <span
@@ -512,16 +516,21 @@ const AppInstallSummary = component$<{ packages: SourcedPackage[] }>(({ packages
         ))}
       </div>
       <div class="indicator" aria-hidden="true">
-        <span class="indicator-item indicator-top indicator-end badge badge-primary badge-xs">
+        <span class="indicator-item indicator-top indicator-end badge badge-primary badge-xs text-[10px]">
           {packages.length}
         </span>
-        <LuPackage class="text-lg text-base-content/50" />
+        <LuPackage class="text-sm text-base-content/50" />
       </div>
+      {/* CSS tooltip for the instant hover experience where there's room
+          for it (the hero) — the native `title` above is the reliable
+          fallback, since the fixed sticky header's own `glass-card` sets
+          `overflow: hidden` (needed for its backdrop-blur edge), which
+          clips this popup completely whenever it's used there. */}
       <div
         class="tooltip tooltip-bottom before:whitespace-pre-wrap before:text-left"
-        data-tip={`sources: ${sourcesTip}\nchannels: ${channelsTip}`}
+        data-tip={tip}
       >
-        <LuInfo class="text-base text-base-content/50 cursor-help" />
+        <LuInfo class="text-sm text-base-content/50 cursor-help" />
       </div>
     </div>
   );
@@ -671,7 +680,7 @@ export default component$(() => {
               <div class="aura aura-sm w-fit">
                 <button
                   type="button"
-                  class="btn btn-primary btn-lg min-w-[120px]"
+                  class="btn btn-primary btn-sm min-w-[120px]"
                   onClick$={() => (drawerOpen.value = true)}
                 >
                   Install
