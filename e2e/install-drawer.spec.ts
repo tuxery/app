@@ -22,6 +22,33 @@ test("groups packages by platform, one collapsible per group (closed by default)
   await expect(page.getByText("sudo dnf install 0ad-data")).toBeVisible();
 });
 
+test('the "Install options" label only shows when there\'s a prerequisite or more than one option', async ({
+  page,
+}) => {
+  await page.goto("/app/flatpak-flathub%3Acom.discordapp.Discord/");
+  await page.getByRole("button", { name: /Install options/ }).click();
+  await page.locator("summary", { hasText: "Arch Linux" }).click();
+
+  // openSUSE: no prerequisite, one option (command only) — label omitted.
+  const opensuseSection = page.locator("details", {
+    has: page.locator("summary", { hasText: "openSUSE" }),
+  });
+  await opensuseSection.locator("summary").click();
+  await expect(opensuseSection.getByText("sudo zypper install discord")).toBeVisible();
+  await expect(opensuseSection.getByText("Install options", { exact: true })).toHaveCount(0);
+
+  // Arch's official repo: no prerequisite, but two options (command + View
+  // on Arch Linux) — label shows to group them. AUR (the other source in
+  // this group) also shows the label, for a different reason (its own
+  // prerequisite) — so both together means exactly two, confirming
+  // Official's own label is really there and not just AUR's.
+  const archSection = page.locator("details", {
+    has: page.locator("summary", { hasText: "Arch Linux" }),
+  });
+  await expect(archSection.getByText("sudo pacman -S discord")).toBeVisible();
+  await expect(archSection.getByText("Install options", { exact: true })).toHaveCount(2);
+});
+
 test("Flatpak's install button is the appstream:// deep link, with a terminal command and website fallback alongside it", async ({
   page,
 }) => {
