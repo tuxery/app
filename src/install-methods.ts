@@ -74,12 +74,13 @@ export interface InstallMethod {
    * The store/package page to hand off to when nothing above is available
    * or worked — deliberately *not* `pkg.homepage` (the developer's own
    * site) by default, since "where do I get this" and "who made this" are
-   * different questions; falls back to `pkg.homepage`/the app's own
-   * homepage only for sources with no verified store page (see each
-   * entry's own comment for what was checked and, for AppCenter, why it
-   * isn't one of them).
+   * different questions; `installWebsiteLink` falls back to
+   * `pkg.homepage`/the app's own homepage, labeled plain "Website", only
+   * for sources with no verified store page (see each entry's own comment
+   * for what was checked and, for AppCenter, why it isn't one of them).
+   * `label` names the source for the button text ("View on {label}").
    */
-  websiteLink?: (pkg: SourcedPackage) => string | undefined;
+  websiteLink?: (pkg: SourcedPackage) => { url: string; label: string } | undefined;
   setup?:
     | { kind: "command"; command: string; note: string }
     | { kind: "link"; url: string; note: string };
@@ -106,7 +107,8 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
     // The store page, not `pkg.homepage` (the developer's own site) — verified
     // live: the bare, locale-less URL 200s and redirects to the visitor's own
     // language (/en/, /fr/, ...) automatically, so no locale is hardcoded here.
-    websiteLink: (pkg) => (pkg.appId ? `https://flathub.org/apps/${pkg.appId}` : undefined),
+    websiteLink: (pkg) =>
+      pkg.appId ? { url: `https://flathub.org/apps/${pkg.appId}`, label: "Flathub" } : undefined,
     setup: FLATHUB_SETUP,
   },
   "flatpak-appcenter": {
@@ -132,7 +134,8 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
       needsIframeDetection: true,
     },
     command: (pkg) => `sudo snap install ${pkg.name}`,
-    websiteLink: (pkg) => (pkg.appId ? `https://snapcraft.io/${pkg.appId}` : pkg.homepage),
+    websiteLink: (pkg) =>
+      pkg.appId ? { url: `https://snapcraft.io/${pkg.appId}`, label: "Snapcraft" } : undefined,
     setup: {
       kind: "link",
       url: "https://snapcraft.io/docs/installing-snapd",
@@ -144,7 +147,7 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
   "pacman-aur": {
     kind: "command",
     command: (pkg) => `yay -S ${pkg.name}`,
-    websiteLink: (pkg) => `https://aur.archlinux.org/packages/${pkg.name}`,
+    websiteLink: (pkg) => ({ url: `https://aur.archlinux.org/packages/${pkg.name}`, label: "AUR" }),
     setup: {
       kind: "command",
       command: "# install an AUR helper first, e.g.: https://github.com/Jguer/yay#installation",
@@ -158,19 +161,28 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
     // own package URLs need the repo (core/extra/multilib) and arch, which
     // this connector doesn't capture per-package. Still a real, verified,
     // always-correct link, just one click less direct.
-    websiteLink: (pkg) => `https://archlinux.org/packages/?q=${pkg.name}`,
+    websiteLink: (pkg) => ({
+      url: `https://archlinux.org/packages/?q=${pkg.name}`,
+      label: "Arch Linux",
+    }),
   },
   "deb-debian": {
     kind: "command",
     deepLink: { url: (pkg) => `apt:${pkg.name}` },
     command: (pkg) => `sudo apt install ${pkg.name}`,
-    websiteLink: (pkg) => `https://packages.debian.org/${pkg.name}`,
+    websiteLink: (pkg) => ({
+      url: `https://packages.debian.org/${pkg.name}`,
+      label: "Debian",
+    }),
   },
   "deb-ubuntu": {
     kind: "command",
     deepLink: { url: (pkg) => `apt:${pkg.name}` },
     command: (pkg) => `sudo apt install ${pkg.name}`,
-    websiteLink: (pkg) => `https://packages.ubuntu.com/${pkg.name}`,
+    websiteLink: (pkg) => ({
+      url: `https://packages.ubuntu.com/${pkg.name}`,
+      label: "Ubuntu",
+    }),
   },
   "deb-mint": { kind: "command", command: (pkg) => `sudo apt install ${pkg.name}` },
   "deb-popos": { kind: "command", command: (pkg) => `sudo apt install ${pkg.name}` },
@@ -179,7 +191,10 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
   "rpm-fedora": {
     kind: "command",
     command: (pkg) => `sudo dnf install ${pkg.name}`,
-    websiteLink: (pkg) => `https://packages.fedoraproject.org/pkgs/${pkg.name}`,
+    websiteLink: (pkg) => ({
+      url: `https://packages.fedoraproject.org/pkgs/${pkg.name}`,
+      label: "Fedora",
+    }),
   },
   "rpm-opensuse": { kind: "command", command: (pkg) => `sudo zypper install ${pkg.name}` },
   "rpm-rpmfusion": {
@@ -214,7 +229,10 @@ export function installDeepLink(pkg: SourcedPackage): string | undefined {
 export function installWebsiteLink(
   pkg: SourcedPackage,
   appHomepage: string | undefined,
-): string | undefined {
-  const method = INSTALL_METHODS[pkg.source];
-  return method?.websiteLink?.(pkg) ?? pkg.homepage ?? appHomepage;
+): { url: string; label: string } | undefined {
+  const override = INSTALL_METHODS[pkg.source]?.websiteLink?.(pkg);
+  if (override) return override;
+
+  const homepage = pkg.homepage ?? appHomepage;
+  return homepage ? { url: homepage, label: "Website" } : undefined;
 }
