@@ -342,19 +342,20 @@ export async function getAppById(id: string): Promise<CatalogApp | null> {
 
 const TRENDING_PAGE_SIZE = 60;
 
-// Icon-only or screenshot-only both count — either is enough to not read
-// as a bare placeholder card. Scoped to homepage/trending surfaces only
-// (not Browse or search, which stay exhaustive/findable) — a curated
-// showcase reading as polished is worth the cut, verified live: only
-// 1,396 of the 21,844 popularity-scored apps have either (mostly AUR's
-// own usage-frequency signal, a source with no icon/screenshot data at
-// all) — still comfortably enough for every trending bucket (232 games,
-// 807 apps, 357 utils) and every homepage category row (off by at most 1
-// app per row — category itself is Flathub/AppCenter-only data, the same
-// sources that carry icons/screenshots, so the two already correlate
-// almost perfectly).
-const HAS_VISUAL_ASSET =
-  "(icon_url IS NOT NULL OR (screenshots_json IS NOT NULL AND screenshots_json != '[]'))";
+// icon_url only — real bug, found live once the homepage's Trending row
+// split into per-type (games/apps/utils) rows: this used to also admit
+// screenshot-only apps ("either is enough to not read as a placeholder"),
+// but `AppCard` has no `screenshots` prop and never renders one — it only
+// ever puts an `<img>` for `iconUrl`, so a screenshot-only app rendered as
+// a bare placeholder-icon card regardless, the exact thing this filter
+// was supposed to prevent. Scoped to homepage/trending surfaces only (not
+// Browse or search, which stay exhaustive/findable) — a curated showcase
+// reading as polished is worth the cut. Verified live: 1,386 of the
+// 21,844 popularity-scored apps have a real icon (mostly AUR's own
+// usage-frequency signal, a source with no icon data at all) — still
+// comfortably enough for every trending bucket (216 games, 814 apps, 356
+// utils) and every homepage category row.
+const HAS_VISUAL_ASSET = "icon_url IS NOT NULL";
 
 /**
  * Apps with a real cross-source popularity score, highest first — see
