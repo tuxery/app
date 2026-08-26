@@ -1,4 +1,4 @@
-import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { LuCheck, LuCopy, LuFlag, LuPackage } from "@qwikest/icons/lucide";
@@ -12,7 +12,12 @@ import {
   type PackageSourceId,
   type SourcedPackage,
 } from "~/catalog-types";
-import { INSTALL_METHODS, installCommand } from "~/install-methods";
+import {
+  INSTALL_METHODS,
+  installCommand,
+  installDeepLink,
+  installWebsiteLink,
+} from "~/install-methods";
 import {
   setSourceActivated,
   useSettings,
@@ -30,17 +35,23 @@ export const useApp = routeLoader$(async (requestEvent): Promise<CatalogApp | nu
 export const useDetailStats = routeLoader$(async () => getStats());
 
 // Only the special repos precise enough to know exactly which package
-// needs them — each has its own distinct PackageSourceId, so showing the
-// setup step on that source's install row is never a guess. Universe/
-// non-oss aren't here: they apply to *some* packages from a source shared
-// with packages that don't need them (deb-ubuntu, rpm-opensuse), so they
-// only ever show generically on the Settings page — see settings.ts.
-const SOURCE_ID_TO_PACKAGE_SOURCE: Record<string, PackageSourceId> = {
-  flathub: "flatpak-flathub",
-  "elementary-appcenter": "flatpak-appcenter",
-  "snap-store": "snap-snapcraft",
-  "arch-aur": "pacman-aur",
-  rpmfusion: "rpm-rpmfusion",
+// needs them — each maps to the settings.ts leaf whose "activated" flag
+// governs it, so showing the setup step on that source's install row is
+// never a guess. Universe/non-oss aren't here: they apply to *some*
+// packages from a source shared with packages that don't need them
+// (deb-ubuntu, rpm-opensuse), so they only ever show generically on the
+// Settings page — see settings.ts. `appimage`/`appimage-manual` both
+// point at the same leaf — the "do you have a desktop-integration tool"
+// question doesn't depend on which of the two AppImage feeds a package
+// came from.
+const PACKAGE_SOURCE_TO_LEAF_ID: Partial<Record<PackageSourceId, string>> = {
+  "flatpak-flathub": "flathub",
+  "flatpak-appcenter": "elementary-appcenter",
+  "snap-snapcraft": "snap-store",
+  appimage: "appimage-integration",
+  "appimage-manual": "appimage-integration",
+  "pacman-aur": "arch-aur",
+  "rpm-rpmfusion": "rpmfusion",
 };
 
 /** A source label, qualified with its channel when it has one (currently only AUR's -git/-svn/-hg/-bzr/-cvs rolling-release builds) — so a merged "official + dev build" pair reads as two distinct install options, not a duplicate. */
@@ -67,11 +78,6 @@ const SHORT_SOURCE_LABELS: Partial<Record<PackageSourceId, string>> = {
   "pacman-arch": "Official",
   "rpm-fedora": "Official",
 };
-
-// Reverse of SOURCE_ID_TO_PACKAGE_SOURCE — each entry maps from exactly one leaf id.
-const PACKAGE_SOURCE_TO_LEAF_ID: Partial<Record<PackageSourceId, string>> = Object.fromEntries(
-  Object.entries(SOURCE_ID_TO_PACKAGE_SOURCE).map(([leaf, source]) => [source, leaf]),
-);
 
 function findSourceOption(
   installGroups: InstallFormatGroup[],
@@ -163,6 +169,8 @@ const SourceInstallUnit = component$<{
   const copied = useSignal(false);
   const settings = useSettings();
 
+  const snapAttemptFailed = useSignal(false);
+
   const pkg = packages[selectedIndex.value] ?? packages[0];
   if (!pkg) return null;
 
@@ -172,7 +180,56 @@ const SourceInstallUnit = component$<{
   const command = installCommand(pkg);
   const needsSetup = method.setup && !sourceOption?.activated;
   const warning = compatWarnings?.find((w) => w.source === pkg.source);
-  const link = method.kind === "link" ? (pkg.homepage ?? appHomepage) : undefined;
+
+  const deepLinkUrl = installDeepLink(pkg);
+  const homepageLink = pkg.homepage ?? appHomepage;
+  // The primary clickable action: a real deep link when this source has
+  // one, otherwise (for "link"-kind sources only) the source's own
+  // homepage/store page — GOG, Lutris, AppImage, GitHub Releases have no
+  // deep-link scheme at all, so their homepage *is* the install action.
+  const primaryLink = method.kind === "link" ? (deepLinkUrl ?? homepageLink) : deepLinkUrl;
+  const websiteLink = installWebsiteLink(pkg, appHomepage);
+  // Only worth its own line when it's not already what the button above points to.
+  const showWebsiteFallback = websiteLink && websiteLink !== primaryLink;
+  const primaryLabel = SOURCE_GROUP_MEMBERS.AppImage?.includes(pkg.source)
+    ? "Download"
+    : "Click to install";
+
+  // Snap's own store (canonical/snapcraft.io's openDesktop.ts) doesn't use
+  // a plain link for snap:// — there's no reliable way to detect a missing
+  // handler from a click, so a bare link either silently works or silently
+  // does nothing. They open it in a hidden iframe and use a blur/
+  // visibilitychange listener with a timeout to infer success (the OS
+  // switching away to launch the handler blurs the page) — ported here
+  // rather than reinvented, same technique, same ~1.5s window.
+  const tryDeepLink = $((url: string) => {
+    snapAttemptFailed.value = false;
+
+    document.querySelector(".js-snap-open-frame")?.remove();
+    const iframe = document.createElement("iframe");
+    iframe.className = "js-snap-open-frame";
+    iframe.style.cssText = "position:absolute;top:-9999px;left:-9999px";
+    iframe.src = url;
+    document.body.appendChild(iframe);
+
+    let settled = false;
+    let timer = 0;
+    const finish = (success: boolean) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      window.removeEventListener("blur", onBlur);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (!success) snapAttemptFailed.value = true;
+    };
+    const onBlur = () => finish(true);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") finish(true);
+    };
+    timer = window.setTimeout(() => finish(false), 1500);
+    window.addEventListener("blur", onBlur);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+  });
 
   return (
     <div class="flex flex-col gap-2">
@@ -243,34 +300,44 @@ const SourceInstallUnit = component$<{
         </div>
       )}
 
-      {/* (1) A clickable install button, only when the source actually has one. */}
-      {method.kind === "link" &&
-        (link ? (
-          <>
-            <a
-              href={link}
+      {/* (1) A clickable install button — the deep link when this source has a real one, otherwise (link-kind sources only) the homepage itself. */}
+      {primaryLink ? (
+        method.deepLink?.needsIframeDetection && primaryLink === deepLinkUrl ? (
+          <div class="flex flex-col gap-1">
+            <button
+              type="button"
               class="btn btn-outline btn-block btn-sm justify-start"
-              target="_blank"
-              rel="noopener"
+              onClick$={() => tryDeepLink(primaryLink)}
             >
-              Click to install
-            </a>
-            {SOURCE_GROUP_MEMBERS.Flatpak?.includes(pkg.source) && pkg.appId && (
-              <a href={`appstream://${pkg.appId}`} class="link link-hover text-xs">
-                Or open directly in GNOME Software / KDE Discover
-              </a>
+              {primaryLabel}
+            </button>
+            {snapAttemptFailed.value && (
+              <p class="text-xs text-warning">
+                Couldn't open the Snap Store app — make sure snapd is installed and running, or use
+                the command below instead.
+              </p>
             )}
-          </>
+          </div>
         ) : (
+          <a
+            href={primaryLink}
+            class="btn btn-outline btn-block btn-sm justify-start"
+            target="_blank"
+            rel="noopener"
+          >
+            {primaryLabel}
+          </a>
+        )
+      ) : (
+        method.kind === "link" && (
           <p class="text-sm text-base-content/60">No direct link available yet.</p>
-        ))}
+        )
+      )}
 
-      {/* (2) The terminal command, as a fallback when no button exists (the common case) or an addition when one does. */}
+      {/* (2) The terminal command — the fallback when no button exists (the common case) or an addition alongside one. */}
       {command && (
         <div class="flex flex-col gap-1">
-          {method.kind === "link" && (
-            <span class="text-xs text-base-content/60">Or, from a terminal:</span>
-          )}
+          {primaryLink && <span class="text-xs text-base-content/60">Or, from a terminal:</span>}
           <div class="flex items-center gap-2">
             <code class="text-xs font-mono break-all flex-1">{command}</code>
             <button
@@ -286,6 +353,13 @@ const SourceInstallUnit = component$<{
             </button>
           </div>
         </div>
+      )}
+
+      {/* (3) The store/homepage page, last — a catch-all for when nothing above worked or applied. */}
+      {showWebsiteFallback && (
+        <a href={websiteLink} class="link link-hover text-xs" target="_blank" rel="noopener">
+          Website
+        </a>
       )}
     </div>
   );
