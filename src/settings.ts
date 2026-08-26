@@ -102,7 +102,23 @@ const defaultInstallGroups = (): InstallFormatGroup[] => [
       },
     ],
   },
-  { id: "AppImage", label: "AppImage", shown: true, specialRepos: [] },
+  {
+    id: "AppImage",
+    label: "AppImage",
+    shown: true,
+    specialRepos: [
+      {
+        id: "appimage-integration",
+        label: "Desktop integration",
+        activated: false,
+        setup: {
+          kind: "link",
+          url: "https://flathub.org/apps/it.mijorus.gearlever",
+          note: "Most distros need a small helper to add AppImages to your app menu and keep them updated — Gear Lever (via Flatpak, so it works the same on any distro) is the actively maintained pick. Some setups already handle this on their own; skip it if yours does.",
+        },
+      },
+    ],
+  },
   {
     id: "Arch Linux",
     label: "Arch Linux",

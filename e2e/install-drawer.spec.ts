@@ -22,7 +22,7 @@ test("groups packages by platform, one collapsible per group (closed by default)
   await expect(page.getByText("sudo dnf install 0ad-data")).toBeVisible();
 });
 
-test("a source with a real store page (Flathub) shows a direct install button, not a command", async ({
+test("Flatpak's install button is the appstream:// deep link, with a terminal command and website fallback alongside it", async ({
   page,
 }) => {
   await page.goto("/app/flatpak-flathub%3Aorg.mozilla.firefox/");
@@ -30,7 +30,37 @@ test("a source with a real store page (Flathub) shows a direct install button, n
   await page.locator("summary", { hasText: "Flatpak" }).click();
 
   await expect(page.getByText("Flathub", { exact: false }).first()).toBeVisible();
-  await expect(page.getByRole("link", { name: "Click to install" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Click to install" })).toHaveAttribute(
+    "href",
+    "appstream://org.mozilla.firefox",
+  );
+  await expect(page.getByText("flatpak install flathub org.mozilla.firefox")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Website" })).toBeVisible();
+});
+
+test("a native distro package with a real apt: handler (Debian) shows it as the install button", async ({
+  page,
+}) => {
+  await page.goto("/app/flatpak-flathub%3Aorg.mozilla.firefox/");
+  await page.getByRole("button", { name: /Install options/ }).click();
+  await page.locator("summary", { hasText: "Debian" }).click();
+
+  await expect(page.getByRole("link", { name: "Click to install" })).toHaveAttribute(
+    "href",
+    /^apt:/,
+  );
+});
+
+test("AppImage shows a desktop-integration setup step and a Download button, not Click to install", async ({
+  page,
+}) => {
+  await page.goto("/app/flatpak-flathub%3Acom.discordapp.Discord/");
+  await page.getByRole("button", { name: /Install options/ }).click();
+  await page.locator("summary", { hasText: "AppImage" }).click();
+
+  await expect(page.getByText("Gear Lever", { exact: false })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Download" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Click to install" })).toHaveCount(0);
 });
 
 test("a native-package-only app shows a copy-paste command, even when it has an informational homepage", async ({
