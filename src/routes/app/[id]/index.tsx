@@ -516,7 +516,10 @@ const AppInstallSummary = component$<{ packages: SourcedPackage[] }>(({ packages
         ))}
       </div>
       <div class="indicator" aria-hidden="true">
-        <span class="indicator-item indicator-top indicator-end badge badge-primary badge-xs text-[10px]">
+        <span
+          class="indicator-item indicator-top indicator-end badge badge-xs text-[10px]"
+          style="padding: 0 1px"
+        >
           {packages.length}
         </span>
         <LuPackage class="text-sm text-base-content/50" />
