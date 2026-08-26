@@ -11,7 +11,11 @@
       {
         "type": "apps",
         "heading": "Browsers",
-        "appIds": ["flatpak-flathub:org.mozilla.firefox", "flatpak-flathub:app.zen_browser.zen"]
+        "appIds": [
+          "flatpak-flathub:app.zen_browser.zen",
+          "flatpak-flathub:org.garudalinux.firedragon",
+          "flatpak-flathub:org.mozilla.firefox"
+        ]
       },
       {
         "type": "apps",
@@ -20,20 +24,18 @@
           "flatpak-flathub:com.discordapp.Discord",
           "flatpak-flathub:org.signal.Signal",
           "flatpak-flathub:me.proton.Mail",
-          "flatpak-flathub:com.tutanota.Tutanota",
-          "pacman-aur:olvid"
+          "flatpak-flathub:com.tutanota.Tutanota"
         ]
       },
       {
         "type": "apps",
         "heading": "Productivity & notes",
         "appIds": [
-          "flatpak-flathub:org.libreoffice.LibreOffice",
-          "flatpak-flathub:org.standardnotes.standardnotes",
-          "flatpak-flathub:com.todoist.Todoist",
           "flatpak-flathub:io.typora.Typora",
           "flatpak-flathub:org.gnome.World.Iotas",
-          "flatpak-flathub:re.sonny.Eloquent"
+          "flatpak-flathub:org.standardnotes.standardnotes",
+          "flatpak-flathub:com.todoist.Todoist",
+          "flatpak-flathub:org.libreoffice.LibreOffice"
         ]
       },
       {
@@ -60,8 +62,7 @@
           "flatpak-flathub:io.github.kolunmi.Bazaar",
           "flatpak-flathub:io.github.pwr_solaar.solaar",
           "flatpak-flathub:it.mijorus.gearlever",
-          "snap-snapcraft:gnome-boxes",
-          "flatpak-flathub:com.adilhanney.no_more_background"
+          "snap-snapcraft:gnome-boxes"
         ]
       },
       {
