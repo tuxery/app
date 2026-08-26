@@ -4,7 +4,7 @@ test("groups packages by platform, one collapsible per group (closed by default)
   page,
 }) => {
   await page.goto("/app/pacman-aur%3A0ad-data-git/");
-  await page.getByRole("button", { name: /Install options/ }).click();
+  await page.getByRole("button", { name: "Install" }).click();
 
   // Debian and Ubuntu are two different packaging groups, each its own
   // collapsible — not flattened into one raw source-per-row list. Closed
@@ -26,7 +26,7 @@ test('the "Install options" label only shows when there\'s a prerequisite or mor
   page,
 }) => {
   await page.goto("/app/flatpak-flathub%3Acom.discordapp.Discord/");
-  await page.getByRole("button", { name: /Install options/ }).click();
+  await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Arch Linux" }).click();
 
   // openSUSE: no prerequisite, one option (command only) — label omitted.
@@ -53,7 +53,7 @@ test("Flatpak's install button is the appstream:// deep link, with a terminal co
   page,
 }) => {
   await page.goto("/app/flatpak-flathub%3Aorg.mozilla.firefox/");
-  await page.getByRole("button", { name: /Install options/ }).click();
+  await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Flatpak" }).click();
 
   await expect(page.getByText("Flathub", { exact: false }).first()).toBeVisible();
@@ -75,7 +75,7 @@ test("a native distro package with a real apt: handler (Debian) shows it as the 
   page,
 }) => {
   await page.goto("/app/flatpak-flathub%3Aorg.mozilla.firefox/");
-  await page.getByRole("button", { name: /Install options/ }).click();
+  await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Debian" }).click();
 
   await expect(page.getByRole("link", { name: "Click to install" })).toHaveAttribute(
@@ -88,7 +88,7 @@ test("AppImage shows a desktop-integration setup step and a Download button, not
   page,
 }) => {
   await page.goto("/app/flatpak-flathub%3Acom.discordapp.Discord/");
-  await page.getByRole("button", { name: /Install options/ }).click();
+  await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "AppImage" }).click();
 
   await expect(page.getByText("Gear Lever", { exact: false })).toBeVisible();
@@ -103,7 +103,7 @@ test("a native-package-only app shows a copy-paste command, even when it has an 
   // install link) — real bug, found live: an earlier "automatic mode"
   // used to treat any homepage as a clickable install action.
   await page.goto("/app/pacman-aur%3A0cc-famitracker/");
-  await page.getByRole("button", { name: /Install options/ }).click();
+  await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Arch Linux" }).click();
   await expect(page.getByText("yay -S 0cc-famitracker")).toBeVisible();
 });
@@ -112,7 +112,7 @@ test("a source with more than one channel (AUR's official/-bin/-git builds) show
   page,
 }) => {
   await page.goto("/app/flatpak-flathub%3Aai.jan.Jan/");
-  await page.getByRole("button", { name: /Install options/ }).click();
+  await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Arch Linux" }).click();
 
   // One tab group, not three separate rows — AUR is the Arch Linux group's
@@ -136,7 +136,7 @@ test("activating a source's setup persists and hides the setup step on future vi
   page,
 }) => {
   await page.goto("/app/pacman-aur%3A0cc-famitracker/");
-  await page.getByRole("button", { name: /Install options/ }).click();
+  await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Arch Linux" }).click();
   await expect(page.getByText("One-time — the AUR itself needs a helper")).toBeVisible();
 
@@ -148,7 +148,7 @@ test("activating a source's setup persists and hides the setup step on future vi
 
   // Reload — the setup step should stay hidden (persisted, not just in-memory).
   await page.reload();
-  await page.getByRole("button", { name: /Install options/ }).click();
+  await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Arch Linux" }).click();
   await expect(page.getByText("One-time — the AUR itself needs a helper")).toHaveCount(0);
   await expect(page.getByText("yay -S 0cc-famitracker")).toBeVisible();
@@ -161,7 +161,7 @@ test("Snap's setup step links to Snapcraft's own install guide instead of an apt
   // variant (see AUR_CHANNEL_WORD) — there's no standalone
   // snap-snapcraft:discord-canary app id to link to directly.
   await page.goto("/app/flatpak-flathub%3Acom.discordapp.Discord/");
-  await page.getByRole("button", { name: /Install options/ }).click();
+  await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Snap" }).click();
 
   await expect(
