@@ -22,6 +22,38 @@ export const Footer = component$(() => {
                 AGPL v3
               </a>
             </p>
+
+            {bg && (
+              <p class="text-xs text-base-content/40 mt-3">
+                <a href={bg.photoUrl} target="_blank" rel="noopener" class="link link-hover">
+                  Background photo
+                </a>{" "}
+                by{" "}
+                <a
+                  href={bg.photographerUrl}
+                  target="_blank"
+                  rel="noopener"
+                  class="link link-hover"
+                >
+                  {bg.photographerName}
+                </a>
+                <br />
+                on{" "}
+                <a href={bg.photoUrl} target="_blank" rel="noopener" class="link link-hover">
+                  Unsplash
+                </a>
+                , used under the{" "}
+                <a
+                  href="https://unsplash.com/license"
+                  target="_blank"
+                  rel="noopener"
+                  class="link link-hover"
+                >
+                  Unsplash License
+                </a>
+                .
+              </p>
+            )}
           </aside>
           <nav>
             <h6 class="footer-title">Catalog</h6>
@@ -66,33 +98,6 @@ export const Footer = component$(() => {
             </a>
           </nav>
         </div>
-
-        {bg && (
-          <p class="text-xs text-base-content/40 mt-8">
-            <a href={bg.photoUrl} target="_blank" rel="noopener" class="link link-hover">
-              Background photo
-            </a>{" "}
-            by{" "}
-            <a href={bg.photographerUrl} target="_blank" rel="noopener" class="link link-hover">
-              {bg.photographerName}
-            </a>
-            <br />
-            on{" "}
-            <a href={bg.photoUrl} target="_blank" rel="noopener" class="link link-hover">
-              Unsplash
-            </a>
-            , used under the{" "}
-            <a
-              href="https://unsplash.com/license"
-              target="_blank"
-              rel="noopener"
-              class="link link-hover"
-            >
-              Unsplash License
-            </a>
-            .
-          </p>
-        )}
       </div>
     </footer>
   );
