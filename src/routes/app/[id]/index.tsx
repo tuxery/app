@@ -187,7 +187,7 @@ const SourceInstallUnit = component$<{
   // homepage/store page — GOG, Lutris, AppImage, GitHub Releases have no
   // deep-link scheme at all, so their homepage *is* the install action.
   const primaryLink = method.kind === "link" ? (deepLinkUrl ?? homepageLink) : deepLinkUrl;
-  const websiteLink = installWebsiteLink(pkg, appHomepage);
+  const websiteLink = installWebsiteLink(pkg);
   // Only worth its own row when it's not already what the button above points to.
   const showWebsiteFallback = websiteLink && websiteLink.url !== primaryLink;
   const primaryLabel = SOURCE_GROUP_MEMBERS.AppImage?.includes(pkg.source)
@@ -371,7 +371,7 @@ const SourceInstallUnit = component$<{
               target="_blank"
               rel="noopener"
             >
-              {websiteLink.label === "Website" ? "Website" : `View on ${websiteLink.label}`}
+              {`View on ${websiteLink.label}`}
               <LuExternalLink class="text-xs" />
             </a>
           )}
