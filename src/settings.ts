@@ -193,8 +193,7 @@ function isCurrentShape(value: unknown): value is InstallFormatGroup[] {
   return (
     Array.isArray(value) &&
     value.every(
-      (group) =>
-        group && typeof group.shown === "boolean" && Array.isArray(group.specialRepos),
+      (group) => group && typeof group.shown === "boolean" && Array.isArray(group.specialRepos),
     )
   );
 }
