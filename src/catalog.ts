@@ -422,15 +422,34 @@ export interface CategoryCount {
   count: number;
 }
 
-/** Every real category with at least one app, most populated first — powers the /categories listing. */
-export async function getCategories(): Promise<CategoryCount[]> {
+/**
+ * Every real category with at least one app, most populated first — powers
+ * the /categories listing and the homepage's "Browse by category" grid.
+ * `typeFilter` splits along the same Apps/Utils line `browseApps`/
+ * `getTrendingApps` already use (see `UTILITY_CATEGORIES`) — there's no
+ * "game" variant here: games never carry a `category` at all (genre-level
+ * taxonomy doesn't exist yet — see the "Genre-level game taxonomy" board
+ * card), so a games-scoped call would always return empty.
+ */
+export async function getCategories(
+  typeFilter: "all" | "app" | "utility" = "all",
+): Promise<CategoryCount[]> {
   const db = getClient();
   if (!db) return [];
 
   return safely([], async () => {
-    const result = await db.execute(
-      `SELECT category, COUNT(*) as count FROM apps WHERE category IS NOT NULL GROUP BY category ORDER BY count DESC`,
-    );
+    const placeholders = UTILITY_CATEGORIES.map(() => "?").join(", ");
+    const where =
+      typeFilter === "utility"
+        ? `AND category IN (${placeholders})`
+        : typeFilter === "app"
+          ? `AND category NOT IN (${placeholders})`
+          : "";
+    const args = typeFilter === "all" ? [] : UTILITY_CATEGORIES;
+    const result = await db.execute({
+      sql: `SELECT category, COUNT(*) as count FROM apps WHERE category IS NOT NULL ${where} GROUP BY category ORDER BY count DESC`,
+      args,
+    });
     return result.rows.map((row) => ({
       category: row.category as string,
       count: Number(row.count),
