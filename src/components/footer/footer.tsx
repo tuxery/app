@@ -13,9 +13,15 @@ export const Footer = component$(() => {
               🐧 Tux<span class="text-primary">ery</span>
             </p>
             <p class="text-sm text-base-content/60">
-              Never installs anything itself, every button hands off to the real source.
+              Never installs anything itself.
+              <br />
+              Every button leads straight to the real source.
             </p>
-            <p class="text-sm text-base-content/60">AGPL-3.0-or-later</p>
+            <p class="text-sm text-base-content/60">
+              <a href="/license/" class="link link-hover">
+                AGPL v3
+              </a>
+            </p>
           </aside>
           <nav>
             <h6 class="footer-title">Catalog</h6>
@@ -62,11 +68,15 @@ export const Footer = component$(() => {
         </div>
 
         {bg && (
-          <p class="text-xs text-base-content/40 mt-3">
-            Background photo by{" "}
+          <p class="text-xs text-base-content/40 mt-8">
+            <a href={bg.photoUrl} target="_blank" rel="noopener" class="link link-hover">
+              Background photo
+            </a>{" "}
+            by{" "}
             <a href={bg.photographerUrl} target="_blank" rel="noopener" class="link link-hover">
               {bg.photographerName}
-            </a>{" "}
+            </a>
+            <br />
             on{" "}
             <a href={bg.photoUrl} target="_blank" rel="noopener" class="link link-hover">
               Unsplash
