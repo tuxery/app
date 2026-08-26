@@ -193,6 +193,11 @@ const SourceInstallUnit = component$<{
   const primaryLabel = SOURCE_GROUP_MEMBERS.AppImage?.includes(pkg.source)
     ? "Download"
     : "Click to install";
+  const installOptionCount = [primaryLink, command, showWebsiteFallback].filter(Boolean).length;
+  // A lone option under a "Prerequisites" heading still needs its own
+  // label to read as a separate step — only skip it when there's nothing
+  // above it *and* nothing else below it to group together.
+  const showInstallOptionsLabel = needsSetup || installOptionCount > 1;
 
   // Snap's own store (canonical/snapcraft.io's openDesktop.ts) doesn't use
   // a plain link for snap:// — there's no reliable way to detect a missing
@@ -311,9 +316,11 @@ const SourceInstallUnit = component$<{
 
       {(primaryLink || command || showWebsiteFallback) && (
         <div class="flex flex-col gap-2">
-          <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
-            Install options
-          </span>
+          {showInstallOptionsLabel && (
+            <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
+              Install options
+            </span>
+          )}
 
           {/* (1) A clickable install button — the deep link when this source has a real one, otherwise (link-kind sources only) the homepage itself. */}
           {primaryLink &&
