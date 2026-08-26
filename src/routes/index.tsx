@@ -1,7 +1,9 @@
-import { component$ } from "@builder.io/qwik";
+import { component$, useSignal } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import {
+  LuChevronLeft,
+  LuChevronRight,
   LuGamepad2,
   LuJoystick,
   LuLayoutGrid,
@@ -122,49 +124,82 @@ const DESTINATION_TILES = [
 ] as const;
 
 /**
- * The left 2/3 of "Events & collections": a single-card-at-a-time slider
- * (daisyUI's `carousel`, not `stack` — `stack` overlays elements in place
- * for a static deck look, it doesn't scroll, so it's the wrong tool for
- * "one card visible, scroll to the next one"). Two slides: the featured
- * creator's pick, then a call-to-action pointing at the still-TODO
- * "influencer mode" roadmap item (see /creators/).
+ * The left 2/3 of "Events & collections": a single-card-at-a-time slider,
+ * same scroll-snap-row + circle-button pattern as `HorizontalScroller`
+ * (not reused directly — its children peek at a fixed width, this needs
+ * exactly one full-width slide visible at a time). Not daisyUI's `stack`:
+ * `stack` overlays elements in place for a static deck look, it doesn't
+ * scroll, so it's the wrong tool for "one card visible, scroll to the
+ * next one." Two slides: the featured creator's pick, then a
+ * call-to-action pointing at the still-TODO "influencer mode" roadmap
+ * item (see /creators/).
  */
 const InfluencerSlider = component$<{
   creator: { name: string; slug: string; avatarUrl?: string } | undefined;
-}>(({ creator }) => (
-  <div class="carousel carousel-center rounded-box w-full h-full">
-    <div class="carousel-item w-full h-full">
-      <a
-        href={creator ? `/creators/${creator.slug}/` : "/creators/"}
-        aria-label={creator ? `${creator.name}'s picks` : "Creator picks"}
-        class="w-full h-full flex flex-col items-center justify-center text-center gap-3 p-6 rounded-box bg-gradient-to-br from-primary to-secondary text-primary-content"
+}>(({ creator }) => {
+  const trackRef = useSignal<HTMLElement>();
+
+  return (
+    <div class="relative w-full h-full">
+      <div
+        ref={trackRef}
+        aria-label="Featured creators"
+        class="flex w-full h-full overflow-x-auto scroll-smooth snap-x snap-mandatory rounded-box"
       >
-        <div class="avatar avatar-placeholder">
-          <div class="w-16 rounded-full bg-base-100 text-base-content">
-            {creator?.avatarUrl ? (
-              <img src={creator.avatarUrl} alt="" />
-            ) : (
-              <span class="text-xl">{creator?.name.charAt(0).toUpperCase() ?? "?"}</span>
-            )}
+        <a
+          href={creator ? `/creators/${creator.slug}/` : "/creators/"}
+          aria-label={creator ? `${creator.name}'s picks` : "Creator picks"}
+          class="w-full h-full shrink-0 snap-start flex flex-col items-center justify-center text-center gap-3 p-6 bg-gradient-to-br from-primary to-secondary text-primary-content"
+        >
+          <div class="avatar avatar-placeholder">
+            <div class="w-16 rounded-full bg-base-100 text-base-content">
+              {creator?.avatarUrl ? (
+                <img src={creator.avatarUrl} alt="" />
+              ) : (
+                <span class="text-xl">{creator?.name.charAt(0).toUpperCase() ?? "?"}</span>
+              )}
+            </div>
           </div>
-        </div>
-        <p class="text-sm opacity-80">La sélection de</p>
-        <p class="text-2xl font-bold">{creator?.name ?? "our creators"}</p>
-      </a>
-    </div>
-    <div class="carousel-item w-full h-full">
-      <a
-        href="/creators/"
-        aria-label="Want to share your apps? Click here"
-        class="w-full h-full flex flex-col items-center justify-center text-center gap-3 p-6 rounded-box bg-gradient-to-br from-secondary to-accent text-secondary-content"
+          <p class="text-sm opacity-80">La sélection de</p>
+          <p class="text-2xl font-bold">{creator?.name ?? "our creators"}</p>
+        </a>
+        <a
+          href="/creators/"
+          aria-label="Want to share your apps? Click here"
+          class="w-full h-full shrink-0 snap-start flex flex-col items-center justify-center text-center gap-3 p-6 bg-gradient-to-br from-secondary to-accent text-secondary-content"
+        >
+          <LuMegaphone class="text-3xl opacity-90" />
+          <p class="text-lg font-semibold">Want to share your apps?</p>
+          <span class="text-sm underline underline-offset-2">Click here →</span>
+        </a>
+      </div>
+
+      {/* Same left/right circle-button pattern as HorizontalScroller — a
+          plain scroll-snap row gives no visual hint it's scrollable at
+          all, especially with a mouse (no drag affordance, no arrows). */}
+      <button
+        type="button"
+        class="btn btn-circle btn-sm absolute left-2 top-1/2 -translate-y-1/2 shadow-md"
+        aria-label="Previous slide"
+        onClick$={() =>
+          trackRef.value?.scrollBy({ left: -trackRef.value.clientWidth, behavior: "smooth" })
+        }
       >
-        <LuMegaphone class="text-3xl opacity-90" />
-        <p class="text-lg font-semibold">Want to share your apps?</p>
-        <span class="text-sm underline underline-offset-2">Click here →</span>
-      </a>
+        <LuChevronLeft />
+      </button>
+      <button
+        type="button"
+        class="btn btn-circle btn-sm absolute right-2 top-1/2 -translate-y-1/2 shadow-md"
+        aria-label="Next slide"
+        onClick$={() =>
+          trackRef.value?.scrollBy({ left: trackRef.value.clientWidth, behavior: "smooth" })
+        }
+      >
+        <LuChevronRight />
+      </button>
     </div>
-  </div>
-));
+  );
+});
 
 const ComingSoonSection = component$<{ title: string; note: string }>(({ title, note }) => (
   <section>
@@ -234,7 +269,6 @@ export default component$(() => {
               three classic app-card heights so it doesn't dominate the
               page above Trending. */}
           <section>
-            <h2 class="text-lg font-semibold mb-3">Events &amp; collections</h2>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 h-auto lg:h-96">
               <div class="lg:col-span-2 h-64 lg:h-full">
                 <InfluencerSlider
