@@ -1,5 +1,5 @@
 import { component$ } from "@builder.io/qwik";
-import { LuInfo, LuPackage } from "@qwikest/icons/lucide";
+import { LuPackage } from "@qwikest/icons/lucide";
 import { ALL_SOURCE_GROUPS, SOURCE_GROUP_MEMBERS, type PackageSourceId } from "~/catalog-types";
 
 export interface AppCardProps {
@@ -25,8 +25,8 @@ export interface AppCardProps {
  * clips any absolutely-positioned popup that would escape it, not just the
  * scroll axis), so the browser's own tooltip is the reliable option here.
  *
- * A small circled-i sits next to the grid as a discoverability affordance
- * (a bare dot grid doesn't read as "hover me" the way a labeled icon does)
+ * A small "i" sits next to the grid as a discoverability affordance (a
+ * bare dot grid doesn't read as "hover me" the way a labeled icon does)
  * — it carries daisyUI's CSS tooltip (instant, no native-title hover
  * delay) *in addition to* the same native `title`, not instead of it: if
  * the CSS bubble gets clipped by the same horizontal-scroll ancestor,
@@ -51,10 +51,10 @@ const SourceDotMap = component$<{ sources: PackageSourceId[] }>(({ sources }) =>
       </div>
       <div class="tooltip tooltip-top" data-tip={tip}>
         <span
-          class="w-3.5 h-3.5 rounded-full border border-base-content/30 flex items-center justify-center text-base-content/50 cursor-help"
+          class="text-xs italic font-serif text-base-content/50 cursor-help leading-none"
           aria-hidden="true"
         >
-          <LuInfo class="text-[9px]" />
+          i
         </span>
       </div>
     </div>
@@ -66,12 +66,12 @@ const SourceDotMap = component$<{ sources: PackageSourceId[] }>(({ sources }) =>
  * an app ships as Flatpak, Snap, *and* AppImage, it renders as exactly one
  * card here, with a badge per available source.
  *
- * Layout: logo + name/category-or-rating on top, description below, and a
- * bottom row (source dot-map + tags) pinned to the card's bottom edge via
- * `mt-auto` so it lines up across cards regardless of description length.
+ * Layout: logo + name/category-or-rating on top, description below, and
+ * the source dot-map pinned to the card's bottom edge via `mt-auto` so it
+ * lines up across cards regardless of description length.
  */
 export const AppCard = component$<AppCardProps>(
-  ({ iconUrl, name, description, sources, contentType, category, rating }) => {
+  ({ iconUrl, name, description, sources, category, rating }) => {
     return (
       <article class="glass-card card h-full transition-shadow hover:shadow-lg">
         <div class="card-body gap-2 p-5">
@@ -92,7 +92,9 @@ export const AppCard = component$<AppCardProps>(
             <div class="min-w-0">
               <h3 class="card-title text-base line-clamp-1">{name}</h3>
               {category ? (
-                <p class="text-sm text-base-content/60 line-clamp-1">{category}</p>
+                <p class="text-sm text-base-content/60 line-clamp-1 break-words" title={category}>
+                  {category}
+                </p>
               ) : (
                 rating && (
                   <p class="text-sm text-base-content/60 line-clamp-1">
@@ -105,7 +107,6 @@ export const AppCard = component$<AppCardProps>(
           <p class="text-sm text-base-content/70 line-clamp-2">{description}</p>
           <div class="flex flex-wrap items-center gap-2 mt-auto pt-1">
             <SourceDotMap sources={sources} />
-            {contentType === "game" && <span class="badge badge-accent badge-sm">Game</span>}
           </div>
         </div>
       </article>
