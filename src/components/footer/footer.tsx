@@ -29,12 +29,7 @@ export const Footer = component$(() => {
                   Background photo
                 </a>{" "}
                 by{" "}
-                <a
-                  href={bg.photographerUrl}
-                  target="_blank"
-                  rel="noopener"
-                  class="link link-hover"
-                >
+                <a href={bg.photographerUrl} target="_blank" rel="noopener" class="link link-hover">
                   {bg.photographerName}
                 </a>
                 <br />

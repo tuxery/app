@@ -225,9 +225,8 @@ export default component$(() => {
         <>
           <div class="flex items-center justify-between gap-3 flex-wrap">
             <p class="text-sm text-base-content/60">
-              Showing {loadedCount.value.toLocaleString()} of{" "}
-              {browse.value.total.toLocaleString()} apps — page{" "}
-              {startPage + batches.value.length} of{" "}
+              Showing {loadedCount.value.toLocaleString()} of {browse.value.total.toLocaleString()}{" "}
+              apps — page {startPage + batches.value.length} of{" "}
               {Math.max(1, Math.ceil(browse.value.total / BROWSE_PAGE_SIZE))}
             </p>
             <a

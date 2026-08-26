@@ -302,7 +302,12 @@ export async function browseApps(
     const offset = Math.max(0, page) * BROWSE_PAGE_SIZE;
     const listResult = await db.execute({
       sql: `SELECT ${SUMMARY_COLUMNS} FROM apps ${where} ORDER BY ${sortClause(sort, orderBy)} LIMIT ? OFFSET ?`,
-      args: [...fullConditionArgs, ...(sort === "relevance" ? orderArgs : []), BROWSE_PAGE_SIZE, offset],
+      args: [
+        ...fullConditionArgs,
+        ...(sort === "relevance" ? orderArgs : []),
+        BROWSE_PAGE_SIZE,
+        offset,
+      ],
     });
 
     return { apps: listResult.rows.map((row) => toSummary(row as unknown as Row)), total };
@@ -348,7 +353,8 @@ const TRENDING_PAGE_SIZE = 60;
 // app per row — category itself is Flathub/AppCenter-only data, the same
 // sources that carry icons/screenshots, so the two already correlate
 // almost perfectly).
-const HAS_VISUAL_ASSET = "(icon_url IS NOT NULL OR (screenshots_json IS NOT NULL AND screenshots_json != '[]'))";
+const HAS_VISUAL_ASSET =
+  "(icon_url IS NOT NULL OR (screenshots_json IS NOT NULL AND screenshots_json != '[]'))";
 
 /**
  * Apps with a real cross-source popularity score, highest first — see
