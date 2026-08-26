@@ -17,7 +17,14 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
 // Cross-distro packaging formats (install once, works the same on any
 // distro) vs. a single distro's own native package manager — same split
 // the user thinks in, not a data-model concept from `~/catalog-types`.
-const COMPOSITE_GROUP_IDS = new Set(["Flatpak", "Snap", "AppImage", "GOG", "Lutris"]);
+const COMPOSITE_GROUP_IDS = new Set([
+  "Flatpak",
+  "Snap",
+  "AppImage",
+  "GOG",
+  "Lutris",
+  "GitHub Releases",
+]);
 
 interface InstallGroupListProps {
   title: string;

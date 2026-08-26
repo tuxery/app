@@ -99,6 +99,7 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
   "nix-nixpkgs": { kind: "command", command: (pkg) => `nix profile install nixpkgs#${pkg.name}` },
   gog: { kind: "link" },
   lutris: { kind: "link" },
+  "github-releases": { kind: "link" },
 };
 
 export function installCommand(pkg: SourcedPackage): string | undefined {

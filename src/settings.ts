@@ -185,6 +185,7 @@ const defaultInstallGroups = (): InstallFormatGroup[] => [
   { id: "MX Linux", label: "MX Linux", shown: true, specialRepos: [] },
   { id: "GOG", label: "GOG", shown: true, specialRepos: [] },
   { id: "Lutris", label: "Lutris", shown: true, specialRepos: [] },
+  { id: "GitHub Releases", label: "GitHub Releases", shown: true, specialRepos: [] },
 ];
 
 /** True only for a value shaped like the current `InstallFormatGroup[]` — guards against a pre-redesign persisted payload (old `enabled`/`sources` shape), which gets discarded in favor of fresh defaults rather than merged field-by-field into a schema it doesn't match. */
