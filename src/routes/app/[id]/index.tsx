@@ -143,6 +143,15 @@ function tabLabel(pkg: SourcedPackage, packages: SourcedPackage[]): string {
   return collides ? pkg.name : label;
 }
 
+/** A small "or" divider between two install options — without it, a stack of buttons reads as a checklist ("do all of these"), not a choice ("pick whichever works for you"). Same divider styling as Browse's own "Page N" one. */
+const Or = component$(() => (
+  <div class="flex items-center gap-2 text-xs text-base-content/40" aria-hidden="true">
+    <span class="flex-1 border-t border-base-300" />
+    or
+    <span class="flex-1 border-t border-base-300" />
+  </div>
+));
+
 /**
  * One packaging source's install info, e.g. "AUR" within "Arch Linux" —
  * two labeled sub-sections: "Prerequisites" (only when this source needs
@@ -358,29 +367,35 @@ const SourceInstallUnit = component$<{
 
           {/* (2) The terminal command, and its copy button, on one line — a shorter button label than before leaves more room for the command itself. */}
           {command && (
-            <div class="flex items-center gap-2 bg-neutral text-neutral-content rounded-field px-3 py-2">
-              <code class="text-xs font-mono break-all flex-1">{command}</code>
-              <button
-                type="button"
-                class="btn btn-outline btn-sm w-fit shrink-0"
-                onClick$={() => navigator.clipboard.writeText(command)}
-              >
-                Copy Command
-              </button>
-            </div>
+            <>
+              {primaryLink && <Or />}
+              <div class="flex items-center gap-2 bg-neutral text-neutral-content rounded-field px-3 py-2">
+                <code class="text-xs font-mono break-all flex-1">{command}</code>
+                <button
+                  type="button"
+                  class="btn btn-outline btn-sm w-fit shrink-0"
+                  onClick$={() => navigator.clipboard.writeText(command)}
+                >
+                  Copy Command
+                </button>
+              </div>
+            </>
           )}
 
           {/* (3) The store/homepage page, last — a catch-all for when nothing above worked or applied. */}
           {showWebsiteFallback && (
-            <a
-              href={websiteLink.url}
-              class="btn btn-outline btn-sm w-fit"
-              target="_blank"
-              rel="noopener"
-            >
-              {`View on ${websiteLink.label}`}
-              <LuExternalLink class="text-xs" />
-            </a>
+            <>
+              {(primaryLink || command) && <Or />}
+              <a
+                href={websiteLink.url}
+                class="btn btn-outline btn-sm w-fit"
+                target="_blank"
+                rel="noopener"
+              >
+                {`View on ${websiteLink.label}`}
+                <LuExternalLink class="text-xs" />
+              </a>
+            </>
           )}
         </div>
       )}
