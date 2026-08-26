@@ -1,10 +1,18 @@
 import { component$ } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { LuSearch } from "@qwikest/icons/lucide";
+import {
+  LuGamepad2,
+  LuJoystick,
+  LuLayoutGrid,
+  LuMegaphone,
+  LuSearch,
+  LuWrench,
+} from "@qwikest/icons/lucide";
 import { AppCard } from "~/components/app-card/app-card";
 import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-scroller";
 import { getStats, getTrendingApps, getCategories, getAppsByCategory } from "~/catalog";
+import { getInfluencerPage } from "~/data/influencer-pages";
 import { useHeroBackground } from "~/routes/layout";
 import type { AppSummary } from "~/catalog-types";
 
@@ -19,6 +27,11 @@ export const useTrendingApps = routeLoader$(async () => {
 export const useCategories = routeLoader$(async () => {
   return getCategories();
 });
+
+// Reuses the same influencer-page data /creators/baxyz/ itself renders
+// from, so the homepage slide's name/avatar stay in sync with that page
+// rather than duplicating them as separate hardcoded homepage copy.
+export const useFeaturedCreator = routeLoader$(async () => getInfluencerPage("baxyz"));
 
 // One loader per curated row on the "Homepage: full section layout" board
 // card — Qwik City loaders have to be individually exported consts, not
@@ -77,6 +90,82 @@ const CategoryRow = component$<{ title: string; category: string; apps: AppSumma
   ),
 );
 
+// Placeholder tiles: a color gradient + icon per destination, not a real
+// photo — no external image dependency (no Unsplash-quota cost, no
+// per-image attribution to display on a small tile). Swap `gradient` for
+// a real `imageUrl` later without changing the grid around it.
+const DESTINATION_TILES = [
+  {
+    title: "All games",
+    href: "/games/",
+    icon: LuGamepad2,
+    gradient: "from-violet-600 to-indigo-700",
+  },
+  {
+    title: "Lutris",
+    href: "/browse/?source=lutris",
+    icon: LuJoystick,
+    gradient: "from-amber-500 to-rose-600",
+  },
+  {
+    title: "All apps",
+    href: "/apps/",
+    icon: LuLayoutGrid,
+    gradient: "from-sky-500 to-blue-700",
+  },
+  {
+    title: "All utils",
+    href: "/utils/",
+    icon: LuWrench,
+    gradient: "from-emerald-500 to-teal-700",
+  },
+] as const;
+
+/**
+ * The left 2/3 of "Events & collections": a single-card-at-a-time slider
+ * (daisyUI's `carousel`, not `stack` — `stack` overlays elements in place
+ * for a static deck look, it doesn't scroll, so it's the wrong tool for
+ * "one card visible, scroll to the next one"). Two slides: the featured
+ * creator's pick, then a call-to-action pointing at the still-TODO
+ * "influencer mode" roadmap item (see /creators/).
+ */
+const InfluencerSlider = component$<{
+  creator: { name: string; slug: string; avatarUrl?: string } | undefined;
+}>(({ creator }) => (
+  <div class="carousel carousel-center rounded-box w-full h-full">
+    <div class="carousel-item w-full h-full">
+      <a
+        href={creator ? `/creators/${creator.slug}/` : "/creators/"}
+        aria-label={creator ? `${creator.name}'s picks` : "Creator picks"}
+        class="w-full h-full flex flex-col items-center justify-center text-center gap-3 p-6 rounded-box bg-gradient-to-br from-primary to-secondary text-primary-content"
+      >
+        <div class="avatar avatar-placeholder">
+          <div class="w-16 rounded-full bg-base-100 text-base-content">
+            {creator?.avatarUrl ? (
+              <img src={creator.avatarUrl} alt="" />
+            ) : (
+              <span class="text-xl">{creator?.name.charAt(0).toUpperCase() ?? "?"}</span>
+            )}
+          </div>
+        </div>
+        <p class="text-sm opacity-80">La sélection de</p>
+        <p class="text-2xl font-bold">{creator?.name ?? "our creators"}</p>
+      </a>
+    </div>
+    <div class="carousel-item w-full h-full">
+      <a
+        href="/creators/"
+        aria-label="Want to share your apps? Click here"
+        class="w-full h-full flex flex-col items-center justify-center text-center gap-3 p-6 rounded-box bg-gradient-to-br from-secondary to-accent text-secondary-content"
+      >
+        <LuMegaphone class="text-3xl opacity-90" />
+        <p class="text-lg font-semibold">Want to share your apps?</p>
+        <span class="text-sm underline underline-offset-2">Click here →</span>
+      </a>
+    </div>
+  </div>
+));
+
 const ComingSoonSection = component$<{ title: string; note: string }>(({ title, note }) => (
   <section>
     <h2 class="text-lg font-semibold mb-2">{title}</h2>
@@ -90,6 +179,7 @@ export default component$(() => {
   const stats = useStats();
   const trendingApps = useTrendingApps();
   const categories = useCategories();
+  const featuredCreator = useFeaturedCreator();
   const heroBackground = useHeroBackground();
   const bg = heroBackground.value;
   const productivityApps = useProductivityApps();
@@ -139,22 +229,41 @@ export default component$(() => {
         </p>
       ) : (
         <>
-          {/* Events carousel: influencer/distro/source pages worth following, plus
-              a few app cards — the influencer half is real now (see /creators/baxyz),
-              distro/source links reuse /distros and /sources; a dedicated mixed-content
-              carousel is still coming. */}
+          {/* Events & collections: a featured-creator slider (left, 2/3) next
+              to four destination tiles (right, 2x2) — capped to roughly
+              three classic app-card heights so it doesn't dominate the
+              page above Trending. */}
           <section>
             <h2 class="text-lg font-semibold mb-3">Events &amp; collections</h2>
-            <div class="flex flex-wrap gap-3">
-              <a href="/creators/baxyz/" class="btn btn-outline">
-                baxyz's picks
-              </a>
-              <a href="/distros/" class="btn btn-outline">
-                Browse by source
-              </a>
-              <a href="/sources/" class="btn btn-outline">
-                All sources
-              </a>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 h-auto lg:h-96">
+              <div class="lg:col-span-2 h-64 lg:h-full">
+                <InfluencerSlider
+                  creator={
+                    featuredCreator.value
+                      ? {
+                          name: featuredCreator.value.name,
+                          slug: featuredCreator.value.slug,
+                          avatarUrl: featuredCreator.value.avatarUrl,
+                        }
+                      : undefined
+                  }
+                />
+              </div>
+              <div class="grid grid-cols-2 grid-rows-2 gap-3 h-64 lg:h-full">
+                {DESTINATION_TILES.map((tile) => (
+                  <a
+                    key={tile.title}
+                    href={tile.href}
+                    aria-label={tile.title}
+                    class={`card bg-gradient-to-br ${tile.gradient} text-white justify-center hover:brightness-110 transition-[filter]`}
+                  >
+                    <div class="card-body items-center justify-center text-center p-3 gap-1">
+                      <tile.icon class="text-2xl opacity-90" />
+                      <span class="font-semibold text-sm">{tile.title}</span>
+                    </div>
+                  </a>
+                ))}
+              </div>
             </div>
           </section>
 
