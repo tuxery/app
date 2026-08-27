@@ -1,4 +1,4 @@
-import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
+import { $, component$, useSignal, useVisibleTask$, type Signal } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { LuExternalLink, LuFlag, LuPackage } from "@qwikest/icons/lucide";
@@ -448,6 +448,34 @@ function summarizeSources(packages: SourcedPackage[]) {
   };
 }
 
+/**
+ * A small tab row switching between the merged view and one specific
+ * source's own raw data — sits next to a section heading, on the same
+ * line. `selected` is shared across every `SourceTabBar` on the page (one
+ * signal, passed down) so switching source in one section switches it
+ * everywhere else too — useful for debugging a bad merge, where seeing
+ * what one source contributed to *both* Screenshots and About at once
+ * matters more than being able to pick a different source per section.
+ * Index 0 is always "Merged"; index `i + 1` is `packages[i]`.
+ */
+const SourceTabBar = component$<{ labels: string[]; selected: Signal<number> }>(
+  ({ labels, selected }) => (
+    <div role="tablist" class="tabs tabs-box tabs-sm overflow-x-auto flex-nowrap shrink-0">
+      {labels.map((label, i) => (
+        <button
+          key={`${label}-${i}`}
+          type="button"
+          role="tab"
+          class={`tab whitespace-nowrap ${i === selected.value ? "tab-active" : ""}`}
+          onClick$={() => (selected.value = i)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  ),
+);
+
 export default component$(() => {
   const app = useApp();
   const stats = useDetailStats();
@@ -491,6 +519,14 @@ export default component$(() => {
     isSourceVisible(pkg.source, settings.installGroups.value),
   );
   const sourceSummary = summarizeSources(visiblePackages);
+
+  // Shared by every SourceTabBar on this page — see its own doc comment.
+  // Every source, not just `visiblePackages` — debugging a merge wants to
+  // see all of them regardless of the viewer's own install-source
+  // settings.
+  const sourceTab = useSignal(0);
+  const sourceTabLabels = ["Merged", ...a.packages.map((pkg) => formatSourceLabel(pkg))];
+  const selectedSourcePkg = sourceTab.value > 0 ? a.packages[sourceTab.value - 1] : undefined;
 
   return (
     <div class="flex flex-col gap-10">
@@ -688,24 +724,52 @@ export default component$(() => {
 
       {a.screenshots?.length || a.videos?.length ? (
         <section>
-          <h2 class="text-lg font-semibold mb-3">Screenshots & videos</h2>
-          <div class="flex gap-3 overflow-x-auto">
-            {a.screenshots?.map((src) => (
-              <img key={src} src={src} alt="" class="h-48 rounded-box shrink-0" />
-            ))}
-            {a.videos?.map((src) => (
-              <video key={src} src={src} controls class="h-48 rounded-box shrink-0">
-                <track kind="captions" label="No captions available" />
-              </video>
-            ))}
+          <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <h2 class="text-lg font-semibold">Screenshots & videos</h2>
+            <SourceTabBar labels={sourceTabLabels} selected={sourceTab} />
           </div>
+          {!selectedSourcePkg ? (
+            <div class="flex gap-3 overflow-x-auto">
+              {a.screenshots?.map((src) => (
+                <img key={src} src={src} alt="" class="h-48 rounded-box shrink-0" />
+              ))}
+              {a.videos?.map((src) => (
+                <video key={src} src={src} controls class="h-48 rounded-box shrink-0">
+                  <track kind="captions" label="No captions available" />
+                </video>
+              ))}
+            </div>
+          ) : selectedSourcePkg.screenshots?.length ? (
+            <div class="flex gap-3 overflow-x-auto">
+              {selectedSourcePkg.screenshots.map((src) => (
+                <img key={src} src={src} alt="" class="h-48 rounded-box shrink-0" />
+              ))}
+            </div>
+          ) : (
+            <p class="text-sm text-base-content/60">
+              No screenshots from {formatSourceLabel(selectedSourcePkg)}.
+            </p>
+          )}
         </section>
       ) : null}
 
       {a.longDescription ? (
         <section>
-          <h2 class="text-lg font-semibold mb-2">About</h2>
-          <p class="whitespace-pre-line text-base-content/80">{a.longDescription}</p>
+          <div class="flex items-center justify-between gap-3 mb-2 flex-wrap">
+            <h2 class="text-lg font-semibold">About</h2>
+            <SourceTabBar labels={sourceTabLabels} selected={sourceTab} />
+          </div>
+          {!selectedSourcePkg ? (
+            <p class="whitespace-pre-line text-base-content/80">{a.longDescription}</p>
+          ) : selectedSourcePkg.longDescription ? (
+            <p class="whitespace-pre-line text-base-content/80">
+              {selectedSourcePkg.longDescription}
+            </p>
+          ) : (
+            <p class="text-sm text-base-content/60">
+              No description from {formatSourceLabel(selectedSourcePkg)}.
+            </p>
+          )}
         </section>
       ) : null}
 
