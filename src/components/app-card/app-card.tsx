@@ -25,11 +25,14 @@ export interface AppCardProps {
  *
  * Layout: logo + name/category on top, description below, and a bottom row
  * — pinned to the card's bottom edge via `mt-auto` so it lines up across
- * cards regardless of description length — spreading `SourceMap` (left),
- * `ChannelIndicator` (center), and `UnifiedRating` in its "short" (stars-
- * only) mode (right) across the row with `justify-between`. Three narrow
- * pieces instead of one wide combined summary + rating: that used to wrap
- * to two lines on some cards and not others depending on content.
+ * cards regardless of description length — `SourceMap`, `ChannelIndicator`,
+ * then (when this app has one) `UnifiedRating` in its "short" (stars-only)
+ * mode, left-aligned in that fixed order rather than spread with
+ * `justify-between`: with that, a card carrying no rating had nothing to
+ * hold `ChannelIndicator` at its own centered spot, so it drifted to the
+ * row's right edge instead. Three narrow pieces instead of one wide
+ * combined summary + rating: that used to wrap to two lines on some cards
+ * and not others depending on content.
  */
 export const AppCard = component$<AppCardProps>(
   ({
@@ -70,7 +73,7 @@ export const AppCard = component$<AppCardProps>(
             </div>
           </div>
           <p class="text-sm text-base-content/70 line-clamp-2">{description}</p>
-          <div class="flex flex-wrap items-center justify-between gap-2 mt-auto pt-1">
+          <div class="flex flex-wrap items-center gap-4 mt-auto pt-1">
             <SourceMap sources={sources} />
             <ChannelIndicator packageCount={packageCount} channels={channels} />
             {rating && (
