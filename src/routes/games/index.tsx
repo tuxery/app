@@ -43,6 +43,7 @@ export default component$(() => {
                   contentType={game.contentType}
                   category={game.category}
                   rating={game.rating}
+                  ratingsBySource={game.ratingsBySource}
                 />
               </a>
             ))}

@@ -9,6 +9,11 @@ const FIREFOX = "/app/firefox/";
 const FIREWATCH = "/app/gog%3Afirewatch/";
 const LIBREOFFICE_MAIN = "/app/libreoffice/";
 const LIBREOFFICE_WRITER = "/app/deb-debian%3Alibreoffice-writer/";
+// AppEditor: a real elementary OS app listed on both Flathub and AppCenter
+// with two genuinely different ratings — the one app in the real dataset
+// most well-known apps don't have (they're only rated on Flathub), needed
+// to exercise UnifiedRating's per-source breakdown at all.
+const APP_EDITOR = "/app/com.github.donadigo.appeditor/";
 
 test("an app page shows an install-options drawer listing every source, each group closed by default", async ({
   page,
@@ -25,13 +30,27 @@ test("an app page shows an install-options drawer listing every source, each gro
   await expect(page.getByRole("link", { name: "Click to install" }).first()).toBeVisible();
 });
 
-test("a rated app shows both the aggregate badge and a per-source ratings breakdown", async ({
+test("a single-source rated app shows the aggregate badge with no breakdown icon", async ({
   page,
 }) => {
   await page.goto(FIREWATCH);
   await expect(page.getByText(/\d\.\d \(\d/).first()).toBeVisible();
-  await expect(page.getByText("Ratings by source")).toBeVisible();
-  await expect(page.getByText(/GOG: ★/)).toBeVisible();
+  // GOG is the only rated source, same figure as the aggregate — nothing
+  // to disclose beyond it, so UnifiedRating renders no info icon at all.
+  await expect(page.getByTitle(/By source/)).toHaveCount(0);
+});
+
+test("a multi-source rated app's aggregate badge exposes a per-source breakdown via its title", async ({
+  page,
+}) => {
+  await page.goto(APP_EDITOR);
+  await expect(page.getByText(/\d\.\d \(\d/).first()).toBeVisible();
+
+  const breakdown = page.getByTitle(/By source/);
+  await expect(breakdown).toHaveCount(1);
+  const title = await breakdown.getAttribute("title");
+  expect(title).toContain("Flathub (Flatpak): ★ 3.1 (29)");
+  expect(title).toContain("elementary AppCenter (Flatpak): ★ 3.3 (12)");
 });
 
 test("suite navigation: main app lists its components, and a component links back", async ({

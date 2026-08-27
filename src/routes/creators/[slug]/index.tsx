@@ -57,6 +57,7 @@ const AppsBlockView = component$<{
               contentType={app.contentType}
               category={app.category}
               rating={app.rating}
+              ratingsBySource={app.ratingsBySource}
             />
           </a>
         ))}

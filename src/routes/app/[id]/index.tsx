@@ -7,14 +7,17 @@ import {
   ALL_SOURCE_GROUPS,
   channelLabel,
   formatBytes,
+  formatSourceLabel,
   SOURCE_GROUP_MEMBERS,
   SOURCE_LABELS,
   summarizeChannels,
+  summarizeRatingsBySource,
   type CatalogApp,
   type PackageSourceId,
   type SourcedPackage,
 } from "~/catalog-types";
 import { SourceSummary } from "~/components/source-summary/source-summary";
+import { UnifiedRating } from "~/components/unified-rating/unified-rating";
 import {
   INSTALL_METHODS,
   installCommand,
@@ -56,12 +59,6 @@ const PACKAGE_SOURCE_TO_LEAF_ID: Partial<Record<PackageSourceId, string>> = {
   "pacman-aur": "arch-aur",
   "rpm-rpmfusion": "rpmfusion",
 };
-
-/** A source label, qualified with its channel when it has one (currently only AUR's -git/-svn/-hg/-bzr/-cvs rolling-release builds) — so a merged "official + dev build" pair reads as two distinct install options, not a duplicate. */
-function formatSourceLabel(pkg: SourcedPackage): string {
-  const label = SOURCE_LABELS[pkg.source];
-  return pkg.channel ? `${label} (${pkg.channel} build)` : label;
-}
 
 /**
  * `SOURCE_LABELS` fully qualifies each source ("Flathub (Flatpak)", "AUR"
@@ -441,41 +438,6 @@ const SourceGroupSection = component$<{
   );
 });
 
-// Half-star granularity (10 positions across 5 stars) — the finest
-// daisyUI's `rating-half` supports. `average` rarely lands on a clean
-// half itself (e.g. 4.23), so this rounds to the nearest one purely for
-// the *visual* stars; the exact figure stays next to them as text and in
-// the `title` tooltip, nothing is hidden by rounding.
-const STAR_HALVES = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
-
-/** A rating shown as daisyUI's star widget instead of a badge/tag — badges are for discrete facts (category, AI features, ...), not a continuous score. */
-const RatingStars = component$<{ average: number; count: number }>(({ average, count }) => {
-  const rounded = Math.round(average * 2) / 2;
-
-  return (
-    <span
-      class="inline-flex items-center gap-1.5"
-      title={`${average.toFixed(1)} out of 5 (${count.toLocaleString()} ratings)`}
-    >
-      <div class="rating rating-xs rating-half" aria-hidden="true">
-        {STAR_HALVES.map((position, i) => (
-          <div
-            key={position}
-            class={[
-              "mask mask-star-2",
-              i % 2 === 0 ? "mask-half-1" : "mask-half-2",
-              position <= rounded ? "bg-warning" : "bg-base-300",
-            ]}
-          />
-        ))}
-      </div>
-      <span class="text-sm text-base-content/60">
-        {average.toFixed(1)} ({count.toLocaleString()})
-      </span>
-    </span>
-  );
-});
-
 /** `SourceSummary`'s three props, derived from a full package list — used for the hero/sticky-header install summary, sitting to the left of the Install button (replaces the old "Install options (N)" count that used to live on the button itself). */
 function summarizeSources(packages: SourcedPackage[]) {
   return {
@@ -604,7 +566,13 @@ export default component$(() => {
 
           <div class="flex flex-wrap items-center gap-2 mt-3">
             {a.contentType === "game" && <span class="badge badge-accent">Game</span>}
-            {a.rating && <RatingStars average={a.rating.average} count={a.rating.count} />}
+            {a.rating && (
+              <UnifiedRating
+                average={a.rating.average}
+                count={a.rating.count}
+                bySource={summarizeRatingsBySource(a.packages)}
+              />
+            )}
             {a.category && <span class="badge badge-outline">{a.category}</span>}
             {a.suite?.role === "component" && a.suite.mainApp && (
               <a
@@ -845,21 +813,6 @@ export default component$(() => {
           )}
           <dt class="text-base-content/60">Available via</dt>
           <dd>{a.packages.map((pkg) => formatSourceLabel(pkg)).join(", ")}</dd>
-          {a.packages.some((pkg) => pkg.rating) && (
-            <>
-              <dt class="text-base-content/60">Ratings by source</dt>
-              <dd>
-                {a.packages
-                  .filter((pkg) => pkg.rating)
-                  .map((pkg) => (
-                    <span key={`${pkg.source}:${pkg.name}`} class="mr-3 whitespace-nowrap">
-                      {formatSourceLabel(pkg)}: ★ {pkg.rating?.average.toFixed(1)} (
-                      {pkg.rating?.count})
-                    </span>
-                  ))}
-              </dd>
-            </>
-          )}
           {stats.value.generatedAt && (
             <>
               <dt class="text-base-content/60">Catalog data as of</dt>
