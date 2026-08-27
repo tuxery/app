@@ -1,5 +1,11 @@
 import { test, expect } from "@playwright/test";
 
+// Firefox/Discord below use their bare Snap name as the app id ("firefox",
+// "discord") — no "source:" prefix — since a Snap or Flatpak package's own
+// name/appId is already globally unique on its own (Snap preferred when an
+// app has both, see catalog's match/group.ts's buildAppId). 0ad-data-git/
+// 0cc-famitracker have neither, so they still use "source:appId".
+
 test("groups packages by platform, one collapsible per group (closed by default), native package managers show a copy-paste command", async ({
   page,
 }) => {
@@ -25,7 +31,7 @@ test("groups packages by platform, one collapsible per group (closed by default)
 test('the "Install options" label only shows when there\'s a prerequisite or more than one option', async ({
   page,
 }) => {
-  await page.goto("/app/flatpak-flathub%3Acom.discordapp.Discord/");
+  await page.goto("/app/discord/");
   await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Arch Linux" }).click();
 
@@ -52,7 +58,7 @@ test('the "Install options" label only shows when there\'s a prerequisite or mor
 test("Flatpak's install button is the appstream:// deep link, with a terminal command and website fallback alongside it", async ({
   page,
 }) => {
-  await page.goto("/app/flatpak-flathub%3Aorg.mozilla.firefox/");
+  await page.goto("/app/firefox/");
   await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Flatpak" }).click();
 
@@ -74,7 +80,7 @@ test("Flatpak's install button is the appstream:// deep link, with a terminal co
 test("a native distro package with a real apt: handler (Debian) shows it as the install button", async ({
   page,
 }) => {
-  await page.goto("/app/flatpak-flathub%3Aorg.mozilla.firefox/");
+  await page.goto("/app/firefox/");
   await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Debian" }).click();
 
@@ -87,7 +93,7 @@ test("a native distro package with a real apt: handler (Debian) shows it as the 
 test("AppImage shows a desktop-integration setup step and a Download button, not Click to install", async ({
   page,
 }) => {
-  await page.goto("/app/flatpak-flathub%3Acom.discordapp.Discord/");
+  await page.goto("/app/discord/");
   await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "AppImage" }).click();
 
@@ -111,7 +117,7 @@ test("a native-package-only app shows a copy-paste command, even when it has an 
 test("a source with more than one channel (AUR's official/-bin/-git builds) shows a channel tab group, not stacked rows", async ({
   page,
 }) => {
-  await page.goto("/app/flatpak-flathub%3Aai.jan.Jan/");
+  await page.goto("/app/ai.jan.Jan/");
   await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Arch Linux" }).click();
 
@@ -160,7 +166,7 @@ test("Snap's setup step links to Snapcraft's own install guide instead of an apt
   // Discord Canary is merged into the main Discord app as a Snap channel
   // variant (see AUR_CHANNEL_WORD) — there's no standalone
   // snap-snapcraft:discord-canary app id to link to directly.
-  await page.goto("/app/flatpak-flathub%3Acom.discordapp.Discord/");
+  await page.goto("/app/discord/");
   await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Snap" }).click();
 

@@ -25,6 +25,6 @@ test("the homepage explains the empty state instead of showing a broken layout",
 });
 
 test("a detail page 404s cleanly rather than crashing", async ({ page }) => {
-  const response = await page.goto("/app/flatpak-flathub%3Aorg.mozilla.firefox/");
+  const response = await page.goto("/app/firefox/");
   expect(response?.status()).toBe(404);
 });
