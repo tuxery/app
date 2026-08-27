@@ -2,6 +2,7 @@ import { component$, Slot } from "@builder.io/qwik";
 import { routeLoader$, useLocation } from "@builder.io/qwik-city";
 import { LuLayoutGrid, LuMenu, LuSearch, LuSettings, LuUser } from "@qwikest/icons/lucide";
 import { Footer } from "~/components/footer/footer";
+import { findOsEntry } from "~/os-catalog";
 import { useProvideSettings } from "~/settings";
 import { getHeroBackgroundPhoto } from "~/unsplash";
 
@@ -21,10 +22,11 @@ const NAV_LINKS = [
 ];
 
 export default component$(() => {
-  useProvideSettings();
+  const settings = useProvideSettings();
   const bg = useHeroBackground().value;
   const location = useLocation();
   const isHome = location.url.pathname === "/";
+  const osEntry = findOsEntry(settings.osId.value);
 
   return (
     <>
@@ -77,6 +79,17 @@ export default component$(() => {
         </div>
 
         <div class="navbar-end gap-1">
+          {osEntry ? (
+            <a href="/settings/?tab=os" class="btn btn-soft hidden sm:inline-flex">
+              {osEntry.label}
+            </a>
+          ) : (
+            <div class="aura aura-sm aura-rainbow hidden sm:inline-block">
+              <a href="/settings/?tab=os" class="btn btn-soft btn-primary">
+                Select your OS
+              </a>
+            </div>
+          )}
           <a href="/about" class="btn btn-ghost hidden sm:inline-flex">
             About
           </a>

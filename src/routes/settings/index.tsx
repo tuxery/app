@@ -1,11 +1,17 @@
-import { component$ } from "@builder.io/qwik";
+import { component$, type Signal } from "@builder.io/qwik";
+import { useLocation } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
+import { findOsEntry, recommendedGroupIds, OS_CATALOG, type OsCatalogEntry } from "~/os-catalog";
 import {
+  CROSS_DISTRO_GROUP_IDS,
+  isGroupEffectivelyShown,
+  isRepoEffectivelyActivated,
+  setGroupShown,
   setSourceActivated,
-  toggleGroupShown,
   useSettings,
   type InstallFormatGroup,
   type Theme,
+  type TriState,
 } from "~/settings";
 
 const THEME_OPTIONS: { value: Theme; label: string }[] = [
@@ -14,136 +20,328 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "dark", label: "Dark" },
 ];
 
-// Cross-distro packaging formats (install once, works the same on any
-// distro) vs. a single distro's own native package manager — same split
-// the user thinks in, not a data-model concept from `~/catalog-types`.
-const COMPOSITE_GROUP_IDS = new Set([
-  "Flatpak",
-  "Snap",
-  "AppImage",
-  "GOG",
-  "Lutris",
-  "GitHub Releases",
-]);
+const TRI_STATE_OPTIONS: { value: TriState; label: string }[] = [
+  { value: "off", label: "Off" },
+  { value: "auto", label: "Auto" },
+  { value: "on", label: "On" },
+];
 
-interface InstallGroupListProps {
-  title: string;
-  groups: { group: InstallFormatGroup; index: number }[];
-}
-
-const InstallGroupList = component$<InstallGroupListProps>(({ title, groups }) => {
-  const settings = useSettings();
-
+/**
+ * Off/Auto/On for one `InstallFormatGroup.shown`, looked up by `index`
+ * from the live signal on every render (not received as a plain `value`
+ * prop computed by a parent — a `component$` child that only *received*
+ * one didn't reliably pick up a fresh value after `installGroups` changed
+ * out from under it via a parent re-render, e.g. loading persisted state
+ * on mount — same fix as `SourceTabBar` on the fiche page, which reads
+ * its own `Signal` directly for the same reason). The button markup is
+ * duplicated with `RepoActivatedControl` below rather than factored into
+ * a shared helper — Qwik's `onClick$` needs to be transformed by its
+ * optimizer, which only reliably reaches inside a `component$`'s own
+ * render body, not a plain function it merely calls into.
+ */
+const GroupShownControl = component$<{
+  installGroups: Signal<InstallFormatGroup[]>;
+  index: number;
+  label: string;
+}>(({ installGroups, index, label }) => {
+  const value = installGroups.value[index]?.shown ?? "auto";
   return (
-    <div>
-      <h3 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
-        {title}
-      </h3>
-      <ul class="list bg-base-100 border border-base-300 rounded-box">
-        {groups.map(({ group, index }) => (
-          <li key={group.id} class="list-row items-center">
-            <span class="font-medium text-sm">{group.label}</span>
-            <input
-              type="checkbox"
-              class="toggle toggle-primary justify-self-end"
-              checked={group.shown}
-              onChange$={() => toggleGroupShown(settings.installGroups, index)}
-              aria-label={`Show ${group.label}`}
-            />
-
-            {group.shown && group.specialRepos.length > 0 && (
-              <div class="list-col-wrap flex flex-col gap-2 pt-2">
-                {group.specialRepos.map((repo) => (
-                  <div key={repo.id} class="flex flex-col gap-1">
-                    <label class="flex items-center justify-between gap-2 cursor-pointer text-sm">
-                      {repo.label}
-                      <input
-                        type="checkbox"
-                        class="toggle toggle-sm toggle-secondary"
-                        checked={repo.activated}
-                        onChange$={() =>
-                          setSourceActivated(settings.installGroups, repo.id, !repo.activated)
-                        }
-                      />
-                    </label>
-                    {!repo.activated && (
-                      <div class="flex flex-col gap-1 bg-base-200 rounded-field p-2">
-                        <p class="text-xs text-base-content/60">{repo.setup.note}</p>
-                        {repo.setup.kind === "link" ? (
-                          <a
-                            href={repo.setup.url}
-                            class="link link-primary text-xs"
-                            target="_blank"
-                            rel="noopener"
-                          >
-                            {repo.setup.url}
-                          </a>
-                        ) : (
-                          <code class="text-xs font-mono break-all">{repo.setup.command}</code>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
+    <div class="join" aria-label={`Show ${label}`}>
+      {TRI_STATE_OPTIONS.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          aria-pressed={value === option.value}
+          class={["btn btn-xs join-item", value === option.value ? "btn-primary" : "btn-ghost"]}
+          onClick$={() => setGroupShown(installGroups, index, option.value)}
+        >
+          {option.label}
+        </button>
+      ))}
     </div>
   );
 });
 
-export default component$(() => {
+/** Off/Auto/On for one `SpecialRepoOption.activated`, looked up by `repoId` from the live signal on every render — see `GroupShownControl`'s doc comment for why. */
+const RepoActivatedControl = component$<{
+  installGroups: Signal<InstallFormatGroup[]>;
+  repoId: string;
+  label: string;
+}>(({ installGroups, repoId, label }) => {
+  const repo = installGroups.value
+    .flatMap((group) => group.specialRepos)
+    .find((r) => r.id === repoId);
+  const value = repo?.activated ?? "auto";
+  return (
+    <div class="join" aria-label={`${label} activated`}>
+      {TRI_STATE_OPTIONS.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          aria-pressed={value === option.value}
+          class={["btn btn-xs join-item", value === option.value ? "btn-primary" : "btn-ghost"]}
+          onClick$={() => setSourceActivated(installGroups, repoId, option.value)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+});
+
+type TabId = "os" | "sources" | "display";
+
+function parseTab(value: string | null): TabId {
+  return value === "sources" || value === "display" ? value : "os";
+}
+
+interface InstallGroupListProps {
+  title: string;
+  groups: { group: InstallFormatGroup; index: number }[];
+  /** The selected OS's recommendation, or `undefined` with none selected — see `isGroupEffectivelyShown`. */
+  recommended: Set<string> | undefined;
+  preActivated: Set<string> | undefined;
+}
+
+const InstallGroupList = component$<InstallGroupListProps>(
+  ({ title, groups, recommended, preActivated }) => {
+    const settings = useSettings();
+
+    return (
+      <div>
+        <h3 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
+          {title}
+        </h3>
+        <ul class="list bg-base-100 border border-base-300 rounded-box">
+          {groups.map(({ group, index }) => {
+            const shown = isGroupEffectivelyShown(group, recommended);
+            return (
+              <li key={group.id} class="list-row items-center">
+                <span class="font-medium text-sm">{group.label}</span>
+                <GroupShownControl
+                  installGroups={settings.installGroups}
+                  index={index}
+                  label={group.label}
+                />
+
+                {shown && group.specialRepos.length > 0 && (
+                  <div class="list-col-wrap flex flex-col gap-2 pt-2">
+                    {group.specialRepos.map((repo) => {
+                      const activated = isRepoEffectivelyActivated(repo, preActivated);
+                      return (
+                        <div key={repo.id} class="flex flex-col gap-1">
+                          <div class="flex items-center justify-between gap-2 text-sm">
+                            <span>{repo.label}</span>
+                            <RepoActivatedControl
+                              installGroups={settings.installGroups}
+                              repoId={repo.id}
+                              label={repo.label}
+                            />
+                          </div>
+                          {!activated && (
+                            <div class="flex flex-col gap-1 bg-base-200 rounded-field p-2">
+                              <p class="text-xs text-base-content/60">{repo.setup.note}</p>
+                              {repo.setup.kind === "link" ? (
+                                <a
+                                  href={repo.setup.url}
+                                  class="link link-primary text-xs"
+                                  target="_blank"
+                                  rel="noopener"
+                                >
+                                  {repo.setup.url}
+                                </a>
+                              ) : (
+                                <code class="text-xs font-mono break-all">
+                                  {repo.setup.command}
+                                </code>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    );
+  },
+);
+
+const SourcesTab = component$(() => {
+  const settings = useSettings();
+  const selectedOs = findOsEntry(settings.osId.value);
+  const recommended = selectedOs ? recommendedGroupIds(selectedOs) : undefined;
+  const preActivated = selectedOs ? new Set(selectedOs.preActivatedRepoIds) : undefined;
+
+  return (
+    <section class="flex flex-col gap-3">
+      <p class="text-sm text-base-content/60">
+        Off/On always show or hide a source, regardless of your OS. Auto follows whatever the{" "}
+        <a href="?tab=os" class="link link-primary">
+          Operating system
+        </a>{" "}
+        tab has selected — or, with none selected, shows everything and assumes nothing's set up
+        yet, same as before this tab existed.
+      </p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <InstallGroupList
+          title="Cross-distro formats"
+          groups={settings.installGroups.value
+            .map((group, index) => ({ group, index }))
+            .filter(({ group }) => CROSS_DISTRO_GROUP_IDS.has(group.id))}
+          recommended={recommended}
+          preActivated={preActivated}
+        />
+        <InstallGroupList
+          title="Distro packages"
+          groups={settings.installGroups.value
+            .map((group, index) => ({ group, index }))
+            .filter(({ group }) => !CROSS_DISTRO_GROUP_IDS.has(group.id))}
+          recommended={recommended}
+          preActivated={preActivated}
+        />
+      </div>
+    </section>
+  );
+});
+
+const DisplayTab = component$(() => {
   const settings = useSettings();
 
   return (
-    <div class="flex flex-col gap-10 max-w-3xl">
+    <section class="flex flex-col gap-3">
+      <h2 class="text-lg font-semibold">Theme</h2>
+      <div class="join">
+        {THEME_OPTIONS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            class={[
+              "btn join-item",
+              settings.theme.value === option.value ? "btn-primary" : "btn-ghost",
+            ]}
+            onClick$={() => {
+              settings.theme.value = option.value;
+            }}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+});
+
+/**
+ * State 2 of the OS Selector tab (see `OsSelectorTab`) — the chosen OS, big
+ * and central, with a way back to state 1 and every source it recommends
+ * (its own native group plus the six cross-distro ones) shown inline with
+ * the exact same tri-state rows the Sources tab uses — same widget, same
+ * data, just pre-scoped to this OS instead of split cross-distro/distro.
+ */
+const OsJumbo = component$<{ entry: OsCatalogEntry }>(({ entry }) => {
+  const settings = useSettings();
+  const recommended = recommendedGroupIds(entry);
+  const preActivated = new Set(entry.preActivatedRepoIds);
+  const groups = settings.installGroups.value
+    .map((group, index) => ({ group, index }))
+    .filter(({ group }) => recommended.has(group.id));
+
+  return (
+    <div class="flex flex-col gap-6">
+      <div class="hero bg-base-200 rounded-box py-10">
+        <div class="hero-content text-center flex-col gap-3">
+          <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">Your OS</p>
+          <h2 class="text-3xl font-bold">{entry.label}</h2>
+          <button
+            type="button"
+            class="btn btn-sm btn-ghost"
+            onClick$={() => (settings.osId.value = undefined)}
+          >
+            Change
+          </button>
+        </div>
+      </div>
+
+      <InstallGroupList
+        title="Recommended sources"
+        groups={groups}
+        recommended={recommended}
+        preActivated={preActivated}
+      />
+    </div>
+  );
+});
+
+/** State 1 of the OS Selector tab — every `~/os-catalog` entry as a small tile, picking one moves to `OsJumbo`. */
+const OsTileGrid = component$(() => {
+  const settings = useSettings();
+
+  return (
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      {OS_CATALOG.map((entry) => (
+        <button
+          key={entry.id}
+          type="button"
+          class="card bg-base-100 border border-base-300 hover:border-primary/40 hover:shadow-md transition-shadow p-4 text-sm font-medium text-center"
+          onClick$={() => (settings.osId.value = entry.id)}
+        >
+          {entry.label}
+        </button>
+      ))}
+    </div>
+  );
+});
+
+const OsSelectorTab = component$(() => {
+  const settings = useSettings();
+  const entry = findOsEntry(settings.osId.value);
+
+  return (
+    <section class="flex flex-col gap-4">
+      <p class="text-sm text-base-content/60">
+        Picking an OS pre-fills the Sources tab's "Auto" choices — it never overrides a source
+        you've explicitly turned Off or On yourself.
+      </p>
+      {entry ? <OsJumbo entry={entry} /> : <OsTileGrid />}
+    </section>
+  );
+});
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: "os", label: "Operating system" },
+  { id: "sources", label: "Sources" },
+  { id: "display", label: "Display" },
+];
+
+export default component$(() => {
+  const location = useLocation();
+  const tab = parseTab(location.url.searchParams.get("tab"));
+
+  return (
+    <div class="flex flex-col gap-6 max-w-3xl">
       <h1 class="text-3xl font-bold">Settings</h1>
 
-      <section>
-        <h2 class="text-lg font-semibold mb-3">Theme</h2>
-        <div class="join">
-          {THEME_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              class={[
-                "btn join-item",
-                settings.theme.value === option.value ? "btn-primary" : "btn-ghost",
-              ]}
-              onClick$={() => {
-                settings.theme.value = option.value;
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </section>
+      <div role="tablist" class="tabs tabs-border">
+        {TABS.map((t) => (
+          <a
+            key={t.id}
+            href={`?tab=${t.id}`}
+            role="tab"
+            class={["tab", tab === t.id && "tab-active"]}
+          >
+            {t.label}
+          </a>
+        ))}
+      </div>
 
-      <section>
-        <h2 class="text-lg font-semibold mb-3">Install sources</h2>
-        <p class="text-sm text-base-content/60 mb-3">
-          Show or hide each format/distro on an app's page. A special repo needs a one-time step
-          before it's usable — check it off once you've done that (or confirm it from an app's own
-          install drawer, wherever it shows there too).
-        </p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <InstallGroupList
-            title="Cross-distro formats"
-            groups={settings.installGroups.value
-              .map((group, index) => ({ group, index }))
-              .filter(({ group }) => COMPOSITE_GROUP_IDS.has(group.id))}
-          />
-          <InstallGroupList
-            title="Distro packages"
-            groups={settings.installGroups.value
-              .map((group, index) => ({ group, index }))
-              .filter(({ group }) => !COMPOSITE_GROUP_IDS.has(group.id))}
-          />
-        </div>
-      </section>
+      {tab === "os" && <OsSelectorTab />}
+      {tab === "sources" && <SourcesTab />}
+      {tab === "display" && <DisplayTab />}
     </div>
   );
 });

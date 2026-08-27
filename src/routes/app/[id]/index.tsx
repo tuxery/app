@@ -25,7 +25,10 @@ import {
   installDeepLink,
   installWebsiteLink,
 } from "~/install-methods";
+import { findOsEntry, recommendedGroupIds } from "~/os-catalog";
 import {
+  isGroupEffectivelyShown,
+  isRepoEffectivelyActivated,
   setSourceActivated,
   useSettings,
   type InstallFormatGroup,
@@ -91,11 +94,16 @@ function findSourceOption(
   return undefined;
 }
 
-/** True unless the user hid this source's platform/distro group in Settings — everything's shown by default. */
-function isSourceVisible(source: PackageSourceId, installGroups: InstallFormatGroup[]): boolean {
+/** True unless the user hid this source's platform/distro group in Settings (or "auto" resolves to hidden — the selected OS doesn't recommend it) — everything's shown by default. */
+function isSourceVisible(
+  source: PackageSourceId,
+  installGroups: InstallFormatGroup[],
+  recommended: Set<string> | undefined,
+): boolean {
   const group = ALL_SOURCE_GROUPS.find((g) => SOURCE_GROUP_MEMBERS[g]?.includes(source));
   if (!group) return true;
-  return installGroups.find((g) => g.id === group)?.shown ?? true;
+  const found = installGroups.find((g) => g.id === group);
+  return found ? isGroupEffectivelyShown(found, recommended) : true;
 }
 
 /** Packages bucketed by platform/distro group (same grouping as the app-card dot-map), in `ALL_SOURCE_GROUPS`' fixed canonical order rather than array-arrival order. */
@@ -186,7 +194,10 @@ const SourceInstallUnit = component$<{
   const leafId = PACKAGE_SOURCE_TO_LEAF_ID[pkg.source];
   const sourceOption = leafId ? findSourceOption(settings.installGroups.value, leafId) : undefined;
   const command = installCommand(pkg);
-  const needsSetup = method.setup && !sourceOption?.activated;
+  const osEntry = findOsEntry(settings.osId.value);
+  const preActivated = osEntry ? new Set(osEntry.preActivatedRepoIds) : undefined;
+  const needsSetup =
+    method.setup && !(sourceOption && isRepoEffectivelyActivated(sourceOption, preActivated));
   const warning = compatWarnings?.find((w) => w.source === pkg.source);
 
   const deepLinkUrl = installDeepLink(pkg);
@@ -314,7 +325,7 @@ const SourceInstallUnit = component$<{
               <button
                 type="button"
                 class="btn btn-xs btn-outline self-start"
-                onClick$={() => setSourceActivated(settings.installGroups, leafId, true)}
+                onClick$={() => setSourceActivated(settings.installGroups, leafId, "on")}
               >
                 I've already done this
               </button>
@@ -487,8 +498,10 @@ export default component$(() => {
     );
   }
 
+  const selectedOs = findOsEntry(settings.osId.value);
+  const recommended = selectedOs ? recommendedGroupIds(selectedOs) : undefined;
   const visiblePackages = a.packages.filter((pkg) =>
-    isSourceVisible(pkg.source, settings.installGroups.value),
+    isSourceVisible(pkg.source, settings.installGroups.value, recommended),
   );
   const sourceSummary = summarizeSources(visiblePackages);
 

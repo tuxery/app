@@ -150,7 +150,7 @@ test("activating a source's setup persists and hides the setup step on future vi
   await expect(page.getByText("One-time — the AUR itself needs a helper")).toHaveCount(0);
 
   const stored = await page.evaluate(() => localStorage.getItem("tuxery:settings"));
-  expect(stored).toContain('"id":"arch-aur","label":"AUR","activated":true');
+  expect(stored).toContain('"id":"arch-aur","label":"AUR","activated":"on"');
 
   // Reload — the setup step should stay hidden (persisted, not just in-memory).
   await page.reload();
