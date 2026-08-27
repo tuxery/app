@@ -30,27 +30,22 @@ test("an app page shows an install-options drawer listing every source, each gro
   await expect(page.getByRole("link", { name: "Click to install" }).first()).toBeVisible();
 });
 
-test("a single-source rated app shows the aggregate badge with no breakdown icon", async ({
+test("a single-source rated app's tooltip still prefixes the figure with its source", async ({
   page,
 }) => {
   await page.goto(FIREWATCH);
   await expect(page.getByText(/\d\.\d \(\d/).first()).toBeVisible();
-  // GOG is the only rated source, same figure as the aggregate — nothing
-  // to disclose beyond it, so UnifiedRating renders no info icon at all.
-  await expect(page.getByTitle(/By source/)).toHaveCount(0);
+  await expect(page.getByTitle("GOG: ★ 3.9 (2,153)")).toBeVisible();
 });
 
-test("a multi-source rated app's aggregate badge exposes a per-source breakdown via its title", async ({
+test("a multi-source rated app's tooltip lists every source, each prefixed by its own label", async ({
   page,
 }) => {
   await page.goto(APP_EDITOR);
   await expect(page.getByText(/\d\.\d \(\d/).first()).toBeVisible();
-
-  const breakdown = page.getByTitle(/By source/);
-  await expect(breakdown).toHaveCount(1);
-  const title = await breakdown.getAttribute("title");
-  expect(title).toContain("Flathub (Flatpak): ★ 3.1 (29)");
-  expect(title).toContain("elementary AppCenter (Flatpak): ★ 3.3 (12)");
+  await expect(
+    page.getByTitle("Flathub (Flatpak): ★ 3.1 (29), elementary AppCenter (Flatpak): ★ 3.3 (12)"),
+  ).toBeVisible();
 });
 
 test("suite navigation: main app lists its components, and a component links back", async ({
