@@ -1,15 +1,15 @@
 import { test, expect } from "@playwright/test";
 
-// Firefox/Discord below use their bare Snap name as the app id ("firefox",
-// "discord") — no "source:" prefix — since a Snap or Flatpak package's own
-// name/appId is already globally unique on its own (Snap preferred when an
-// app has both, see catalog's match/group.ts's buildAppId). 0ad-data-git/
-// 0cc-famitracker have neither, so they still use "source:appId".
+// Firefox/Discord/0ad below use their bare Snap name as the app id
+// ("firefox", "discord", "0ad") — no "source:" prefix — since a Snap or
+// Flatpak package's own name/appId is already globally unique on its own
+// (Snap preferred when an app has both, see catalog's match/group.ts's
+// buildAppId). 0cc-famitracker has neither, so it still uses "source:appId".
 
 test("groups packages by platform, one collapsible per group (closed by default), native package managers show a copy-paste command", async ({
   page,
 }) => {
-  await page.goto("/app/pacman-aur%3A0ad-data-git/");
+  await page.goto("/app/0ad/");
   await page.getByRole("button", { name: "Install" }).click();
 
   // Debian and Ubuntu are two different packaging groups, each its own
@@ -19,13 +19,13 @@ test("groups packages by platform, one collapsible per group (closed by default)
   const ubuntuSummary = page.locator("summary", { hasText: "Ubuntu" });
   const fedoraSummary = page.locator("summary", { hasText: "Fedora" });
   await expect(debianSummary).toBeVisible();
-  await expect(page.getByText("sudo apt install 0ad-data").first()).not.toBeVisible();
+  await expect(page.getByText("sudo apt install 0ad").first()).not.toBeVisible();
 
   await debianSummary.click();
   await ubuntuSummary.click();
   await fedoraSummary.click();
-  await expect(page.getByText("sudo apt install 0ad-data").first()).toBeVisible();
-  await expect(page.getByText("sudo dnf install 0ad-data")).toBeVisible();
+  await expect(page.getByText("sudo apt install 0ad").first()).toBeVisible();
+  await expect(page.getByText("sudo dnf install 0ad")).toBeVisible();
 });
 
 test('the "Install options" label only shows when there\'s a prerequisite or more than one option', async ({
