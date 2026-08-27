@@ -137,7 +137,8 @@ export interface CatalogApp {
   contentType?: "game";
   iconUrl?: string;
   longDescription?: string;
-  category?: string;
+  /** Always a real label, "To Classify" at worst — see `tuxery/catalog`'s `CatalogApp.category` doc comment. */
+  category: string;
   developer?: string;
   publisher?: string;
   license?: string;
@@ -218,10 +219,10 @@ export function summarizeRatingsBySource(packages: SourcedPackage[]): SourceRati
  * e.g. AUR's official + `-git` build); `packageCount`/`channels` describe
  * the same underlying `packages` list `sources` was derived from — not
  * derivable from `sources` alone, so carried separately for
- * `SourceSummary`'s package-count badge and channels tooltip. `ratingsBySource`
- * is the same "per-package breakdown" data `UnifiedRating`'s tooltip needs —
- * free to derive from `packages_json`, already selected for `sources`/
- * `channels` above.
+ * `ChannelIndicator`'s package-count badge and channels tooltip.
+ * `ratingsBySource` is the same "per-package breakdown" data
+ * `UnifiedRating`'s tooltip needs — free to derive from `packages_json`,
+ * already selected for `sources`/`channels` above.
  */
 export interface AppSummary {
   id: string;
@@ -230,7 +231,8 @@ export interface AppSummary {
   iconUrl?: string;
   kind?: "gui";
   contentType?: "game";
-  category?: string;
+  /** Always a real label, "To Classify" at worst — see `tuxery/catalog`'s `CatalogApp.category` doc comment. */
+  category: string;
   rating?: { average: number; count: number };
   ratingsBySource: SourceRating[];
   sources: PackageSourceId[];

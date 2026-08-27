@@ -60,7 +60,7 @@ function toSummary(row: Row): AppSummary {
     iconUrl: (row.icon_url as string | null) ?? undefined,
     kind: row.kind === "gui" ? "gui" : undefined,
     contentType: row.content_type === "game" ? "game" : undefined,
-    category: (row.category as string | null) ?? undefined,
+    category: row.category as string,
     rating: parseRating(row),
     ratingsBySource: summarizeRatingsBySource(packages),
     // Deduplicated — a merged app can carry two packages from the same
@@ -98,7 +98,7 @@ function toCatalogApp(row: Row): CatalogApp {
     homepage: str(row.homepage),
     kind: row.kind === "gui" ? "gui" : undefined,
     contentType: row.content_type === "game" ? "game" : undefined,
-    category: str(row.category),
+    category: row.category as string,
     developer: str(row.developer),
     publisher: str(row.publisher),
     license: str(row.license),
@@ -145,14 +145,16 @@ export type InterfaceFilter = "all" | "gui" | "cli";
 
 /**
  * "game" is real positive evidence (`contentType`, see `~/catalog-types`'s
- * doc comment); "app"/"utility" are a best-effort split of everything
- * else by `category` (see `UTILITY_CATEGORIES` below) — not a confirmed
- * signal the way "game" is, just a reasonable first cut to refine later.
+ * doc comment) — "app" is just its complement (everything not confirmed a
+ * game), same as `category` itself always being set now (see
+ * `CatalogApp.category`'s doc comment on the catalog side): no more
+ * "utility" — that used to be a client-side guess (a hardcoded category-
+ * name list) layered on top of an already best-effort split, folded away
+ * now that catalog's own taxonomy scopes categories by app/game directly
+ * (Utilities is just one ordinary category among many, same as every
+ * real app store researched treats it — see the categories board card).
  */
-export type TypeFilter = "all" | "game" | "app" | "utility";
-
-/** `category` values that read as a power-user/system tool rather than a general-purpose app — the "Utils" side of the best-effort Apps/Utils split. Deliberately coarse (see `TypeFilter`'s doc comment) — refine by splintering `~/tuxery/catalog`'s own category taxonomy later, not by tuning this list in isolation. */
-const UTILITY_CATEGORIES = ["System tools", "Settings", "Utilities", "Developer tools"];
+export type TypeFilter = "all" | "game" | "app";
 
 export type SortOption = "relevance" | "name-asc" | "name-desc";
 
@@ -273,16 +275,8 @@ export async function browseApps(
     }
     if (typeFilter === "game") {
       conditions.push("content_type = 'game'");
-    } else if (typeFilter === "utility") {
-      const placeholders = UTILITY_CATEGORIES.map(() => "?").join(", ");
-      conditions.push(`(content_type IS NOT 'game' AND category IN (${placeholders}))`);
-      conditionArgs.push(...UTILITY_CATEGORIES);
     } else if (typeFilter === "app") {
-      const placeholders = UTILITY_CATEGORIES.map(() => "?").join(", ");
-      conditions.push(
-        `(content_type IS NOT 'game' AND (category IS NULL OR category NOT IN (${placeholders})))`,
-      );
-      conditionArgs.push(...UTILITY_CATEGORIES);
+      conditions.push("content_type IS NOT 'game'");
     }
     if (category) {
       conditions.push("category = ?");
@@ -359,8 +353,9 @@ const TRENDING_PAGE_SIZE = 60;
 // reading as polished is worth the cut. Verified live: 1,386 of the
 // 21,844 popularity-scored apps have a real icon (mostly AUR's own
 // usage-frequency signal, a source with no icon data at all) — still
-// comfortably enough for every trending bucket (216 games, 814 apps, 356
-// utils) and every homepage category row.
+// comfortably enough for every trending bucket (216 games, 1,170 apps —
+// re-verified after the Apps/Games taxonomy redesign dropped "utility" as
+// a separate bucket) and every homepage category row.
 const HAS_VISUAL_ASSET = "icon_url IS NOT NULL";
 
 /**
@@ -368,9 +363,7 @@ const HAS_VISUAL_ASSET = "icon_url IS NOT NULL";
  * `tuxery/catalog`'s `CatalogApp.popularity` doc comment for how it's
  * computed. Apps with no score are excluded entirely rather than sorted
  * to the bottom — "no signal" isn't "unpopular". `typeFilter: "game"` is
- * real positive evidence; "app"/"utility" are the same best-effort
- * category split `browseApps` uses (see `UTILITY_CATEGORIES`) — good
- * enough for a trending row, not a claim of certainty. Also requires an
+ * real positive evidence; "app" is just its complement. Also requires an
  * icon or screenshot — see `HAS_VISUAL_ASSET`.
  */
 export async function getTrendingApps(typeFilter: TypeFilter = "all"): Promise<AppSummary[]> {
@@ -378,22 +371,15 @@ export async function getTrendingApps(typeFilter: TypeFilter = "all"): Promise<A
   if (!db) return [];
 
   return safely([], async () => {
-    const args: string[] = [];
     let where = "";
     if (typeFilter === "game") {
       where = "AND content_type = 'game'";
-    } else if (typeFilter === "utility") {
-      const placeholders = UTILITY_CATEGORIES.map(() => "?").join(", ");
-      where = `AND content_type IS NOT 'game' AND category IN (${placeholders})`;
-      args.push(...UTILITY_CATEGORIES);
     } else if (typeFilter === "app") {
-      const placeholders = UTILITY_CATEGORIES.map(() => "?").join(", ");
-      where = `AND content_type IS NOT 'game' AND (category IS NULL OR category NOT IN (${placeholders}))`;
-      args.push(...UTILITY_CATEGORIES);
+      where = "AND content_type IS NOT 'game'";
     }
     const result = await db.execute({
       sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE popularity IS NOT NULL AND ${HAS_VISUAL_ASSET} ${where} ORDER BY popularity DESC LIMIT ?`,
-      args: [...args, TRENDING_PAGE_SIZE],
+      args: [TRENDING_PAGE_SIZE],
     });
     return result.rows.map((row) => toSummary(row as unknown as Row));
   });
@@ -431,30 +417,24 @@ export interface CategoryCount {
 /**
  * Every real category with at least one app, most populated first — powers
  * the /categories listing and the homepage's "Browse by category" grid.
- * `typeFilter` splits along the same Apps/Utils line `browseApps`/
- * `getTrendingApps` already use (see `UTILITY_CATEGORIES`) — there's no
- * "game" variant here: games never carry a `category` at all (genre-level
- * taxonomy doesn't exist yet — see the "Genre-level game taxonomy" board
- * card), so a games-scoped call would always return empty.
+ * `typeFilter` scopes to apps or games — catalog draws each from its own
+ * taxonomy now (see `tuxery/catalog`'s `CatalogApp.category` doc comment),
+ * so the two never mix; "To Classify" is a real category like any other
+ * and shows up here too, usually the largest by far.
  */
-export async function getCategories(
-  typeFilter: "all" | "app" | "utility" = "all",
-): Promise<CategoryCount[]> {
+export async function getCategories(typeFilter: TypeFilter = "all"): Promise<CategoryCount[]> {
   const db = getClient();
   if (!db) return [];
 
   return safely([], async () => {
-    const placeholders = UTILITY_CATEGORIES.map(() => "?").join(", ");
     const where =
-      typeFilter === "utility"
-        ? `AND category IN (${placeholders})`
+      typeFilter === "game"
+        ? "WHERE content_type = 'game'"
         : typeFilter === "app"
-          ? `AND category NOT IN (${placeholders})`
+          ? "WHERE content_type IS NOT 'game'"
           : "";
-    const args = typeFilter === "all" ? [] : UTILITY_CATEGORIES;
     const result = await db.execute({
-      sql: `SELECT category, COUNT(*) as count FROM apps WHERE category IS NOT NULL ${where} GROUP BY category ORDER BY count DESC`,
-      args,
+      sql: `SELECT category, COUNT(*) as count FROM apps ${where} GROUP BY category ORDER BY count DESC`,
     });
     return result.rows.map((row) => ({
       category: row.category as string,
