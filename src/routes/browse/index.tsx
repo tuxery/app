@@ -225,9 +225,8 @@ export default component$(() => {
         <>
           <div class="flex items-center justify-between gap-3 flex-wrap">
             <p class="text-sm text-base-content/60">
-              Showing {loadedCount.value.toLocaleString()} of {browse.value.total.toLocaleString()}{" "}
-              apps — page {startPage + batches.value.length} of{" "}
-              {Math.max(1, Math.ceil(browse.value.total / BROWSE_PAGE_SIZE))}
+              Showing {browse.value.total.toLocaleString()} apps across{" "}
+              {Math.max(1, Math.ceil(browse.value.total / BROWSE_PAGE_SIZE)).toLocaleString()} pages
             </p>
             <a
               href="#top"
@@ -246,6 +245,10 @@ export default component$(() => {
                     <span class="flex-1 border-t border-base-300" />
                     Page {startPage + batchIndex + 1}
                     <span class="flex-1 border-t border-base-300" />
+                    <a href="#top" class="link link-hover flex items-center gap-1">
+                      <LuArrowUp aria-hidden="true" />
+                      Top
+                    </a>
                   </div>
                 )}
                 {batch.map((app) => (
