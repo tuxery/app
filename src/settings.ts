@@ -10,18 +10,29 @@ import {
 export type Theme = "light" | "dark" | "system";
 
 /**
+ * "off"/"on" are an explicit user override, always winning regardless of
+ * the selected OS. "auto" defers to whatever the selected OS (see
+ * `~/os-catalog`) recommends — or, with no OS selected, to the same
+ * always-shown/never-preactivated behavior this had before OS selection
+ * existed, so a user who's never touched the OS Selector tab sees no
+ * change at all. Picking an OS doesn't overwrite anyone's explicit
+ * choices, only what's still "auto".
+ */
+export type TriState = "off" | "auto" | "on";
+
+/**
  * A one-time setup step some of a category's packages need before they'll
  * actually install — adding a Flatpak remote, installing an AUR helper,
  * enabling a distro's non-default repo component (Ubuntu's Universe,
  * openSUSE's non-oss, ...). Checking it here and confirming "I've already
  * done this" in an app's install drawer (for the handful precise enough to
- * show it there — see `~/install-methods`) are the same flag; unchecked by
- * default since nobody's done the setup yet.
+ * show it there — see `~/install-methods`) are the same flag; "auto" by
+ * default since nobody's done the setup yet and no OS is selected.
  */
 export interface SpecialRepoOption {
   id: string;
   label: string;
-  activated: boolean;
+  activated: TriState;
   setup:
     | { kind: "command"; command: string; note: string }
     | { kind: "link"; url: string; note: string };
@@ -31,18 +42,38 @@ export interface SpecialRepoOption {
 export interface InstallFormatGroup {
   id: string;
   label: string;
-  shown: boolean;
+  shown: TriState;
   specialRepos: SpecialRepoOption[];
 }
+
+/**
+ * Cross-distro packaging formats and distribution-agnostic storefronts —
+ * install once, work the same regardless of which distro tile is
+ * selected in the OS Selector tab, so every `~/os-catalog` entry
+ * recommends all six of these alongside its own native distro group. Also
+ * the "Cross-distro formats" vs. "Distro packages" split on the Sources
+ * tab — a UI/recommendation grouping, not a `~/catalog-types` concept.
+ */
+export const CROSS_DISTRO_GROUP_IDS = new Set([
+  "Flatpak",
+  "Snap",
+  "AppImage",
+  "GOG",
+  "Lutris",
+  "GitHub Releases",
+]);
 
 export interface SettingsState {
   theme: Signal<Theme>;
   installGroups: Signal<InstallFormatGroup[]>;
+  /** Selected `~/os-catalog` entry id — `undefined` until the user picks one (or, once real detection exists, until it succeeds; see the "Best-effort OS/platform detection" board card, deliberately out of scope here). */
+  osId: Signal<string | undefined>;
 }
 
 interface PersistedSettings {
   theme: Theme;
   installGroups: InstallFormatGroup[];
+  osId: string | undefined;
 }
 
 const STORAGE_KEY = "tuxery:settings";
@@ -59,12 +90,12 @@ const defaultInstallGroups = (): InstallFormatGroup[] => [
   {
     id: "Flatpak",
     label: "Flatpak",
-    shown: true,
+    shown: "auto",
     specialRepos: [
       {
         id: "flathub",
         label: "Flathub",
-        activated: false,
+        activated: "auto",
         setup: {
           kind: "command",
           command:
@@ -75,7 +106,7 @@ const defaultInstallGroups = (): InstallFormatGroup[] => [
       {
         id: "elementary-appcenter",
         label: "elementary AppCenter",
-        activated: false,
+        activated: "auto",
         setup: {
           kind: "command",
           command:
@@ -88,12 +119,12 @@ const defaultInstallGroups = (): InstallFormatGroup[] => [
   {
     id: "Snap",
     label: "Snap",
-    shown: true,
+    shown: "auto",
     specialRepos: [
       {
         id: "snap-store",
         label: "Snap Store",
-        activated: false,
+        activated: "auto",
         setup: {
           kind: "link",
           url: "https://snapcraft.io/docs/installing-snapd",
@@ -105,12 +136,12 @@ const defaultInstallGroups = (): InstallFormatGroup[] => [
   {
     id: "AppImage",
     label: "AppImage",
-    shown: true,
+    shown: "auto",
     specialRepos: [
       {
         id: "appimage-integration",
         label: "Desktop integration",
-        activated: false,
+        activated: "auto",
         setup: {
           kind: "link",
           url: "https://flathub.org/apps/it.mijorus.gearlever",
@@ -122,12 +153,12 @@ const defaultInstallGroups = (): InstallFormatGroup[] => [
   {
     id: "Arch Linux",
     label: "Arch Linux",
-    shown: true,
+    shown: "auto",
     specialRepos: [
       {
         id: "arch-aur",
         label: "AUR",
-        activated: false,
+        activated: "auto",
         setup: {
           kind: "command",
           command: "# install an AUR helper first, e.g.: https://github.com/Jguer/yay#installation",
@@ -136,16 +167,16 @@ const defaultInstallGroups = (): InstallFormatGroup[] => [
       },
     ],
   },
-  { id: "Debian", label: "Debian", shown: true, specialRepos: [] },
+  { id: "Debian", label: "Debian", shown: "auto", specialRepos: [] },
   {
     id: "Ubuntu",
     label: "Ubuntu",
-    shown: true,
+    shown: "auto",
     specialRepos: [
       {
         id: "ubuntu-universe",
         label: "Universe",
-        activated: false,
+        activated: "auto",
         setup: {
           kind: "command",
           command: "sudo add-apt-repository universe && sudo apt update",
@@ -157,12 +188,12 @@ const defaultInstallGroups = (): InstallFormatGroup[] => [
   {
     id: "Fedora",
     label: "Fedora",
-    shown: true,
+    shown: "auto",
     specialRepos: [
       {
         id: "rpmfusion",
         label: "RPM Fusion",
-        activated: false,
+        activated: "auto",
         setup: {
           kind: "command",
           command:
@@ -175,12 +206,12 @@ const defaultInstallGroups = (): InstallFormatGroup[] => [
   {
     id: "openSUSE",
     label: "openSUSE",
-    shown: true,
+    shown: "auto",
     specialRepos: [
       {
         id: "opensuse-non-oss",
         label: "non-oss",
-        activated: false,
+        activated: "auto",
         setup: {
           kind: "command",
           command: "sudo zypper mr -e repo-non-oss repo-update-non-oss",
@@ -189,27 +220,29 @@ const defaultInstallGroups = (): InstallFormatGroup[] => [
       },
     ],
   },
-  { id: "Alpine Linux", label: "Alpine Linux", shown: true, specialRepos: [] },
-  { id: "Void Linux", label: "Void Linux", shown: true, specialRepos: [] },
-  { id: "Slackware", label: "Slackware", shown: true, specialRepos: [] },
-  { id: "Solus", label: "Solus", shown: true, specialRepos: [] },
-  { id: "Gentoo", label: "Gentoo", shown: true, specialRepos: [] },
-  { id: "Nixpkgs", label: "Nixpkgs", shown: true, specialRepos: [] },
-  { id: "Linux Mint", label: "Linux Mint", shown: true, specialRepos: [] },
-  { id: "Pop!_OS", label: "Pop!_OS", shown: true, specialRepos: [] },
-  { id: "Deepin", label: "Deepin", shown: true, specialRepos: [] },
-  { id: "MX Linux", label: "MX Linux", shown: true, specialRepos: [] },
-  { id: "GOG", label: "GOG", shown: true, specialRepos: [] },
-  { id: "Lutris", label: "Lutris", shown: true, specialRepos: [] },
-  { id: "GitHub Releases", label: "GitHub Releases", shown: true, specialRepos: [] },
+  { id: "Alpine Linux", label: "Alpine Linux", shown: "auto", specialRepos: [] },
+  { id: "Void Linux", label: "Void Linux", shown: "auto", specialRepos: [] },
+  { id: "Slackware", label: "Slackware", shown: "auto", specialRepos: [] },
+  { id: "Solus", label: "Solus", shown: "auto", specialRepos: [] },
+  { id: "Gentoo", label: "Gentoo", shown: "auto", specialRepos: [] },
+  { id: "Nixpkgs", label: "Nixpkgs", shown: "auto", specialRepos: [] },
+  { id: "Linux Mint", label: "Linux Mint", shown: "auto", specialRepos: [] },
+  { id: "Pop!_OS", label: "Pop!_OS", shown: "auto", specialRepos: [] },
+  { id: "Deepin", label: "Deepin", shown: "auto", specialRepos: [] },
+  { id: "MX Linux", label: "MX Linux", shown: "auto", specialRepos: [] },
+  { id: "GOG", label: "GOG", shown: "auto", specialRepos: [] },
+  { id: "Lutris", label: "Lutris", shown: "auto", specialRepos: [] },
+  { id: "GitHub Releases", label: "GitHub Releases", shown: "auto", specialRepos: [] },
 ];
 
-/** True only for a value shaped like the current `InstallFormatGroup[]` — guards against a pre-redesign persisted payload (old `enabled`/`sources` shape), which gets discarded in favor of fresh defaults rather than merged field-by-field into a schema it doesn't match. */
+const TRI_STATES = new Set(["off", "auto", "on"]);
+
+/** True only for a value shaped like the current `InstallFormatGroup[]` — guards against a pre-redesign persisted payload (the old plain-boolean `shown`/`activated` shape, or older still, `enabled`/`sources`), which gets discarded in favor of fresh defaults rather than merged field-by-field into a schema it doesn't match. */
 function isCurrentShape(value: unknown): value is InstallFormatGroup[] {
   return (
     Array.isArray(value) &&
     value.every(
-      (group) => group && typeof group.shown === "boolean" && Array.isArray(group.specialRepos),
+      (group) => group && TRI_STATES.has(group.shown) && Array.isArray(group.specialRepos),
     )
   );
 }
@@ -250,8 +283,9 @@ export const SettingsContext = createContextId<SettingsState>("tuxery.settings")
 export const useProvideSettings = (): SettingsState => {
   const theme = useSignal<Theme>("system");
   const installGroups = useSignal<InstallFormatGroup[]>(defaultInstallGroups());
+  const osId = useSignal<string | undefined>(undefined);
 
-  const state: SettingsState = { theme, installGroups };
+  const state: SettingsState = { theme, installGroups, osId };
   useContextProvider(SettingsContext, state);
 
   const hydrated = useSignal(false);
@@ -260,6 +294,7 @@ export const useProvideSettings = (): SettingsState => {
   useVisibleTask$(({ track }) => {
     track(() => theme.value);
     track(() => JSON.stringify(installGroups.value));
+    track(() => osId.value);
 
     if (!hydrated.value) {
       hydrated.value = true;
@@ -271,6 +306,7 @@ export const useProvideSettings = (): SettingsState => {
           if (isCurrentShape(stored.installGroups)) {
             installGroups.value = mergeInstallGroups(stored.installGroups, defaultInstallGroups());
           }
+          if (typeof stored.osId === "string") osId.value = stored.osId;
         }
       } catch {
         // malformed/unavailable storage — keep defaults
@@ -281,6 +317,7 @@ export const useProvideSettings = (): SettingsState => {
     const payload: PersistedSettings = {
       theme: theme.value,
       installGroups: installGroups.value,
+      osId: osId.value,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   });
@@ -311,23 +348,30 @@ export const useProvideSettings = (): SettingsState => {
 
 export const useSettings = () => useContext(SettingsContext);
 
-export const toggleGroupShown = (installGroups: Signal<InstallFormatGroup[]>, index: number) => {
+/** Sets one group's Show/Hide tri-state directly (the OS Selector and Sources tabs both offer all three choices, not just a flip). */
+export const setGroupShown = (
+  installGroups: Signal<InstallFormatGroup[]>,
+  index: number,
+  shown: TriState,
+) => {
   installGroups.value = installGroups.value.map((group, i) =>
-    i === index ? { ...group, shown: !group.shown } : group,
+    i === index ? { ...group, shown } : group,
   );
 };
 
 /**
- * Marks one special-repo leaf as activated — looked up by its own `id`
+ * Marks one special-repo leaf's tri-state — looked up by its own `id`
  * rather than group/index, since callers like the install drawer work from
  * a `PackageSourceId`, not a position in the settings list. The same
- * mutator backs both the Settings page's checkbox and the drawer's "I've
- * already done this" button; a no-op if the id isn't found.
+ * mutator backs the Settings page's tri-state control, the OS Selector
+ * tab's, and the drawer's "I've already done this" button (which always
+ * passes "on" — a real user confirmation, not a guess); a no-op if the id
+ * isn't found.
  */
 export const setSourceActivated = (
   installGroups: Signal<InstallFormatGroup[]>,
   sourceId: string,
-  activated: boolean,
+  activated: TriState,
 ) => {
   installGroups.value = installGroups.value.map((group) => ({
     ...group,
@@ -336,3 +380,35 @@ export const setSourceActivated = (
     ),
   }));
 };
+
+/**
+ * Resolves a group's Show/Hide tri-state to a real boolean — "auto" defers
+ * to `recommendedGroupIds` (the selected OS's own recommendation, see
+ * `~/os-catalog`'s `recommendedGroupIds`), or shows everything when
+ * `undefined` (no OS selected yet — the original, pre-OS-Selector
+ * behavior). "off"/"on" always win outright, regardless of the OS.
+ */
+export function isGroupEffectivelyShown(
+  group: InstallFormatGroup,
+  recommendedGroupIds: Set<string> | undefined,
+): boolean {
+  if (group.shown === "off") return false;
+  if (group.shown === "on") return true;
+  return recommendedGroupIds ? recommendedGroupIds.has(group.id) : true;
+}
+
+/**
+ * Resolves a special repo's tri-state to a real boolean — the same
+ * "auto" defers to the selected OS" reasoning as `isGroupEffectivelyShown`,
+ * except "auto" with no OS selected resolves to `false` (not preactivated
+ * — the original, pre-OS-Selector default, since nothing was ever assumed
+ * set up before this feature existed).
+ */
+export function isRepoEffectivelyActivated(
+  repo: SpecialRepoOption,
+  preActivatedRepoIds: Set<string> | undefined,
+): boolean {
+  if (repo.activated === "off") return false;
+  if (repo.activated === "on") return true;
+  return preActivatedRepoIds ? preActivatedRepoIds.has(repo.id) : false;
+}
