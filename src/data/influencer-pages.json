@@ -16,7 +16,13 @@
       {
         "type": "apps",
         "heading": "Communication",
-        "appIds": ["appimage-manual:Beeper", "discord", "signal-desktop", "proton-mail", "com.tutanota.Tutanota"]
+        "appIds": [
+          "appimage-manual:Beeper",
+          "discord",
+          "signal-desktop",
+          "proton-mail",
+          "com.tutanota.Tutanota"
+        ]
       },
       {
         "type": "apps",
