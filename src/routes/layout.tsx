@@ -17,7 +17,6 @@ export const useHeroBackground = routeLoader$(async () => {
 const NAV_LINKS = [
   { href: "/apps/", label: "Apps" },
   { href: "/games/", label: "Games" },
-  { href: "/utils/", label: "Utils" },
   { href: "/categories/", label: "Categories" },
 ];
 

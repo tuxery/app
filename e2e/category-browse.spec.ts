@@ -6,7 +6,10 @@ test("a category card on /categories leads to filtered, non-empty /browse result
   await page.goto("/categories/");
   await expect(page.getByRole("heading", { name: "Categories" })).toBeVisible();
 
-  const firstCategory = page.locator("a[href*='/browse/?category=']").first();
+  // Scoped to the actual grid tiles (`.card`), not just any link to
+  // /browse/?category= — the intro paragraph's own "To Classify" link
+  // matches the bare href pattern too and would otherwise win `.first()`.
+  const firstCategory = page.locator("a.card[href*='/browse/?category=']").first();
   const categoryName = await firstCategory.locator(".font-medium").innerText();
   await firstCategory.click();
 

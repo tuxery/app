@@ -64,9 +64,6 @@ export const Footer = component$(() => {
             <a href="/distros/" class="link link-hover">
               Browse by source
             </a>
-            <a href="/utils/" class="link link-hover">
-              Utils
-            </a>
           </nav>
           <nav>
             <h6 class="footer-title">Project</h6>

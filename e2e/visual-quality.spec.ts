@@ -20,10 +20,10 @@ test("homepage trending/category rows only show apps with a real icon or screens
   expect(await placeholderCount(page)).toBe(0);
 });
 
-test("/apps, /games, /utils trending rows only show apps with a real icon or screenshot", async ({
+test("/apps, /games trending rows only show apps with a real icon or screenshot", async ({
   page,
 }) => {
-  for (const path of ["/apps/", "/games/", "/utils/"]) {
+  for (const path of ["/apps/", "/games/"]) {
     await page.goto(path);
     const cards = page.locator("article.card");
     await expect(cards.first()).toBeVisible();

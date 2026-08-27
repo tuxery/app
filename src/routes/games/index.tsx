@@ -2,12 +2,15 @@ import { component$ } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { AppCard } from "~/components/app-card/app-card";
-import { getTrendingApps } from "~/catalog";
+import { CategoryTileGrid } from "~/components/category-tile-grid/category-tile-grid";
+import { getCategories, getTrendingApps } from "~/catalog";
 
 export const useTrendingGames = routeLoader$(async () => getTrendingApps("game"));
+export const useCategories = routeLoader$(async () => getCategories("game"));
 
 export default component$(() => {
   const trending = useTrendingGames();
+  const categories = useCategories();
 
   return (
     <div class="flex flex-col gap-10">
@@ -51,14 +54,12 @@ export default component$(() => {
         </section>
       )}
 
-      <section>
-        <h2 class="text-lg font-semibold mb-2">Genre browsing</h2>
-        <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
-          Games mostly don't carry the same category data apps do (AppStream's own taxonomy excludes
-          genre for anything tagged "Game"), so genre-level browsing needs its own taxonomy — still
-          coming.
-        </div>
-      </section>
+      {categories.value.length > 0 && (
+        <section>
+          <h2 class="text-lg font-semibold mb-3">Browse by genre</h2>
+          <CategoryTileGrid categories={categories.value} />
+        </section>
+      )}
     </div>
   );
 });
