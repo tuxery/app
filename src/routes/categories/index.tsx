@@ -1,56 +1,50 @@
 import { component$ } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
+import { CategoryTileGrid } from "~/components/category-tile-grid/category-tile-grid";
 import { getCategories } from "~/catalog";
 
-export const useCategories = routeLoader$(async () => getCategories());
+export const useAppCategories = routeLoader$(async () => getCategories("app"));
+export const useGameCategories = routeLoader$(async () => getCategories("game"));
 
 export default component$(() => {
-  const categories = useCategories();
+  const appCategories = useAppCategories();
+  const gameCategories = useGameCategories();
 
   return (
-    <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-8">
       <div>
         <h1 class="text-3xl font-bold mb-2">Categories</h1>
         <p class="text-base-content/70">
-          Sourced from each app's own AppStream metadata, mapped to a small, deliberately
-          conservative set of display categories (freedesktop.org's Main Categories only) — apps,
-          games, and CLI utilities alike, whenever the source data actually carries one. Coverage is
-          uneven: games rarely carry a Main Category upstream (freedesktop's own convention drops it
-          once something is tagged "Game"), and there's no reliable way yet to tell a CLI tool apart
-          from a GUI app in the first place — so both are under-represented here, not excluded, and
-          will fill in as the catalog's own signal improves.
+          Apps and games each draw from their own taxonomy, sourced from each app's own AppStream
+          metadata whenever the source data actually carries one — coverage is uneven (only Flathub
+          and elementary AppCenter populate it today), so most of the catalog lands in{" "}
+          <a href="/browse/?category=To+Classify" class="link link-primary">
+            To Classify
+          </a>{" "}
+          rather than a guess.
         </p>
       </div>
 
-      {categories.value.length === 0 ? (
+      {appCategories.value.length === 0 && gameCategories.value.length === 0 ? (
         <p class="text-base-content/60">No category data loaded yet.</p>
       ) : (
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          {categories.value.map((c) => (
-            <a
-              key={c.category}
-              href={`/browse/?category=${encodeURIComponent(c.category)}`}
-              aria-label={`Browse ${c.category} (${c.count} apps)`}
-              class="card bg-base-100 border border-base-300 hover:border-primary/40 hover:shadow-md transition-shadow"
-            >
-              <div class="card-body p-5 flex-row items-center justify-between">
-                <span class="font-medium">{c.category}</span>
-                <span class="badge badge-ghost">{c.count.toLocaleString()}</span>
-              </div>
-            </a>
-          ))}
-        </div>
-      )}
+        <>
+          {appCategories.value.length > 0 && (
+            <section>
+              <h2 class="text-lg font-semibold mb-3">Apps</h2>
+              <CategoryTileGrid categories={appCategories.value} />
+            </section>
+          )}
 
-      <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
-        Looking for games specifically? A genre-level taxonomy (Puzzle, Casual, Strategy, ...) isn't
-        built yet, but{" "}
-        <a href="/games/" class="link link-primary">
-          Games
-        </a>{" "}
-        lists every confirmed game regardless of category.
-      </div>
+          {gameCategories.value.length > 0 && (
+            <section>
+              <h2 class="text-lg font-semibold mb-3">Games</h2>
+              <CategoryTileGrid categories={gameCategories.value} />
+            </section>
+          )}
+        </>
+      )}
     </div>
   );
 });

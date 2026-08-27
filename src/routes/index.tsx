@@ -10,9 +10,9 @@ import {
   LuLayoutGrid,
   LuMegaphone,
   LuSearch,
-  LuWrench,
 } from "@qwikest/icons/lucide";
 import { AppCard } from "~/components/app-card/app-card";
+import { CategoryTileGrid } from "~/components/category-tile-grid/category-tile-grid";
 import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-scroller";
 import {
   getStats,
@@ -20,7 +20,6 @@ import {
   getCategories,
   getAppsByCategory,
   getAppsByIds,
-  type CategoryCount,
 } from "~/catalog";
 import { getInfluencerPage } from "~/data/influencer-pages";
 import { useHeroBackground } from "~/routes/layout";
@@ -35,12 +34,11 @@ export const useStats = routeLoader$(async () => {
 // "Trending games" row already uses).
 export const useTrendingApps = routeLoader$(async () => getTrendingApps("app"));
 export const useTrendingGames = routeLoader$(async () => getTrendingApps("game"));
-export const useTrendingUtils = routeLoader$(async () => getTrendingApps("utility"));
 
-// "Browse by category" is split Apps/Utils the same way trending is — no
-// "game" variant, see `getCategories`'s own doc comment for why.
+// "Browse by category" is split Apps/Games — each draws from its own
+// taxonomy now (see `tuxery/catalog`'s `CatalogApp.category` doc comment).
 export const useAppCategories = routeLoader$(async () => getCategories("app"));
-export const useUtilCategories = routeLoader$(async () => getCategories("utility"));
+export const useGameCategories = routeLoader$(async () => getCategories("game"));
 
 // Reuses the same influencer-page data /creators/baxyz/ itself renders
 // from, so the homepage slide's name/avatar stay in sync with that page
@@ -49,17 +47,18 @@ export const useFeaturedCreator = routeLoader$(async () => getInfluencerPage("ba
 
 // One loader per curated row on the "Homepage: full section layout" board
 // card — Qwik City loaders have to be individually exported consts, not
-// built from a loop. Category strings match enrich/category.ts's
-// CATEGORY_LABELS on the catalog side exactly (kept in sync by hand, same
-// convention as catalog-types.ts's own mirrors). No "Internet &
-// Communication" row (former "Social network apps") — see MUST_HAVE_APP_IDS'
-// neighbor comment on why that one's gone.
+// built from a loop. Category strings match catalog's own
+// config/categories-apps.json/categories-games.json labels exactly (kept
+// in sync by hand, same convention as catalog-types.ts's own mirrors). No
+// "Internet & Communication" row (former "Social network apps") — see
+// MUST_HAVE_APP_IDS' neighbor comment on why that one's gone.
 export const useProductivityApps = routeLoader$(async () => getAppsByCategory("Productivity"));
-export const useCreativityApps = routeLoader$(async () =>
-  getAppsByCategory("Graphics & Creativity"),
-);
+export const useCreativityApps = routeLoader$(async () => getAppsByCategory("Graphics & Design"));
 export const useLearningApps = routeLoader$(async () => getAppsByCategory("Education"));
-export const useMultimediaApps = routeLoader$(async () => getAppsByCategory("Multimedia"));
+export const useMusicApps = routeLoader$(async () => getAppsByCategory("Music & Audio"));
+export const useVideoApps = routeLoader$(async () => getAppsByCategory("Photo & Video"));
+export const useCasualGames = routeLoader$(async () => getAppsByCategory("Casual"));
+export const usePuzzleGames = routeLoader$(async () => getAppsByCategory("Puzzle"));
 
 // Hand-picked, not category-derived — there's no "must-have" signal in the
 // data model, so this is genuinely editorial, same spirit as
@@ -146,15 +145,14 @@ const TRENDING_TIP =
   "Ranked by a popularity score averaged across sources that expose one (AUR usage ranking, Flathub's own Popular collection).";
 
 /**
- * One content-type-scoped trending row (Apps/Games/Utils) — used to be a
- * single mixed "Trending" row with its ranking-methodology explanation as
- * a full paragraph underneath; now an "i" tooltip next to the heading
- * instead, so three of these stacked don't repeat the same paragraph
- * three times.
+ * One content-type-scoped trending row (Apps/Games) — used to be a single
+ * mixed "Trending" row with its ranking-methodology explanation as a full
+ * paragraph underneath; now an "i" tooltip next to the heading instead,
+ * so two of these stacked don't repeat the same paragraph twice.
  */
 const TrendingRow = component$<{
   title: string;
-  typeFilter: "app" | "game" | "utility";
+  typeFilter: "app" | "game";
   apps: AppSummary[];
 }>(({ title, typeFilter, apps }) => (
   <section>
@@ -205,12 +203,6 @@ const DESTINATION_TILES = [
     href: "/apps/",
     icon: LuLayoutGrid,
     gradient: "from-sky-500 to-blue-700",
-  },
-  {
-    title: "All utils",
-    href: "/utils/",
-    icon: LuWrench,
-    gradient: "from-emerald-500 to-teal-700",
   },
 ] as const;
 
@@ -301,45 +293,22 @@ const ComingSoonSection = component$<{ title: string; note: string }>(({ title, 
   </section>
 ));
 
-/** One Apps-or-Utils tile grid within "Browse by category" — extracted so the Games slot next to it can show its own no-data note instead of a second empty grid. */
-const CategoryTileGrid = component$<{ categories: CategoryCount[] }>(({ categories }) =>
-  categories.length === 0 ? (
-    <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
-      No categories catalogued yet.
-    </div>
-  ) : (
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-      {categories.map((c) => (
-        <a
-          key={c.category}
-          href={`/browse/?category=${encodeURIComponent(c.category)}`}
-          aria-label={`Browse ${c.category} (${c.count} apps)`}
-          class="card bg-base-100 border border-base-300 hover:border-primary/40 hover:shadow-md transition-shadow"
-        >
-          <div class="card-body p-4 flex-row items-center justify-between">
-            <span class="font-medium">{c.category}</span>
-            <span class="badge badge-ghost">{c.count.toLocaleString()}</span>
-          </div>
-        </a>
-      ))}
-    </div>
-  ),
-);
-
 export default component$(() => {
   const stats = useStats();
   const trendingApps = useTrendingApps();
   const trendingGames = useTrendingGames();
-  const trendingUtils = useTrendingUtils();
   const appCategories = useAppCategories();
-  const utilCategories = useUtilCategories();
+  const gameCategories = useGameCategories();
   const featuredCreator = useFeaturedCreator();
   const heroBackground = useHeroBackground();
   const bg = heroBackground.value;
   const productivityApps = useProductivityApps();
   const creativityApps = useCreativityApps();
   const learningApps = useLearningApps();
-  const multimediaApps = useMultimediaApps();
+  const musicApps = useMusicApps();
+  const videoApps = useVideoApps();
+  const casualGames = useCasualGames();
+  const puzzleGames = usePuzzleGames();
   const mustHaveApps = useMustHaveApps();
 
   return (
@@ -368,7 +337,7 @@ export default component$(() => {
             </form>
             {stats.value.total > 0 && (
               <p class={`text-sm mt-4 ${bg ? "text-white/60" : "text-base-content/50"}`}>
-                {stats.value.total.toLocaleString()} apps, games and utils catalogued
+                {stats.value.total.toLocaleString()} apps and games catalogued
               </p>
             )}
           </div>
@@ -402,7 +371,7 @@ export default component$(() => {
                   }
                 />
               </div>
-              <div class="grid grid-cols-2 grid-rows-2 gap-3 h-64 lg:h-full">
+              <div class="grid grid-cols-3 grid-rows-1 gap-3 h-64 lg:h-full">
                 {DESTINATION_TILES.map((tile) => (
                   <a
                     key={tile.title}
@@ -422,7 +391,6 @@ export default component$(() => {
 
           <TrendingRow title="Trending apps" typeFilter="app" apps={trendingApps.value} />
           <TrendingRow title="Trending games" typeFilter="game" apps={trendingGames.value} />
-          <TrendingRow title="Trending utils" typeFilter="utility" apps={trendingUtils.value} />
 
           {/* Flathub's own per-app stats API (installs_total + a daily
               installs_per_day series) was verified live and would cover
@@ -467,33 +435,29 @@ export default component$(() => {
             note="No reliable release/added date to sort by yet — showing the same list as Trending games would just be misleading, not actually 'new'."
           />
 
-          <CategoryRow title="Music apps" category="Multimedia" apps={multimediaApps.value} />
+          <CategoryRow title="Music apps" category="Music & Audio" apps={musicApps.value} />
 
           <CategoryRow
-            title="Creativity apps"
-            category="Graphics & Creativity"
+            title="Graphics & design apps"
+            category="Graphics & Design"
             apps={creativityApps.value}
           />
 
           {/* See the "Add a Kids/Children category" board card. */}
           <ComingSoonSection
             title="For kids"
-            note="Not part of the current category taxonomy (freedesktop.org's Main Categories don't cover it) — no data to show yet."
+            note="Not part of the current category taxonomy — no data to show yet."
           />
 
           <CategoryRow title="Learning apps" category="Education" apps={learningApps.value} />
 
-          {/* See the "Genre-level game taxonomy" board card — same
-              dependency as Casual/Puzzle games below. */}
-          <ComingSoonSection
+          <CategoryRow
             title="Movies & streaming apps"
-            note="Same underlying Multimedia category as Music above — AppStream doesn't split the two, so a genuinely separate list needs its own genre-level taxonomy (not built yet), not a fake duplicate of the Music row."
+            category="Photo & Video"
+            apps={videoApps.value}
           />
 
-          <ComingSoonSection
-            title="Casual games"
-            note="Genre-level game categorization isn't built yet — see the Games page for confirmed games without a genre split."
-          />
+          <CategoryRow title="Casual games" category="Casual" apps={casualGames.value} />
 
           {/* See the "Split Internet & Communication" board card — same
               dependency as Messaging above. Was previously a real
@@ -506,50 +470,34 @@ export default component$(() => {
             note="Not its own category yet — social apps are folded into the broader Internet & Communication bucket alongside browsers, email, and VoIP, with no way to isolate just social networks."
           />
 
-          <ComingSoonSection
-            title="Puzzle games"
-            note="Genre-level game categorization isn't built yet — see the Games page for confirmed games without a genre split."
-          />
+          <CategoryRow title="Puzzle games" category="Puzzle" apps={puzzleGames.value} />
 
-          {(appCategories.value.length > 0 || utilCategories.value.length > 0) && (
+          {(appCategories.value.length > 0 || gameCategories.value.length > 0) && (
             <section>
               <h2 class="text-lg font-semibold mb-3">Browse by category</h2>
               <p class="text-sm text-base-content/60 mb-3">
-                Every category, including the ones without a dedicated row above — split the same
-                way Trending is, Apps/Games/Utils.
+                Every category, including the ones without a dedicated row above — apps and games
+                each draw from their own taxonomy, same split Trending uses.
               </p>
 
               <div class="flex flex-col gap-4">
-                <div>
-                  <h3 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
-                    Apps
-                  </h3>
-                  <CategoryTileGrid categories={appCategories.value} />
-                </div>
-
-                <div>
-                  <h3 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
-                    Utils
-                  </h3>
-                  <CategoryTileGrid categories={utilCategories.value} />
-                </div>
-
-                {/* Games never carry a `category` at all (see
-                    `getCategories`'s doc comment) — there's nothing to
-                    build a real tile grid from until the "Genre-level
-                    game taxonomy" board card lands. */}
-                <div>
-                  <h3 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
-                    Games
-                  </h3>
-                  <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
-                    No genre-level breakdown yet — see the full{" "}
-                    <a href="/games/" class="link link-primary">
-                      Games list
-                    </a>
-                    .
+                {appCategories.value.length > 0 && (
+                  <div>
+                    <h3 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
+                      Apps
+                    </h3>
+                    <CategoryTileGrid categories={appCategories.value} />
                   </div>
-                </div>
+                )}
+
+                {gameCategories.value.length > 0 && (
+                  <div>
+                    <h3 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
+                      Games
+                    </h3>
+                    <CategoryTileGrid categories={gameCategories.value} />
+                  </div>
+                )}
               </div>
             </section>
           )}

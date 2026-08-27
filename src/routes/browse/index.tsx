@@ -37,7 +37,7 @@ function parseInterfaceFilter(value: string | null): InterfaceFilter {
 }
 
 function parseTypeFilter(value: string | null): TypeFilter {
-  return value === "game" || value === "app" || value === "utility" ? value : "all";
+  return value === "game" || value === "app" ? value : "all";
 }
 
 function parseSource(value: string | null): PackageSourceId | undefined {
@@ -60,7 +60,14 @@ export const useBrowse = routeLoader$(async ({ url }) => {
   });
 });
 
-export const useBrowseCategories = routeLoader$(async () => getCategories());
+// Scoped to the current Type filter — apps and games each draw from their
+// own taxonomy now (see `tuxery/catalog`'s `CatalogApp.category` doc
+// comment), so a mixed "all types" dropdown would show two disjoint label
+// sets at once, e.g. "Strategy" (a game genre) next to "Productivity" (an
+// app category), neither meaningful to the other type.
+export const useBrowseCategories = routeLoader$(async ({ url }) =>
+  getCategories(parseTypeFilter(url.searchParams.get("type"))),
+);
 
 export default component$(() => {
   const location = useLocation();
@@ -142,9 +149,6 @@ export default component$(() => {
             <option value="game" selected={typeFilter === "game"}>
               Games
             </option>
-            <option value="utility" selected={typeFilter === "utility"}>
-              Utils
-            </option>
           </select>
         </label>
 
@@ -213,8 +217,9 @@ export default component$(() => {
       )}
 
       <p class="text-sm text-base-content/60">
-        "Games" is a confirmed match; "Apps"/"Utils" and "GUI"/"CLI" are a best-effort split by
-        category/desktop-file detection, not a guarantee — a few will land in the wrong bucket.
+        "Games" is a confirmed match, "Apps" its complement — a rare undetected game may still show
+        up as an app. "GUI"/"CLI" is a separate best-effort split by desktop-file detection, not a
+        guarantee.
       </p>
 
       {browse.value.apps.length === 0 ? (
