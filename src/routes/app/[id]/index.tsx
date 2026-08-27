@@ -16,7 +16,8 @@ import {
   type PackageSourceId,
   type SourcedPackage,
 } from "~/catalog-types";
-import { SourceSummary } from "~/components/source-summary/source-summary";
+import { ChannelIndicator } from "~/components/channel-indicator/channel-indicator";
+import { SourceMap } from "~/components/source-map/source-map";
 import { UnifiedRating } from "~/components/unified-rating/unified-rating";
 import {
   INSTALL_METHODS,
@@ -438,7 +439,7 @@ const SourceGroupSection = component$<{
   );
 });
 
-/** `SourceSummary`'s three props, derived from a full package list — used for the hero/sticky-header install summary, sitting to the left of the Install button (replaces the old "Install options (N)" count that used to live on the button itself). */
+/** `SourceMap`/`ChannelIndicator`'s combined props, derived from a full package list — used for the hero/sticky-header install summary, sitting to the left of the Install button (replaces the old "Install options (N)" count that used to live on the button itself). */
 function summarizeSources(packages: SourcedPackage[]) {
   return {
     sources: [...new Set(packages.map((pkg) => pkg.source))],
@@ -489,6 +490,7 @@ export default component$(() => {
   const visiblePackages = a.packages.filter((pkg) =>
     isSourceVisible(pkg.source, settings.installGroups.value),
   );
+  const sourceSummary = summarizeSources(visiblePackages);
 
   return (
     <div class="flex flex-col gap-10">
@@ -510,7 +512,14 @@ export default component$(() => {
             </div>
             <span class="font-medium truncate flex-1">{a.name}</span>
             {visiblePackages.length > 0 && (
-              <SourceSummary {...summarizeSources(visiblePackages)} tooltipPosition="bottom" />
+              <div class="flex items-center gap-2">
+                <SourceMap sources={sourceSummary.sources} tooltipPosition="bottom" />
+                <ChannelIndicator
+                  packageCount={sourceSummary.packageCount}
+                  channels={sourceSummary.channels}
+                  tooltipPosition="bottom"
+                />
+              </div>
             )}
             <div class="aura aura-sm w-fit">
               <button
@@ -595,7 +604,14 @@ export default component$(() => {
         <div class="flex flex-wrap items-center gap-3">
           {visiblePackages.length ? (
             <>
-              <SourceSummary {...summarizeSources(visiblePackages)} tooltipPosition="bottom" />
+              <div class="flex items-center gap-2">
+                <SourceMap sources={sourceSummary.sources} tooltipPosition="bottom" />
+                <ChannelIndicator
+                  packageCount={sourceSummary.packageCount}
+                  channels={sourceSummary.channels}
+                  tooltipPosition="bottom"
+                />
+              </div>
               <div class="aura aura-sm w-fit">
                 <button
                   type="button"

@@ -1,6 +1,7 @@
 import { component$ } from "@builder.io/qwik";
 import { LuPackage } from "@qwikest/icons/lucide";
-import { SourceSummary } from "~/components/source-summary/source-summary";
+import { ChannelIndicator } from "~/components/channel-indicator/channel-indicator";
+import { SourceMap } from "~/components/source-map/source-map";
 import { UnifiedRating } from "~/components/unified-rating/unified-rating";
 import type { PackageSourceId, SourceRating } from "~/catalog-types";
 
@@ -24,11 +25,11 @@ export interface AppCardProps {
  *
  * Layout: logo + name/category on top, description below, and a bottom row
  * — pinned to the card's bottom edge via `mt-auto` so it lines up across
- * cards regardless of description length — pairing `SourceSummary` (the
- * same dot-map + package-count + info-tooltip used on the app-detail
- * page's hero/sticky header) with `UnifiedRating` in its "short" (stars-
- * only) mode, the one place both a rating and a category fit without
- * competing for the same line.
+ * cards regardless of description length — spreading `SourceMap` (left),
+ * `ChannelIndicator` (center), and `UnifiedRating` in its "short" (stars-
+ * only) mode (right) across the row with `justify-between`. Three narrow
+ * pieces instead of one wide combined summary + rating: that used to wrap
+ * to two lines on some cards and not others depending on content.
  */
 export const AppCard = component$<AppCardProps>(
   ({
@@ -70,7 +71,8 @@ export const AppCard = component$<AppCardProps>(
           </div>
           <p class="text-sm text-base-content/70 line-clamp-2">{description}</p>
           <div class="flex flex-wrap items-center justify-between gap-2 mt-auto pt-1">
-            <SourceSummary sources={sources} packageCount={packageCount} channels={channels} />
+            <SourceMap sources={sources} />
+            <ChannelIndicator packageCount={packageCount} channels={channels} />
             {rating && (
               <UnifiedRating
                 average={rating.average}

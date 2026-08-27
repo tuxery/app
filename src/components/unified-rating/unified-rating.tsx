@@ -1,57 +1,46 @@
 import { component$ } from "@builder.io/qwik";
-import { LuInfo } from "@qwikest/icons/lucide";
 import type { SourceRating } from "~/catalog-types";
-
-// Full literal class names, not a template-interpolated `dropdown-${...}` —
-// Tailwind's static scanner needs each one spelled out verbatim in the
-// source to generate its CSS at all. Same discipline as SourceSummary's
-// TOOLTIP_POSITION_CLASSES.
-const DROPDOWN_POSITION_CLASSES = {
-  top: "dropdown-top",
-  bottom: "dropdown-bottom",
-  right: "dropdown-right",
-} as const;
+import { TOOLTIP_POSITION_CLASSES, type TooltipPosition } from "~/components/tooltip-position";
 
 // Half-star granularity (10 positions across 5 stars) — the finest
 // daisyUI's `rating-half` supports. `average` rarely lands on a clean half
 // itself (e.g. 4.23), so this rounds to the nearest one purely for the
 // *visual* stars; the exact figure stays next to them as text (normal
-// mode) and in the `title` tooltip, nothing is hidden by rounding.
+// mode) and in the tooltip, nothing is hidden by rounding.
 const STAR_HALVES = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
 
+/** Every rated source, always prefixed by its own label — even a single one, so hovering a card whose aggregate came from just Flathub still says "Flathub", not a bare number with no source in sight. */
 function starsTitle(average: number, count: number, bySource: SourceRating[]): string {
-  const base = `${average.toFixed(1)} out of 5 (${count.toLocaleString()} ratings)`;
-  if (bySource.length < 2) return base;
-  const lines = bySource.map(
-    (s) => `${s.label}: ★ ${s.average.toFixed(1)} (${s.count.toLocaleString()})`,
-  );
-  return [base, "", "By source:", ...lines].join("\n");
+  if (bySource.length === 0) {
+    return `${average.toFixed(1)} out of 5 (${count.toLocaleString()} ratings)`;
+  }
+  return bySource
+    .map((s) => `${s.label}: ★ ${s.average.toFixed(1)} (${s.count.toLocaleString()})`)
+    .join(", ");
 }
 
 export interface UnifiedRatingProps {
   average: number;
   count: number;
-  /** Per-source breakdown for the info-icon dropdown — omitted or single-entry means nothing to disclose beyond the aggregate, so no icon is rendered. */
+  /** Per-source breakdown for the tooltip — omitted or empty falls back to a bare "X out of 5 (Y ratings)" tooltip with no source name. */
   bySource?: SourceRating[];
   /** "normal" (stars + figure, the fiche layout) or "short" (stars only, for cramped card rows). */
   mode?: "normal" | "short";
-  /** Which side the dropdown opens toward — pick whichever has room in the surrounding layout. Purely cosmetic: the native `title` fallback below is what survives a clipping ancestor (a card's overflow-hidden, a horizontal-scroll row, ...). */
-  tooltipPosition?: "top" | "bottom" | "right";
+  tooltipPosition?: TooltipPosition;
 }
 
 /**
  * The star-rating widget shown on an app's fiche (`/app/[id]`) and, in its
  * "short" mode, on listing cards — one component for both instead of the
  * fiche's old private `RatingStars` plus a separate always-visible
- * "Ratings by source" table row: the per-source breakdown now lives in this
- * component's own info-icon dropdown instead, so it's available in both
- * places without duplicating the same numbers twice on the fiche.
- *
- * Two tooltip mechanisms stacked on purpose, not redundant — same
- * reasoning as `SourceSummary`: the native `title` on the outer wrapper is
- * the reliable one (survives a clipping ancestor), the inner dropdown is
- * the richer one (a real aligned two-column grid, which a CSS
- * `content: attr()` tooltip can't render) for contexts with room for it.
+ * "Ratings by source" table row: the per-source breakdown now lives in
+ * this component's own tooltip instead, so it's available in both places
+ * without duplicating the same numbers twice on the fiche. Hovering
+ * reveals it: the native `title` on the outer wrapper is the reliable
+ * mechanism (survives a clipping ancestor), the `.tooltip`/`data-tip` on
+ * the same element is the fast, no-hover-delay one for contexts with room
+ * for it — same two-tier discipline as `SourceMap`/`ChannelIndicator`, no
+ * separate info icon needed for either.
  */
 export const UnifiedRating = component$<UnifiedRatingProps>(
   ({ average, count, bySource = [], mode = "normal", tooltipPosition = "top" }) => {
@@ -59,7 +48,11 @@ export const UnifiedRating = component$<UnifiedRatingProps>(
     const tip = starsTitle(average, count, bySource);
 
     return (
-      <span class="inline-flex items-center gap-1.5" title={tip}>
+      <span
+        class={`tooltip ${TOOLTIP_POSITION_CLASSES[tooltipPosition]} before:whitespace-pre-wrap before:text-left inline-flex items-center gap-1.5`}
+        title={tip}
+        data-tip={tip}
+      >
         <div class="rating rating-xs rating-half" aria-hidden="true">
           {STAR_HALVES.map((position, i) => (
             <div
@@ -76,21 +69,6 @@ export const UnifiedRating = component$<UnifiedRatingProps>(
           <span class="text-sm text-base-content/60">
             {average.toFixed(1)} ({count.toLocaleString()})
           </span>
-        )}
-        {bySource.length > 1 && (
-          <div class={`dropdown dropdown-hover ${DROPDOWN_POSITION_CLASSES[tooltipPosition]}`}>
-            <LuInfo class="text-sm text-base-content/50 cursor-help" />
-            <div class="dropdown-content z-50 bg-base-100 rounded-box shadow-lg border border-base-300 p-2 grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5 text-sm whitespace-nowrap">
-              {bySource.flatMap((s) => [
-                <span key={`${s.label}-label`} class="text-base-content/70">
-                  {s.label}
-                </span>,
-                <span key={`${s.label}-value`} class="text-right tabular-nums">
-                  ★ {s.average.toFixed(1)} ({s.count.toLocaleString()})
-                </span>,
-              ])}
-            </div>
-          </div>
         )}
       </span>
     );
