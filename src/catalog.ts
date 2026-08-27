@@ -3,6 +3,7 @@ import {
   BROWSE_PAGE_SIZE,
   EMPTY_STATS,
   summarizeChannels,
+  summarizeRatingsBySource,
   type AppSummary,
   type BrowseResult,
   type CatalogApp,
@@ -61,6 +62,7 @@ function toSummary(row: Row): AppSummary {
     contentType: row.content_type === "game" ? "game" : undefined,
     category: (row.category as string | null) ?? undefined,
     rating: parseRating(row),
+    ratingsBySource: summarizeRatingsBySource(packages),
     // Deduplicated — a merged app can carry two packages from the same
     // source now (e.g. AUR's official + -git build), and a summary card
     // only needs to say "AUR" once, not distinguish the channel — that's

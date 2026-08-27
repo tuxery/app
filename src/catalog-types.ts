@@ -186,6 +186,31 @@ export function summarizeChannels(packages: { channel?: string }[]): string[] {
   return [...new Set(packages.map((pkg) => channelLabel(pkg.channel)))];
 }
 
+/** Human label for a package's own source, e.g. "Flathub (Flatpak)", or "AUR (git build)" for a non-default channel. */
+export function formatSourceLabel(pkg: { source: PackageSourceId; channel?: string }): string {
+  const label = SOURCE_LABELS[pkg.source];
+  return pkg.channel ? `${label} (${pkg.channel} build)` : label;
+}
+
+export interface SourceRating {
+  label: string;
+  average: number;
+  count: number;
+}
+
+/** One row per package that carries its own crowd rating, formatted for `UnifiedRating`'s per-source breakdown — on both a `CatalogApp`'s full `packages` and (via `AppSummary.ratingsBySource`) an already-summarized listing row. */
+export function summarizeRatingsBySource(packages: SourcedPackage[]): SourceRating[] {
+  return packages
+    .filter((pkg): pkg is SourcedPackage & { rating: { average: number; count: number } } =>
+      Boolean(pkg.rating),
+    )
+    .map((pkg) => ({
+      label: formatSourceLabel(pkg),
+      average: pkg.rating.average,
+      count: pkg.rating.count,
+    }));
+}
+
 /**
  * The subset of `CatalogApp` a search result card needs — cheap to select
  * and stream in bulk, unlike the full row. `sources` is deduplicated by
@@ -193,7 +218,10 @@ export function summarizeChannels(packages: { channel?: string }[]): string[] {
  * e.g. AUR's official + `-git` build); `packageCount`/`channels` describe
  * the same underlying `packages` list `sources` was derived from — not
  * derivable from `sources` alone, so carried separately for
- * `SourceSummary`'s package-count badge and channels tooltip.
+ * `SourceSummary`'s package-count badge and channels tooltip. `ratingsBySource`
+ * is the same "per-package breakdown" data `UnifiedRating`'s tooltip needs —
+ * free to derive from `packages_json`, already selected for `sources`/
+ * `channels` above.
  */
 export interface AppSummary {
   id: string;
@@ -204,6 +232,7 @@ export interface AppSummary {
   contentType?: "game";
   category?: string;
   rating?: { average: number; count: number };
+  ratingsBySource: SourceRating[];
   sources: PackageSourceId[];
   packageCount: number;
   channels: string[];
