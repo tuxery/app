@@ -67,22 +67,28 @@ export const useMultimediaApps = routeLoader$(async () => getAppsByCategory("Mul
 // seeded DB before being added here — capped at 15 per the "max 15 items"
 // ask. Order is the display order (getAppsByIds doesn't preserve input
 // order, so the loader below re-sorts by it).
+//
+// Bare ids (no "source:" prefix), not the old flatpak-flathub:<appId>
+// form — a Snap or Flatpak package's own name/appId is already globally
+// unique on its own, so catalog's match/group.ts picks it directly as
+// the app's canonical id (Snap preferred when an app has both). Each one
+// re-verified live against the reseeded DB when the id scheme changed.
 const MUST_HAVE_APP_IDS = [
-  "flatpak-flathub:org.mozilla.firefox",
-  "flatpak-flathub:app.zen_browser.zen",
-  "flatpak-flathub:org.videolan.VLC",
-  "flatpak-flathub:org.libreoffice.LibreOffice",
-  "flatpak-flathub:org.mozilla.thunderbird",
-  "flatpak-flathub:com.discordapp.Discord",
-  "flatpak-flathub:org.signal.Signal",
-  "flatpak-flathub:org.gimp.GIMP",
-  "flatpak-flathub:org.inkscape.Inkscape",
-  "flatpak-flathub:org.kde.krita",
-  "flatpak-flathub:org.blender.Blender",
-  "flatpak-flathub:org.kde.kdenlive.desktop",
-  "flatpak-flathub:org.audacityteam.Audacity",
-  "flatpak-flathub:com.obsproject.Studio",
-  "flatpak-flathub:org.keepassxc.KeePassXC.desktop",
+  "firefox",
+  "zen-browser-snap",
+  "vlc",
+  "libreoffice",
+  "thunderbird",
+  "discord",
+  "signal-desktop",
+  "gimp",
+  "inkscape",
+  "krita",
+  "blender",
+  "kdenlive",
+  "audacity",
+  "obs-studio",
+  "keepassxc",
 ] as const;
 
 export const useMustHaveApps = routeLoader$(async () => {

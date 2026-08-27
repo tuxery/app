@@ -1,8 +1,13 @@
 import { test, expect } from "@playwright/test";
 
-const FIREFOX = "/app/flatpak-flathub%3Aorg.mozilla.firefox/";
+// Ids that carry a Flatpak or Snap package use that package's own
+// globally-unique name/appId directly (Snap preferred — see catalog's
+// match/group.ts's buildAppId), no "source:" prefix; Firewatch and
+// LibreOffice Writer have neither, so they still fall back to
+// "source:appId".
+const FIREFOX = "/app/firefox/";
 const FIREWATCH = "/app/gog%3Afirewatch/";
-const LIBREOFFICE_MAIN = "/app/flatpak-flathub%3Aorg.libreoffice.LibreOffice/";
+const LIBREOFFICE_MAIN = "/app/libreoffice/";
 const LIBREOFFICE_WRITER = "/app/deb-debian%3Alibreoffice-writer/";
 
 test("an app page shows an install-options drawer listing every source, each group closed by default", async ({

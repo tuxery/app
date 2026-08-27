@@ -11,64 +11,42 @@
       {
         "type": "apps",
         "heading": "Browsers",
-        "appIds": [
-          "flatpak-flathub:app.zen_browser.zen",
-          "flatpak-flathub:org.garudalinux.firedragon",
-          "flatpak-flathub:org.mozilla.firefox"
-        ]
+        "appIds": ["zen-browser-snap", "org.garudalinux.firedragon", "firefox"]
       },
       {
         "type": "apps",
         "heading": "Communication",
-        "appIds": [
-          "flatpak-flathub:com.discordapp.Discord",
-          "flatpak-flathub:org.signal.Signal",
-          "flatpak-flathub:me.proton.Mail",
-          "flatpak-flathub:com.tutanota.Tutanota"
-        ]
+        "appIds": ["discord", "signal-desktop", "proton-mail", "com.tutanota.Tutanota"]
       },
       {
         "type": "apps",
         "heading": "Productivity & notes",
-        "appIds": [
-          "flatpak-flathub:io.typora.Typora",
-          "flatpak-flathub:org.gnome.World.Iotas",
-          "flatpak-flathub:org.standardnotes.standardnotes",
-          "flatpak-flathub:com.todoist.Todoist",
-          "flatpak-flathub:org.libreoffice.LibreOffice"
-        ]
+        "appIds": ["typora", "org.gnome.World.Iotas", "standard-notes", "todoist", "libreoffice"]
       },
       {
         "type": "apps",
         "heading": "Media",
-        "appIds": [
-          "flatpak-flathub:com.spotify.Client",
-          "flatpak-flathub:org.videolan.VLC",
-          "snap-snapcraft:noson"
-        ]
+        "appIds": ["spotify", "vlc", "noson"]
       },
       {
         "type": "apps",
         "heading": "Gaming",
-        "appIds": [
-          "flatpak-flathub:com.valvesoftware.Steam",
-          "flatpak-flathub:com.heroicgameslauncher.hgl"
-        ]
+        "appIds": ["steam", "com.heroicgameslauncher.hgl"]
       },
       {
         "type": "apps",
         "heading": "System & utilities",
         "appIds": [
-          "flatpak-flathub:io.github.kolunmi.Bazaar",
-          "flatpak-flathub:io.github.pwr_solaar.solaar",
-          "flatpak-flathub:it.mijorus.gearlever",
-          "snap-snapcraft:gnome-boxes"
+          "io.github.kolunmi.Bazaar",
+          "io.github.pwr_solaar.solaar",
+          "it.mijorus.gearlever",
+          "gnome-boxes"
         ]
       },
       {
         "type": "apps",
         "heading": "Privacy & AI",
-        "appIds": ["flatpak-flathub:me.proton.Pass", "snap-snapcraft:proton-lumo-ai"]
+        "appIds": ["proton-pass", "proton-lumo-ai"]
       }
     ]
   },
@@ -85,11 +63,7 @@
       {
         "type": "apps",
         "heading": "My daily drivers",
-        "appIds": [
-          "flatpak-flathub:org.mozilla.firefox",
-          "flatpak-flathub:org.gimp.GIMP",
-          "gog:firewatch"
-        ]
+        "appIds": ["firefox", "gimp", "gog:firewatch"]
       }
     ]
   }
