@@ -48,10 +48,10 @@ test("selecting an OS pre-fills Auto sources on the Sources tab without overridi
 }) => {
   await page.goto("/settings/?tab=sources");
 
-  // Explicitly turn Fedora Off before ever touching the OS Selector.
+  // Explicitly Hide Fedora before ever touching the OS Selector.
   const fedoraRow = page.locator('[aria-label="Show Fedora"]');
-  await fedoraRow.getByRole("button", { name: "Off" }).click();
-  await expect(fedoraRow.getByRole("button", { name: "Off" })).toHaveAttribute(
+  await fedoraRow.getByRole("button", { name: "Hide" }).click();
+  await expect(fedoraRow.getByRole("button", { name: "Hide" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
@@ -71,7 +71,7 @@ test("selecting an OS pre-fills Auto sources on the Sources tab without overridi
   // survived the OS pick untouched.
   await page.goto("/settings/?tab=sources");
   await expect(
-    page.locator('[aria-label="Show Fedora"]').getByRole("button", { name: "Off" }),
+    page.locator('[aria-label="Show Fedora"]').getByRole("button", { name: "Hide" }),
   ).toHaveAttribute("aria-pressed", "true");
   const snapStoreRow = page.locator('[aria-label="Snap Store activated"]');
   await expect(snapStoreRow.getByRole("button", { name: "Auto" })).toHaveAttribute(

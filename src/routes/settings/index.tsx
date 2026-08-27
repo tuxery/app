@@ -20,14 +20,23 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "dark", label: "Dark" },
 ];
 
-const TRI_STATE_OPTIONS: { value: TriState; label: string }[] = [
-  { value: "off", label: "Off" },
+// Same three underlying TriState values, worded per what the control
+// actually asks — "Off/Auto/On" read as one generic toggle language for
+// two genuinely different questions ("is this source relevant to you?"
+// vs. "have you done the one-time setup?").
+const SHOWN_OPTIONS: { value: TriState; label: string }[] = [
+  { value: "off", label: "Hide" },
   { value: "auto", label: "Auto" },
-  { value: "on", label: "On" },
+  { value: "on", label: "Show" },
+];
+const ACTIVATED_OPTIONS: { value: TriState; label: string }[] = [
+  { value: "off", label: "No" },
+  { value: "auto", label: "Auto" },
+  { value: "on", label: "Done" },
 ];
 
 /**
- * Off/Auto/On for one `InstallFormatGroup.shown`, looked up by `index`
+ * Hide/Auto/Show for one `InstallFormatGroup.shown`, looked up by `index`
  * from the live signal on every render (not received as a plain `value`
  * prop computed by a parent — a `component$` child that only *received*
  * one didn't reliably pick up a fresh value after `installGroups` changed
@@ -47,7 +56,7 @@ const GroupShownControl = component$<{
   const value = installGroups.value[index]?.shown ?? "auto";
   return (
     <div class="join" aria-label={`Show ${label}`}>
-      {TRI_STATE_OPTIONS.map((option) => (
+      {SHOWN_OPTIONS.map((option) => (
         <button
           key={option.value}
           type="button"
@@ -62,7 +71,7 @@ const GroupShownControl = component$<{
   );
 });
 
-/** Off/Auto/On for one `SpecialRepoOption.activated`, looked up by `repoId` from the live signal on every render — see `GroupShownControl`'s doc comment for why. */
+/** No/Auto/Done for one `SpecialRepoOption.activated`, looked up by `repoId` from the live signal on every render — see `GroupShownControl`'s doc comment for why. */
 const RepoActivatedControl = component$<{
   installGroups: Signal<InstallFormatGroup[]>;
   repoId: string;
@@ -74,7 +83,7 @@ const RepoActivatedControl = component$<{
   const value = repo?.activated ?? "auto";
   return (
     <div class="join" aria-label={`${label} activated`}>
-      {TRI_STATE_OPTIONS.map((option) => (
+      {ACTIVATED_OPTIONS.map((option) => (
         <button
           key={option.value}
           type="button"
@@ -180,7 +189,7 @@ const SourcesTab = component$(() => {
   return (
     <section class="flex flex-col gap-3">
       <p class="text-sm text-base-content/60">
-        Off/On always show or hide a source, regardless of your OS. Auto follows whatever the{" "}
+        Hide/Show always win, regardless of your OS. Auto follows whatever the{" "}
         <a href="?tab=os" class="link link-primary">
           Operating system
         </a>{" "}
@@ -304,8 +313,8 @@ const OsSelectorTab = component$(() => {
   return (
     <section class="flex flex-col gap-4">
       <p class="text-sm text-base-content/60">
-        Picking an OS pre-fills the Sources tab's "Auto" choices — it never overrides a source
-        you've explicitly turned Off or On yourself.
+        Picking an OS pre-fills the Sources tab's "Auto" choices — it never overrides a choice
+        you've made explicitly yourself.
       </p>
       {entry ? <OsJumbo entry={entry} /> : <OsTileGrid />}
     </section>

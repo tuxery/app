@@ -35,7 +35,7 @@ test("a stale, pre-expansion persisted install-groups list gets merged with the 
   // The user's own prior state for groups they already had is preserved,
   // not reset back to the default (Snap was explicitly Off in the stale
   // copy).
-  const snapOff = page.locator('[aria-label="Show Snap"]').getByRole("button", { name: "Off" });
+  const snapOff = page.locator('[aria-label="Show Snap"]').getByRole("button", { name: "Hide" });
   await expect(snapOff).toHaveAttribute("aria-pressed", "true");
 
   // The stale copy's Flatpak group predates specialRepos entirely — Flathub
@@ -82,7 +82,7 @@ test("checking a special repo in Settings persists and is Auto by default", asyn
   const flathubCommand = page.getByText("remote-add --if-not-exists flathub");
   await expect(flathubCommand).toBeVisible();
 
-  await flathubRow.getByRole("button", { name: "On" }).click();
+  await flathubRow.getByRole("button", { name: "Done" }).click();
   await expect(flathubCommand).toHaveCount(0);
 
   // The setting persists from a client-side effect, not synchronously with
