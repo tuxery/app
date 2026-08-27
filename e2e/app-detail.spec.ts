@@ -14,6 +14,10 @@ const LIBREOFFICE_WRITER = "/app/deb-debian%3Alibreoffice-writer/";
 // most well-known apps don't have (they're only rated on Flathub), needed
 // to exercise UnifiedRating's per-source breakdown at all.
 const APP_EDITOR = "/app/com.github.donadigo.appeditor/";
+// GIMP: real screenshots + About text from Flathub, plus 15 other sources
+// (Snap, AUR, every native distro, ...) with neither — the per-source
+// debug tabs' honest-empty-state case.
+const GIMP = "/app/gimp/";
 
 test("an app page shows an install-options drawer listing every source, each group closed by default", async ({
   page,
@@ -62,4 +66,27 @@ test("suite navigation: main app lists its components, and a component links bac
   await expect(backLink).toBeVisible();
   await backLink.click();
   await expect(page).toHaveURL(new RegExp(LIBREOFFICE_MAIN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+});
+
+test("Screenshots & videos and About default to Merged, and their source tabs are shared", async ({
+  page,
+}) => {
+  await page.goto(GIMP);
+  await expect(page.getByRole("tab", { name: "Merged", exact: true }).first()).toHaveClass(
+    /tab-active/,
+  );
+  await expect(page.locator("img[alt='']").first()).toBeVisible();
+  await expect(page.getByText(/GIMP is an acronym/)).toBeVisible();
+
+  // Switching source in the Screenshots tab bar also switches About's —
+  // one shared selection, not two independent ones (debugging a merge
+  // wants to see everything one source contributed at once).
+  await page.getByRole("tab", { name: "Flathub (Flatpak)", exact: true }).first().click();
+  await expect(
+    page.getByRole("tab", { name: "Flathub (Flatpak)", exact: true }).nth(1),
+  ).toHaveClass(/tab-active/);
+
+  await page.getByRole("tab", { name: "Snap Store (stable build)", exact: true }).first().click();
+  await expect(page.getByText("No screenshots from Snap Store (stable build).")).toBeVisible();
+  await expect(page.getByText("No description from Snap Store (stable build).")).toBeVisible();
 });
