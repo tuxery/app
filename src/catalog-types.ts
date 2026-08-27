@@ -175,7 +175,26 @@ export interface CatalogApp {
   }[];
 }
 
-/** The subset of `CatalogApp` a search result card needs — cheap to select and stream in bulk, unlike the full row. */
+/** Human label for a build channel — `undefined` is the default/stable build, everything else (AUR's git/svn/hg/bzr/cvs/bin) gets its raw value capitalized. */
+export function channelLabel(channel: string | undefined): string {
+  if (!channel) return "Stable";
+  return channel.charAt(0).toUpperCase() + channel.slice(1);
+}
+
+/** Every channel word present across a set of packages, deduplicated — the "channels: ..." line in `SourceSummary`'s tooltip, on both a `CatalogApp`'s full `packages` and an `AppSummary`'s already-summarized `channels`. */
+export function summarizeChannels(packages: { channel?: string }[]): string[] {
+  return [...new Set(packages.map((pkg) => channelLabel(pkg.channel)))];
+}
+
+/**
+ * The subset of `CatalogApp` a search result card needs — cheap to select
+ * and stream in bulk, unlike the full row. `sources` is deduplicated by
+ * source id (a merged app can carry two packages from the same source,
+ * e.g. AUR's official + `-git` build); `packageCount`/`channels` describe
+ * the same underlying `packages` list `sources` was derived from — not
+ * derivable from `sources` alone, so carried separately for
+ * `SourceSummary`'s package-count badge and channels tooltip.
+ */
 export interface AppSummary {
   id: string;
   name: string;
@@ -186,6 +205,8 @@ export interface AppSummary {
   category?: string;
   rating?: { average: number; count: number };
   sources: PackageSourceId[];
+  packageCount: number;
+  channels: string[];
 }
 
 export interface CatalogStats {

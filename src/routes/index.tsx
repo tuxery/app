@@ -98,6 +98,8 @@ const AppCardLink = component$<{ app: AppSummary }>(({ app }) => (
       name={app.name}
       description={app.shortDescription}
       sources={app.sources}
+      packageCount={app.packageCount}
+      channels={app.channels}
       contentType={app.contentType}
       category={app.category}
       rating={app.rating}
