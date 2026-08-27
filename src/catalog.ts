@@ -2,6 +2,7 @@ import { createClient, type Client } from "@libsql/client";
 import {
   BROWSE_PAGE_SIZE,
   EMPTY_STATS,
+  summarizeChannels,
   type AppSummary,
   type BrowseResult,
   type CatalogApp,
@@ -62,8 +63,11 @@ function toSummary(row: Row): AppSummary {
     rating: parseRating(row),
     // Deduplicated — a merged app can carry two packages from the same
     // source now (e.g. AUR's official + -git build), and a summary card
-    // only needs to say "AUR" once, not distinguish the channel.
+    // only needs to say "AUR" once, not distinguish the channel — that's
+    // what packageCount/channels are for instead.
     sources: [...new Set(packages.map((pkg) => pkg.source))],
+    packageCount: packages.length,
+    channels: summarizeChannels(packages),
   };
 }
 

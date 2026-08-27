@@ -1,17 +1,20 @@
 import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { LuExternalLink, LuFlag, LuInfo, LuPackage } from "@qwikest/icons/lucide";
+import { LuExternalLink, LuFlag, LuPackage } from "@qwikest/icons/lucide";
 import { getAppById, getStats } from "~/catalog";
 import {
   ALL_SOURCE_GROUPS,
+  channelLabel,
   formatBytes,
   SOURCE_GROUP_MEMBERS,
   SOURCE_LABELS,
+  summarizeChannels,
   type CatalogApp,
   type PackageSourceId,
   type SourcedPackage,
 } from "~/catalog-types";
+import { SourceSummary } from "~/components/source-summary/source-summary";
 import {
   INSTALL_METHODS,
   installCommand,
@@ -121,12 +124,6 @@ function groupBySource(packages: SourcedPackage[]): [PackageSourceId, SourcedPac
     bySource.set(pkg.source, list);
   }
   return [...bySource.entries()];
-}
-
-/** Human label for a build channel — `undefined` is the default/stable build, everything else (AUR's git/svn/hg/bzr/cvs/bin) gets its raw value capitalized. */
-function channelLabel(channel: string | undefined): string {
-  if (!channel) return "Stable";
-  return channel.charAt(0).toUpperCase() + channel.slice(1);
 }
 
 /**
@@ -479,65 +476,14 @@ const RatingStars = component$<{ average: number; count: number }>(({ average, c
   );
 });
 
-/**
- * App-level install summary, sitting to the left of the Install button
- * (hero and sticky header alike) — replaces the old "Install options
- * (N)" count that used to live on the button itself. Three pieces:
- * - The same source dot-map grid as AppCard's (one square per platform/
- *   distro group, colored when present).
- * - A package icon carrying a small badge with the total channel count
- *   — every one of `packages`, not just distinct source groups (an app
- *   merged across 5 groups with an AUR stable/bin/git split shows 7).
- * - An info icon with a two-line tooltip: which source groups, then
- *   which individual channels — daisyUI's tooltip only renders
- *   `data-tip` as one line by default, so `before:whitespace-pre-wrap`
- *   plus a real newline in the string is what actually breaks it.
- */
-const AppInstallSummary = component$<{ packages: SourcedPackage[] }>(({ packages }) => {
-  const sourceSet = new Set(packages.map((pkg) => pkg.source));
-  const presentGroups = ALL_SOURCE_GROUPS.filter((group) =>
-    SOURCE_GROUP_MEMBERS[group]?.some((source) => sourceSet.has(source)),
-  );
-  const sourcesTip = presentGroups.length ? presentGroups.join(", ") : "none";
-  // The actual channel/build-type words (Stable, Bin, Git, Canary, ...),
-  // deduplicated — not `formatSourceLabel`, which repeats the source name
-  // per package ("AUR (bin build)") rather than naming the channel itself.
-  const channelsTip = [...new Set(packages.map((pkg) => channelLabel(pkg.channel)))].join(", ");
-  const tip = `sources: ${sourcesTip}\nchannels: ${channelsTip}`;
-
-  return (
-    <div class="flex items-center gap-2" title={tip}>
-      <div class="grid grid-rows-2 grid-flow-col gap-0.5" aria-hidden="true">
-        {ALL_SOURCE_GROUPS.map((group) => (
-          <span
-            key={group}
-            class={`w-1.5 h-1.5 rounded-[1px] ${presentGroups.includes(group) ? "bg-primary" : "bg-base-300"}`}
-          />
-        ))}
-      </div>
-      <div class="indicator" aria-hidden="true">
-        <span
-          class="indicator-item indicator-top indicator-end badge badge-xs text-[10px]"
-          style="padding: 0 1px"
-        >
-          {packages.length}
-        </span>
-        <LuPackage class="text-sm text-base-content/50" />
-      </div>
-      {/* CSS tooltip for the instant hover experience where there's room
-          for it (the hero) — the native `title` above is the reliable
-          fallback, since the fixed sticky header's own `glass-card` sets
-          `overflow: hidden` (needed for its backdrop-blur edge), which
-          clips this popup completely whenever it's used there. */}
-      <div
-        class="tooltip tooltip-bottom before:whitespace-pre-wrap before:text-left"
-        data-tip={tip}
-      >
-        <LuInfo class="text-sm text-base-content/50 cursor-help" />
-      </div>
-    </div>
-  );
-});
+/** `SourceSummary`'s three props, derived from a full package list — used for the hero/sticky-header install summary, sitting to the left of the Install button (replaces the old "Install options (N)" count that used to live on the button itself). */
+function summarizeSources(packages: SourcedPackage[]) {
+  return {
+    sources: [...new Set(packages.map((pkg) => pkg.source))],
+    packageCount: packages.length,
+    channels: summarizeChannels(packages),
+  };
+}
 
 export default component$(() => {
   const app = useApp();
@@ -601,7 +547,9 @@ export default component$(() => {
               )}
             </div>
             <span class="font-medium truncate flex-1">{a.name}</span>
-            {visiblePackages.length > 0 && <AppInstallSummary packages={visiblePackages} />}
+            {visiblePackages.length > 0 && (
+              <SourceSummary {...summarizeSources(visiblePackages)} tooltipPosition="bottom" />
+            )}
             <div class="aura aura-sm w-fit">
               <button
                 type="button"
@@ -679,7 +627,7 @@ export default component$(() => {
         <div class="flex flex-wrap items-center gap-3">
           {visiblePackages.length ? (
             <>
-              <AppInstallSummary packages={visiblePackages} />
+              <SourceSummary {...summarizeSources(visiblePackages)} tooltipPosition="bottom" />
               <div class="aura aura-sm w-fit">
                 <button
                   type="button"
