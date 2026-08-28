@@ -6,6 +6,8 @@ import {
   useVisibleTask$,
   type Signal,
 } from "@builder.io/qwik";
+import { toMapByKey } from "@helpers4/map";
+import { safeJsonParse } from "@helpers4/object";
 
 export type Theme = "light" | "dark" | "system";
 
@@ -260,7 +262,7 @@ function mergeInstallGroups(
   stored: InstallFormatGroup[],
   defaults: InstallFormatGroup[],
 ): InstallFormatGroup[] {
-  const defaultsById = new Map(defaults.map((group) => [group.id, group]));
+  const defaultsById = toMapByKey(defaults, (group) => group.id);
 
   const merged = stored.map((group) => {
     const def = defaultsById.get(group.id);
@@ -300,8 +302,8 @@ export const useProvideSettings = (): SettingsState => {
       hydrated.value = true;
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const stored = JSON.parse(raw) as Partial<PersistedSettings>;
+        const stored = raw ? safeJsonParse<Partial<PersistedSettings>>(raw) : null;
+        if (stored) {
           if (stored.theme) theme.value = stored.theme;
           if (isCurrentShape(stored.installGroups)) {
             installGroups.value = mergeInstallGroups(stored.installGroups, defaultInstallGroups());
@@ -309,7 +311,9 @@ export const useProvideSettings = (): SettingsState => {
           if (typeof stored.osId === "string") osId.value = stored.osId;
         }
       } catch {
-        // malformed/unavailable storage — keep defaults
+        // localStorage itself unavailable (private-browsing edge cases,
+        // site data blocked, ...) — safeJsonParse already handles bad
+        // JSON without throwing, this only guards getItem itself.
       }
       return;
     }

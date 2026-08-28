@@ -1,6 +1,7 @@
 import { component$, useSignal } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
+import { toMapByKey } from "@helpers4/map";
 import {
   LuChevronLeft,
   LuChevronRight,
@@ -92,7 +93,7 @@ const MUST_HAVE_APP_IDS = [
 
 export const useMustHaveApps = routeLoader$(async () => {
   const apps = await getAppsByIds([...MUST_HAVE_APP_IDS]);
-  const byId = new Map(apps.map((app) => [app.id, app]));
+  const byId = toMapByKey(apps, (app) => app.id);
   return MUST_HAVE_APP_IDS.map((id) => byId.get(id)).filter((app): app is AppSummary => !!app);
 });
 
