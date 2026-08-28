@@ -13,13 +13,20 @@ import { CROSS_DISTRO_GROUP_IDS } from "~/settings";
  *
  * Deliberately one tile per distro *family*, not per release version —
  * "as exhaustive as possible, but as few options as possible: consolidate
- * versions where you can" was the ask. A version only earns its own tile
- * when it genuinely changes what's recommended here (openSUSE Tumbleweed
- * vs. Leap are different release models entirely); a newer LTS that just
- * keeps doing what the last one did doesn't. These are best-effort,
- * general-knowledge facts about each distro's defaults, not independently
- * re-verified against each one's current release notes — flag anything
- * wrong and it's a one-line fix.
+ * versions where you can" was the ask. A version/derivative only earns its
+ * own tile when it genuinely changes what's recommended here (openSUSE
+ * Tumbleweed vs. Leap are different release models entirely; elementary
+ * OS ships its own AppCenter remote out of the box, Ubuntu doesn't); a
+ * newer LTS — or an Arch derivative that's just Arch's own repos + AUR
+ * with different branding (EndeavourOS, CachyOS, Garuda, ...) — that
+ * keeps doing what its base already does doesn't. Same reasoning applies
+ * the other way: Ubuntu's own official flavors (Kubuntu, Xubuntu,
+ * Lubuntu, ...) differ only by desktop environment, never by package
+ * source defaults, so they were never candidates for their own tile in
+ * the first place. These are best-effort, general-knowledge facts about
+ * each distro's defaults, not independently re-verified against each
+ * one's current release notes — flag anything wrong and it's a one-line
+ * fix.
  */
 export interface OsCatalogEntry {
   id: string;
@@ -47,10 +54,45 @@ export const OS_CATALOG: OsCatalogEntry[] = [
     distroGroupId: "Pop!_OS",
     preActivatedRepoIds: ["flathub"],
   },
+  {
+    id: "elementary",
+    label: "elementary OS",
+    // No dedicated catalog source group — elementary is Ubuntu-based, .deb
+    // compatible, so its native packages come from the same "Ubuntu"
+    // group everything else Ubuntu-based uses.
+    distroGroupId: "Ubuntu",
+    // The one real, already-modeled distinction: elementary AppCenter is
+    // its own bundled app store, not an optional extra — the specialRepo
+    // already exists (settings.ts's "elementary-appcenter") but no tile
+    // used to reference it.
+    preActivatedRepoIds: ["elementary-appcenter"],
+  },
+  {
+    id: "zorin",
+    label: "Zorin OS",
+    distroGroupId: "Ubuntu",
+    preActivatedRepoIds: [],
+  },
   { id: "deepin", label: "Deepin", distroGroupId: "Deepin", preActivatedRepoIds: [] },
   { id: "mx-linux", label: "MX Linux", distroGroupId: "MX Linux", preActivatedRepoIds: [] },
   { id: "fedora", label: "Fedora", distroGroupId: "Fedora", preActivatedRepoIds: [] },
   { id: "arch", label: "Arch Linux", distroGroupId: "Arch Linux", preActivatedRepoIds: [] },
+  {
+    id: "manjaro",
+    label: "Manjaro",
+    // Same reasoning as elementary: no dedicated source, Arch-compatible
+    // (pacman + its own repos), so it shares Arch Linux's native group.
+    // Deliberately NOT folded into the plain "Arch Linux" tile itself,
+    // unlike EndeavourOS/CachyOS/Garuda — Manjaro's AUR usage carries a
+    // real, distro-specific risk the others don't: its own repos trail
+    // Arch's by design (delayed-update model), so AUR packages built
+    // against current Arch libraries can mismatch Manjaro's older ones.
+    // Nothing in today's data model expresses "recommended, but riskier
+    // here" — still just shows AUR the same as any other Arch-family
+    // tile, this comment is the only place that nuance lives for now.
+    distroGroupId: "Arch Linux",
+    preActivatedRepoIds: [],
+  },
   {
     id: "opensuse-tumbleweed",
     label: "openSUSE Tumbleweed",
