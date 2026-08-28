@@ -382,6 +382,23 @@ export const setSourceActivated = (
 };
 
 /**
+ * The subset of `installGroups` matching `predicate`, each paired with its
+ * own index into the *original* list — `InstallGroupList`'s rows mutate a
+ * group by that original index (`GroupShownControl`), not by a position
+ * within whatever filtered/scoped subset the Settings page happens to be
+ * rendering (cross-distro vs. distro packages, or one OS's recommended
+ * set), so the index has to survive the filter.
+ */
+export function groupsWhere(
+  installGroups: InstallFormatGroup[],
+  predicate: (group: InstallFormatGroup) => boolean,
+): { group: InstallFormatGroup; index: number }[] {
+  return installGroups
+    .map((group, index) => ({ group, index }))
+    .filter(({ group }) => predicate(group));
+}
+
+/**
  * Resolves a group's Show/Hide tri-state to a real boolean — "auto" defers
  * to `recommendedGroupIds` (the selected OS's own recommendation, see
  * `~/os-catalog`'s `recommendedGroupIds`), or shows everything when

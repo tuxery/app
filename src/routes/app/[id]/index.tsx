@@ -1,6 +1,7 @@
 import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
+import { unique } from "@helpers4/array";
 import { LuExternalLink, LuFlag, LuPackage } from "@qwikest/icons/lucide";
 import { getAppById, getStats } from "~/catalog";
 import {
@@ -453,7 +454,7 @@ const SourceGroupSection = component$<{
 /** `SourceMap`/`ChannelIndicator`'s combined props, derived from a full package list — used for the hero/sticky-header install summary, sitting to the left of the Install button (replaces the old "Install options (N)" count that used to live on the button itself). */
 function summarizeSources(packages: SourcedPackage[]) {
   return {
-    sources: [...new Set(packages.map((pkg) => pkg.source))],
+    sources: unique(packages.map((pkg) => pkg.source)),
     packageCount: packages.length,
     channels: summarizeChannels(packages),
   };

@@ -4,6 +4,7 @@ import type { DocumentHead } from "@builder.io/qwik-city";
 import { findOsEntry, recommendedGroupIds, OS_CATALOG, type OsCatalogEntry } from "~/os-catalog";
 import {
   CROSS_DISTRO_GROUP_IDS,
+  groupsWhere,
   isGroupEffectivelyShown,
   isRepoEffectivelyActivated,
   setGroupShown,
@@ -199,17 +200,18 @@ const SourcesTab = component$(() => {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <InstallGroupList
           title="Cross-distro formats"
-          groups={settings.installGroups.value
-            .map((group, index) => ({ group, index }))
-            .filter(({ group }) => CROSS_DISTRO_GROUP_IDS.has(group.id))}
+          groups={groupsWhere(settings.installGroups.value, (group) =>
+            CROSS_DISTRO_GROUP_IDS.has(group.id),
+          )}
           recommended={recommended}
           preActivated={preActivated}
         />
         <InstallGroupList
           title="Distro packages"
-          groups={settings.installGroups.value
-            .map((group, index) => ({ group, index }))
-            .filter(({ group }) => !CROSS_DISTRO_GROUP_IDS.has(group.id))}
+          groups={groupsWhere(
+            settings.installGroups.value,
+            (group) => !CROSS_DISTRO_GROUP_IDS.has(group.id),
+          )}
           recommended={recommended}
           preActivated={preActivated}
         />
@@ -256,9 +258,7 @@ const OsJumbo = component$<{ entry: OsCatalogEntry }>(({ entry }) => {
   const settings = useSettings();
   const recommended = recommendedGroupIds(entry);
   const preActivated = new Set(entry.preActivatedRepoIds);
-  const groups = settings.installGroups.value
-    .map((group, index) => ({ group, index }))
-    .filter(({ group }) => recommended.has(group.id));
+  const groups = groupsWhere(settings.installGroups.value, (group) => recommended.has(group.id));
 
   return (
     <div class="flex flex-col gap-6">
