@@ -3,7 +3,7 @@ import { LuPackage } from "@qwikest/icons/lucide";
 import { ChannelIndicator } from "~/components/channel-indicator/channel-indicator";
 import { SourceMap } from "~/components/source-map/source-map";
 import { UnifiedRating } from "~/components/unified-rating/unified-rating";
-import type { PackageSourceId, SourceRating } from "~/catalog-types";
+import type { AppSummary, PackageSourceId, SourceRating } from "~/catalog-types";
 
 export interface AppCardProps {
   iconUrl?: string;
@@ -90,4 +90,30 @@ export const AppCard = component$<AppCardProps>(
       </article>
     );
   },
+);
+
+/**
+ * `AppCard` wrapped in its listing link — the same `<a href="/app/<id>/">`
+ * plus prop spread repeated across every page that renders a grid/row of
+ * `AppSummary` cards (homepage rows, Browse, Apps/Games, creator pages).
+ * `linkClass` defaults to a bare block link; the homepage's horizontal
+ * scrollers pass their own fixed-width/snap classes instead.
+ */
+export const AppCardLink = component$<{ app: AppSummary; linkClass?: string }>(
+  ({ app, linkClass = "block" }) => (
+    <a href={`/app/${encodeURIComponent(app.id)}/`} class={linkClass}>
+      <AppCard
+        iconUrl={app.iconUrl}
+        name={app.name}
+        description={app.shortDescription}
+        sources={app.sources}
+        packageCount={app.packageCount}
+        channels={app.channels}
+        contentType={app.contentType}
+        category={app.category}
+        rating={app.rating}
+        ratingsBySource={app.ratingsBySource}
+      />
+    </a>
+  ),
 );

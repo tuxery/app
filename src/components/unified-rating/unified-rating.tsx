@@ -1,6 +1,6 @@
 import { component$ } from "@builder.io/qwik";
 import type { SourceRating } from "~/catalog-types";
-import { TOOLTIP_POSITION_CLASSES, type TooltipPosition } from "~/components/tooltip-position";
+import { tooltipClass, type TooltipPosition } from "~/components/tooltip-position";
 
 // Half-star granularity (10 positions across 5 stars) — the finest
 // daisyUI's `rating-half` supports. `average` rarely lands on a clean half
@@ -49,7 +49,7 @@ export const UnifiedRating = component$<UnifiedRatingProps>(
 
     return (
       <span
-        class={`tooltip ${TOOLTIP_POSITION_CLASSES[tooltipPosition]} before:whitespace-pre-wrap before:text-left inline-flex items-center gap-1.5`}
+        class={tooltipClass(tooltipPosition, "inline-flex items-center gap-1.5")}
         title={tip}
         data-tip={tip}
       >

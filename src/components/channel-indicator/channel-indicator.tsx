@@ -1,6 +1,6 @@
 import { component$ } from "@builder.io/qwik";
 import { LuPackage } from "@qwikest/icons/lucide";
-import { TOOLTIP_POSITION_CLASSES, type TooltipPosition } from "~/components/tooltip-position";
+import { tooltipClass, type TooltipPosition } from "~/components/tooltip-position";
 
 export interface ChannelIndicatorProps {
   packageCount: number;
@@ -20,11 +20,7 @@ export const ChannelIndicator = component$<ChannelIndicatorProps>(
     const tip = channels.join(", ");
 
     return (
-      <div
-        class={`tooltip ${TOOLTIP_POSITION_CLASSES[tooltipPosition]} before:whitespace-pre-wrap before:text-left indicator`}
-        title={tip}
-        data-tip={tip}
-      >
+      <div class={tooltipClass(tooltipPosition, "indicator")} title={tip} data-tip={tip}>
         <span
           class="indicator-item indicator-top indicator-end badge badge-xs text-[10px]"
           style="padding: 0 1px"

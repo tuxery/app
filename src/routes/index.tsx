@@ -11,7 +11,7 @@ import {
   LuMegaphone,
   LuSearch,
 } from "@qwikest/icons/lucide";
-import { AppCard } from "~/components/app-card/app-card";
+import { AppCardLink } from "~/components/app-card/app-card";
 import { CategoryTileGrid } from "~/components/category-tile-grid/category-tile-grid";
 import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-scroller";
 import {
@@ -96,23 +96,6 @@ export const useMustHaveApps = routeLoader$(async () => {
   return MUST_HAVE_APP_IDS.map((id) => byId.get(id)).filter((app): app is AppSummary => !!app);
 });
 
-const AppCardLink = component$<{ app: AppSummary }>(({ app }) => (
-  <a href={`/app/${encodeURIComponent(app.id)}/`} class="block w-64 shrink-0 snap-start">
-    <AppCard
-      iconUrl={app.iconUrl}
-      name={app.name}
-      description={app.shortDescription}
-      sources={app.sources}
-      packageCount={app.packageCount}
-      channels={app.channels}
-      contentType={app.contentType}
-      category={app.category}
-      rating={app.rating}
-      ratingsBySource={app.ratingsBySource}
-    />
-  </a>
-));
-
 /** A curated-by-category row (Productivity, Creativity, ...) — real data, not a placeholder, but honest about showing nothing when a category happens to be empty rather than hiding the whole section. */
 const CategoryRow = component$<{ title: string; category: string; apps: AppSummary[] }>(
   ({ title, category, apps }) => (
@@ -133,7 +116,7 @@ const CategoryRow = component$<{ title: string; category: string; apps: AppSumma
       ) : (
         <HorizontalScroller ariaLabel={title}>
           {apps.map((app) => (
-            <AppCardLink key={app.id} app={app} />
+            <AppCardLink key={app.id} app={app} linkClass="block w-64 shrink-0 snap-start" />
           ))}
         </HorizontalScroller>
       )}
@@ -174,7 +157,7 @@ const TrendingRow = component$<{
     ) : (
       <HorizontalScroller ariaLabel={title}>
         {apps.map((app) => (
-          <AppCardLink key={app.id} app={app} />
+          <AppCardLink key={app.id} app={app} linkClass="block w-64 shrink-0 snap-start" />
         ))}
       </HorizontalScroller>
     )}
@@ -411,7 +394,7 @@ export default component$(() => {
             ) : (
               <HorizontalScroller ariaLabel="Must-have apps">
                 {mustHaveApps.value.map((app) => (
-                  <AppCardLink key={app.id} app={app} />
+                  <AppCardLink key={app.id} app={app} linkClass="block w-64 shrink-0 snap-start" />
                 ))}
               </HorizontalScroller>
             )}

@@ -1,6 +1,6 @@
 import { component$ } from "@builder.io/qwik";
 import { ALL_SOURCE_GROUPS, SOURCE_GROUP_MEMBERS, type PackageSourceId } from "~/catalog-types";
-import { TOOLTIP_POSITION_CLASSES, type TooltipPosition } from "~/components/tooltip-position";
+import { tooltipClass, type TooltipPosition } from "~/components/tooltip-position";
 
 export interface SourceMapProps {
   sources: PackageSourceId[];
@@ -33,7 +33,7 @@ export const SourceMap = component$<SourceMapProps>(({ sources, tooltipPosition 
 
   return (
     <div
-      class={`tooltip ${TOOLTIP_POSITION_CLASSES[tooltipPosition]} before:whitespace-pre-wrap before:text-left grid grid-rows-2 grid-flow-col gap-0.5`}
+      class={tooltipClass(tooltipPosition, "grid grid-rows-2 grid-flow-col gap-0.5")}
       title={tip}
       data-tip={tip}
     >
