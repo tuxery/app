@@ -1,6 +1,7 @@
 import { component$ } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
+import { toMapByKey } from "@helpers4/map";
 import { AppCardLink } from "~/components/app-card/app-card";
 import { getAppsByIds } from "~/catalog";
 import { getInfluencerPage, type InfluencerBlock } from "~/data/influencer-pages";
@@ -17,7 +18,7 @@ export const usePage = routeLoader$(async (requestEvent) => {
   // per block — cheap even for a page with several app-grid sections.
   const allAppIds = page.blocks.flatMap((block) => (block.type === "apps" ? block.appIds : []));
   const apps = await getAppsByIds(allAppIds);
-  const appsById = new Map(apps.map((app) => [app.id, app]));
+  const appsById = toMapByKey(apps, (app) => app.id);
 
   return { page, appsById: Object.fromEntries(appsById) };
 });
