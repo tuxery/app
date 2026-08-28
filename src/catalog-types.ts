@@ -9,6 +9,9 @@
 // `apps` table). No cross-repo import (separate repos, not a monorepo), so
 // this is kept in sync by hand.
 
+import { unique } from "@helpers4/array";
+import { capitalize } from "@helpers4/string";
+
 // One id per connector folder under catalog's packages/sources/src/ —
 // `<format>-<provider>` (e.g. "deb-debian"), except appimage/slackware/
 // gog/lutris, which keep a bare name (single format+provider today, or,
@@ -179,12 +182,12 @@ export interface CatalogApp {
 /** Human label for a build channel — `undefined` is the default/stable build, everything else (AUR's git/svn/hg/bzr/cvs/bin) gets its raw value capitalized. */
 export function channelLabel(channel: string | undefined): string {
   if (!channel) return "Stable";
-  return channel.charAt(0).toUpperCase() + channel.slice(1);
+  return capitalize(channel, { lowercaseRest: false });
 }
 
 /** Every channel word present across a set of packages, deduplicated — the "channels: ..." line in `SourceSummary`'s tooltip, on both a `CatalogApp`'s full `packages` and an `AppSummary`'s already-summarized `channels`. */
 export function summarizeChannels(packages: { channel?: string }[]): string[] {
-  return [...new Set(packages.map((pkg) => channelLabel(pkg.channel)))];
+  return unique(packages.map((pkg) => channelLabel(pkg.channel)));
 }
 
 /** Human label for a package's own source, e.g. "Flathub (Flatpak)", or "AUR (git build)" for a non-default channel. */

@@ -3,6 +3,8 @@
 // comes from the shared `.dev/.env` (see `vite.config.ts`), never a
 // VITE_-prefixed var, so it never reaches the client bundle.
 
+import { safeFetch } from "@helpers4/promise";
+
 const UNSPLASH_API = "https://api.unsplash.com";
 
 // Placeholder direction, not a final choice — a clean, dark/abstract shot
@@ -66,30 +68,24 @@ async function fetchHeroBackgroundPhoto(): Promise<HeroBackgroundPhoto | null> {
   const accessKey = process.env.UNSPLASH_ACCESS_KEY;
   if (!accessKey) return null;
 
-  try {
-    const res = await fetch(
-      `${UNSPLASH_API}/photos/random?query=${encodeURIComponent(HERO_QUERY)}&orientation=landscape`,
-      { headers: { Authorization: `Client-ID ${accessKey}` } },
-    );
-    if (!res.ok) return null;
+  const photo = await safeFetch<UnsplashRandomPhotoResponse>(
+    `${UNSPLASH_API}/photos/random?query=${encodeURIComponent(HERO_QUERY)}&orientation=landscape`,
+    { headers: { Authorization: `Client-ID ${accessKey}` } },
+  );
+  if (!photo) return null;
 
-    const photo = (await res.json()) as UnsplashRandomPhotoResponse;
+  // Required by Unsplash's API guidelines whenever a photo is actually
+  // displayed, not just fetched — a fire-and-forget tracking ping, not
+  // awaited, so a slow/failed call never delays the page.
+  fetch(`${photo.links.download_location}&client_id=${accessKey}`).catch(() => {});
 
-    // Required by Unsplash's API guidelines whenever a photo is actually
-    // displayed, not just fetched — a fire-and-forget tracking ping, not
-    // awaited, so a slow/failed call never delays the page.
-    fetch(`${photo.links.download_location}&client_id=${accessKey}`).catch(() => {});
-
-    // utm params per Unsplash's attribution guidelines, on both the photo
-    // and the photographer link.
-    const utm = "utm_source=tuxery&utm_medium=referral";
-    return {
-      imageUrl: photo.urls.regular,
-      photoUrl: `${photo.links.html}?${utm}`,
-      photographerName: photo.user.name,
-      photographerUrl: `${photo.user.links.html}?${utm}`,
-    };
-  } catch {
-    return null;
-  }
+  // utm params per Unsplash's attribution guidelines, on both the photo
+  // and the photographer link.
+  const utm = "utm_source=tuxery&utm_medium=referral";
+  return {
+    imageUrl: photo.urls.regular,
+    photoUrl: `${photo.links.html}?${utm}`,
+    photographerName: photo.user.name,
+    photographerUrl: `${photo.user.links.html}?${utm}`,
+  };
 }

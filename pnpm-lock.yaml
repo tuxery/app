@@ -11,6 +11,18 @@ importers:
 
   .:
     dependencies:
+      '@helpers4/array':
+        specifier: ^3.0.7
+        version: 3.0.7
+      '@helpers4/guard':
+        specifier: ^3.0.7
+        version: 3.0.7
+      '@helpers4/promise':
+        specifier: ^3.0.7
+        version: 3.0.7
+      '@helpers4/string':
+        specifier: ^3.0.7
+        version: 3.0.7
       '@libsql/client':
         specifier: ^0.17.4
         version: 0.17.4
@@ -250,6 +262,22 @@ packages:
 
   '@fluejs/noscroll@1.0.0':
     resolution: {integrity: sha512-fyu6jPL/BzUWkrxpwmG8RC/8LM4Fp2GprYRco2BBTypIl7zDyuipRHg6NcuoTGh4s5fAV8D1DBDMS2aDhuGclg==}
+
+  '@helpers4/array@3.0.7':
+    resolution: {integrity: sha512-k45+RjvmfY+ql9DeBxeQg9f2k/9q0AxGTCvpGBfD5hm9+4E453NFv106Jqyv3CLxHajXFNivlq4WJ27iiIJYaw==}
+    engines: {node: '>=26.0.0'}
+
+  '@helpers4/guard@3.0.7':
+    resolution: {integrity: sha512-1Z7embQkWycTM7T3lADhMU84sl/zuBCGCjvf9dk40DTNwc6Ls7lFjKOsAYBn/fFddGTypahiSU8fvhC3vJuHBA==}
+    engines: {node: '>=26.0.0'}
+
+  '@helpers4/promise@3.0.7':
+    resolution: {integrity: sha512-OxAiH2egam0KYmYieDTHws/Vxln/DBEh9DrvCUtrHzkhOCwCRF64J7LVVtIQSEscxF/r4tK3waloJL0+VAftBw==}
+    engines: {node: '>=26.0.0'}
+
+  '@helpers4/string@3.0.7':
+    resolution: {integrity: sha512-j4/FD9TTX4JqpG8tXQ2OdPMavfZDDBHZdvaWTGHDvoQZVGFr1nCwSEvQG/unnklYJAkzAg/iHOvNu4PJAW0hzQ==}
+    engines: {node: '>=26.0.0'}
 
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
@@ -2406,6 +2434,14 @@ snapshots:
   '@floating-ui/utils@0.2.12': {}
 
   '@fluejs/noscroll@1.0.0': {}
+
+  '@helpers4/array@3.0.7': {}
+
+  '@helpers4/guard@3.0.7': {}
+
+  '@helpers4/promise@3.0.7': {}
+
+  '@helpers4/string@3.0.7': {}
 
   '@img/colour@1.1.0': {}
 

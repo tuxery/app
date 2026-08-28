@@ -1,3 +1,5 @@
+import { unique } from "@helpers4/array";
+import { isNullish } from "@helpers4/guard";
 import { createClient, type Client } from "@libsql/client";
 import {
   BROWSE_PAGE_SIZE,
@@ -46,7 +48,7 @@ async function safely<T>(fallback: T, fn: () => Promise<T>): Promise<T> {
 type Row = Record<string, unknown>;
 
 function parseRating(row: Row): { average: number; count: number } | undefined {
-  return row.rating_average === null || row.rating_average === undefined
+  return isNullish(row.rating_average)
     ? undefined
     : { average: row.rating_average as number, count: (row.rating_count as number | null) ?? 0 };
 }
@@ -67,26 +69,26 @@ function toSummary(row: Row): AppSummary {
     // source now (e.g. AUR's official + -git build), and a summary card
     // only needs to say "AUR" once, not distinguish the channel — that's
     // what packageCount/channels are for instead.
-    sources: [...new Set(packages.map((pkg) => pkg.source))],
+    sources: unique(packages.map((pkg) => pkg.source)),
     packageCount: packages.length,
     channels: summarizeChannels(packages),
   };
 }
 
 function str(value: unknown): string | undefined {
-  return value === null || value === undefined ? undefined : (value as string);
+  return isNullish(value) ? undefined : (value as string);
 }
 
 function num(value: unknown): number | undefined {
-  return value === null || value === undefined ? undefined : (value as number);
+  return isNullish(value) ? undefined : (value as number);
 }
 
 function bool(value: unknown): boolean | undefined {
-  return value === null || value === undefined ? undefined : Boolean(value);
+  return isNullish(value) ? undefined : Boolean(value);
 }
 
 function json<T>(value: unknown): T | undefined {
-  return value === null || value === undefined ? undefined : (JSON.parse(value as string) as T);
+  return isNullish(value) ? undefined : (JSON.parse(value as string) as T);
 }
 
 function toCatalogApp(row: Row): CatalogApp {
@@ -110,10 +112,9 @@ function toCatalogApp(row: Row): CatalogApp {
     aiFeatures: bool(row.ai_features),
     inAppPurchases: bool(row.in_app_purchases),
     gdprCompliant: bool(row.gdpr_compliant),
-    ageRating:
-      row.age_rating_system === null || row.age_rating_system === undefined
-        ? undefined
-        : { system: row.age_rating_system as string, value: row.age_rating_value as string },
+    ageRating: isNullish(row.age_rating_system)
+      ? undefined
+      : { system: row.age_rating_system as string, value: row.age_rating_value as string },
     popularity: num(row.popularity),
     languages: json(row.languages_json),
     screenshots: json(row.screenshots_json),
