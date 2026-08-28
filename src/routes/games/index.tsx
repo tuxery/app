@@ -1,7 +1,7 @@
 import { component$ } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { AppCard } from "~/components/app-card/app-card";
+import { AppCardLink } from "~/components/app-card/app-card";
 import { CategoryTileGrid } from "~/components/category-tile-grid/category-tile-grid";
 import { getCategories, getTrendingApps } from "~/catalog";
 
@@ -35,20 +35,7 @@ export default component$(() => {
           </div>
           <div class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
             {trending.value.slice(0, 12).map((game) => (
-              <a key={game.id} href={`/app/${encodeURIComponent(game.id)}/`} class="block">
-                <AppCard
-                  iconUrl={game.iconUrl}
-                  name={game.name}
-                  description={game.shortDescription}
-                  sources={game.sources}
-                  packageCount={game.packageCount}
-                  channels={game.channels}
-                  contentType={game.contentType}
-                  category={game.category}
-                  rating={game.rating}
-                  ratingsBySource={game.ratingsBySource}
-                />
-              </a>
+              <AppCardLink key={game.id} app={game} />
             ))}
           </div>
         </section>

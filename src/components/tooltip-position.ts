@@ -11,3 +11,15 @@ export const TOOLTIP_POSITION_CLASSES = {
 } as const;
 
 export type TooltipPosition = keyof typeof TOOLTIP_POSITION_CLASSES;
+
+/**
+ * The full class list for a hover tooltip, shared by every component that
+ * pairs a native `title` with a fast CSS `.tooltip`/`data-tip` (`SourceMap`,
+ * `ChannelIndicator`, `UnifiedRating`) — `before:whitespace-pre-wrap
+ * before:text-left` lets a multi-item tip (comma-joined sources/channels)
+ * wrap onto several lines instead of one unreadable strip. `extra` adds
+ * each component's own layout classes on top.
+ */
+export function tooltipClass(position: TooltipPosition, extra = ""): string {
+  return `tooltip ${TOOLTIP_POSITION_CLASSES[position]} before:whitespace-pre-wrap before:text-left ${extra}`.trim();
+}

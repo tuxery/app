@@ -2,7 +2,7 @@ import { $, component$, Fragment, useSignal, useVisibleTask$ } from "@builder.io
 import { routeLoader$, server$, useLocation } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { LuArrowUp, LuLoader2 } from "@qwikest/icons/lucide";
-import { AppCard } from "~/components/app-card/app-card";
+import { AppCardLink } from "~/components/app-card/app-card";
 import {
   browseApps,
   getCategories,
@@ -257,20 +257,7 @@ export default component$(() => {
                   </div>
                 )}
                 {batch.map((app) => (
-                  <a key={app.id} href={`/app/${encodeURIComponent(app.id)}/`} class="block">
-                    <AppCard
-                      iconUrl={app.iconUrl}
-                      name={app.name}
-                      description={app.shortDescription}
-                      sources={app.sources}
-                      packageCount={app.packageCount}
-                      channels={app.channels}
-                      contentType={app.contentType}
-                      category={app.category}
-                      rating={app.rating}
-                      ratingsBySource={app.ratingsBySource}
-                    />
-                  </a>
+                  <AppCardLink key={app.id} app={app} />
                 ))}
               </Fragment>
             ))}
