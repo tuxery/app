@@ -302,6 +302,19 @@ const OsTileGrid = component$(() => {
           {entry.label}
         </button>
       ))}
+      {/* Dashed border, not a real choice among the tiles above — same
+          "honest, not a placeholder pretending to be content" convention
+          as this app's ComingSoon sections. Deep-links straight to
+          catalog's own issue template (?template=..., a real GitHub
+          feature) rather than catalog's bare issues page. */}
+      <a
+        href="https://github.com/tuxery/catalog/issues/new?template=add-something.yml"
+        target="_blank"
+        rel="noopener"
+        class="card border border-dashed border-base-300 hover:border-primary/40 transition-colors p-4 text-sm font-medium text-center text-base-content/60"
+      >
+        Your distro not here?
+      </a>
     </div>
   );
 });
