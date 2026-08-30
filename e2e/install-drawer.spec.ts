@@ -160,6 +160,35 @@ test("activating a source's setup persists and hides the setup step on future vi
   await expect(page.getByText("yay -S 0cc-famitracker")).toBeVisible();
 });
 
+test("selecting an OS collapses its non-recommended platforms behind a 'Show N other platforms' toggle, expandable in place", async ({
+  page,
+}) => {
+  await page.goto("/settings/?tab=os");
+  await page.getByRole("button", { name: "Fedora", exact: true }).click();
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem("tuxery:settings")), { timeout: 15_000 })
+    .toContain('"osId":"fedora"');
+
+  await page.goto("/app/firefox/");
+  await page.getByRole("button", { name: "Install" }).click();
+
+  // Fedora and the always-recommended cross-distro formats show directly.
+  await expect(page.locator("summary", { hasText: "Fedora" })).toBeVisible();
+  await expect(page.locator("summary", { hasText: "Flatpak" })).toBeVisible();
+
+  // Debian/Ubuntu (native packages Fedora doesn't recommend) start hidden
+  // inside the collapsed toggle — present in the DOM (nested <details>
+  // content isn't removed, just closed) but not visible until expanded.
+  const debianSummary = page.locator("summary", { hasText: "Debian" });
+  await expect(debianSummary).toBeHidden();
+
+  const otherPlatforms = page.locator("summary", { hasText: /other platform/ });
+  await expect(otherPlatforms).toBeVisible();
+
+  await otherPlatforms.click();
+  await expect(debianSummary).toBeVisible();
+});
+
 test("Snap's setup step links to Snapcraft's own install guide instead of an apt-only command", async ({
   page,
 }) => {
