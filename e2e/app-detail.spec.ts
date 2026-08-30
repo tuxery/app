@@ -55,12 +55,17 @@ test("a multi-source rated app's tooltip lists every source, each prefixed by it
 
 test("the build-channel badge counts distinct channels, not raw packages", async ({ page }) => {
   // Real bug, found live: an earlier version badged the *package* count
-  // (27 — one per distro, mostly all "Stable") right next to a tooltip
-  // naming only 2 channels, which read as broken. The badge is the
-  // channel count itself now, matching the tooltip it explains.
+  // (dozens — one per distro, mostly all "Stable") right next to a
+  // tooltip naming only a handful of channels, which read as broken. The
+  // badge is the channel count itself now, matching the tooltip it
+  // explains. Exact channel set re-verified against the live dataset
+  // (2026-08-30) — Luanti now carries 5 distinct channel words across its
+  // packages (Flathub added its own "latest" branch, Snap exposes raw
+  // version-numbered channels on top of the AUR git build).
+  const tip = "Stable, Git, Flathub latest, 0.4.17.1, 5.7.0-dev";
   await page.goto(LUANTI);
-  await expect(page.getByTitle("Stable, Git")).toBeVisible();
-  await expect(page.getByTitle("Stable, Git").locator(".badge")).toHaveText("2");
+  await expect(page.getByTitle(tip)).toBeVisible();
+  await expect(page.getByTitle(tip).locator(".badge")).toHaveText("5");
 });
 
 test("Claim this listing links to the claim explainer, personalized with the app's name, and back again", async ({

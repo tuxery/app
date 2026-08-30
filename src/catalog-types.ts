@@ -163,6 +163,8 @@ export interface CatalogApp {
   inAppPurchases?: boolean;
   gdprCompliant?: boolean;
   editorialTags?: string[];
+  /** Upstream store collections this app appears in (Flathub's verified/recently-added/recently-updated, Snapcraft's featured) — see `tuxery/catalog`'s `CatalogApp.storeCollections` doc comment. Distinct from `editorialTags` above (Tuxery's own manual curation). */
+  storeCollections?: string[];
   /** Software-suite membership — see `tuxery/catalog`'s `CatalogApp.suite` doc comment. */
   suite?: {
     id: string;
