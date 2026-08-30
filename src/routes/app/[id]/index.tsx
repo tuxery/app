@@ -533,7 +533,7 @@ export default component$(() => {
             </div>
             <span class="font-medium truncate flex-1">{a.name}</span>
             {visiblePackages.length > 0 && (
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 mr-3">
                 <SourceMap sources={sourceSummary.sources} tooltipPosition="bottom" />
                 <BuildChannelIndicator channels={sourceSummary.channels} tooltipPosition="bottom" />
               </div>
@@ -621,7 +621,7 @@ export default component$(() => {
         <div class="flex flex-wrap items-center gap-3">
           {visiblePackages.length ? (
             <>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 mr-3">
                 <SourceMap sources={sourceSummary.sources} tooltipPosition="bottom" />
                 <BuildChannelIndicator channels={sourceSummary.channels} tooltipPosition="bottom" />
               </div>
