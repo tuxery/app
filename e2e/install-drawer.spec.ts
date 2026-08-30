@@ -124,13 +124,9 @@ test("a source with more than one channel (AUR's official/-bin/-git builds) show
   // One tab group, not three separate rows — AUR is the Arch Linux group's
   // only source here, so its own label is omitted as redundant with the
   // "Arch Linux" heading right above (see SourceInstallUnit's showLabel).
-  // Exact match — the fiche's own per-source debug tabs (Screenshots &
-  // videos/About) also use role="tab" and can carry a label containing
-  // these words too (e.g. "AUR (bin build)"), so a loose substring match
-  // picks up more than one element once both are on the page at once.
-  const stable = page.getByRole("tab", { name: "Stable", exact: true });
-  const bin = page.getByRole("tab", { name: "Bin", exact: true });
-  const git = page.getByRole("tab", { name: "Git", exact: true });
+  const stable = page.getByRole("tab", { name: "Stable" });
+  const bin = page.getByRole("tab", { name: "Bin" });
+  const git = page.getByRole("tab", { name: "Git" });
   await expect(stable).toBeVisible();
   await expect(bin).toBeVisible();
   await expect(git).toBeVisible();
