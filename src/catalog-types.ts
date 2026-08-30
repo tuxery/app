@@ -123,10 +123,6 @@ export interface SourcedPackage {
   homepage?: string;
   /** A crowd rating from this specific source, when it has one — see `tuxery/catalog`'s `SourcedPackage.rating` doc comment for which sources populate this. */
   rating?: { average: number; count: number };
-  /** This source's own screenshot URLs, before merging picks one representative source's set as `CatalogApp.screenshots` — only Flathub/AppCenter populate this today. Powers the fiche's per-source tab on "Screenshots & videos", not shown anywhere else. */
-  screenshots?: string[];
-  /** This source's own long description, before merging picks one representative source's as `CatalogApp.longDescription` — only Flathub/AppCenter populate this today. Powers the fiche's per-source tab on "About", not shown anywhere else. */
-  longDescription?: string;
 }
 
 export interface CatalogApp {
