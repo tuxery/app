@@ -39,7 +39,7 @@ export interface UnifiedRatingProps {
  * reveals it: the native `title` on the outer wrapper is the reliable
  * mechanism (survives a clipping ancestor), the `.tooltip`/`data-tip` on
  * the same element is the fast, no-hover-delay one for contexts with room
- * for it — same two-tier discipline as `SourceMap`/`ChannelIndicator`, no
+ * for it — same two-tier discipline as `SourceMap`/`BuildChannelIndicator`, no
  * separate info icon needed for either.
  */
 export const UnifiedRating = component$<UnifiedRatingProps>(

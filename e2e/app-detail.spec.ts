@@ -14,6 +14,11 @@ const LIBREOFFICE_WRITER = "/app/deb-debian%3Alibreoffice-writer/";
 // most well-known apps don't have (they're only rated on Flathub), needed
 // to exercise UnifiedRating's per-source breakdown at all.
 const APP_EDITOR = "/app/com.github.donadigo.appeditor/";
+// A merged app with a large native-package fanout (many distros, all the
+// default "Stable" channel) plus a few AUR "-git" builds — the case that
+// exposed the channel-tooltip bug below (many more packages than distinct
+// channel words).
+const LUANTI = "/app/luanti/";
 
 test("an app page shows an install-options drawer listing every source, each group closed by default", async ({
   page,
@@ -46,6 +51,16 @@ test("a multi-source rated app's tooltip lists every source, each prefixed by it
   await expect(
     page.getByTitle("Flathub (Flatpak): ★ 3.1 (29), elementary AppCenter (Flatpak): ★ 3.3 (12)"),
   ).toBeVisible();
+});
+
+test("the build-channel badge counts distinct channels, not raw packages", async ({ page }) => {
+  // Real bug, found live: an earlier version badged the *package* count
+  // (27 — one per distro, mostly all "Stable") right next to a tooltip
+  // naming only 2 channels, which read as broken. The badge is the
+  // channel count itself now, matching the tooltip it explains.
+  await page.goto(LUANTI);
+  await expect(page.getByTitle("Stable, Git")).toBeVisible();
+  await expect(page.getByTitle("Stable, Git").locator(".badge")).toHaveText("2");
 });
 
 test("suite navigation: main app lists its components, and a component links back", async ({

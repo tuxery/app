@@ -1,6 +1,6 @@
 import { component$ } from "@builder.io/qwik";
 import { LuPackage } from "@qwikest/icons/lucide";
-import { ChannelIndicator } from "~/components/channel-indicator/channel-indicator";
+import { BuildChannelIndicator } from "~/components/build-channel-indicator/build-channel-indicator";
 import { SourceMap } from "~/components/source-map/source-map";
 import { UnifiedRating } from "~/components/unified-rating/unified-rating";
 import type { AppSummary, PackageSourceId, SourceRating } from "~/catalog-types";
@@ -10,7 +10,6 @@ export interface AppCardProps {
   name: string;
   description: string;
   sources: PackageSourceId[];
-  packageCount: number;
   channels: string[];
   contentType?: "game";
   category?: string;
@@ -25,27 +24,17 @@ export interface AppCardProps {
  *
  * Layout: logo + name/category on top, description below, and a bottom row
  * — pinned to the card's bottom edge via `mt-auto` so it lines up across
- * cards regardless of description length — `SourceMap`, `ChannelIndicator`,
- * then (when this app has one) `UnifiedRating` in its "short" (stars-only)
- * mode, left-aligned in that fixed order rather than spread with
- * `justify-between`: with that, a card carrying no rating had nothing to
- * hold `ChannelIndicator` at its own centered spot, so it drifted to the
- * row's right edge instead. Three narrow pieces instead of one wide
- * combined summary + rating: that used to wrap to two lines on some cards
- * and not others depending on content.
+ * cards regardless of description length — `SourceMap`,
+ * `BuildChannelIndicator`, then (when this app has one) `UnifiedRating` in
+ * its "short" (stars-only) mode, left-aligned in that fixed order rather
+ * than spread with `justify-between`: with that, a card carrying no rating
+ * had nothing to hold `BuildChannelIndicator` at its own centered spot, so
+ * it drifted to the row's right edge instead. Three narrow pieces instead
+ * of one wide combined summary + rating: that used to wrap to two lines on
+ * some cards and not others depending on content.
  */
 export const AppCard = component$<AppCardProps>(
-  ({
-    iconUrl,
-    name,
-    description,
-    sources,
-    packageCount,
-    channels,
-    category,
-    rating,
-    ratingsBySource,
-  }) => {
+  ({ iconUrl, name, description, sources, channels, category, rating, ratingsBySource }) => {
     return (
       <article class="glass-card card h-full transition-shadow hover:shadow-lg">
         <div class="card-body gap-2 p-5">
@@ -75,7 +64,7 @@ export const AppCard = component$<AppCardProps>(
           <p class="text-sm text-base-content/70 line-clamp-2">{description}</p>
           <div class="flex flex-wrap items-center gap-4 mt-auto pt-1">
             <SourceMap sources={sources} />
-            <ChannelIndicator packageCount={packageCount} channels={channels} />
+            <BuildChannelIndicator channels={channels} />
             {rating && (
               <UnifiedRating
                 average={rating.average}
@@ -107,7 +96,6 @@ export const AppCardLink = component$<{ app: AppSummary; linkClass?: string }>(
         name={app.name}
         description={app.shortDescription}
         sources={app.sources}
-        packageCount={app.packageCount}
         channels={app.channels}
         contentType={app.contentType}
         category={app.category}
