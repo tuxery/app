@@ -386,6 +386,29 @@ export async function getTrendingApps(typeFilter: TypeFilter = "all"): Promise<A
   });
 }
 
+/**
+ * Popularity-ranked apps with at least one package from `source` — powers
+ * a source's own dedicated page (`/sources/[id]/`'s trending row). Same
+ * `packages_json LIKE` match `browseApps`'s own `source` filter uses (the
+ * only place per-package sources live), same popularity/visual-asset
+ * gating as `getTrendingApps`.
+ */
+export async function getTrendingAppsBySource(
+  source: PackageSourceId,
+  limit = TRENDING_PAGE_SIZE,
+): Promise<AppSummary[]> {
+  const db = getClient();
+  if (!db) return [];
+
+  return safely([], async () => {
+    const result = await db.execute({
+      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE popularity IS NOT NULL AND ${HAS_VISUAL_ASSET} AND packages_json LIKE ? ORDER BY popularity DESC LIMIT ?`,
+      args: [`%"source":"${source}"%`, limit],
+    });
+    return result.rows.map((row) => toSummary(row as unknown as Row));
+  });
+}
+
 const CATEGORY_PREVIEW_SIZE = 12;
 
 /**

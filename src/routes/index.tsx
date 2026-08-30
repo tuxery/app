@@ -8,9 +8,10 @@ import {
   LuGamepad2,
   LuInfo,
   LuJoystick,
-  LuLayoutGrid,
   LuMegaphone,
+  LuPackage,
   LuSearch,
+  LuStore,
 } from "@qwikest/icons/lucide";
 import { AppCardLink } from "~/components/app-card/app-card";
 import { CategoryTileGrid } from "~/components/category-tile-grid/category-tile-grid";
@@ -168,25 +169,34 @@ const TrendingRow = component$<{
 // Placeholder tiles: a color gradient + icon per destination, not a real
 // photo — no external image dependency (no Unsplash-quota cost, no
 // per-image attribution to display on a small tile). Swap `gradient` for
-// a real `imageUrl` later without changing the grid around it.
+// a real `imageUrl` later without changing the grid around it. Each links
+// to that source's own dedicated page (`/sources/[id]/`), not straight to
+// the external store — the dedicated page is what has the external
+// "Visit ___" link, plus a trending recap first.
 const DESTINATION_TILES = [
   {
-    title: "All games",
-    href: "/games/",
+    title: "Flathub",
+    href: "/sources/flatpak-flathub/",
+    icon: LuPackage,
+    gradient: "from-sky-500 to-blue-700",
+  },
+  {
+    title: "Snap Store",
+    href: "/sources/snap-snapcraft/",
+    icon: LuStore,
+    gradient: "from-orange-500 to-red-600",
+  },
+  {
+    title: "GOG",
+    href: "/sources/gog/",
     icon: LuGamepad2,
     gradient: "from-violet-600 to-indigo-700",
   },
   {
     title: "Lutris",
-    href: "/browse/?source=lutris",
+    href: "/sources/lutris/",
     icon: LuJoystick,
     gradient: "from-amber-500 to-rose-600",
-  },
-  {
-    title: "All apps",
-    href: "/apps/",
-    icon: LuLayoutGrid,
-    gradient: "from-sky-500 to-blue-700",
   },
 ] as const;
 
@@ -337,9 +347,9 @@ export default component$(() => {
       ) : (
         <>
           {/* Events & collections: a featured-creator slider (left, 2/3) next
-              to four destination tiles (right, 2x2) — capped to roughly
-              three classic app-card heights so it doesn't dominate the
-              page above Trending. */}
+              to four store destination tiles (right, 2x2) — capped to
+              roughly three classic app-card heights so it doesn't
+              dominate the page above Trending. */}
           <section>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 h-auto lg:h-96">
               <div class="lg:col-span-2 h-64 lg:h-full">
@@ -355,7 +365,7 @@ export default component$(() => {
                   }
                 />
               </div>
-              <div class="grid grid-cols-3 grid-rows-1 gap-3 h-64 lg:h-full">
+              <div class="grid grid-cols-2 grid-rows-2 gap-3 h-64 lg:h-full">
                 {DESTINATION_TILES.map((tile) => (
                   <a
                     key={tile.title}
