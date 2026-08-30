@@ -504,6 +504,14 @@ export default component$(() => {
   const visiblePackages = a.packages.filter((pkg) =>
     isSourceVisible(pkg.source, settings.installGroups.value, recommended),
   );
+  // Non-empty only once an OS is selected and it doesn't recommend every
+  // group — with no OS selected, "auto" shows everything (see
+  // isGroupEffectivelyShown), so nothing's ever hidden here by default.
+  const hiddenGroups = groupPackagesBySourceGroup(
+    a.packages.filter(
+      (pkg) => !isSourceVisible(pkg.source, settings.installGroups.value, recommended),
+    ),
+  );
   const sourceSummary = summarizeSources(visiblePackages);
 
   return (
@@ -636,6 +644,17 @@ export default component$(() => {
                 </button>
               </div>
             </>
+          ) : hiddenGroups.length > 0 ? (
+            // Every source is hidden by the selected OS's recommendations,
+            // but some exist — open the drawer to its collapsed "other
+            // platforms" section instead of claiming there's nothing.
+            <button
+              type="button"
+              class="btn btn-outline btn-sm min-w-[120px]"
+              onClick$={() => (drawerOpen.value = true)}
+            >
+              Install
+            </button>
           ) : (
             <span class="btn btn-disabled btn-sm" aria-disabled="true">
               No install source available
@@ -696,6 +715,28 @@ export default component$(() => {
                 compatWarnings={a.compatibilityWarnings}
               />
             ))}
+
+            {hiddenGroups.length > 0 && (
+              <details class="collapse collapse-arrow bg-base-100 border border-dashed border-base-300">
+                <summary class="collapse-title min-h-0 py-3 text-sm text-base-content/60">
+                  Show{" "}
+                  {hiddenGroups.length === 1
+                    ? "1 other platform"
+                    : `${hiddenGroups.length} other platforms`}
+                </summary>
+                <div class="collapse-content flex flex-col gap-3">
+                  {hiddenGroups.map(([group, packages]) => (
+                    <SourceGroupSection
+                      key={group}
+                      group={group}
+                      packages={packages}
+                      appHomepage={a.homepage}
+                      compatWarnings={a.compatibilityWarnings}
+                    />
+                  ))}
+                </div>
+              </details>
+            )}
           </div>
         </div>
       )}
