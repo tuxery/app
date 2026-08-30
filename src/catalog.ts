@@ -68,9 +68,8 @@ function toSummary(row: Row): AppSummary {
     // Deduplicated — a merged app can carry two packages from the same
     // source now (e.g. AUR's official + -git build), and a summary card
     // only needs to say "AUR" once, not distinguish the channel — that's
-    // what packageCount/channels are for instead.
+    // what channels is for instead.
     sources: unique(packages.map((pkg) => pkg.source)),
-    packageCount: packages.length,
     channels: summarizeChannels(packages),
   };
 }

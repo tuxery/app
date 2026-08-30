@@ -17,7 +17,7 @@ import {
   type PackageSourceId,
   type SourcedPackage,
 } from "~/catalog-types";
-import { ChannelIndicator } from "~/components/channel-indicator/channel-indicator";
+import { BuildChannelIndicator } from "~/components/build-channel-indicator/build-channel-indicator";
 import { SourceMap } from "~/components/source-map/source-map";
 import { UnifiedRating } from "~/components/unified-rating/unified-rating";
 import {
@@ -451,11 +451,10 @@ const SourceGroupSection = component$<{
   );
 });
 
-/** `SourceMap`/`ChannelIndicator`'s combined props, derived from a full package list — used for the hero/sticky-header install summary, sitting to the left of the Install button (replaces the old "Install options (N)" count that used to live on the button itself). */
+/** `SourceMap`/`BuildChannelIndicator`'s combined props, derived from a full package list — used for the hero/sticky-header install summary, sitting to the left of the Install button (replaces the old "Install options (N)" count that used to live on the button itself). */
 function summarizeSources(packages: SourcedPackage[]) {
   return {
     sources: unique(packages.map((pkg) => pkg.source)),
-    packageCount: packages.length,
     channels: summarizeChannels(packages),
   };
 }
@@ -536,11 +535,7 @@ export default component$(() => {
             {visiblePackages.length > 0 && (
               <div class="flex items-center gap-2">
                 <SourceMap sources={sourceSummary.sources} tooltipPosition="bottom" />
-                <ChannelIndicator
-                  packageCount={sourceSummary.packageCount}
-                  channels={sourceSummary.channels}
-                  tooltipPosition="bottom"
-                />
+                <BuildChannelIndicator channels={sourceSummary.channels} tooltipPosition="bottom" />
               </div>
             )}
             <div class="aura aura-sm w-fit">
@@ -628,11 +623,7 @@ export default component$(() => {
             <>
               <div class="flex items-center gap-2">
                 <SourceMap sources={sourceSummary.sources} tooltipPosition="bottom" />
-                <ChannelIndicator
-                  packageCount={sourceSummary.packageCount}
-                  channels={sourceSummary.channels}
-                  tooltipPosition="bottom"
-                />
+                <BuildChannelIndicator channels={sourceSummary.channels} tooltipPosition="bottom" />
               </div>
               <div class="aura aura-sm w-fit">
                 <button

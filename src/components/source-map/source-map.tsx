@@ -17,7 +17,7 @@ export interface SourceMapProps {
  * the `.tooltip`/`data-tip` on the same element is the fast, no-hover-
  * delay one for contexts with room for it.
  *
- * Was half of `SourceSummary` (paired with `ChannelIndicator`, its other
+ * Was half of `SourceSummary` (paired with `BuildChannelIndicator`, its other
  * half) — the combined dot-map + package-count badge + one shared info
  * icon was too wide for many listing cards, wrapping to two lines on some
  * and not others depending on content. Two narrower, single-purpose

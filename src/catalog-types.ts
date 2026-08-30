@@ -186,7 +186,7 @@ export function channelLabel(channel: string | undefined): string {
   return capitalize(channel, { lowercaseRest: false });
 }
 
-/** Every channel word present across a set of packages, deduplicated — the "channels: ..." line in `SourceSummary`'s tooltip, on both a `CatalogApp`'s full `packages` and an `AppSummary`'s already-summarized `channels`. */
+/** Every distinct build-channel word present across a set of packages — the "channels: ..." line in `BuildChannelIndicator`'s tooltip, on both a `CatalogApp`'s full `packages` and an `AppSummary`'s already-summarized `channels`. Deduplicated: this counts build *variants* (e.g. "Stable"/"Git"), not raw packages — an app with a dozen native-distro packages (all the same default "Stable" channel) still has exactly one entry here. */
 export function summarizeChannels(packages: { channel?: string }[]): string[] {
   return unique(packages.map((pkg) => channelLabel(pkg.channel)));
 }
@@ -220,13 +220,13 @@ export function summarizeRatingsBySource(packages: SourcedPackage[]): SourceRati
  * The subset of `CatalogApp` a search result card needs — cheap to select
  * and stream in bulk, unlike the full row. `sources` is deduplicated by
  * source id (a merged app can carry two packages from the same source,
- * e.g. AUR's official + `-git` build); `packageCount`/`channels` describe
- * the same underlying `packages` list `sources` was derived from — not
+ * e.g. AUR's official + `-git` build); `channels` describes the distinct
+ * build variants across that same underlying `packages` list — not
  * derivable from `sources` alone, so carried separately for
- * `ChannelIndicator`'s package-count badge and channels tooltip.
- * `ratingsBySource` is the same "per-package breakdown" data
- * `UnifiedRating`'s tooltip needs — free to derive from `packages_json`,
- * already selected for `sources`/`channels` above.
+ * `BuildChannelIndicator`'s badge/tooltip. `ratingsBySource` is the same
+ * "per-package breakdown" data `UnifiedRating`'s tooltip needs — free to
+ * derive from `packages_json`, already selected for `sources`/`channels`
+ * above.
  */
 export interface AppSummary {
   id: string;
@@ -240,7 +240,6 @@ export interface AppSummary {
   rating?: { average: number; count: number };
   ratingsBySource: SourceRating[];
   sources: PackageSourceId[];
-  packageCount: number;
   channels: string[];
 }
 
