@@ -63,6 +63,25 @@ test("the build-channel badge counts distinct channels, not raw packages", async
   await expect(page.getByTitle("Stable, Git").locator(".badge")).toHaveText("2");
 });
 
+test("Claim this listing links to the claim explainer, personalized with the app's name, and back again", async ({
+  page,
+}) => {
+  await page.goto(FIREFOX);
+  await page.getByRole("link", { name: "Claim this listing" }).click();
+
+  await expect(page).toHaveURL("/claim/?app=firefox");
+  await expect(page.getByRole("heading", { name: "Claim Firefox" })).toBeVisible();
+  await expect(page.getByText("User accounts")).toBeVisible();
+
+  await page.getByRole("link", { name: "← Back to Firefox" }).click();
+  await expect(page).toHaveURL(FIREFOX);
+});
+
+test("the claim page falls back to a generic heading with no ?app given", async ({ page }) => {
+  await page.goto("/claim/");
+  await expect(page.getByRole("heading", { name: "Claim your listing" })).toBeVisible();
+});
+
 test("suite navigation: main app lists its components, and a component links back", async ({
   page,
 }) => {

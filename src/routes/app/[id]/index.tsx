@@ -2,7 +2,7 @@ import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { unique } from "@helpers4/array";
-import { LuExternalLink, LuFlag, LuPackage } from "@qwikest/icons/lucide";
+import { LuBadgeCheck, LuExternalLink, LuFlag, LuPackage } from "@qwikest/icons/lucide";
 import { getAppById, getStats } from "~/catalog";
 import {
   ALL_SOURCE_GROUPS,
@@ -653,6 +653,19 @@ export default component$(() => {
           )}
         </div>
       </section>
+
+      {/* Starter version of the claim flow — a button and a static
+          explainer page, not the mechanism itself (that needs user
+          accounts, an ownership-verification process, and a real per-field
+          edit capability, none of which exist yet — see /claim/). Only
+          here, in the page's own hero — not duplicated on the fixed
+          sticky-header variant that appears on scroll. */}
+      <div>
+        <a href={`/claim/?app=${encodeURIComponent(a.id)}`} class="btn btn-ghost btn-sm gap-1.5">
+          <LuBadgeCheck class="text-base" />
+          Claim this listing
+        </a>
+      </div>
 
       {/* Suite main app: link out to each separately-installable component. */}
       {a.suite?.role === "main" && a.suite.components && a.suite.components.length > 0 && (
