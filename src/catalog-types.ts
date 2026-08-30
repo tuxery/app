@@ -10,6 +10,7 @@
 // this is kept in sync by hand.
 
 import { unique } from "@helpers4/array";
+import { formatSize } from "@helpers4/number";
 import { capitalize } from "@helpers4/string";
 
 // One id per connector folder under catalog's packages/sources/src/ —
@@ -258,13 +259,5 @@ export interface BrowseResult {
 }
 
 export function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  const units = ["KB", "MB", "GB"];
-  let value = bytes / 1024;
-  let unitIndex = 0;
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024;
-    unitIndex++;
-  }
-  return `${value.toFixed(1)} ${units[unitIndex]}`;
+  return formatSize(bytes, { unitSeparator: " ", integerBelowFirstUnit: true });
 }
