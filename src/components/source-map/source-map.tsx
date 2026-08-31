@@ -40,11 +40,13 @@ export interface SourceMapProps {
  * present/absent two every other group has — muted daisyUI semantic
  * tones throughout (never a saturated/attention-grabbing color; this is
  * informative, not a callout, same restraint as `BuildChannelIndicator`),
- * automatically theme-correct in light/dark since none are hardcoded:
- *   - verified AND the selected OS recommends it: soft green
- *   - verified, but not recommended for the selected OS (or none picked): soft blue
- *   - present but not verified: today's dim primary
- *   - absent: gray, unchanged
+ * automatically theme-correct in light/dark since none are hardcoded.
+ * Color is reserved for an actual verified signal; "just present" gets no
+ * color at all, only a neutral gray a step up from "absent":
+ *   - verified AND the selected OS recommends it: soft blue
+ *   - verified, but not recommended for the selected OS (or none picked): dim primary
+ *   - present but not verified: neutral gray (a step above "absent")
+ *   - absent: base gray, unchanged
  * Reads the OS selection itself via `useSettings` (same "read the live
  * signal directly" pattern as `SourceTabBar`/`GroupShownControl`) rather
  * than threading it through every caller — this renders on every listing
@@ -70,8 +72,9 @@ export const SourceMap = component$<SourceMapProps>(
 
     const dotClass = (group: string): string => {
       if (!presentGroups.includes(group)) return "bg-base-300";
-      if (!isVerified(group)) return isVerifiable(group) ? "bg-primary/50" : "bg-primary";
-      return recommended?.has(group) ? "bg-success/70" : "bg-info/70";
+      if (!isVerifiable(group)) return "bg-primary";
+      if (!isVerified(group)) return "bg-base-content/25";
+      return recommended?.has(group) ? "bg-info/70" : "bg-primary/50";
     };
 
     const tip = presentGroups.length
