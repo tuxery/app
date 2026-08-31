@@ -68,6 +68,26 @@ test("the build-channel badge counts distinct channels, not raw packages", async
   await expect(page.getByTitle(tip).locator(".badge")).toHaveText("5");
 });
 
+test("a Flathub-verified app shows a Verified badge next to its developer, and on the Flatpak drawer row", async ({
+  page,
+}) => {
+  await page.goto(FIREFOX);
+  await expect(
+    page.locator('[data-tip*="developer-identity-verified"]').getByText("Verified"),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Install" }).click();
+  await page.locator("summary", { hasText: "Flatpak" }).click();
+  await expect(page.locator('[data-tip="Developer-identity-verified on Flathub"]')).toBeVisible();
+});
+
+test("the source dot-map's Flatpak dot names its verified status in the tooltip", async ({
+  page,
+}) => {
+  await page.goto(FIREFOX);
+  await expect(page.locator('[title*="Flatpak ✓ verified"]').first()).toBeVisible();
+});
+
 test("Claim this listing links to the claim explainer, personalized with the app's name, and back again", async ({
   page,
 }) => {

@@ -9,10 +9,12 @@ import {
   channelLabel,
   formatBytes,
   formatSourceLabel,
+  isVerifiedPackage,
   SOURCE_GROUP_MEMBERS,
   SOURCE_LABELS,
   summarizeChannels,
   summarizeRatingsBySource,
+  verifiedSourcesOf,
   type CatalogApp,
   type PackageSourceId,
   type SourcedPackage,
@@ -256,12 +258,27 @@ const SourceInstallUnit = component$<{
     document.addEventListener("visibilitychange", onVisibilityChange);
   });
 
+  const verified = isVerifiedPackage(pkg);
+
   return (
     <div class="flex flex-col gap-2">
-      {showLabel && (
-        <span class="text-sm font-medium">
-          {SHORT_SOURCE_LABELS[pkg.source] ?? SOURCE_LABELS[pkg.source]}
-        </span>
+      {(showLabel || verified) && (
+        <div class="flex items-center gap-2">
+          {showLabel && (
+            <span class="text-sm font-medium">
+              {SHORT_SOURCE_LABELS[pkg.source] ?? SOURCE_LABELS[pkg.source]}
+            </span>
+          )}
+          {verified && (
+            <span
+              class="tooltip badge badge-success badge-outline badge-xs gap-1"
+              data-tip="Developer-identity-verified on Flathub"
+            >
+              <LuBadgeCheck class="text-xs" />
+              Verified
+            </span>
+          )}
+        </div>
       )}
 
       {/* Classic underlined tabs, not the tabs-box pill group this had before
@@ -456,6 +473,7 @@ function summarizeSources(packages: SourcedPackage[]) {
   return {
     sources: unique(packages.map((pkg) => pkg.source)),
     channels: summarizeChannels(packages),
+    verifiedSources: verifiedSourcesOf(packages),
   };
 }
 
@@ -498,6 +516,11 @@ export default component$(() => {
     );
   }
 
+  // From the full package list, not the OS-filtered one below — a
+  // developer-verified listing doesn't stop being verified just because
+  // its source is hidden by the selected OS.
+  const hasVerifiedPackage = a.packages.some(isVerifiedPackage);
+
   const selectedOs = findOsEntry(settings.osId.value);
   const recommended = selectedOs ? recommendedGroupIds(selectedOs) : undefined;
   const visiblePackages = a.packages.filter((pkg) =>
@@ -534,7 +557,11 @@ export default component$(() => {
             <span class="font-medium truncate flex-1">{a.name}</span>
             {visiblePackages.length > 0 && (
               <div class="flex items-center gap-2 mr-3">
-                <SourceMap sources={sourceSummary.sources} tooltipPosition="bottom" />
+                <SourceMap
+                  sources={sourceSummary.sources}
+                  verifiedSources={sourceSummary.verifiedSources}
+                  tooltipPosition="bottom"
+                />
                 <BuildChannelIndicator channels={sourceSummary.channels} tooltipPosition="bottom" />
               </div>
             )}
@@ -578,7 +605,7 @@ export default component$(() => {
           <h1 class="text-3xl font-bold">{a.name}</h1>
           <p class="text-base-content/70 mt-1">{a.shortDescription}</p>
           {a.developer && (
-            <p class="text-sm text-base-content/60 mt-1">
+            <p class="text-sm text-base-content/60 mt-1 flex items-center gap-1.5">
               by{" "}
               {a.homepage ? (
                 <a href={a.homepage} class="link link-hover" target="_blank" rel="noopener">
@@ -586,6 +613,15 @@ export default component$(() => {
                 </a>
               ) : (
                 a.developer
+              )}
+              {hasVerifiedPackage && (
+                <span
+                  class="tooltip inline-flex items-center gap-1 text-success"
+                  data-tip="This listing's Flathub package is from a developer-identity-verified publisher"
+                >
+                  <LuBadgeCheck class="text-sm" />
+                  <span class="text-xs">Verified</span>
+                </span>
               )}
             </p>
           )}
@@ -622,7 +658,11 @@ export default component$(() => {
           {visiblePackages.length ? (
             <>
               <div class="flex items-center gap-2 mr-3">
-                <SourceMap sources={sourceSummary.sources} tooltipPosition="bottom" />
+                <SourceMap
+                  sources={sourceSummary.sources}
+                  verifiedSources={sourceSummary.verifiedSources}
+                  tooltipPosition="bottom"
+                />
                 <BuildChannelIndicator channels={sourceSummary.channels} tooltipPosition="bottom" />
               </div>
               <div class="aura aura-sm w-fit">
