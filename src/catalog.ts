@@ -389,6 +389,33 @@ export async function getTrendingApps(typeFilter: TypeFilter = "all"): Promise<A
 }
 
 /**
+ * Apps sorted by their most recent release date, newest first — powers the
+ * homepage's "New games" row. `last_updated` is each source's own newest
+ * `<release>` timestamp (see `tuxery/catalog`'s `CatalogApp.lastUpdated`
+ * doc comment), only populated by Flathub/AppCenter today — apps with no
+ * value are excluded entirely rather than sorted to the bottom, same
+ * "no signal isn't evidence of anything" discipline as `getTrendingApps`.
+ */
+export async function getNewApps(typeFilter: TypeFilter = "all"): Promise<AppSummary[]> {
+  const db = getClient();
+  if (!db) return [];
+
+  return safely([], async () => {
+    let where = "";
+    if (typeFilter === "game") {
+      where = "AND content_type = 'game'";
+    } else if (typeFilter === "app") {
+      where = "AND content_type IS NOT 'game'";
+    }
+    const result = await db.execute({
+      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE last_updated IS NOT NULL AND ${HAS_VISUAL_ASSET} ${where} ORDER BY last_updated DESC LIMIT ?`,
+      args: [TRENDING_PAGE_SIZE],
+    });
+    return result.rows.map((row) => toSummary(row as unknown as Row));
+  });
+}
+
+/**
  * Popularity-ranked apps with at least one package from `source` — powers
  * a source's own dedicated page (`/sources/[id]/`'s trending row). Same
  * `packages_json LIKE` match `browseApps`'s own `source` filter uses (the

@@ -19,6 +19,7 @@ import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-
 import {
   getStats,
   getTrendingApps,
+  getNewApps,
   getCategories,
   getAppsByCategory,
   getAppsByIds,
@@ -36,6 +37,11 @@ export const useStats = routeLoader$(async () => {
 // "Trending games" row already uses).
 export const useTrendingApps = routeLoader$(async () => getTrendingApps("app"));
 export const useTrendingGames = routeLoader$(async () => getTrendingApps("game"));
+
+// Games only for now — see the "Release/added-date signal" board card
+// ("New apps" is explicitly a later follow-up, once the signal's real
+// coverage across the whole catalog is better understood).
+export const useNewGames = routeLoader$(async () => getNewApps("game"));
 
 // "Browse by category" is split Apps/Games — each draws from its own
 // taxonomy now (see `tuxery/catalog`'s `CatalogApp.category` doc comment).
@@ -128,24 +134,29 @@ const CategoryRow = component$<{ title: string; category: string; apps: AppSumma
 
 const TRENDING_TIP =
   "Ranked by a popularity score averaged across sources that expose one (AUR usage ranking, Flathub's own Popular collection).";
+const NEW_GAMES_TIP =
+  "Sorted by each source's own newest-release date (Flathub/AppCenter's AppStream <releases> timestamp) — not every app has one, so this skews toward Flatpak-packaged games.";
 
 /**
- * One content-type-scoped trending row (Apps/Games) — used to be a single
- * mixed "Trending" row with its ranking-methodology explanation as a full
- * paragraph underneath; now an "i" tooltip next to the heading instead,
- * so two of these stacked don't repeat the same paragraph twice.
+ * One content-type-scoped horizontal app row (Trending apps/games, New
+ * games, ...) — used to be a single "TrendingRow" hardcoded to the
+ * trending methodology tooltip; generalized once "New games" needed the
+ * same shell with different copy (a release-date explanation, not a
+ * popularity one) rather than duplicating the whole scroller structure.
  */
-const TrendingRow = component$<{
+const AppScrollRow = component$<{
   title: string;
   typeFilter: "app" | "game";
   apps: AppSummary[];
-}>(({ title, typeFilter, apps }) => (
+  tip: string;
+  emptyMessage: string;
+}>(({ title, typeFilter, apps, tip, emptyMessage }) => (
   <section>
     <div class="flex items-baseline justify-between mb-3">
       <div class="flex items-center gap-1.5">
         <h2 class="text-lg font-semibold">{title}</h2>
-        <div class="tooltip tooltip-right" data-tip={TRENDING_TIP}>
-          <LuInfo class="text-sm text-base-content/40 cursor-help" aria-label={TRENDING_TIP} />
+        <div class="tooltip tooltip-right" data-tip={tip}>
+          <LuInfo class="text-sm text-base-content/40 cursor-help" aria-label={tip} />
         </div>
       </div>
       <a href={`/browse/?type=${typeFilter}`} class="link link-primary text-sm">
@@ -154,7 +165,7 @@ const TrendingRow = component$<{
     </div>
     {apps.length === 0 ? (
       <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
-        No trending data available yet.
+        {emptyMessage}
       </div>
     ) : (
       <HorizontalScroller ariaLabel={title}>
@@ -291,6 +302,7 @@ export default component$(() => {
   const stats = useStats();
   const trendingApps = useTrendingApps();
   const trendingGames = useTrendingGames();
+  const newGames = useNewGames();
   const appCategories = useAppCategories();
   const gameCategories = useGameCategories();
   const featuredCreator = useFeaturedCreator();
@@ -383,8 +395,20 @@ export default component$(() => {
             </div>
           </section>
 
-          <TrendingRow title="Trending apps" typeFilter="app" apps={trendingApps.value} />
-          <TrendingRow title="Trending games" typeFilter="game" apps={trendingGames.value} />
+          <AppScrollRow
+            title="Trending apps"
+            typeFilter="app"
+            apps={trendingApps.value}
+            tip={TRENDING_TIP}
+            emptyMessage="No trending data available yet."
+          />
+          <AppScrollRow
+            title="Trending games"
+            typeFilter="game"
+            apps={trendingGames.value}
+            tip={TRENDING_TIP}
+            emptyMessage="No trending data available yet."
+          />
 
           {/* Flathub's own per-app stats API (installs_total + a daily
               installs_per_day series) was verified live and would cover
@@ -423,10 +447,12 @@ export default component$(() => {
             note="Not its own category yet — chat/messaging apps are folded into the broader Internet & Communication bucket, with no way to isolate just messaging."
           />
 
-          {/* See the "Release/added-date signal for apps" board card. */}
-          <ComingSoonSection
+          <AppScrollRow
             title="New games"
-            note="No reliable release/added date to sort by yet — showing the same list as Trending games would just be misleading, not actually 'new'."
+            typeFilter="game"
+            apps={newGames.value}
+            tip={NEW_GAMES_TIP}
+            emptyMessage="No release-date data available yet."
           />
 
           <CategoryRow title="Music apps" category="Music & Audio" apps={musicApps.value} />
