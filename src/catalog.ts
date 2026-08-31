@@ -416,6 +416,36 @@ export async function getNewApps(typeFilter: TypeFilter = "all"): Promise<AppSum
 }
 
 /**
+ * Apps ranked by installs over the last 7 days, not lifetime total — a
+ * lifetime figure would always favor old, long-established apps over ones
+ * genuinely popular *right now*. Powers the homepage's "Download trends"
+ * row. `installs_last_7_days` is Flathub's own per-app stats API only
+ * today (see `tuxery/catalog`'s `CatalogApp.installsLast7Days` doc
+ * comment) — same "excluded entirely, not sorted to the bottom" gating as
+ * `getTrendingApps`.
+ */
+export async function getDownloadTrendingApps(
+  typeFilter: TypeFilter = "all",
+): Promise<AppSummary[]> {
+  const db = getClient();
+  if (!db) return [];
+
+  return safely([], async () => {
+    let where = "";
+    if (typeFilter === "game") {
+      where = "AND content_type = 'game'";
+    } else if (typeFilter === "app") {
+      where = "AND content_type IS NOT 'game'";
+    }
+    const result = await db.execute({
+      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE installs_last_7_days IS NOT NULL AND ${HAS_VISUAL_ASSET} ${where} ORDER BY installs_last_7_days DESC LIMIT ?`,
+      args: [TRENDING_PAGE_SIZE],
+    });
+    return result.rows.map((row) => toSummary(row as unknown as Row));
+  });
+}
+
+/**
  * Popularity-ranked apps with at least one package from `source` — powers
  * a source's own dedicated page (`/sources/[id]/`'s trending row). Same
  * `packages_json LIKE` match `browseApps`'s own `source` filter uses (the
