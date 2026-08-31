@@ -6,6 +6,7 @@ import {
   EMPTY_STATS,
   summarizeChannels,
   summarizeRatingsBySource,
+  verifiedSourcesOf,
   type AppSummary,
   type BrowseResult,
   type CatalogApp,
@@ -71,6 +72,7 @@ function toSummary(row: Row): AppSummary {
     // what channels is for instead.
     sources: unique(packages.map((pkg) => pkg.source)),
     channels: summarizeChannels(packages),
+    verifiedSources: verifiedSourcesOf(packages),
   };
 }
 

@@ -127,6 +127,8 @@ export interface SourcedPackage {
   homepage?: string;
   /** A crowd rating from this specific source, when it has one — see `tuxery/catalog`'s `SourcedPackage.rating` doc comment for which sources populate this. */
   rating?: { average: number; count: number };
+  /** Upstream store collections this specific package appears in — see `tuxery/catalog`'s `SourcedPackage.storeCollections` doc comment. Today only Flathub populates `"verified"` (developer-identity-verified) here; no other source has an equivalent signal. */
+  storeCollections?: string[];
 }
 
 export interface CatalogApp {
@@ -188,6 +190,18 @@ export function channelLabel(channel: string | undefined): string {
   return capitalize(channel, { lowercaseRest: false });
 }
 
+/** Whether this specific package is from a developer-identity-verified listing — today only ever true for a `flatpak-flathub` package carrying Flathub's own "verified" collection tag. */
+export function isVerifiedPackage(pkg: { storeCollections?: string[] }): boolean {
+  return pkg.storeCollections?.includes("verified") ?? false;
+}
+
+/** Every distinct source with at least one verified package — see `isVerifiedPackage`. Used both server-side (`AppSummary.verifiedSources`) and client-side (the detail page, from its own full `packages`). */
+export function verifiedSourcesOf(
+  packages: { source: PackageSourceId; storeCollections?: string[] }[],
+): PackageSourceId[] {
+  return unique(packages.filter(isVerifiedPackage).map((pkg) => pkg.source));
+}
+
 /** Every distinct build-channel word present across a set of packages — the "channels: ..." line in `BuildChannelIndicator`'s tooltip, on both a `CatalogApp`'s full `packages` and an `AppSummary`'s already-summarized `channels`. Deduplicated: this counts build *variants* (e.g. "Stable"/"Git"), not raw packages — an app with a dozen native-distro packages (all the same default "Stable" channel) still has exactly one entry here. */
 export function summarizeChannels(packages: { channel?: string }[]): string[] {
   return unique(packages.map((pkg) => channelLabel(pkg.channel)));
@@ -243,6 +257,8 @@ export interface AppSummary {
   ratingsBySource: SourceRating[];
   sources: PackageSourceId[];
   channels: string[];
+  /** Which of `sources` has at least one verified package — see `verifiedSourcesOf`. Almost always `[]` or `["flatpak-flathub"]` today, no other source has an equivalent signal. */
+  verifiedSources: PackageSourceId[];
 }
 
 export interface CatalogStats {

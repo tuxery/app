@@ -10,6 +10,7 @@ export interface AppCardProps {
   name: string;
   description: string;
   sources: PackageSourceId[];
+  verifiedSources?: PackageSourceId[];
   channels: string[];
   contentType?: "game";
   category?: string;
@@ -34,7 +35,17 @@ export interface AppCardProps {
  * some cards and not others depending on content.
  */
 export const AppCard = component$<AppCardProps>(
-  ({ iconUrl, name, description, sources, channels, category, rating, ratingsBySource }) => {
+  ({
+    iconUrl,
+    name,
+    description,
+    sources,
+    verifiedSources,
+    channels,
+    category,
+    rating,
+    ratingsBySource,
+  }) => {
     return (
       <article class="glass-card card h-full transition-shadow hover:shadow-lg">
         <div class="card-body gap-2 p-5">
@@ -63,7 +74,7 @@ export const AppCard = component$<AppCardProps>(
           </div>
           <p class="text-sm text-base-content/70 line-clamp-2">{description}</p>
           <div class="flex flex-wrap items-center gap-4 mt-auto pt-1">
-            <SourceMap sources={sources} />
+            <SourceMap sources={sources} verifiedSources={verifiedSources} />
             <BuildChannelIndicator channels={channels} />
             {rating && (
               <UnifiedRating
@@ -96,6 +107,7 @@ export const AppCardLink = component$<{ app: AppSummary; linkClass?: string }>(
         name={app.name}
         description={app.shortDescription}
         sources={app.sources}
+        verifiedSources={app.verifiedSources}
         channels={app.channels}
         contentType={app.contentType}
         category={app.category}
