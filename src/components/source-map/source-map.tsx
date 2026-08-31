@@ -1,13 +1,15 @@
 import { component$ } from "@builder.io/qwik";
 import { ALL_SOURCE_GROUPS, SOURCE_GROUP_MEMBERS, type PackageSourceId } from "~/catalog-types";
 import { tooltipClass, type TooltipPosition } from "~/components/tooltip-position";
+import { findOsEntry, recommendedGroupIds } from "~/os-catalog";
+import { useSettings } from "~/settings";
 
 // Sources with a real developer-identity-verification signal today — only
 // Flathub. Deliberately not "every source without a verified package is
 // unverified": a distro's own repo (Debian, Fedora, ...) has no such
 // concept to check at all, so its dot stays the single plain "present"
 // color it always has — only a group that actually *has* a verifiable
-// member (Flatpak, via Flathub) gets the two-tone treatment below.
+// member (Flatpak, via Flathub) gets the multi-tone treatment below.
 const VERIFIABLE_SOURCES = new Set<PackageSourceId>(["flatpak-flathub"]);
 
 export interface SourceMapProps {
@@ -34,13 +36,27 @@ export interface SourceMapProps {
  * pieces (each carrying its own tooltip directly, no separate icon
  * needed) fit a card's bottom row on one line instead.
  *
- * A verifiable group's dot dims to half-opacity when present but not
- * verified — subtle by design, this renders on every listing card
- * sitewide, not just the detail page (which shows its own explicit
- * "Verified developer" badge instead — see that page's hero).
+ * A verifiable group's dot carries four tiers instead of the plain
+ * present/absent two every other group has — muted daisyUI semantic
+ * tones throughout (never a saturated/attention-grabbing color; this is
+ * informative, not a callout, same restraint as `BuildChannelIndicator`),
+ * automatically theme-correct in light/dark since none are hardcoded:
+ *   - verified AND the selected OS recommends it: soft green
+ *   - verified, but not recommended for the selected OS (or none picked): soft blue
+ *   - present but not verified: today's dim primary
+ *   - absent: gray, unchanged
+ * Reads the OS selection itself via `useSettings` (same "read the live
+ * signal directly" pattern as `SourceTabBar`/`GroupShownControl`) rather
+ * than threading it through every caller — this renders on every listing
+ * card sitewide, not just the detail page (which also shows its own
+ * explicit "Verified developer" badge — see that page's hero).
  */
 export const SourceMap = component$<SourceMapProps>(
   ({ sources, verifiedSources = [], tooltipPosition = "top" }) => {
+    const settings = useSettings();
+    const osEntry = findOsEntry(settings.osId.value);
+    const recommended = osEntry ? recommendedGroupIds(osEntry) : undefined;
+
     const sourceSet = new Set(sources);
     const verifiedSet = new Set(verifiedSources);
     const presentGroups = ALL_SOURCE_GROUPS.filter((group) =>
@@ -52,8 +68,21 @@ export const SourceMap = component$<SourceMapProps>(
     const isVerified = (group: string) =>
       SOURCE_GROUP_MEMBERS[group]?.some((source) => verifiedSet.has(source)) ?? false;
 
+    const dotClass = (group: string): string => {
+      if (!presentGroups.includes(group)) return "bg-base-300";
+      if (!isVerified(group)) return isVerifiable(group) ? "bg-primary/50" : "bg-primary";
+      return recommended?.has(group) ? "bg-success/70" : "bg-info/70";
+    };
+
     const tip = presentGroups.length
-      ? presentGroups.map((group) => (isVerified(group) ? `${group} ✓ verified` : group)).join(", ")
+      ? presentGroups
+          .map((group) => {
+            if (!isVerified(group)) return group;
+            return recommended?.has(group)
+              ? `${group} ✓ verified, recommended for your OS`
+              : `${group} ✓ verified`;
+          })
+          .join(", ")
       : "No sources";
 
     return (
@@ -62,18 +91,9 @@ export const SourceMap = component$<SourceMapProps>(
         title={tip}
         data-tip={tip}
       >
-        {ALL_SOURCE_GROUPS.map((group) => {
-          const present = presentGroups.includes(group);
-          const dimVerifiable = present && isVerifiable(group) && !isVerified(group);
-          return (
-            <span
-              key={group}
-              class={`w-1.5 h-1.5 rounded-[1px] ${
-                !present ? "bg-base-300" : dimVerifiable ? "bg-primary/50" : "bg-primary"
-              }`}
-            />
-          );
-        })}
+        {ALL_SOURCE_GROUPS.map((group) => (
+          <span key={group} class={`w-1.5 h-1.5 rounded-[1px] ${dotClass(group)}`} />
+        ))}
       </div>
     );
   },

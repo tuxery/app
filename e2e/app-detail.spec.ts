@@ -88,6 +88,30 @@ test("the source dot-map's Flatpak dot names its verified status in the tooltip"
   await expect(page.locator('[title*="Flatpak ✓ verified"]').first()).toBeVisible();
 });
 
+test("the dot-map's verified dot turns green once the selected OS actually recommends that group, blue before that", async ({
+  page,
+}) => {
+  await page.goto(FIREFOX);
+  const dotMap = page.locator("div.grid.grid-rows-2").first();
+  await expect(dotMap).toHaveAttribute("title", /Flatpak ✓ verified(?!,\s*recommended)/);
+  await expect(dotMap.locator("span").first()).toHaveClass(/bg-info\/70/);
+
+  // Flatpak is always cross-distro-recommended, so any OS pick flips it green.
+  await page.goto("/settings/?tab=os");
+  await page.getByRole("button", { name: "Fedora", exact: true }).click();
+  await expect
+    .poll(() => page.evaluate(() => localStorage.getItem("tuxery:settings")), { timeout: 15_000 })
+    .toContain('"osId":"fedora"');
+
+  await page.goto(FIREFOX);
+  const dotMapWithOs = page.locator("div.grid.grid-rows-2").first();
+  await expect(dotMapWithOs).toHaveAttribute(
+    "title",
+    /Flatpak ✓ verified, recommended for your OS/,
+  );
+  await expect(dotMapWithOs.locator("span").first()).toHaveClass(/bg-success\/70/);
+});
+
 test("Claim this listing links to the claim explainer, personalized with the app's name, and back again", async ({
   page,
 }) => {
