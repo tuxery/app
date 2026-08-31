@@ -222,6 +222,24 @@ export default component$(() => {
         guarantee.
       </p>
 
+      {category === "To Classify" && (
+        <div class="border border-dashed border-base-300 rounded-box p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+          <p class="text-sm text-base-content/70">
+            "To Classify" isn't a real category — it's everything with no category signal yet. Only
+            Flathub and elementary AppCenter's own metadata carries one today, so most of the
+            catalog lands here rather than a guess. Know what one of these actually is?
+          </p>
+          <a
+            href="https://github.com/tuxery/catalog/issues/new?template=report-problem.yml"
+            target="_blank"
+            rel="noopener"
+            class="btn btn-sm btn-outline shrink-0"
+          >
+            Suggest a category
+          </a>
+        </div>
+      )}
+
       {browse.value.apps.length === 0 ? (
         <p class="text-center text-base-content/60 mt-4">
           No apps found{query ? ` for "${query}"` : ""}.
