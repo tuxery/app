@@ -36,7 +36,7 @@
     "@libsql/client": "^0.17.4",
     "@qwik-ui/headless": "^0.7.7",
     "@qwikest/icons": "^0.0.13",
-    "daisyui": "^5.7.20"
+    "daisyui": "^5.7.22"
   },
   "devDependencies": {
     "@builder.io/qwik": "^1.20.0",
