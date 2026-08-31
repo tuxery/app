@@ -21,3 +21,18 @@ test("a category card on /categories leads to filtered, non-empty /browse result
   await expect(page.locator(".badge", { hasText: categoryName })).toBeVisible();
   await expect(page.locator("a[href^='/app/']").first()).toBeVisible();
 });
+
+test("the To Classify category shows a 'suggest a category' banner, not shown on a real category", async ({
+  page,
+}) => {
+  await page.goto("/browse/?category=To+Classify");
+  const banner = page.getByText("isn't a real category");
+  await expect(banner).toBeVisible();
+  await expect(page.getByRole("link", { name: "Suggest a category" })).toHaveAttribute(
+    "href",
+    "https://github.com/tuxery/catalog/issues/new?template=report-problem.yml",
+  );
+
+  await page.goto("/browse/?category=Productivity");
+  await expect(banner).toHaveCount(0);
+});
