@@ -88,15 +88,15 @@ test("the source dot-map's Flatpak dot names its verified status in the tooltip"
   await expect(page.locator('[title*="Flatpak ✓ verified"]').first()).toBeVisible();
 });
 
-test("the dot-map's verified dot turns green once the selected OS actually recommends that group, blue before that", async ({
+test("the dot-map's verified dot turns bg-info/70 once the selected OS actually recommends that group, dim bg-primary/50 before that", async ({
   page,
 }) => {
   await page.goto(FIREFOX);
   const dotMap = page.locator("div.grid.grid-rows-2").first();
   await expect(dotMap).toHaveAttribute("title", /Flatpak ✓ verified(?!,\s*recommended)/);
-  await expect(dotMap.locator("span").first()).toHaveClass(/bg-info\/70/);
+  await expect(dotMap.locator("span").first()).toHaveClass(/bg-primary\/50/);
 
-  // Flatpak is always cross-distro-recommended, so any OS pick flips it green.
+  // Flatpak is always cross-distro-recommended, so any OS pick flips it.
   await page.goto("/settings/?tab=os");
   await page.getByRole("button", { name: "Fedora", exact: true }).click();
   await expect
@@ -109,7 +109,17 @@ test("the dot-map's verified dot turns green once the selected OS actually recom
     "title",
     /Flatpak ✓ verified, recommended for your OS/,
   );
-  await expect(dotMapWithOs.locator("span").first()).toHaveClass(/bg-success\/70/);
+  await expect(dotMapWithOs.locator("span").first()).toHaveClass(/bg-info\/70/);
+});
+
+test("a present-but-unverified group's dot is a plain neutral gray, distinct from both a verified dot and an absent one", async ({
+  page,
+}) => {
+  // LM Studio: on Flathub but not in its "verified" collection.
+  await page.goto("/app/ai.lmstudio.lm-studio/");
+  const dotMap = page.locator("div.grid.grid-rows-2").first();
+  await expect(dotMap).toHaveAttribute("title", "Flatpak, Arch Linux");
+  await expect(dotMap.locator("span").first()).toHaveClass(/bg-base-content\/25/);
 });
 
 test("Claim this listing links to the claim explainer, personalized with the app's name, and back again", async ({
