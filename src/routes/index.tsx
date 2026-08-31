@@ -20,6 +20,7 @@ import {
   getStats,
   getTrendingApps,
   getNewApps,
+  getDownloadTrendingApps,
   getCategories,
   getAppsByCategory,
   getAppsByIds,
@@ -42,6 +43,11 @@ export const useTrendingGames = routeLoader$(async () => getTrendingApps("game")
 // ("New apps" is explicitly a later follow-up, once the signal's real
 // coverage across the whole catalog is better understood).
 export const useNewGames = routeLoader$(async () => getNewApps("game"));
+
+// Both apps and games, unlike the type-scoped rows above — download
+// counts are a single signal that doesn't naturally split by content
+// type the way trending/new do.
+export const useDownloadTrends = routeLoader$(async () => getDownloadTrendingApps("all"));
 
 // "Browse by category" is split Apps/Games — each draws from its own
 // taxonomy now (see `tuxery/catalog`'s `CatalogApp.category` doc comment).
@@ -136,17 +142,23 @@ const TRENDING_TIP =
   "Ranked by a popularity score averaged across sources that expose one (AUR usage ranking, Flathub's own Popular collection).";
 const NEW_GAMES_TIP =
   "Sorted by each source's own newest-release date (Flathub/AppCenter's AppStream <releases> timestamp) — not every app has one, so this skews toward Flatpak-packaged games.";
+const DOWNLOAD_TRENDS_TIP =
+  "Ranked by installs over the last 7 days (Flathub's own per-app stats API) — not lifetime total, so this reflects what's popular right now rather than old, long-established apps. Flathub only today, so this skews toward Flatpak-packaged apps.";
 
 /**
- * One content-type-scoped horizontal app row (Trending apps/games, New
- * games, ...) — used to be a single "TrendingRow" hardcoded to the
- * trending methodology tooltip; generalized once "New games" needed the
- * same shell with different copy (a release-date explanation, not a
+ * One horizontal app row (Trending apps/games, New games, Download
+ * trends, ...), optionally scoped to one content type — used to be a
+ * single "TrendingRow" hardcoded to the trending methodology tooltip;
+ * generalized once "New games"/"Download trends" needed the same shell
+ * with different copy (a release-date/install-count explanation, not a
  * popularity one) rather than duplicating the whole scroller structure.
+ * `typeFilter: "all"` (Download trends — both apps and games trend on
+ * downloads) still links to a real, working `/browse/?type=all`, the
+ * same as picking "All" in Browse's own type dropdown.
  */
 const AppScrollRow = component$<{
   title: string;
-  typeFilter: "app" | "game";
+  typeFilter: "all" | "app" | "game";
   apps: AppSummary[];
   tip: string;
   emptyMessage: string;
@@ -303,6 +315,7 @@ export default component$(() => {
   const trendingApps = useTrendingApps();
   const trendingGames = useTrendingGames();
   const newGames = useNewGames();
+  const downloadTrends = useDownloadTrends();
   const appCategories = useAppCategories();
   const gameCategories = useGameCategories();
   const featuredCreator = useFeaturedCreator();
@@ -410,14 +423,12 @@ export default component$(() => {
             emptyMessage="No trending data available yet."
           />
 
-          {/* Flathub's own per-app stats API (installs_total + a daily
-              installs_per_day series) was verified live and would cover
-              this — see the "Flathub download-stats connector" board card.
-              Not wired up yet: needs a new fetch step in the catalog
-              pipeline, not just an app-side change. */}
-          <ComingSoonSection
+          <AppScrollRow
             title="Download trends"
-            note="Download/install counts over the past week — Flathub exposes a real per-app stats API for this (verified), just not fetched into the catalog yet."
+            typeFilter="all"
+            apps={downloadTrends.value}
+            tip={DOWNLOAD_TRENDS_TIP}
+            emptyMessage="No download-stats data available yet."
           />
 
           <section>
