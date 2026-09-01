@@ -56,8 +56,9 @@ secret):
   `www.tuxery.store` (identical), deployed with `wrangler deploy --env
 production` on every push to `main`.
 - **`tuxery-web-preview`** (`env.preview`) — no custom domain (its own
-  `*.workers.dev` preview URL only), deployed with `wrangler versions upload
---env preview` on every pull request targeting `main`.
+  `*.workers.dev` preview URL only, so a real `deploy` here never touches
+  production), deployed with `wrangler deploy --env preview` on every pull
+  request targeting `main`.
 
 Both read `TURSO_DB_URL`/`TURSO_DB_AUTH_TOKEN`/`UNSPLASH_ACCESS_KEY` as Worker
 secrets, set per environment (`wrangler secret put <NAME> --env production`
