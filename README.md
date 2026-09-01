@@ -45,14 +45,28 @@ pnpm build
 
 ## Deployment
 
-Cloudflare Workers, on `tuxery.store` and `www.tuxery.store` (identical).
-`wrangler.jsonc` defines the Worker (assets binding, custom domains); build
-locally with `pnpm build.server`, deploy with `pnpm deploy`, or preview with
-`pnpm serve`. `TURSO_DB_URL`, `TURSO_DB_AUTH_TOKEN`, `UNSPLASH_ACCESS_KEY` are
-Worker secrets, never committed — `process.env` picks them up automatically
-via `nodejs_compat`. In production, Cloudflare's own Git integration (Workers
-Builds) builds and deploys straight from `main` on every merge; secrets are
-configured there, in the Cloudflare dashboard.
+Two Workers, both named environments in the same `wrangler.jsonc`, deployed by
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) (not
+Cloudflare's own Git integration — its dashboard doesn't expose a
+per-branch deploy command on this account, so GitHub Actions owns it
+instead, via `cloudflare/wrangler-action` and a `CLOUDFLARE_API_TOKEN` repo
+secret):
+
+- **`tuxery-web`** (`env.production`) — on `tuxery.store` and
+  `www.tuxery.store` (identical), deployed with `wrangler deploy --env
+production` on every push to `main`.
+- **`tuxery-web-preview`** (`env.preview`) — no custom domain (its own
+  `*.workers.dev` preview URL only), deployed with `wrangler versions upload
+--env preview` on every pull request targeting `main`.
+
+Both read `TURSO_DB_URL`/`TURSO_DB_AUTH_TOKEN`/`UNSPLASH_ACCESS_KEY` as Worker
+secrets, set per environment (`wrangler secret put <NAME> --env production`
+or `--env preview`) — never committed, never plain `vars` (those get wiped
+by Wrangler on every deploy unless declared in this file, so secrets are the
+only thing that reliably survives dashboard-side). `process.env` picks them
+up automatically via `nodejs_compat`. `tuxery-web-preview`'s secrets point
+at `tuxery-dev` instead of prod. Build locally with `pnpm build.server`,
+deploy with `pnpm deploy`, or preview with `pnpm serve`.
 
 ## Status
 

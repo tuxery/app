@@ -15,7 +15,6 @@
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1,
-    "redact_query_string": false,
     "logs": {
       "enabled": true,
       "head_sampling_rate": 1,
@@ -31,6 +30,11 @@
   /**
    * Custom domains — tuxery.store and www.tuxery.store both serve this
    * same Worker (identical site, no canonical redirect between them).
+   * Copied into env.production below rather than left to inherit — Wrangler
+   * warns that relying on inheritance here looks like it "reassigns" the
+   * domains (even though env.production is the same Worker, so it's a
+   * no-op); cleared for env.preview, which only needs its own
+   * *.workers.dev preview URL.
    * https://developers.cloudflare.com/workers/configuration/routing/custom-domains/
    */
   "routes": [
@@ -38,9 +42,41 @@
     { "pattern": "www.tuxery.store", "custom_domain": true },
   ],
   /**
+   * Explicit named environments, both deployed by GitHub Actions
+   * (.github/workflows/deploy.yml) — `wrangler deploy --env production` on
+   * `main`, `wrangler versions upload --env preview` on other branches.
+   * `assets` is non-inheritable in Wrangler and must be redeclared in each;
+   * env.production's `name` matches the top-level one on purpose (same
+   * Worker, same existing custom domains/secrets) — it's only here so every
+   * deploy command in CI can pass an explicit `--env` and never rely on the
+   * ambiguous top-level default.
+   */
+  "env": {
+    "production": {
+      "name": "tuxery-web",
+      "assets": {
+        "binding": "ASSET",
+        "directory": "./dist",
+      },
+      "routes": [
+        { "pattern": "tuxery.store", "custom_domain": true },
+        { "pattern": "www.tuxery.store", "custom_domain": true },
+      ],
+    },
+    "preview": {
+      "name": "tuxery-web-preview",
+      "assets": {
+        "binding": "ASSET",
+        "directory": "./dist",
+      },
+      "routes": [],
+    },
+  },
+  /**
    * Environment Variables
    * TURSO_DB_URL, TURSO_DB_AUTH_TOKEN, UNSPLASH_ACCESS_KEY: set as secrets
-   * (`wrangler secret put <NAME>`), never committed here — see README.
+   * per environment (`wrangler secret put <NAME> --env production` /
+   * `--env preview`), never committed here — see README.
    * https://developers.cloudflare.com/workers/configuration/secrets/
    */
 }
