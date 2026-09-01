@@ -1,0 +1,33 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tuxery-web",
+  "main": "./dist/_worker.js",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "binding": "ASSET",
+    "directory": "./dist",
+  },
+  "observability": {
+    "enabled": true,
+  },
+  /**
+   * Custom domains — tuxery.store and www.tuxery.store both serve this
+   * same Worker (identical site, no canonical redirect between them).
+   * https://developers.cloudflare.com/workers/configuration/routing/custom-domains/
+   */
+  "routes": [
+    { "pattern": "tuxery.store", "custom_domain": true },
+    { "pattern": "www.tuxery.store", "custom_domain": true },
+  ],
+  /**
+   * Environment Variables
+   * TURSO_DB_URL, TURSO_DB_AUTH_TOKEN, UNSPLASH_ACCESS_KEY: set as secrets
+   * (`wrangler secret put <NAME>`), never committed here — see README.
+   * https://developers.cloudflare.com/workers/configuration/secrets/
+   */
+}

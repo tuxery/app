@@ -2,6 +2,7 @@ allowBuilds:
   "@parcel/watcher": false
   esbuild: true
   sharp: false
+  workerd: true
 
 minimumReleaseAgeExclude:
   - "@helpers4/array@3.0.9"
