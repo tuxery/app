@@ -47,12 +47,12 @@ pnpm build
 
 Cloudflare Workers, on `tuxery.store` and `www.tuxery.store` (identical).
 `wrangler.jsonc` defines the Worker (assets binding, custom domains); build
-with `pnpm build.server`, deploy with `pnpm deploy`, or preview locally with
+locally with `pnpm build.server`, deploy with `pnpm deploy`, or preview with
 `pnpm serve`. `TURSO_DB_URL`, `TURSO_DB_AUTH_TOKEN`, `UNSPLASH_ACCESS_KEY` are
-set as Worker secrets (`wrangler secret put <NAME>`), never committed —
-`process.env` picks them up automatically via `nodejs_compat`. CI/CD in
-[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) redeploys on
-every push to `main`.
+Worker secrets, never committed — `process.env` picks them up automatically
+via `nodejs_compat`. In production, Cloudflare's own Git integration (Workers
+Builds) builds and deploys straight from `main` on every merge; secrets are
+configured there, in the Cloudflare dashboard.
 
 ## Status
 
