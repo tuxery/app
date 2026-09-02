@@ -46,6 +46,25 @@ jobs:
           packageManager: pnpm
           command: deploy --env production
 
+      # `versions upload` (not `deploy`) gives each branch its own stable,
+      # non-clobbering Preview URL — https://developers.cloudflare.com/
+      # workers/versions-and-deployments/preview-urls/#aliased-preview-urls
+      # — rather than every branch overwriting the same 100%-traffic
+      # deployment of tuxery-web-preview. `deploy` was used here originally
+      # only because `versions upload` needs the Worker to already exist
+      # (see 68af08c) — it does now. `github.head_ref` is the actual branch
+      # name on a `pull_request` event (`github.ref` there is the synthetic
+      # `refs/pull/<n>/merge`); `github.ref_name` covers `workflow_dispatch`
+      # on a branch directly.
+      - name: Compute preview alias from branch name
+        if: github.ref != 'refs/heads/main'
+        id: alias
+        run: |
+          branch="${{ github.head_ref || github.ref_name }}"
+          alias=$(echo "$branch" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9-]+/-/g; s/^-+//; s/-+$//')
+          if [[ ! "$alias" =~ ^[a-z] ]]; then alias="b-$alias"; fi
+          echo "alias=$alias" >> "$GITHUB_OUTPUT"
+
       - name: Deploy preview
         if: github.ref != 'refs/heads/main'
         uses: cloudflare/wrangler-action@v4
@@ -53,4 +72,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           packageManager: pnpm
-          command: deploy --env preview
+          command: versions upload --env preview --preview-alias ${{ steps.alias.outputs.alias }}

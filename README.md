@@ -55,10 +55,14 @@ secret):
 - **`tuxery-web`** (`env.production`) — on `tuxery.store` and
   `www.tuxery.store` (identical), deployed with `wrangler deploy --env
 production` on every push to `main`.
-- **`tuxery-web-preview`** (`env.preview`) — no custom domain (its own
-  `*.workers.dev` preview URL only, so a real `deploy` here never touches
-  production), deployed with `wrangler deploy --env preview` on every pull
-  request targeting `main`.
+- **`tuxery-web-preview`** (`env.preview`) — no custom domain, but each
+  branch gets its own stable, non-clobbering [Aliased Preview
+  URL](https://developers.cloudflare.com/workers/versions-and-deployments/preview-urls/#aliased-preview-urls)
+  (`<branch>-tuxery-web-preview.<subdomain>.workers.dev`) via `wrangler
+  versions upload --env preview --preview-alias <branch>` on every pull
+  request targeting `main` — `versions upload`, not `deploy`, is the point:
+  it never touches the environment's 100%-traffic version, so two PRs open
+  at once no longer overwrite each other's preview.
 
 Both read `TURSO_DB_URL`/`TURSO_DB_AUTH_TOKEN`/`UNSPLASH_ACCESS_KEY` as Worker
 secrets, set per environment (`wrangler secret put <NAME> --env production`
