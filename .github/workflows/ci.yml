@@ -13,14 +13,21 @@ jobs:
       working-directory: .
 
   # Not folded into ci-web.yml (the shared reusable workflow every
-  # tuxery/* repo's CI calls) — this needs real Turso/Unsplash dev
-  # credentials as repo secrets and a `wrangler dev` run, both specific to
-  # this repo. See playwright.worker.config.ts's header for what this
-  # actually catches that the ci-web.yml `test` job (`pnpm run test`,
-  # vitest) and e2e/ (runs against `pnpm dev`, not the real Worker bundle)
-  # both miss. Requires repo secrets TURSO_DEV_DB_URL/
-  # TURSO_DEV_DB_AUTH_TOKEN/UNSPLASH_ACCESS_KEY (see README.md) — not yet
-  # set as of this job's introduction, so it will fail until they are.
+  # tuxery/* repo's CI calls) — this needs real Turso dev credentials as
+  # repo secrets and a `wrangler dev` run, both specific to this repo. See
+  # playwright.worker.config.ts's header for what this actually catches
+  # that the ci-web.yml `test` job (`pnpm run test`, vitest) and e2e/ (runs
+  # against `pnpm dev`, not the real Worker bundle) both miss. Requires
+  # repo secrets TURSO_DEV_DB_URL/TURSO_DEV_DB_AUTH_TOKEN (see README.md).
+  #
+  # Deliberately no UNSPLASH_ACCESS_KEY here, unlike local `pnpm serve`'s
+  # .dev.vars: the test only cares about catalog data, and every run spins
+  # up a fresh `wrangler dev` — getHeroBackgroundPhoto()'s in-process cache
+  # (unsplash.ts) never survives between runs, so a real key here would
+  # mean burning one real Unsplash API call per CI run against the same
+  # 50-req/hour demo-tier quota production shares with real visitors.
+  # unsplash.ts already degrades to no background with no key set — that's
+  # exactly what we want for this job.
   e2e-worker:
     name: E2E (Cloudflare Worker bundle)
     runs-on: ubuntu-latest
@@ -40,7 +47,6 @@ jobs:
           cat > .dev.vars <<VARS
           TURSO_DB_URL=${{ secrets.TURSO_DEV_DB_URL }}
           TURSO_DB_AUTH_TOKEN=${{ secrets.TURSO_DEV_DB_AUTH_TOKEN }}
-          UNSPLASH_ACCESS_KEY=${{ secrets.UNSPLASH_ACCESS_KEY }}
           VARS
 
       - name: Run worker e2e
