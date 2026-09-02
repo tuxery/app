@@ -1,9 +1,18 @@
 {
   "$schema": "https://json.schemastore.org/web-manifest-combined.json",
-  "name": "qwik-project-name",
-  "short_name": "Welcome to Qwik",
+  "name": "Tuxery",
+  "short_name": "Tuxery",
+  "description": "Search-first Linux app and game discovery — never installs anything itself, every button leads straight to the real source.",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#fff",
-  "description": "A Qwik project app."
+  "theme_color": "#18B6F6",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    }
+  ]
 }

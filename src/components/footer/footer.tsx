@@ -1,4 +1,5 @@
 import { component$ } from "@builder.io/qwik";
+import { TuxeryLogo } from "~/components/tuxery-logo/tuxery-logo";
 import { useHeroBackground } from "~/routes/layout";
 
 export const Footer = component$(() => {
@@ -9,8 +10,9 @@ export const Footer = component$(() => {
       <div class="max-w-6xl mx-auto px-4 md:px-6 py-10">
         <div class="footer sm:footer-horizontal">
           <aside>
-            <p class="text-lg font-bold">
-              🐧 Tux<span class="text-primary">ery</span>
+            <p class="text-lg font-bold flex items-center gap-2">
+              <TuxeryLogo size={22} cutoutColor="var(--color-base-100)" />
+              Tux<span class="text-tuxery-gradient">ery</span>
             </p>
             <p class="text-sm text-base-content/60">
               Never installs anything itself.
