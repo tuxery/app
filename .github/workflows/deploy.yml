@@ -8,8 +8,23 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Gates the deploy on the same checks ci.yml runs (typecheck/lint/test/
+  # build) — deploy.yml used to be a fully independent workflow with no
+  # `needs:` on it, so a commit that failed CI could still deploy straight
+  # to preview (and, once merged, to production) as long as the build step
+  # alone happened to succeed. Duplicated here rather than making `deploy`
+  # depend on the separate `CI` workflow via `workflow_run`, since that
+  # trigger runs on the base ref, not the PR's actual commit — `needs:` on
+  # a job in the same workflow run is the only way to gate on the exact
+  # commit being deployed.
+  ci:
+    uses: tuxery/.github/.github/workflows/ci-web.yml@d31579f042cf78a25d34c729966ddf91f59c38be # main @ 2026-08-13
+    with:
+      working-directory: .
+
   deploy:
     name: Deploy to Cloudflare Workers
+    needs: ci
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

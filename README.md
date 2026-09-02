@@ -62,12 +62,29 @@ production` on every push to `main`.
 
 Both read `TURSO_DB_URL`/`TURSO_DB_AUTH_TOKEN`/`UNSPLASH_ACCESS_KEY` as Worker
 secrets, set per environment (`wrangler secret put <NAME> --env production`
-or `--env preview`) — never committed, never plain `vars` (those get wiped
-by Wrangler on every deploy unless declared in this file, so secrets are the
-only thing that reliably survives dashboard-side). `process.env` picks them
-up automatically via `nodejs_compat`. `tuxery-web-preview`'s secrets point
-at `tuxery-dev` instead of prod. Build locally with `pnpm build.server`,
-deploy with `pnpm deploy`, or preview with `pnpm serve`.
+or `--env preview` — `scripts/push-cloudflare-secrets.sh` does both from
+`../.dev/.env(.prod)` in one go) — never committed, never plain `vars`
+(those get wiped by Wrangler on every deploy unless declared in this file,
+so secrets are the only thing that reliably survives dashboard-side).
+`tuxery-web-preview`'s secrets point at `tuxery-dev` instead of prod.
+
+**Not** `process.env`, despite `nodejs_compat` being enabled: the Cloudflare
+Workers build target has no real Node `process`, so Vite bakes `process.env`
+into a dead, empty object at build time, completely disconnected from
+whatever's bound to the Worker at runtime — confirmed live (2026-09-02) by
+inspecting the deployed bundle after `wrangler secret put` had zero effect
+on it. `requestEvent.platform.env` is the one channel the bundler doesn't
+touch, so `~/server-env`'s `resolveServerEnv()` reads from there, falling
+back to `process.env` only for `pnpm dev`/`pnpm start` (plain Vite/Node,
+no `platform` at all). Every `routeLoader$`/`server$` that needs a secret
+must thread `resolveServerEnv(requestEvent.platform)` (or `this.platform`
+in a `server$`) into `~/catalog`/`~/unsplash` explicitly — there is no
+ambient fallback that quietly does this for you.
+
+Build locally with `pnpm build.server`, deploy with `pnpm deploy`, or
+preview with `pnpm serve` (reads `.dev.vars`, gitignored — copy the three
+keys above from `../.dev/.env`, or run `pnpm cf-typegen` after creating it
+to keep `worker-configuration.d.ts`'s `Env` type in sync).
 
 ## Status
 
