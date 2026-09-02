@@ -59,7 +59,7 @@ production` on every push to `main`.
   branch gets its own stable, non-clobbering [Aliased Preview
   URL](https://developers.cloudflare.com/workers/versions-and-deployments/preview-urls/#aliased-preview-urls)
   (`<branch>-tuxery-web-preview.<subdomain>.workers.dev`) via `wrangler
-  versions upload --env preview --preview-alias <branch>` on every pull
+versions upload --env preview --preview-alias <branch>` on every pull
   request targeting `main` — `versions upload`, not `deploy`, is the point:
   it never touches the environment's 100%-traffic version, so two PRs open
   at once no longer overwrite each other's preview.

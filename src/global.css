@@ -41,6 +41,17 @@ html {
   overflow: hidden;
 }
 
+/* The "ery" half of the wordmark, matching TuxeryLogo's mark gradient —
+   duplicated as flat CSS rather than reading the SVG's own gradient
+   (text can't fill from an external SVG gradient def across a page). Kept
+   in one place since the mark and the wordmark must never drift apart. */
+.text-tuxery-gradient {
+  background: linear-gradient(120deg, #18b6f6, #8b5cf6 45%, #f0637c 75%, #f2a94a);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
 .glass-card::before {
   content: "";
   position: absolute;

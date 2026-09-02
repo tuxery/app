@@ -2,6 +2,7 @@ import { component$, Slot } from "@builder.io/qwik";
 import { routeLoader$, useLocation } from "@builder.io/qwik-city";
 import { LuLayoutGrid, LuMenu, LuSearch, LuSettings, LuUser } from "@qwikest/icons/lucide";
 import { Footer } from "~/components/footer/footer";
+import { TuxeryLogo } from "~/components/tuxery-logo/tuxery-logo";
 import { findOsEntry } from "~/os-catalog";
 import { resolveServerEnv } from "~/server-env";
 import { useProvideSettings } from "~/settings";
@@ -51,8 +52,9 @@ export default component$(() => {
           </div>
 
           <a href="/" class="btn btn-ghost text-xl px-2">
-            <span>
-              🐧 Tux<span class="text-primary">ery</span>
+            <span class="flex items-center gap-2">
+              <TuxeryLogo size={24} cutoutColor="var(--color-base-100)" />
+              Tux<span class="text-tuxery-gradient">ery</span>
             </span>
           </a>
 
