@@ -1,6 +1,6 @@
 import { $, component$, Fragment, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { routeLoader$, server$, useLocation } from "@builder.io/qwik-city";
-import type { DocumentHead } from "@builder.io/qwik-city";
+import type { DocumentHead, RequestEventBase } from "@builder.io/qwik-city";
 import { LuArrowUp, LuLoader2 } from "@qwikest/icons/lucide";
 import { AppCardLink } from "~/components/app-card/app-card";
 import {
@@ -17,6 +17,7 @@ import {
   type AppSummary,
   type PackageSourceId,
 } from "~/catalog-types";
+import { resolveServerEnv } from "~/server-env";
 
 /**
  * RPC endpoint the client calls directly (no full navigation) as the user
@@ -25,11 +26,12 @@ import {
  * server-rendered first page.
  */
 const loadBrowsePage = server$(async function (
+  this: RequestEventBase,
   query: string,
   page: number,
   options: BrowseOptions,
 ) {
-  return browseApps(query, page, options);
+  return browseApps(resolveServerEnv(this.platform), query, page, options);
 });
 
 function parseInterfaceFilter(value: string | null): InterfaceFilter {
@@ -48,10 +50,11 @@ function parseSort(value: string | null): SortOption {
   return value === "name-asc" || value === "name-desc" ? value : "relevance";
 }
 
-export const useBrowse = routeLoader$(async ({ url }) => {
+export const useBrowse = routeLoader$(async (requestEvent) => {
+  const { url } = requestEvent;
   const query = url.searchParams.get("q") ?? "";
   const page = Math.max(0, Number(url.searchParams.get("page") ?? "1") - 1);
-  return browseApps(query, page, {
+  return browseApps(resolveServerEnv(requestEvent.platform), query, page, {
     interfaceFilter: parseInterfaceFilter(url.searchParams.get("interface")),
     typeFilter: parseTypeFilter(url.searchParams.get("type")),
     category: url.searchParams.get("category") ?? undefined,
@@ -65,8 +68,11 @@ export const useBrowse = routeLoader$(async ({ url }) => {
 // comment), so a mixed "all types" dropdown would show two disjoint label
 // sets at once, e.g. "Strategy" (a game genre) next to "Productivity" (an
 // app category), neither meaningful to the other type.
-export const useBrowseCategories = routeLoader$(async ({ url }) =>
-  getCategories(parseTypeFilter(url.searchParams.get("type"))),
+export const useBrowseCategories = routeLoader$(async (requestEvent) =>
+  getCategories(
+    resolveServerEnv(requestEvent.platform),
+    parseTypeFilter(requestEvent.url.searchParams.get("type")),
+  ),
 );
 
 export default component$(() => {

@@ -3,6 +3,7 @@ import { routeLoader$, useLocation } from "@builder.io/qwik-city";
 import { LuLayoutGrid, LuMenu, LuSearch, LuSettings, LuUser } from "@qwikest/icons/lucide";
 import { Footer } from "~/components/footer/footer";
 import { findOsEntry } from "~/os-catalog";
+import { resolveServerEnv } from "~/server-env";
 import { useProvideSettings } from "~/settings";
 import { getHeroBackgroundPhoto } from "~/unsplash";
 
@@ -11,8 +12,8 @@ import { getHeroBackgroundPhoto } from "~/unsplash";
 // loader (see routes/index.tsx's own, taller hero treatment) without a
 // second fetch, since Qwik City resolves one loader instance per request
 // regardless of how many components call it.
-export const useHeroBackground = routeLoader$(async () => {
-  return getHeroBackgroundPhoto();
+export const useHeroBackground = routeLoader$(async (requestEvent) => {
+  return getHeroBackgroundPhoto(resolveServerEnv(requestEvent.platform));
 });
 
 const NAV_LINKS = [

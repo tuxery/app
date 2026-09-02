@@ -27,32 +27,45 @@ import {
 } from "~/catalog";
 import { getInfluencerPage } from "~/data/influencer-pages";
 import { useHeroBackground } from "~/routes/layout";
+import { resolveServerEnv } from "~/server-env";
 import type { AppSummary } from "~/catalog-types";
 
-export const useStats = routeLoader$(async () => {
-  return getStats();
+export const useStats = routeLoader$(async (requestEvent) => {
+  return getStats(resolveServerEnv(requestEvent.platform));
 });
 
 // One row per content type, not one mixed "Trending" row — each links to
 // its own /browse/?type=... scope (same convention /games/'s own
 // "Trending games" row already uses).
-export const useTrendingApps = routeLoader$(async () => getTrendingApps("app"));
-export const useTrendingGames = routeLoader$(async () => getTrendingApps("game"));
+export const useTrendingApps = routeLoader$(async (requestEvent) =>
+  getTrendingApps(resolveServerEnv(requestEvent.platform), "app"),
+);
+export const useTrendingGames = routeLoader$(async (requestEvent) =>
+  getTrendingApps(resolveServerEnv(requestEvent.platform), "game"),
+);
 
 // Games only for now — see the "Release/added-date signal" board card
 // ("New apps" is explicitly a later follow-up, once the signal's real
 // coverage across the whole catalog is better understood).
-export const useNewGames = routeLoader$(async () => getNewApps("game"));
+export const useNewGames = routeLoader$(async (requestEvent) =>
+  getNewApps(resolveServerEnv(requestEvent.platform), "game"),
+);
 
 // Both apps and games, unlike the type-scoped rows above — download
 // counts are a single signal that doesn't naturally split by content
 // type the way trending/new do.
-export const useDownloadTrends = routeLoader$(async () => getDownloadTrendingApps("all"));
+export const useDownloadTrends = routeLoader$(async (requestEvent) =>
+  getDownloadTrendingApps(resolveServerEnv(requestEvent.platform), "all"),
+);
 
 // "Browse by category" is split Apps/Games — each draws from its own
 // taxonomy now (see `tuxery/catalog`'s `CatalogApp.category` doc comment).
-export const useAppCategories = routeLoader$(async () => getCategories("app"));
-export const useGameCategories = routeLoader$(async () => getCategories("game"));
+export const useAppCategories = routeLoader$(async (requestEvent) =>
+  getCategories(resolveServerEnv(requestEvent.platform), "app"),
+);
+export const useGameCategories = routeLoader$(async (requestEvent) =>
+  getCategories(resolveServerEnv(requestEvent.platform), "game"),
+);
 
 // Reuses the same influencer-page data /creators/baxyz/ itself renders
 // from, so the homepage slide's name/avatar stay in sync with that page
@@ -66,13 +79,27 @@ export const useFeaturedCreator = routeLoader$(async () => getInfluencerPage("ba
 // in sync by hand, same convention as catalog-types.ts's own mirrors). No
 // "Internet & Communication" row (former "Social network apps") — see
 // MUST_HAVE_APP_IDS' neighbor comment on why that one's gone.
-export const useProductivityApps = routeLoader$(async () => getAppsByCategory("Productivity"));
-export const useCreativityApps = routeLoader$(async () => getAppsByCategory("Graphics & Design"));
-export const useLearningApps = routeLoader$(async () => getAppsByCategory("Education"));
-export const useMusicApps = routeLoader$(async () => getAppsByCategory("Music & Audio"));
-export const useVideoApps = routeLoader$(async () => getAppsByCategory("Photo & Video"));
-export const useCasualGames = routeLoader$(async () => getAppsByCategory("Casual"));
-export const usePuzzleGames = routeLoader$(async () => getAppsByCategory("Puzzle"));
+export const useProductivityApps = routeLoader$(async (requestEvent) =>
+  getAppsByCategory(resolveServerEnv(requestEvent.platform), "Productivity"),
+);
+export const useCreativityApps = routeLoader$(async (requestEvent) =>
+  getAppsByCategory(resolveServerEnv(requestEvent.platform), "Graphics & Design"),
+);
+export const useLearningApps = routeLoader$(async (requestEvent) =>
+  getAppsByCategory(resolveServerEnv(requestEvent.platform), "Education"),
+);
+export const useMusicApps = routeLoader$(async (requestEvent) =>
+  getAppsByCategory(resolveServerEnv(requestEvent.platform), "Music & Audio"),
+);
+export const useVideoApps = routeLoader$(async (requestEvent) =>
+  getAppsByCategory(resolveServerEnv(requestEvent.platform), "Photo & Video"),
+);
+export const useCasualGames = routeLoader$(async (requestEvent) =>
+  getAppsByCategory(resolveServerEnv(requestEvent.platform), "Casual"),
+);
+export const usePuzzleGames = routeLoader$(async (requestEvent) =>
+  getAppsByCategory(resolveServerEnv(requestEvent.platform), "Puzzle"),
+);
 
 // Hand-picked, not category-derived — there's no "must-have" signal in the
 // data model, so this is genuinely editorial, same spirit as
@@ -104,8 +131,8 @@ const MUST_HAVE_APP_IDS = [
   "keepassxc",
 ] as const;
 
-export const useMustHaveApps = routeLoader$(async () => {
-  const apps = await getAppsByIds([...MUST_HAVE_APP_IDS]);
+export const useMustHaveApps = routeLoader$(async (requestEvent) => {
+  const apps = await getAppsByIds(resolveServerEnv(requestEvent.platform), [...MUST_HAVE_APP_IDS]);
   const byId = toMapByKey(apps, (app) => app.id);
   return MUST_HAVE_APP_IDS.map((id) => byId.get(id)).filter((app): app is AppSummary => !!app);
 });

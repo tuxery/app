@@ -4,6 +4,7 @@ import type { DocumentHead } from "@builder.io/qwik-city";
 import { unique } from "@helpers4/array";
 import { LuBadgeCheck, LuExternalLink, LuFlag, LuPackage } from "@qwikest/icons/lucide";
 import { getAppById, getStats } from "~/catalog";
+import { resolveServerEnv } from "~/server-env";
 import {
   ALL_SOURCE_GROUPS,
   channelLabel,
@@ -40,12 +41,14 @@ import {
 
 export const useApp = routeLoader$(async (requestEvent): Promise<CatalogApp | null> => {
   const id = decodeURIComponent(requestEvent.params.id ?? "");
-  const app = await getAppById(id);
+  const app = await getAppById(resolveServerEnv(requestEvent.platform), id);
   if (!app) requestEvent.status(404);
   return app;
 });
 
-export const useDetailStats = routeLoader$(async () => getStats());
+export const useDetailStats = routeLoader$(async (requestEvent) =>
+  getStats(resolveServerEnv(requestEvent.platform)),
+);
 
 // Only the special repos precise enough to know exactly which package
 // needs them — each maps to the settings.ts leaf whose "activated" flag

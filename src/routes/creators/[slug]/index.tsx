@@ -5,6 +5,7 @@ import { toMapByKey } from "@helpers4/map";
 import { AppCardLink } from "~/components/app-card/app-card";
 import { getAppsByIds } from "~/catalog";
 import { getInfluencerPage, type InfluencerBlock } from "~/data/influencer-pages";
+import { resolveServerEnv } from "~/server-env";
 import type { AppSummary } from "~/catalog-types";
 
 export const usePage = routeLoader$(async (requestEvent) => {
@@ -17,7 +18,7 @@ export const usePage = routeLoader$(async (requestEvent) => {
   // Resolves every `apps` block's ids in one batch rather than one query
   // per block — cheap even for a page with several app-grid sections.
   const allAppIds = page.blocks.flatMap((block) => (block.type === "apps" ? block.appIds : []));
-  const apps = await getAppsByIds(allAppIds);
+  const apps = await getAppsByIds(resolveServerEnv(requestEvent.platform), allAppIds);
   const appsById = toMapByKey(apps, (app) => app.id);
 
   return { page, appsById: Object.fromEntries(appsById) };

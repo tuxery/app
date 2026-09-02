@@ -4,9 +4,14 @@ import type { DocumentHead } from "@builder.io/qwik-city";
 import { AppCardLink } from "~/components/app-card/app-card";
 import { CategoryTileGrid } from "~/components/category-tile-grid/category-tile-grid";
 import { getCategories, getTrendingApps } from "~/catalog";
+import { resolveServerEnv } from "~/server-env";
 
-export const useTrendingGames = routeLoader$(async () => getTrendingApps("game"));
-export const useCategories = routeLoader$(async () => getCategories("game"));
+export const useTrendingGames = routeLoader$(async (requestEvent) =>
+  getTrendingApps(resolveServerEnv(requestEvent.platform), "game"),
+);
+export const useCategories = routeLoader$(async (requestEvent) =>
+  getCategories(resolveServerEnv(requestEvent.platform), "game"),
+);
 
 export default component$(() => {
   const trending = useTrendingGames();

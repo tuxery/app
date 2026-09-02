@@ -14,6 +14,7 @@ import {
   type PackageSourceId,
   type SourcedPackage,
 } from "~/catalog-types";
+import type { ServerEnv } from "~/server-env";
 
 // Server-only half of the catalog layer — everything here touches the DB
 // (`@libsql/client`, a Node-only driver), so it must only ever be referenced
@@ -29,10 +30,10 @@ const MAX_RESULTS = 60;
 let client: Client | null | undefined;
 
 /** `undefined` TURSO_DB_URL (e.g. catalog's `pnpm serve` never ran) degrades to an empty catalog rather than throwing. */
-function getClient(): Client | null {
+function getClient(env: ServerEnv): Client | null {
   if (client !== undefined) return client;
-  const url = process.env.TURSO_DB_URL;
-  client = url ? createClient({ url, authToken: process.env.TURSO_DB_AUTH_TOKEN }) : null;
+  const url = env.TURSO_DB_URL;
+  client = url ? createClient({ url, authToken: env.TURSO_DB_AUTH_TOKEN }) : null;
   return client;
 }
 
@@ -218,8 +219,8 @@ function sortClause(sort: SortOption, searchOrderBy: string): string {
  * than an arbitrary first-N — there's no "insertion order" worth
  * preserving once apps live in a table instead of a JSON array.
  */
-export async function searchApps(query: string): Promise<AppSummary[]> {
-  const db = getClient();
+export async function searchApps(env: ServerEnv, query: string): Promise<AppSummary[]> {
+  const db = getClient(env);
   if (!db) return [];
 
   return safely([], async () => {
@@ -250,11 +251,12 @@ export interface BrowseOptions {
 }
 
 export async function browseApps(
+  env: ServerEnv,
   query: string,
   page: number,
   options: BrowseOptions = {},
 ): Promise<BrowseResult> {
-  const db = getClient();
+  const db = getClient(env);
   if (!db) return { apps: [], total: 0 };
   const {
     interfaceFilter = "all",
@@ -300,7 +302,7 @@ export async function browseApps(
               args: fullConditionArgs,
             })
             .then((result) => Number(result.rows[0]?.count ?? 0))
-        : await getStats().then((stats) => stats.total);
+        : await getStats(env).then((stats) => stats.total);
 
     const offset = Math.max(0, page) * BROWSE_PAGE_SIZE;
     const listResult = await db.execute({
@@ -318,8 +320,8 @@ export async function browseApps(
 }
 
 /** Looks up several apps by id at once, in whatever order the DB returns them — callers that need a specific order (e.g. an editorial block referencing ids in a chosen sequence) should re-sort client-side. Missing ids are silently dropped rather than erroring, since editorial content referencing a since-removed app shouldn't break the whole page. */
-export async function getAppsByIds(ids: string[]): Promise<AppSummary[]> {
-  const db = getClient();
+export async function getAppsByIds(env: ServerEnv, ids: string[]): Promise<AppSummary[]> {
+  const db = getClient(env);
   if (!db || ids.length === 0) return [];
 
   return safely([], async () => {
@@ -332,8 +334,8 @@ export async function getAppsByIds(ids: string[]): Promise<AppSummary[]> {
   });
 }
 
-export async function getAppById(id: string): Promise<CatalogApp | null> {
-  const db = getClient();
+export async function getAppById(env: ServerEnv, id: string): Promise<CatalogApp | null> {
+  const db = getClient(env);
   if (!db) return null;
 
   return safely(null, async () => {
@@ -369,8 +371,11 @@ const HAS_VISUAL_ASSET = "icon_url IS NOT NULL";
  * real positive evidence; "app" is just its complement. Also requires an
  * icon or screenshot — see `HAS_VISUAL_ASSET`.
  */
-export async function getTrendingApps(typeFilter: TypeFilter = "all"): Promise<AppSummary[]> {
-  const db = getClient();
+export async function getTrendingApps(
+  env: ServerEnv,
+  typeFilter: TypeFilter = "all",
+): Promise<AppSummary[]> {
+  const db = getClient(env);
   if (!db) return [];
 
   return safely([], async () => {
@@ -396,8 +401,11 @@ export async function getTrendingApps(typeFilter: TypeFilter = "all"): Promise<A
  * value are excluded entirely rather than sorted to the bottom, same
  * "no signal isn't evidence of anything" discipline as `getTrendingApps`.
  */
-export async function getNewApps(typeFilter: TypeFilter = "all"): Promise<AppSummary[]> {
-  const db = getClient();
+export async function getNewApps(
+  env: ServerEnv,
+  typeFilter: TypeFilter = "all",
+): Promise<AppSummary[]> {
+  const db = getClient(env);
   if (!db) return [];
 
   return safely([], async () => {
@@ -425,9 +433,10 @@ export async function getNewApps(typeFilter: TypeFilter = "all"): Promise<AppSum
  * `getTrendingApps`.
  */
 export async function getDownloadTrendingApps(
+  env: ServerEnv,
   typeFilter: TypeFilter = "all",
 ): Promise<AppSummary[]> {
-  const db = getClient();
+  const db = getClient(env);
   if (!db) return [];
 
   return safely([], async () => {
@@ -453,10 +462,11 @@ export async function getDownloadTrendingApps(
  * gating as `getTrendingApps`.
  */
 export async function getTrendingAppsBySource(
+  env: ServerEnv,
   source: PackageSourceId,
   limit = TRENDING_PAGE_SIZE,
 ): Promise<AppSummary[]> {
-  const db = getClient();
+  const db = getClient(env);
   if (!db) return [];
 
   return safely([], async () => {
@@ -479,8 +489,12 @@ const CATEGORY_PREVIEW_SIZE = 12;
  * rather than an empty row. Also requires an icon or screenshot — see
  * `HAS_VISUAL_ASSET`.
  */
-export async function getAppsByCategory(category: string, limit = CATEGORY_PREVIEW_SIZE) {
-  const db = getClient();
+export async function getAppsByCategory(
+  env: ServerEnv,
+  category: string,
+  limit = CATEGORY_PREVIEW_SIZE,
+) {
+  const db = getClient(env);
   if (!db) return [];
 
   return safely<AppSummary[]>([], async () => {
@@ -505,8 +519,11 @@ export interface CategoryCount {
  * so the two never mix; "To Classify" is a real category like any other
  * and shows up here too, usually the largest by far.
  */
-export async function getCategories(typeFilter: TypeFilter = "all"): Promise<CategoryCount[]> {
-  const db = getClient();
+export async function getCategories(
+  env: ServerEnv,
+  typeFilter: TypeFilter = "all",
+): Promise<CategoryCount[]> {
+  const db = getClient(env);
   if (!db) return [];
 
   return safely([], async () => {
@@ -527,8 +544,8 @@ export async function getCategories(typeFilter: TypeFilter = "all"): Promise<Cat
 }
 
 /** Reads precomputed totals from the `meta` table — never `COUNT(*)` on `apps` at request time. */
-export async function getStats(): Promise<CatalogStats> {
-  const db = getClient();
+export async function getStats(env: ServerEnv): Promise<CatalogStats> {
+  const db = getClient(env);
   if (!db) return EMPTY_STATS;
 
   return safely(EMPTY_STATS, async () => {

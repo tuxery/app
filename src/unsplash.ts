@@ -4,6 +4,7 @@
 // VITE_-prefixed var, so it never reaches the client bundle.
 
 import { safeFetch } from "@helpers4/promise";
+import type { ServerEnv } from "~/server-env";
 
 const UNSPLASH_API = "https://api.unsplash.com";
 
@@ -53,19 +54,19 @@ let cached: { photo: HeroBackgroundPhoto | null; fetchedAt: number } | undefined
  * rather than breaking the page — a background image is a decoration,
  * never load-bearing.
  */
-export async function getHeroBackgroundPhoto(): Promise<HeroBackgroundPhoto | null> {
+export async function getHeroBackgroundPhoto(env: ServerEnv): Promise<HeroBackgroundPhoto | null> {
   if (cached) {
     const ttl = cached.photo ? CACHE_TTL_MS : FAILURE_CACHE_TTL_MS;
     if (Date.now() - cached.fetchedAt < ttl) return cached.photo;
   }
 
-  const photo = await fetchHeroBackgroundPhoto();
+  const photo = await fetchHeroBackgroundPhoto(env);
   cached = { photo, fetchedAt: Date.now() };
   return photo;
 }
 
-async function fetchHeroBackgroundPhoto(): Promise<HeroBackgroundPhoto | null> {
-  const accessKey = process.env.UNSPLASH_ACCESS_KEY;
+async function fetchHeroBackgroundPhoto(env: ServerEnv): Promise<HeroBackgroundPhoto | null> {
+  const accessKey = env.UNSPLASH_ACCESS_KEY;
   if (!accessKey) return null;
 
   const photo = await safeFetch<UnsplashRandomPhotoResponse>(
