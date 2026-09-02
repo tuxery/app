@@ -3,9 +3,14 @@ import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { CategoryTileGrid } from "~/components/category-tile-grid/category-tile-grid";
 import { getCategories } from "~/catalog";
+import { resolveServerEnv } from "~/server-env";
 
-export const useAppCategories = routeLoader$(async () => getCategories("app"));
-export const useGameCategories = routeLoader$(async () => getCategories("game"));
+export const useAppCategories = routeLoader$(async (requestEvent) =>
+  getCategories(resolveServerEnv(requestEvent.platform), "app"),
+);
+export const useGameCategories = routeLoader$(async (requestEvent) =>
+  getCategories(resolveServerEnv(requestEvent.platform), "game"),
+);
 
 export default component$(() => {
   const appCategories = useAppCategories();

@@ -3,6 +3,7 @@ import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { LuUserCheck, LuShieldCheck, LuPencilLine } from "@qwikest/icons/lucide";
 import { getAppById } from "~/catalog";
+import { resolveServerEnv } from "~/server-env";
 
 // `?app=<id>` is optional, purely cosmetic (a "Claim <name>" headline
 // instead of the generic one) — the page itself is the same static
@@ -12,7 +13,7 @@ import { getAppById } from "~/catalog";
 export const useClaimedApp = routeLoader$(async (requestEvent) => {
   const appId = requestEvent.url.searchParams.get("app");
   if (!appId) return null;
-  const app = await getAppById(appId);
+  const app = await getAppById(resolveServerEnv(requestEvent.platform), appId);
   return app ? { id: app.id, name: app.name } : null;
 });
 

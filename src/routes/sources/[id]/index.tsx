@@ -5,6 +5,7 @@ import { LuExternalLink } from "@qwikest/icons/lucide";
 import { AppCardLink } from "~/components/app-card/app-card";
 import { getTrendingAppsBySource } from "~/catalog";
 import type { PackageSourceId } from "~/catalog-types";
+import { resolveServerEnv } from "~/server-env";
 
 interface StorePageInfo {
   id: PackageSourceId;
@@ -63,7 +64,7 @@ export const useStorePage = routeLoader$(async (requestEvent) => {
     return null;
   }
 
-  const apps = await getTrendingAppsBySource(store.id);
+  const apps = await getTrendingAppsBySource(resolveServerEnv(requestEvent.platform), store.id);
   return { store, apps };
 });
 
