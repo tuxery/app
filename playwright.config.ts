@@ -24,14 +24,18 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
-      // The mobile nav dropdown only exists below the `lg` breakpoint — a
-      // desktop viewport never shows the trigger button at all.
-      testIgnore: /mobile-nav\.spec\.ts/,
+      // `mobile-*.spec.ts` files assume the sub-`lg` layout (hamburger menu
+      // instead of the nav links, hero search bar full-width, ...) — a
+      // desktop viewport never shows that layout at all, so they'd just
+      // fail here rather than test anything meaningful.
+      testIgnore: /mobile-.*\.spec\.ts/,
     },
     {
       name: "mobile-chromium",
-      use: { ...devices["Pixel 7"] },
-      testMatch: /mobile-nav\.spec\.ts/,
+      use: { ...devices["Pixel 7"], hasTouch: true, isMobile: true },
+      // Every new mobile-specific spec should follow this `mobile-*` naming
+      // convention rather than editing this regex per file.
+      testMatch: /mobile-.*\.spec\.ts/,
     },
   ],
   webServer: {
