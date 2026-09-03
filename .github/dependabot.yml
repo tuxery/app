@@ -14,6 +14,16 @@ updates:
         dependency-type: development
         patterns:
           - "*"
+        # @builder.io/qwik's peer dependency caps vite at <8 (Qwik 2, which
+        # lifts that cap, is still a 2.0.0-beta.x prerelease under a
+        # different package name, @qwik.dev/core — not a drop-in bump).
+        # Excluded so a blocked vite major doesn't hold back every other
+        # harmless dev-tooling bump in the same group PR; these two get
+        # their own individual PR instead, expected to stay unmergeable
+        # until Qwik's peer range moves.
+        exclude-patterns:
+          - "vite"
+          - "vite-tsconfig-paths"
     labels:
       - dependencies
 
