@@ -46,9 +46,22 @@ push_env() {
     done
 
     cd "$APP_DIR"
+    # preview never has a plain 100%-traffic deployed version to attach a
+    # classic `secret put` to — deploy.yml uses `versions upload
+    # --preview-alias` there on purpose (see README.md's Deployment
+    # section), so every version only ever exists behind its own alias
+    # URL. `versions secret put` updates the environment's stored secret
+    # without needing one; every later `versions upload` picks it up.
+    # production still gets a real `wrangler deploy` (100% traffic) each
+    # time, so the classic command keeps working there.
+    local put_command="secret put"
+    if [[ "$wrangler_env" == "preview" ]]; then
+      put_command="versions secret put"
+    fi
     for secret in TURSO_DB_URL TURSO_DB_AUTH_TOKEN UNSPLASH_ACCESS_KEY; do
       echo "==> Setting $secret --env $wrangler_env"
-      printf '%s' "${!secret}" | pnpm exec wrangler secret put "$secret" --env "$wrangler_env"
+      # shellcheck disable=SC2086
+      printf '%s' "${!secret}" | pnpm exec wrangler $put_command "$secret" --env "$wrangler_env"
     done
   )
 }
