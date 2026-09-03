@@ -29,10 +29,12 @@ pnpm install
 pnpm dev            # Vite SSR dev server on :5173
 ```
 
-Queries `tuxery/catalog`'s dataset via Turso — run `tuxery/catalog`'s
-`pnpm seed` then `pnpm serve` first (its own README) to have real data
-locally; without that, the homepage just shows an empty catalog rather
-than failing.
+Queries `tuxery/catalog`'s dataset — always against catalog's own **local**
+`turso dev` server (`http://127.0.0.1:8080`), never a hosted Turso DB; see
+`vite.config.ts`'s own comment for why that's a hard rule, not just a
+default. Run `tuxery/catalog`'s `pnpm seed` then `pnpm serve` first (its own
+README) to have real data locally; without that, the homepage just shows an
+empty catalog rather than failing.
 
 ## Checks
 

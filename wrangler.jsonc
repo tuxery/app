@@ -75,8 +75,12 @@
   /**
    * Environment Variables
    * TURSO_DB_URL, TURSO_DB_AUTH_TOKEN, UNSPLASH_ACCESS_KEY: set as secrets
-   * per environment (`wrangler secret put <NAME> --env production` /
-   * `--env preview`), never committed here — see README.
+   * per environment — `wrangler secret put <NAME> --env production`, but
+   * `wrangler versions secret put <NAME> --env preview` for preview
+   * specifically (the plain command needs a 100%-traffic deployed
+   * version to attach to, which preview never has by design — see the
+   * "preview" env entry below and README's Deployment section). Never
+   * committed here — see README.
    * https://developers.cloudflare.com/workers/configuration/secrets/
    */
 }
