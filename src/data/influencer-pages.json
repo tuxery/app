@@ -41,6 +41,11 @@
       },
       {
         "type": "apps",
+        "heading": "Hardware",
+        "appIds": ["org.freedesktop.Piper"]
+      },
+      {
+        "type": "apps",
         "heading": "System & utilities",
         "appIds": [
           "io.github.kolunmi.Bazaar",
