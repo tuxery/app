@@ -362,7 +362,7 @@ export default component$(() => {
       <section class="hero rounded-box px-4 md:px-6">
         <div class={`hero-content text-center py-14 ${bg ? "text-white" : ""}`}>
           <div class="max-w-2xl">
-            <h1 class="text-4xl md:text-5xl font-bold text-nowrap">
+            <h1 class="text-4xl md:text-5xl font-bold md:text-nowrap">
               Search <span class="text-primary">every</span> Linux app.
             </h1>
             <p class={`py-4 ${bg ? "text-white/80" : "text-base-content/70"}`}>

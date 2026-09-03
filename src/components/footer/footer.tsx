@@ -12,7 +12,9 @@ export const Footer = component$(() => {
           <aside>
             <p class="text-lg font-bold flex items-center gap-2">
               <TuxeryLogo size={22} cutoutColor="var(--color-base-100)" />
-              Tux<span class="text-tuxery-gradient">ery</span>
+              <span>
+                Tux<span class="text-tuxery-gradient">ery</span>
+              </span>
             </p>
             <p class="text-sm text-base-content/60">
               Never installs anything itself.

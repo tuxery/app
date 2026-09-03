@@ -9,6 +9,24 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Guards against horizontal page scroll on narrow viewports — root cause
+   found live: daisyUI tooltip bubbles (`.tooltip::before`) are sized and
+   positioned for their full content even at rest (opacity: 0, not
+   display: none), so a long tooltip-right tip near the right edge of a
+   360-420px mobile viewport pokes past it and inflates the document's
+   scrollWidth, even though the bubble itself is invisible until hover/
+   focus. `clip`, not `hidden`: `overflow-x: hidden` on `html` turned it
+   into a scroll container, which broke the header's `position: sticky`
+   (it started scrolling away with the page instead of staying pinned) —
+   found live too. `overflow: clip` clips the same way without engaging
+   that scroll-container machinery. Set on both `html` (what actually
+   drives visible page scroll) and `body` (belt and suspenders — some
+   overflow checks look at `<body>` instead). */
+html,
+body {
+  overflow-x: clip;
+}
+
 /* daisyUI's stock dim theme ships a green primary (hue ~139) against
    nord's blue (hue ~254) — the accent color would silently flip hue when
    the theme switches. Same lightness/chroma dim already used for its own

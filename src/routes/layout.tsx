@@ -32,7 +32,7 @@ export default component$(() => {
 
   return (
     <>
-      <header class="navbar glass-card rounded-none! h-16 px-4 md:px-6 sticky! top-0 z-40">
+      <header class="navbar glass-card rounded-none! overflow-visible! h-16 px-4 md:px-6 sticky! top-0 z-40">
         <div class="navbar-start gap-1">
           <div class="dropdown lg:hidden">
             <button type="button" class="btn btn-ghost btn-square" aria-label="Menu">
@@ -54,7 +54,9 @@ export default component$(() => {
           <a href="/" class="btn btn-ghost text-xl px-2">
             <span class="flex items-center gap-2">
               <TuxeryLogo size={24} cutoutColor="var(--color-base-100)" />
-              Tux<span class="text-tuxery-gradient">ery</span>
+              <span>
+                Tux<span class="text-tuxery-gradient">ery</span>
+              </span>
             </span>
           </a>
 
