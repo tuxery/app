@@ -65,12 +65,19 @@ versions upload --env preview --preview-alias <branch>` on every pull
   at once no longer overwrite each other's preview.
 
 Both read `TURSO_DB_URL`/`TURSO_DB_AUTH_TOKEN`/`UNSPLASH_ACCESS_KEY` as Worker
-secrets, set per environment (`wrangler secret put <NAME> --env production`
-or `--env preview` — `scripts/push-cloudflare-secrets.sh` does both from
-`../.dev/.env(.prod)` in one go) — never committed, never plain `vars`
-(those get wiped by Wrangler on every deploy unless declared in this file,
-so secrets are the only thing that reliably survives dashboard-side).
-`tuxery-web-preview`'s secrets point at `tuxery-dev` instead of prod.
+secrets, set per environment — `wrangler secret put <NAME> --env production`
+for `tuxery-web`, `wrangler versions secret put <NAME> --env preview` for
+`tuxery-web-preview` (a plain `secret put` fails there: preview never has a
+100%-traffic deployed version to attach to, by design — see above; every
+later `versions upload` picks up a `versions secret put` change without
+needing one). `scripts/push-cloudflare-secrets.sh` does both, from
+`../.dev/.env.prod` and `../.dev/.env.preview` respectively — never
+committed, never plain `vars` (those get wiped by Wrangler on every deploy
+unless declared in this file, so secrets are the only thing that reliably
+survives dashboard-side). `tuxery-web-preview`'s secrets point at its own
+`preview-tuxery` Turso DB, not prod's — there is no shared "dev" Turso DB
+(retired 2026-09-03); local dev emulates a local sqlite instead (see
+`vite.config.ts`, and "Development" above).
 
 **Not** `process.env`, despite `nodejs_compat` being enabled: the Cloudflare
 Workers build target has no real Node `process`, so Vite bakes `process.env`
@@ -87,8 +94,8 @@ ambient fallback that quietly does this for you.
 
 Build locally with `pnpm build.server`, deploy with `pnpm deploy`, or
 preview with `pnpm serve` (reads `.dev.vars`, gitignored — copy the three
-keys above from `../.dev/.env`, or run `pnpm cf-typegen` after creating it
-to keep `worker-configuration.d.ts`'s `Env` type in sync).
+keys above from `../.dev/.env.preview`, or run `pnpm cf-typegen` after
+creating it to keep `worker-configuration.d.ts`'s `Env` type in sync).
 
 ## Status
 

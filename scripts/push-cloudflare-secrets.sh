@@ -2,8 +2,10 @@
 # Pushes Worker secrets to Cloudflare for both environments
 # (TURSO_DB_URL, TURSO_DB_AUTH_TOKEN, UNSPLASH_ACCESS_KEY — see README.md's
 # "Environment Variables" section and wrangler.jsonc):
-#   production <- ../.dev/.env.prod (tuxery DB)
-#   preview    <- ../.dev/.env      (tuxery-dev DB)
+#   production <- ../.dev/.env.prod    (prod-tuxery DB)
+#   preview    <- ../.dev/.env.preview (preview-tuxery DB — there is no
+#                 shared "dev" Turso DB anymore, retired 2026-09-03; local
+#                 dev emulates a local sqlite instead, see vite.config.ts)
 # Auth always comes from .env.prod's CLOUDFLARE_API_TOKEN/CLOUDFLARE_ACCOUNT_ID
 # (same Cloudflare account for both envs), so no `wrangler login` is needed.
 set -euo pipefail
@@ -67,6 +69,6 @@ push_env() {
 }
 
 push_env production "$DEV_DIR/.env.prod"
-push_env preview "$DEV_DIR/.env"
+push_env preview "$DEV_DIR/.env.preview"
 
 echo "Done."

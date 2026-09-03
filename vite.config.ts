@@ -33,13 +33,17 @@ export default defineConfig(({ mode }): UserConfig => {
   // package.json), and Vite's own CLI rejects any unrecognized flag, so a
   // `--remote` CLI flag (as catalog's plain Node scripts use) can't work
   // here — TUXERY_REMOTE is an env var instead: `TUXERY_REMOTE=1 pnpm dev`.
-  // Without it, TURSO_DB_URL defaults to the local turso dev server rather
-  // than the shared .dev/.env's real hosted DB, which was always winning
-  // before (nothing ever set TURSO_DB_URL locally) — every query paying a
-  // real network round-trip to aws-eu-west-1 on every request, the actual
-  // cause of "pnpm dev is extremely slow".
+  // Without it, TURSO_DB_URL defaults to the local turso dev server. There
+  // is no shared "dev" Turso DB anymore (baxyz retired it, 2026-09-03) —
+  // TUXERY_REMOTE now points at the **preview** DB instead (`.env.preview`,
+  // the same one the Cloudflare preview Worker uses), loaded by passing
+  // "preview" as the mode so Vite's own `.env` + `.env.${mode}` merge
+  // layers it over `.env`'s (now-blank) Turso keys. Real hosted DB access
+  // from local dev always paid a real network round-trip to aws-eu-west-1
+  // on every request when this was the unconditional default — the actual
+  // cause of "pnpm dev is extremely slow", hence opt-in only.
   if (process.env.TUXERY_REMOTE) {
-    const sharedEnv = loadEnv(mode, SHARED_ENV_DIR, "");
+    const sharedEnv = loadEnv("preview", SHARED_ENV_DIR, "");
     process.env.TURSO_DB_URL ??= sharedEnv.TURSO_DB_URL;
     process.env.TURSO_DB_AUTH_TOKEN ??= sharedEnv.TURSO_DB_AUTH_TOKEN;
   } else {
