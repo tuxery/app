@@ -26,6 +26,8 @@ jobs:
     name: Deploy to Cloudflare Workers
     needs: ci
     runs-on: ubuntu-latest
+    outputs:
+      preview-url: ${{ steps.preview-url.outputs.url }}
     steps:
       - uses: actions/checkout@v7
 
@@ -67,9 +69,47 @@ jobs:
 
       - name: Deploy preview
         if: github.ref != 'refs/heads/main'
+        id: deploy-preview
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           packageManager: pnpm
           command: versions upload --env preview --preview-alias ${{ steps.alias.outputs.alias }}
+
+      # wrangler-action's own `deployment-url` output isn't reliable here —
+      # `versions upload` prints two URLs (the version-hash one, then the
+      # stable alias one) and wrangler-action's own extraction has
+      # previously been observed picking "the first" without it being the
+      # alias — so this parses the exact line straight out of wrangler's
+      # own stdout instead of trusting that.
+      - name: Extract preview alias URL
+        if: github.ref != 'refs/heads/main'
+        id: preview-url
+        run: |
+          url=$(echo "${{ steps.deploy-preview.outputs.command-output }}" | grep -oP '(?<=Version Preview Alias URL: ).*')
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+  # Cloudflare's own dashboard-driven Pages integration used to comment the
+  # preview URL on every PR automatically — that stopped the moment
+  # deploy.yml took over deploys (a GitHub Actions job has no equivalent
+  # built in, wrangler-action included). Restores it as a sticky comment
+  # (one comment that updates in place across pushes, not a new one every
+  # run) instead of a plain echo, via helpers4's own reusable action.
+  pr-comment:
+    name: Preview URL comment
+    needs: [ci, deploy]
+    if: always() && github.event_name == 'pull_request' && needs.deploy.result != 'skipped'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: helpers4/action/pr-status-comment@b93b7383e99665db30a61f16afce9fd6347bf4bf # main @ 2026-08-07
+        with:
+          comment-header: "Preview Deployment"
+          jobs: |
+            {
+              "🚀 Deploy preview": "${{ needs.deploy.result }}"
+            }
+          extra-markdown: |
+            ${{ needs.deploy.outputs.preview-url && format('🔗 **Preview:** {0}', needs.deploy.outputs.preview-url) || '⚠️ No preview URL captured — check the `deploy` job logs.' }}
