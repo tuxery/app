@@ -56,3 +56,59 @@ jobs:
 
       - name: Run worker e2e
         run: pnpm run test.e2e.worker
+
+  # e2e/'s own suite (desktop `chromium` + mobile `mobile-chromium`, see
+  # playwright.config.ts) — previously never run automatically anywhere,
+  # only in e2e-worker/'s narrower Worker-bundle-specific check above and
+  # whatever a human happened to run locally. Against `pnpm dev` (cheaper/
+  # faster than wrangler dev — this suite doesn't need the real Worker
+  # bundle, e2e-worker/ already covers that half), pointed at the real
+  # preview Turso DB via the same secrets e2e-worker uses. Safe now that
+  # both catalog's indexes and this repo's listing-query cache
+  # (catalog.ts's cachedListing) are in place — the 2026-09-03 Turso quota
+  # incident was root-caused to missing indexes turning every query into a
+  # full-table scan, not to running queries as such; a full suite run here
+  # reads a few thousand rows at most, not hundreds of millions. No
+  # UNSPLASH_ACCESS_KEY, same reasoning as e2e-worker above.
+  e2e:
+    name: E2E (desktop + mobile)
+    runs-on: ubuntu-latest
+    env:
+      TURSO_DB_URL: ${{ secrets.TURSO_PREVIEW_DB_URL }}
+      TURSO_DB_AUTH_TOKEN: ${{ secrets.TURSO_PREVIEW_DB_AUTH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: helpers4/action/setup-pnpm@6fddd178620e7325d446a246c38a44f979569fc4 # main @ 2026-07-29
+        with:
+          node-version: "24"
+          working-directory: .
+
+      - name: Install Playwright's Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run e2e
+        run: pnpm run test.e2e
+
+  # One sticky comment (updates in place across pushes, not a new one
+  # every run) summarizing every check in one place — GitHub's own PR
+  # "Checks" tab scatters typecheck/lint/test/build (all inside the one
+  # reusable ci-web.yml call) and the two e2e jobs across separate rows,
+  # easy to miss one failing among the noise.
+  pr-comment:
+    name: PR status comment
+    needs: [ci, e2e, e2e-worker]
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: helpers4/action/pr-status-comment@b93b7383e99665db30a61f16afce9fd6347bf4bf # main @ 2026-08-07
+        with:
+          comment-header: "CI"
+          jobs: |
+            {
+              "🔎 TypeCheck / Lint / Test / Build": "${{ needs.ci.result }}",
+              "🧪 E2E (desktop + mobile)": "${{ needs.e2e.result }}",
+              "🧭 E2E (Cloudflare Worker bundle)": "${{ needs.e2e-worker.result }}"
+            }
