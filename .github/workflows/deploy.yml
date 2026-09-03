@@ -18,7 +18,9 @@ jobs:
   # a job in the same workflow run is the only way to gate on the exact
   # commit being deployed.
   ci:
-    uses: tuxery/.github/.github/workflows/ci-web.yml@d31579f042cf78a25d34c729966ddf91f59c38be # main @ 2026-08-13
+    # Kept in lockstep with ci.yml's pin to the same reusable workflow — see
+    # that file's comment for why this is a branch SHA, not main yet.
+    uses: tuxery/.github/.github/workflows/ci-web.yml@0e35a38b6c2644fece88e6b86c7136bf49752329 # ci/expose-per-job-outputs @ 2026-09-03
     with:
       working-directory: .
 
