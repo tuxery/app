@@ -9,8 +9,13 @@ import { defineConfig } from "@playwright/test";
 // dead, empty object at build time (see README.md's Deployment section).
 // This config runs against that real artifact instead: `wrangler dev`
 // serving a fresh `pnpm run build`, reading `.dev.vars` (gitignored — copy
-// the three keys from `../.dev/.env`, see README.md) for real bindings via
-// `platform.env`, the same channel the deployed Worker uses.
+// the three keys from `../.dev/.env.preview`, see README.md) for real
+// bindings via `platform.env`, the same channel the deployed Worker uses.
+// `.env.preview`, not `.env` — `wrangler dev` is emulating the Cloudflare
+// Worker runtime, so it gets the preview environment's own DB, same as
+// CI's e2e-worker job (see ci.yml); plain local dev (`pnpm dev`/`start`,
+// no Cloudflare emulation at all) is the only thing that uses the local
+// sqlite server instead, see vite.config.ts.
 export default defineConfig({
   testDir: "./e2e-worker",
   fullyParallel: true,
