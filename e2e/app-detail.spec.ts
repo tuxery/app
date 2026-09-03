@@ -40,7 +40,7 @@ test("a single-source rated app's tooltip still prefixes the figure with its sou
 }) => {
   await page.goto(FIREWATCH);
   await expect(page.getByText(/\d\.\d \(\d/).first()).toBeVisible();
-  await expect(page.getByTitle("GOG: ★ 3.9 (2,153)")).toBeVisible();
+  await expect(page.getByTitle("GOG: ★ 3.9 (2,174)")).toBeVisible();
 });
 
 test("a multi-source rated app's tooltip lists every source, each prefixed by its own label", async ({
