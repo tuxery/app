@@ -47,6 +47,46 @@ async function safely<T>(fallback: T, fn: () => Promise<T>): Promise<T> {
   }
 }
 
+interface CacheEntry<T> {
+  value: T;
+  expiresAt: number;
+}
+
+const LISTING_CACHE_TTL_MS = 10 * 60 * 1000;
+const listingCache = new Map<string, CacheEntry<unknown>>();
+
+/**
+ * Caches a listing/aggregate query in memory for `LISTING_CACHE_TTL_MS`,
+ * keyed by whatever the caller passes (function name + its filter args) —
+ * these only change when catalog republishes (manual, infrequent today),
+ * so redoing the same query on every single request in between is pure
+ * waste. Real motivation, not speculative: this exact class of query (13
+ * of them, fired by the homepage alone) was unindexed until 2026-09-03
+ * and burned through Turso's entire 500M-row monthly quota in 3 days —
+ * indexes fix the per-query cost, this fixes the redundant-repeat cost on
+ * top of that. Subsumes `safely()` for these callers rather than wrapping
+ * it: a failed fetch must never get cached (that would extend a real
+ * outage's visible impact for the rest of the TTL), so this only ever
+ * writes the cache on success, same "degrade to fallback, log the error"
+ * behavior as `safely()` on failure. Per-isolate only, like this file's
+ * own `client` singleton and `~/unsplash`'s photo cache — doesn't survive
+ * a cold start or spread across isolates, but free on every request a
+ * warm one serves in between.
+ */
+async function cachedListing<T>(key: string, fallback: T, fn: () => Promise<T>): Promise<T> {
+  const cached = listingCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.value as T;
+
+  try {
+    const value = await fn();
+    listingCache.set(key, { value, expiresAt: Date.now() + LISTING_CACHE_TTL_MS });
+    return value;
+  } catch (error) {
+    console.error("[catalog] query failed, degrading to empty:", error);
+    return fallback;
+  }
+}
+
 type Row = Record<string, unknown>;
 
 function parseRating(row: Row): { average: number; count: number } | undefined {
@@ -378,7 +418,7 @@ export async function getTrendingApps(
   const db = getClient(env);
   if (!db) return [];
 
-  return safely([], async () => {
+  return cachedListing(`getTrendingApps:${typeFilter}`, [], async () => {
     let where = "";
     if (typeFilter === "game") {
       where = "AND content_type = 'game'";
@@ -408,7 +448,7 @@ export async function getNewApps(
   const db = getClient(env);
   if (!db) return [];
 
-  return safely([], async () => {
+  return cachedListing(`getNewApps:${typeFilter}`, [], async () => {
     let where = "";
     if (typeFilter === "game") {
       where = "AND content_type = 'game'";
@@ -439,7 +479,7 @@ export async function getDownloadTrendingApps(
   const db = getClient(env);
   if (!db) return [];
 
-  return safely([], async () => {
+  return cachedListing(`getDownloadTrendingApps:${typeFilter}`, [], async () => {
     let where = "";
     if (typeFilter === "game") {
       where = "AND content_type = 'game'";
@@ -469,7 +509,7 @@ export async function getTrendingAppsBySource(
   const db = getClient(env);
   if (!db) return [];
 
-  return safely([], async () => {
+  return cachedListing(`getTrendingAppsBySource:${source}:${limit}`, [], async () => {
     const result = await db.execute({
       sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE popularity IS NOT NULL AND ${HAS_VISUAL_ASSET} AND packages_json LIKE ? ORDER BY popularity DESC LIMIT ?`,
       args: [`%"source":"${source}"%`, limit],
@@ -497,7 +537,7 @@ export async function getAppsByCategory(
   const db = getClient(env);
   if (!db) return [];
 
-  return safely<AppSummary[]>([], async () => {
+  return cachedListing<AppSummary[]>(`getAppsByCategory:${category}:${limit}`, [], async () => {
     const result = await db.execute({
       sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE category = ? AND ${HAS_VISUAL_ASSET} ORDER BY popularity IS NULL, popularity DESC, name ASC LIMIT ?`,
       args: [category, limit],
@@ -526,7 +566,7 @@ export async function getCategories(
   const db = getClient(env);
   if (!db) return [];
 
-  return safely([], async () => {
+  return cachedListing(`getCategories:${typeFilter}`, [], async () => {
     const where =
       typeFilter === "game"
         ? "WHERE content_type = 'game'"
