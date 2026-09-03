@@ -1,10 +1,14 @@
 import { component$ } from "@builder.io/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
+import { TuxeryLogo } from "~/components/tuxery-logo/tuxery-logo";
 
 export default component$(() => {
   return (
     <div class="flex flex-col gap-10 max-w-2xl">
       <section>
+        <div class="flex justify-center mb-6">
+          <TuxeryLogo size={96} cutoutColor="var(--color-base-100)" />
+        </div>
         <h1 class="text-3xl font-bold mb-3">About Tuxery</h1>
         <p class="text-base-content/80">
           Tuxery's goal is simple, if a little ambitious: list every piece of Linux software and
