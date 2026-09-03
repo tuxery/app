@@ -7,8 +7,12 @@ on:
     branches: [main]
 
 jobs:
+  # Pinned to the ci/expose-per-job-outputs branch, not main yet — that
+  # branch adds the typecheck-result/lint-result/test-result/test-summary/
+  # build-result outputs the pr-comment job below reads. Re-pin to main
+  # once tuxery/.github's PR for it merges.
   ci:
-    uses: tuxery/.github/.github/workflows/ci-web.yml@d31579f042cf78a25d34c729966ddf91f59c38be # main @ 2026-08-13
+    uses: tuxery/.github/.github/workflows/ci-web.yml@0e35a38b6c2644fece88e6b86c7136bf49752329 # ci/expose-per-job-outputs @ 2026-09-03
     with:
       working-directory: .
 
@@ -36,6 +40,8 @@ jobs:
   e2e-worker:
     name: E2E (Cloudflare Worker bundle)
     runs-on: ubuntu-latest
+    outputs:
+      summary: ${{ steps.summary.outputs.summary }}
     steps:
       - uses: actions/checkout@v7
 
@@ -55,27 +61,43 @@ jobs:
           VARS
 
       - name: Run worker e2e
-        run: pnpm run test.e2e.worker
+        run: pnpm run test.e2e.worker -- --reporter=list,json
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: e2e-worker-report.json
 
-  # e2e/'s own suite (desktop `chromium` + mobile `mobile-chromium`, see
-  # playwright.config.ts) — previously never run automatically anywhere,
-  # only in e2e-worker/'s narrower Worker-bundle-specific check above and
-  # whatever a human happened to run locally. Against `pnpm dev` (cheaper/
-  # faster than wrangler dev — this suite doesn't need the real Worker
-  # bundle, e2e-worker/ already covers that half), pointed at the real
-  # preview Turso DB via the same secrets e2e-worker uses. Safe now that
-  # both catalog's indexes and this repo's listing-query cache
-  # (catalog.ts's cachedListing) are in place — the 2026-09-03 Turso quota
-  # incident was root-caused to missing indexes turning every query into a
-  # full-table scan, not to running queries as such; a full suite run here
-  # reads a few thousand rows at most, not hundreds of millions. No
-  # UNSPLASH_ACCESS_KEY, same reasoning as e2e-worker above.
-  e2e:
-    name: E2E (desktop + mobile)
+      - name: Summarize results
+        id: summary
+        if: always()
+        run: |
+          if [[ -f e2e-worker-report.json ]]; then
+            summary=$(jq -r '.stats | "\(.expected) passed, \(.unexpected) failed, \(.flaky) flaky, \(.skipped) skipped"' e2e-worker-report.json)
+          else
+            summary="no report"
+          fi
+          echo "summary=$summary" >> "$GITHUB_OUTPUT"
+
+  # e2e/'s own suite split into its two Playwright projects (see
+  # playwright.config.ts) as two separate jobs — previously one "e2e" job
+  # ran both, which meant a mobile-only failure showed as one bundled
+  # "failing" row with no way to tell desktop and mobile apart from the PR
+  # comment alone. Against `pnpm dev` (cheaper/faster than wrangler dev —
+  # this suite doesn't need the real Worker bundle, e2e-worker/ already
+  # covers that half), pointed at the real preview Turso DB via the same
+  # secrets e2e-worker uses. Safe now that both catalog's indexes and this
+  # repo's listing-query cache (catalog.ts's cachedListing) are in place —
+  # the 2026-09-03 Turso quota incident was root-caused to missing indexes
+  # turning every query into a full-table scan, not to running queries as
+  # such; a full suite run here reads a few thousand rows at most, not
+  # hundreds of millions. No UNSPLASH_ACCESS_KEY, same reasoning as
+  # e2e-worker above.
+  e2e-desktop:
+    name: E2E (desktop)
     runs-on: ubuntu-latest
     env:
       TURSO_DB_URL: ${{ secrets.TURSO_PREVIEW_DB_URL }}
       TURSO_DB_AUTH_TOKEN: ${{ secrets.TURSO_PREVIEW_DB_AUTH_TOKEN }}
+    outputs:
+      summary: ${{ steps.summary.outputs.summary }}
     steps:
       - uses: actions/checkout@v7
 
@@ -87,17 +109,108 @@ jobs:
       - name: Install Playwright's Chromium
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run e2e
-        run: pnpm run test.e2e
+      - name: Run e2e (desktop)
+        run: pnpm exec playwright test --project=chromium --reporter=list,json
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: e2e-desktop-report.json
+
+      - name: Summarize results
+        id: summary
+        if: always()
+        run: |
+          if [[ -f e2e-desktop-report.json ]]; then
+            summary=$(jq -r '.stats | "\(.expected) passed, \(.unexpected) failed, \(.flaky) flaky, \(.skipped) skipped"' e2e-desktop-report.json)
+          else
+            summary="no report"
+          fi
+          echo "summary=$summary" >> "$GITHUB_OUTPUT"
+
+  # Mobile half of the same suite (mobile-chromium project, mobile-*.spec.ts
+  # files) — see e2e-desktop above for why this is a separate job rather
+  # than one "e2e" job running both projects.
+  e2e-mobile:
+    name: E2E (mobile)
+    runs-on: ubuntu-latest
+    env:
+      TURSO_DB_URL: ${{ secrets.TURSO_PREVIEW_DB_URL }}
+      TURSO_DB_AUTH_TOKEN: ${{ secrets.TURSO_PREVIEW_DB_AUTH_TOKEN }}
+    outputs:
+      summary: ${{ steps.summary.outputs.summary }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: helpers4/action/setup-pnpm@6fddd178620e7325d446a246c38a44f979569fc4 # main @ 2026-07-29
+        with:
+          node-version: "24"
+          working-directory: .
+
+      - name: Install Playwright's Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run e2e (mobile)
+        run: pnpm exec playwright test --project=mobile-chromium --reporter=list,json
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: e2e-mobile-report.json
+
+      - name: Summarize results
+        id: summary
+        if: always()
+        run: |
+          if [[ -f e2e-mobile-report.json ]]; then
+            summary=$(jq -r '.stats | "\(.expected) passed, \(.unexpected) failed, \(.flaky) flaky, \(.skipped) skipped"' e2e-mobile-report.json)
+          else
+            summary="no report"
+          fi
+          echo "summary=$summary" >> "$GITHUB_OUTPUT"
+
+  # e2e-degraded/'s suite (playwright.degraded.config.ts) — the one place
+  # TURSO_DB_URL is deliberately unset, exercising the app's own no-DB
+  # fallback UI. Never wired into any CI workflow before now. No secrets,
+  # no preview DB — its own dev server on its own port, see that config's
+  # header comment.
+  e2e-degraded:
+    name: E2E (degraded, no DB)
+    runs-on: ubuntu-latest
+    outputs:
+      summary: ${{ steps.summary.outputs.summary }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: helpers4/action/setup-pnpm@6fddd178620e7325d446a246c38a44f979569fc4 # main @ 2026-07-29
+        with:
+          node-version: "24"
+          working-directory: .
+
+      - name: Install Playwright's Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run e2e (degraded)
+        run: pnpm run test.e2e.degraded -- --reporter=list,json
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: e2e-degraded-report.json
+
+      - name: Summarize results
+        id: summary
+        if: always()
+        run: |
+          if [[ -f e2e-degraded-report.json ]]; then
+            summary=$(jq -r '.stats | "\(.expected) passed, \(.unexpected) failed, \(.flaky) flaky, \(.skipped) skipped"' e2e-degraded-report.json)
+          else
+            summary="no report"
+          fi
+          echo "summary=$summary" >> "$GITHUB_OUTPUT"
 
   # One sticky comment (updates in place across pushes, not a new one
   # every run) summarizing every check in one place — GitHub's own PR
-  # "Checks" tab scatters typecheck/lint/test/build (all inside the one
-  # reusable ci-web.yml call) and the two e2e jobs across separate rows,
-  # easy to miss one failing among the noise.
+  # "Checks" tab scatters typecheck/lint/test/build/e2e-desktop/e2e-mobile/
+  # e2e-worker/e2e-degraded across separate rows, easy to miss one failing
+  # among the noise. Each row also carries its own pass/fail counts (from
+  # ci-web.yml's test-summary output and each e2e job's own JSON-reporter
+  # summary above) rather than just a status icon, so a failure is visible
+  # at a glance without opening the job log.
   pr-comment:
     name: PR status comment
-    needs: [ci, e2e, e2e-worker]
+    needs: [ci, e2e-desktop, e2e-mobile, e2e-worker, e2e-degraded]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
@@ -108,7 +221,12 @@ jobs:
           comment-header: "CI"
           jobs: |
             {
-              "🔎 TypeCheck / Lint / Test / Build": "${{ needs.ci.result }}",
-              "🧪 E2E (desktop + mobile)": "${{ needs.e2e.result }}",
-              "🧭 E2E (Cloudflare Worker bundle)": "${{ needs.e2e-worker.result }}"
+              "🔎 TypeCheck": "${{ needs.ci.outputs.typecheck-result }}",
+              "🧹 Lint": "${{ needs.ci.outputs.lint-result }}",
+              "🧪 Unit Tests (${{ needs.ci.outputs.test-summary }})": "${{ needs.ci.outputs.test-result }}",
+              "📦 Build": "${{ needs.ci.outputs.build-result }}",
+              "🖥️ E2E Desktop (${{ needs.e2e-desktop.outputs.summary }})": "${{ needs.e2e-desktop.result }}",
+              "📱 E2E Mobile (${{ needs.e2e-mobile.outputs.summary }})": "${{ needs.e2e-mobile.result }}",
+              "🧭 E2E Worker bundle (${{ needs.e2e-worker.outputs.summary }})": "${{ needs.e2e-worker.result }}",
+              "🛟 E2E Degraded (${{ needs.e2e-degraded.outputs.summary }})": "${{ needs.e2e-degraded.result }}"
             }
