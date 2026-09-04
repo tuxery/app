@@ -197,6 +197,15 @@ export type InterfaceFilter = "all" | "gui" | "cli";
  * now that catalog's own taxonomy scopes categories by app/game directly
  * (Utilities is just one ordinary category among many, same as every
  * real app store researched treats it — see the categories board card).
+ *
+ * Every `typeFilter === "app"` query below filters `content_type IS NULL`,
+ * not `content_type IS NOT 'game'` — same set of rows (catalog's
+ * `AppRecord.contentType` is only ever written as "game" or left
+ * unset/NULL, see `tuxery/catalog`'s `turso-client.ts`), but SQLite can
+ * use `idx_apps_content_type*` for an equality/NULL check where it can't
+ * for a negation. Real cost, found live via Turso's query stats
+ * 2026-09-04: despite the indexes landing 2026-09-03, `content_type IS
+ * NOT 'game'` was still a full ~168k-row scan on every cache miss.
  */
 export type TypeFilter = "all" | "game" | "app";
 
@@ -306,8 +315,9 @@ export async function browseApps(
     sort = "relevance",
   } = options;
 
-  return safely({ apps: [], total: 0 }, async () => {
-    const trimmed = query.trim();
+  const trimmed = query.trim();
+
+  const runBrowseQuery = async (): Promise<BrowseResult> => {
     const { where: searchWhere, whereArgs, orderBy, orderArgs } = buildSearchClause(trimmed);
 
     const conditions: string[] = [];
@@ -316,12 +326,18 @@ export async function browseApps(
     if (interfaceFilter === "gui") {
       conditions.push("kind = 'gui'");
     } else if (interfaceFilter === "cli") {
-      conditions.push("(kind IS NULL OR kind != 'gui')");
+      // `kind` is only ever written as "gui" or left NULL (see catalog's
+      // `AppRecord.kind`, typed `"gui" | undefined` — never any other
+      // string), so "not gui" and "IS NULL" are the same set of rows.
+      // `kind != 'gui'` on its own can't use an index (negation isn't a
+      // b-tree range), same class of gap as content_type IS NOT 'game'
+      // below — rewritten to the indexable equivalent.
+      conditions.push("kind IS NULL");
     }
     if (typeFilter === "game") {
       conditions.push("content_type = 'game'");
     } else if (typeFilter === "app") {
-      conditions.push("content_type IS NOT 'game'");
+      conditions.push("content_type IS NULL");
     }
     if (category) {
       conditions.push("category = ?");
@@ -356,7 +372,23 @@ export async function browseApps(
     });
 
     return { apps: listResult.rows.map((row) => toSummary(row as unknown as Row)), total };
-  });
+  };
+
+  // A free-text query has an effectively unbounded key space (arbitrary
+  // user input) — stays uncached, same as before. Everything else
+  // (filter/category/source/sort/page) is a small, bounded combination
+  // that only changes when catalog republishes, same "cache it" reasoning
+  // as the homepage's cachedListing queries above. Real cost this fixes,
+  // found live via Turso's query stats 2026-09-04: `browseApps`'s
+  // `source` filter (`packages_json LIKE`, can't use an index — see
+  // catalog's turso-client.ts) was paying two uncached full-table scans
+  // — one for COUNT(*), one for the page itself — on every single visit
+  // to a source's browse/store page.
+  if (!trimmed) {
+    const key = `browseApps:${interfaceFilter}:${typeFilter}:${category ?? ""}:${source ?? ""}:${sort}:${page}`;
+    return cachedListing(key, { apps: [], total: 0 }, runBrowseQuery);
+  }
+  return safely({ apps: [], total: 0 }, runBrowseQuery);
 }
 
 /** Looks up several apps by id at once, in whatever order the DB returns them — callers that need a specific order (e.g. an editorial block referencing ids in a chosen sequence) should re-sort client-side. Missing ids are silently dropped rather than erroring, since editorial content referencing a since-removed app shouldn't break the whole page. */
@@ -423,7 +455,7 @@ export async function getTrendingApps(
     if (typeFilter === "game") {
       where = "AND content_type = 'game'";
     } else if (typeFilter === "app") {
-      where = "AND content_type IS NOT 'game'";
+      where = "AND content_type IS NULL";
     }
     const result = await db.execute({
       sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE popularity IS NOT NULL AND ${HAS_VISUAL_ASSET} ${where} ORDER BY popularity DESC LIMIT ?`,
@@ -453,7 +485,7 @@ export async function getNewApps(
     if (typeFilter === "game") {
       where = "AND content_type = 'game'";
     } else if (typeFilter === "app") {
-      where = "AND content_type IS NOT 'game'";
+      where = "AND content_type IS NULL";
     }
     const result = await db.execute({
       sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE last_updated IS NOT NULL AND ${HAS_VISUAL_ASSET} ${where} ORDER BY last_updated DESC LIMIT ?`,
@@ -484,7 +516,7 @@ export async function getDownloadTrendingApps(
     if (typeFilter === "game") {
       where = "AND content_type = 'game'";
     } else if (typeFilter === "app") {
-      where = "AND content_type IS NOT 'game'";
+      where = "AND content_type IS NULL";
     }
     const result = await db.execute({
       sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE installs_last_7_days IS NOT NULL AND ${HAS_VISUAL_ASSET} ${where} ORDER BY installs_last_7_days DESC LIMIT ?`,
@@ -571,7 +603,7 @@ export async function getCategories(
       typeFilter === "game"
         ? "WHERE content_type = 'game'"
         : typeFilter === "app"
-          ? "WHERE content_type IS NOT 'game'"
+          ? "WHERE content_type IS NULL"
           : "";
     const result = await db.execute({
       sql: `SELECT category, COUNT(*) as count FROM apps ${where} GROUP BY category ORDER BY count DESC`,
