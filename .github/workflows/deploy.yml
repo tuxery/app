@@ -19,8 +19,10 @@ jobs:
   # commit being deployed.
   ci:
     # Kept in lockstep with ci.yml's pin to the same reusable workflow — see
-    # that file's comment for why this is a branch SHA, not main yet.
-    uses: tuxery/.github/.github/workflows/ci-web.yml@0e35a38b6c2644fece88e6b86c7136bf49752329 # ci/expose-per-job-outputs @ 2026-09-03
+    # that file's comment: this was pinned to a feature-branch tip commit
+    # that became unreachable once that branch's PR merged, breaking every
+    # run (including deploys) since 2026-09-03. Re-pinned to main's head.
+    uses: tuxery/.github/.github/workflows/ci-web.yml@a93f7e556b3778cdc3b23bff815b4bba650c7b47 # main @ 2026-09-04
     with:
       working-directory: .
 

@@ -7,12 +7,21 @@ on:
     branches: [main]
 
 jobs:
-  # Pinned to the ci/expose-per-job-outputs branch, not main yet — that
-  # branch adds the typecheck-result/lint-result/test-result/test-summary/
-  # build-result outputs the pr-comment job below reads. Re-pin to main
-  # once tuxery/.github's PR for it merges.
+  # Needs the typecheck-result/lint-result/test-result/test-summary/
+  # build-result outputs the pr-comment job below reads — added to
+  # tuxery/.github's ci-web.yml by a93f7e5, now on main.
+  #
+  # This was pinned to the ci/expose-per-job-outputs branch's tip commit
+  # from before that PR merged (0e35a38) — real breakage, found live
+  # 2026-09-04: that branch commit is unreachable from any ref once the
+  # PR merged (squash-merged under a93f7e5, a different SHA), so every
+  # run of this workflow since has failed outright before a single job
+  # starts (zero jobs, near-instant "failure", on every push/PR to main
+  # from 9187841 onward — this repo's CI has been red the whole time).
+  # Re-pin to a real branch/tag-reachable SHA, not a feature-branch tip
+  # that's about to disappear, next time this needs bumping.
   ci:
-    uses: tuxery/.github/.github/workflows/ci-web.yml@0e35a38b6c2644fece88e6b86c7136bf49752329 # ci/expose-per-job-outputs @ 2026-09-03
+    uses: tuxery/.github/.github/workflows/ci-web.yml@a93f7e556b3778cdc3b23bff815b4bba650c7b47 # main @ 2026-09-04
     with:
       working-directory: .
 
