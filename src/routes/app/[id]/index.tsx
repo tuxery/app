@@ -1,7 +1,7 @@
 import { $, component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { unique } from "@helpers4/array";
+import { unique } from "helpers4/array";
 import { LuBadgeCheck, LuExternalLink, LuFlag, LuPackage } from "@qwikest/icons/lucide";
 import { getAppById, getStats } from "~/catalog";
 import { resolveServerEnv } from "~/server-env";

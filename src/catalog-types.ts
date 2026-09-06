@@ -9,9 +9,9 @@
 // `apps` table). No cross-repo import (separate repos, not a monorepo), so
 // this is kept in sync by hand.
 
-import { unique } from "@helpers4/array";
-import { formatSize } from "@helpers4/number";
-import { capitalize } from "@helpers4/string";
+import { unique } from "helpers4/array";
+import { formatSize } from "helpers4/number";
+import { capitalize } from "helpers4/string";
 
 // One id per connector folder under catalog's packages/sources/src/ —
 // `<format>-<provider>` (e.g. "deb-debian"), except appimage/slackware/

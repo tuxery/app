@@ -6,8 +6,8 @@ import {
   useVisibleTask$,
   type Signal,
 } from "@builder.io/qwik";
-import { toMapByKey } from "@helpers4/map";
-import { safeJsonParse } from "@helpers4/object";
+import { toMapByKey } from "helpers4/map";
+import { safeJsonParse } from "helpers4/object";
 
 export type Theme = "light" | "dark" | "system";
 

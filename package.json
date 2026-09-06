@@ -27,17 +27,11 @@
     "qwik": "qwik"
   },
   "dependencies": {
-    "@helpers4/array": "^3.1.1",
-    "@helpers4/guard": "^3.1.1",
-    "@helpers4/map": "^3.1.1",
-    "@helpers4/number": "^3.1.1",
-    "@helpers4/object": "^3.1.1",
-    "@helpers4/promise": "^3.1.1",
-    "@helpers4/string": "^3.1.1",
     "@libsql/client": "^0.17.4",
     "@qwik-ui/headless": "^0.7.7",
     "@qwikest/icons": "^0.0.13",
-    "daisyui": "^5.7.22"
+    "daisyui": "^5.7.22",
+    "helpers4": "^3.1.1"
   },
   "devDependencies": {
     "@builder.io/qwik": "^1.20.0",
