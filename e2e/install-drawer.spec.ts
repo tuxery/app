@@ -117,7 +117,7 @@ test("a native-package-only app shows a copy-paste command, even when it has an 
 test("a source with more than one channel (AUR's official/-bin/-git builds) shows a channel tab group, not stacked rows", async ({
   page,
 }) => {
-  await page.goto("/app/ai.jan.Jan/");
+  await page.goto("/app/jan-ai/");
   await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Arch Linux" }).click();
 
