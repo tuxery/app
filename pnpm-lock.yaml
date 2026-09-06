@@ -12,26 +12,26 @@ importers:
   .:
     dependencies:
       '@helpers4/array':
-        specifier: ^3.0.9
-        version: 3.0.9
+        specifier: ^3.1.1
+        version: 3.1.1
       '@helpers4/guard':
-        specifier: ^3.0.9
-        version: 3.0.9
+        specifier: ^3.1.1
+        version: 3.1.1
       '@helpers4/map':
-        specifier: ^3.0.9
-        version: 3.0.9
+        specifier: ^3.1.1
+        version: 3.1.1
       '@helpers4/number':
-        specifier: ^3.0.9
-        version: 3.0.9
+        specifier: ^3.1.1
+        version: 3.1.1
       '@helpers4/object':
-        specifier: ^3.0.9
-        version: 3.0.9
+        specifier: ^3.1.1
+        version: 3.1.1
       '@helpers4/promise':
-        specifier: ^3.0.9
-        version: 3.0.9
+        specifier: ^3.1.1
+        version: 3.1.1
       '@helpers4/string':
-        specifier: ^3.0.9
-        version: 3.0.9
+        specifier: ^3.1.1
+        version: 3.1.1
       '@libsql/client':
         specifier: ^0.17.4
         version: 0.17.4
@@ -484,32 +484,32 @@ packages:
   '@fluejs/noscroll@1.0.0':
     resolution: {integrity: sha512-fyu6jPL/BzUWkrxpwmG8RC/8LM4Fp2GprYRco2BBTypIl7zDyuipRHg6NcuoTGh4s5fAV8D1DBDMS2aDhuGclg==}
 
-  '@helpers4/array@3.0.9':
-    resolution: {integrity: sha512-mxk8YaGIP+CaTfiMxTqpETZ55TFRnCBCbb+DuAoLMt9JEVg3b4gXqZlODe2yYOsRCbwlJXYyeV7iAzLtwQ8G5g==}
+  '@helpers4/array@3.1.1':
+    resolution: {integrity: sha512-922w05k0f7wMpAqY1cPhsHnVfzjWIownrXQWKqT7NUoX36670TIVYS3qYUWPtJMWInGuRD89yzRg2bHArTv/rQ==}
     engines: {node: '>=26.0.0'}
 
-  '@helpers4/guard@3.0.9':
-    resolution: {integrity: sha512-Wnp41j3EExC0MCr2w6SBhDWPBbFCDLJC4wN1VySu/Brr95pZAMxLy9FeDJYkPKAYQNGYSknIKa4aUzTDZL1mSw==}
+  '@helpers4/guard@3.1.1':
+    resolution: {integrity: sha512-+Q852y6pfUrzkEsygMaZ/WPW9y69M8mGQx6ZCQ3J5r40desv65PpyURP14cI9Guxz3z5SnHMawQswIV0v3D4Zg==}
     engines: {node: '>=26.0.0'}
 
-  '@helpers4/map@3.0.9':
-    resolution: {integrity: sha512-+nBsD0sFFUH5RdHJjET9xCZaUf0ELRjxKlG/92jqZMJ1/vD74j+88oUZXpOgQBKqW53uPOUYVy8txFQt4SbvNA==}
+  '@helpers4/map@3.1.1':
+    resolution: {integrity: sha512-So9G7jGQkIXWHjWQOJmuW1UZA19v8vCV0qtwMuhh6WVckk5nfO+S0SRYzBKMooNdb7SvWz8GBLuMHeVlFKik/Q==}
     engines: {node: '>=26.0.0'}
 
-  '@helpers4/number@3.0.9':
-    resolution: {integrity: sha512-9ewJUuLN80x8MoCg7/aGlSI0ytDzaBpwfLCVamyKFKbRAuk1zTaudQHgyphoXmk4FGJk9wBDBPcXXGNXyb1i8w==}
+  '@helpers4/number@3.1.1':
+    resolution: {integrity: sha512-a0CrkWRTf/n6Ts8MkCJCfnArprkghWM5567QaBtJkgbuokFU460FL3wlO4Y4pCgrTBdfkEjHQjsAlQSUp2yzsQ==}
     engines: {node: '>=26.0.0'}
 
-  '@helpers4/object@3.0.9':
-    resolution: {integrity: sha512-ZHbZUvQSkWUdBMyNs9EPohcEoPL9rqhHSqvYF7brs5R749aMRUs92/3AmU/XIRre6axXZ95c81wVTzeGff1R3A==}
+  '@helpers4/object@3.1.1':
+    resolution: {integrity: sha512-+0YzD0+TXqsjKXUxyWqRuVZGmIFv2SH+Fudvb4QmN0Jv7zORHQZvoguZWQLPF4PbhMFSJTr2eoMB4SXIGwOFMQ==}
     engines: {node: '>=26.0.0'}
 
-  '@helpers4/promise@3.0.9':
-    resolution: {integrity: sha512-H6rkPT9Ldt9r7RDKBBlUTwep8mWtXHHWzwDY9gw9YwqE5GTw27FnIf390GFpx1bSj+dXT+oKEl1dtDk9ct/dxg==}
+  '@helpers4/promise@3.1.1':
+    resolution: {integrity: sha512-utTUGpw9/v11vLSpm2ONb8mWrMU4ztivbhpoMx/JVRLMeswKA+BHK1oXEyvCVdpMEU5tnnGIr+z3kuwfksVmmA==}
     engines: {node: '>=26.0.0'}
 
-  '@helpers4/string@3.0.9':
-    resolution: {integrity: sha512-GHxEsTwcGijhs56RpuWYbBZeotQir6O9y7Wb7AW28Iq8kccycZtqXUEluw7Wpa87tHGzsLQu5yvjELjzUUh2Jg==}
+  '@helpers4/string@3.1.1':
+    resolution: {integrity: sha512-iS9IXM8X6EVtDADL8kWTHFnyxSS7OTIL2h39PV4Mz3vYIQnlLgSeV9GmjAz/6EJavxd5KSguwMH2XxpEx6hz+w==}
     engines: {node: '>=26.0.0'}
 
   '@img/colour@1.1.0':
@@ -2856,19 +2856,19 @@ snapshots:
 
   '@fluejs/noscroll@1.0.0': {}
 
-  '@helpers4/array@3.0.9': {}
+  '@helpers4/array@3.1.1': {}
 
-  '@helpers4/guard@3.0.9': {}
+  '@helpers4/guard@3.1.1': {}
 
-  '@helpers4/map@3.0.9': {}
+  '@helpers4/map@3.1.1': {}
 
-  '@helpers4/number@3.0.9': {}
+  '@helpers4/number@3.1.1': {}
 
-  '@helpers4/object@3.0.9': {}
+  '@helpers4/object@3.1.1': {}
 
-  '@helpers4/promise@3.0.9': {}
+  '@helpers4/promise@3.1.1': {}
 
-  '@helpers4/string@3.0.9': {}
+  '@helpers4/string@3.1.1': {}
 
   '@img/colour@1.1.0': {}
 
