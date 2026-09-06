@@ -1,7 +1,7 @@
 import { component$ } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
 import type { DocumentHead } from "@builder.io/qwik-city";
-import { toMapByKey } from "@helpers4/map";
+import { toMapByKey } from "helpers4/map";
 import { AppCardLink } from "~/components/app-card/app-card";
 import { getAppsByIds } from "~/catalog";
 import { getInfluencerPage, type InfluencerBlock } from "~/data/influencer-pages";

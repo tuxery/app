@@ -11,27 +11,6 @@ importers:
 
   .:
     dependencies:
-      '@helpers4/array':
-        specifier: ^3.1.1
-        version: 3.1.1
-      '@helpers4/guard':
-        specifier: ^3.1.1
-        version: 3.1.1
-      '@helpers4/map':
-        specifier: ^3.1.1
-        version: 3.1.1
-      '@helpers4/number':
-        specifier: ^3.1.1
-        version: 3.1.1
-      '@helpers4/object':
-        specifier: ^3.1.1
-        version: 3.1.1
-      '@helpers4/promise':
-        specifier: ^3.1.1
-        version: 3.1.1
-      '@helpers4/string':
-        specifier: ^3.1.1
-        version: 3.1.1
       '@libsql/client':
         specifier: ^0.17.4
         version: 0.17.4
@@ -44,6 +23,9 @@ importers:
       daisyui:
         specifier: ^5.7.22
         version: 5.7.22
+      helpers4:
+        specifier: ^3.1.1
+        version: 3.1.1(@types/node@20.19.0)(rxjs@7.8.2)
     devDependencies:
       '@builder.io/qwik':
         specifier: ^1.20.0
@@ -488,13 +470,47 @@ packages:
     resolution: {integrity: sha512-922w05k0f7wMpAqY1cPhsHnVfzjWIownrXQWKqT7NUoX36670TIVYS3qYUWPtJMWInGuRD89yzRg2bHArTv/rQ==}
     engines: {node: '>=26.0.0'}
 
+  '@helpers4/ci@3.1.1':
+    resolution: {integrity: sha512-Qt0SsZXZSjy2AE5KbL2bDnIQ+Y5yKDdC2kuAlmfB7lf3YtMUHP/ANey9Ewql5WJWZZWsrr69etjiBk5YS96QAw==}
+    engines: {node: '>=26.0.0'}
+
+  '@helpers4/color@3.1.1':
+    resolution: {integrity: sha512-Y8u8xyoASVF5Rsmd38aAhNO7XvP2zdyr/7LKNyLYU7+LudIN/rcUQySwWgxt+Al3uuOv89mKJGM5/pWT5soocA==}
+    engines: {node: '>=26.0.0'}
+
+  '@helpers4/commit@3.1.1':
+    resolution: {integrity: sha512-LOYUPQyNPiqfMFx5A0RgwcY1fRGItZLiCuC6CQPgxzIUkKISGfu98rh6AfKKuzYHMjU6g7UFid2AwQIWqixz3A==}
+    engines: {node: '>=26.0.0'}
+
+  '@helpers4/date@3.1.1':
+    resolution: {integrity: sha512-XvWD807ImZatxiX2Q+AjNb3pw2dPDJtryAfvaabtV0nzTs/YlSIM3CdKGpRC0I5nag6RC9zGBK9n7ilLj+1kkA==}
+    engines: {node: '>=26.0.0'}
+
+  '@helpers4/function@3.1.1':
+    resolution: {integrity: sha512-VIXzAIlbuWm/oLLPTun/+gjfsWAu45sU2THNEfcHky+pddB8Yf8jVWnbKS5vzDJ60ZpXIdT1l3eD4bUw4OzxKQ==}
+    engines: {node: '>=26.0.0'}
+
   '@helpers4/guard@3.1.1':
     resolution: {integrity: sha512-+Q852y6pfUrzkEsygMaZ/WPW9y69M8mGQx6ZCQ3J5r40desv65PpyURP14cI9Guxz3z5SnHMawQswIV0v3D4Zg==}
+    engines: {node: '>=26.0.0'}
+
+  '@helpers4/id@3.1.1':
+    resolution: {integrity: sha512-dY1f/vhIVFEkcYMWhwf9K8T5wNaafIzNwstAPptpgH23rswln8inRjEVy+u/XFmwlItVidHVSX8O6QbwysqTeA==}
     engines: {node: '>=26.0.0'}
 
   '@helpers4/map@3.1.1':
     resolution: {integrity: sha512-So9G7jGQkIXWHjWQOJmuW1UZA19v8vCV0qtwMuhh6WVckk5nfO+S0SRYzBKMooNdb7SvWz8GBLuMHeVlFKik/Q==}
     engines: {node: '>=26.0.0'}
+
+  '@helpers4/markdown@3.1.1':
+    resolution: {integrity: sha512-sMgGQkByS0rqiyAvbW9vqx+qziMuQNUXcVKd6MqLfceoA7yJvs3R0SFLVC67Pg2i65ZrIW5dOSTy26oW3sqppA==}
+    engines: {node: '>=26.0.0'}
+
+  '@helpers4/node@3.1.1':
+    resolution: {integrity: sha512-U+jscIhWiWF4IUwlwRYp5f6YWYkkCcOEdcubzTnWJy4eZHBS5TbWl59SBH0UT0AuHZl1Wco7VR3AJCflp2FySA==}
+    engines: {node: '>=26.0.0'}
+    peerDependencies:
+      '@types/node': '>=22'
 
   '@helpers4/number@3.1.1':
     resolution: {integrity: sha512-a0CrkWRTf/n6Ts8MkCJCfnArprkghWM5567QaBtJkgbuokFU460FL3wlO4Y4pCgrTBdfkEjHQjsAlQSUp2yzsQ==}
@@ -504,12 +520,38 @@ packages:
     resolution: {integrity: sha512-+0YzD0+TXqsjKXUxyWqRuVZGmIFv2SH+Fudvb4QmN0Jv7zORHQZvoguZWQLPF4PbhMFSJTr2eoMB4SXIGwOFMQ==}
     engines: {node: '>=26.0.0'}
 
+  '@helpers4/observable@3.1.1':
+    resolution: {integrity: sha512-W1/TTewEPLX1jI8iStuEAiDQ7qbbqE4s43Yq4xwr/me9eybl20HtQVxElriUYoYl9tmkJ9Y9dkV/d9RQ1DSL/A==}
+    engines: {node: '>=26.0.0'}
+    peerDependencies:
+      rxjs: ^7.0.0
+
   '@helpers4/promise@3.1.1':
     resolution: {integrity: sha512-utTUGpw9/v11vLSpm2ONb8mWrMU4ztivbhpoMx/JVRLMeswKA+BHK1oXEyvCVdpMEU5tnnGIr+z3kuwfksVmmA==}
     engines: {node: '>=26.0.0'}
 
+  '@helpers4/set@3.1.1':
+    resolution: {integrity: sha512-c+g3ocK2NYOepKxQQiYKZmAqVXokUEVDwMdT4UaHWjtbbUVJRDNI8/LbpfvbIKjo53klj1QsMd8GstNj7xQdbw==}
+    engines: {node: '>=26.0.0'}
+
   '@helpers4/string@3.1.1':
     resolution: {integrity: sha512-iS9IXM8X6EVtDADL8kWTHFnyxSS7OTIL2h39PV4Mz3vYIQnlLgSeV9GmjAz/6EJavxd5KSguwMH2XxpEx6hz+w==}
+    engines: {node: '>=26.0.0'}
+
+  '@helpers4/structure@3.1.1':
+    resolution: {integrity: sha512-iMoEcn6ffCVrHSDcdb+LEUwBdH+0XXas6s1mLn3ycGW41Q6qOBk5Ce7RYsgS9RfvxcqmqiVDIflAKDyXomErvw==}
+    engines: {node: '>=26.0.0'}
+
+  '@helpers4/type@3.1.1':
+    resolution: {integrity: sha512-X8SBdKmsr6p9fI1zUreYPVlxxhF87tHtblXTEWYQVAoIph8OB3yhTypCqn5K+Yacn4xtI0kDc+bj4Dk+xl9Zeg==}
+    engines: {node: '>=26.0.0'}
+
+  '@helpers4/url@3.1.1':
+    resolution: {integrity: sha512-xHtaTXFRYLw4SDgllLWrPA+SqMICmqUARfvjansctPvOwJqCHV07N8zUc57JmZ34IIQYSB0aMHysDRvFssy/Iw==}
+    engines: {node: '>=26.0.0'}
+
+  '@helpers4/version@3.1.1':
+    resolution: {integrity: sha512-f23IKK3n5/e/EOybBqa/Iwqm0cGbDDUO8xGaV8zS6hBOWtVv7Lj//jADYpi1Sg7cMkU1tsEaN+xX8LM0Ekp5CQ==}
     engines: {node: '>=26.0.0'}
 
   '@img/colour@1.1.0':
@@ -1830,6 +1872,10 @@ packages:
   hast-util-whitespace@3.0.0:
     resolution: {integrity: sha512-88JUN06ipLwsnv+dVn+OIYOvAuvBMy/Qoi6O7mQHxdPXpjy+Cd6xRkWwux7DKO+4sYILtLBRIKgsdpS2gQc7qw==}
 
+  helpers4@3.1.1:
+    resolution: {integrity: sha512-u4OKtUA/Wf8N94LpL0SJhirTOdoE2LhKmNr6JVxCCubhtyhhIIUlJUarP8Tf3OzQL6zqcAvlVpW2Wb0FShLPpw==}
+    engines: {node: '>=26.0.0'}
+
   iconv-lite@0.4.24:
     resolution: {integrity: sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==}
     engines: {node: '>=0.10.0'}
@@ -2275,6 +2321,9 @@ packages:
     resolution: {integrity: sha512-RXOqwaPsBGjMNMa4sQjDjHieHEZDFoj/Rdr46l2MU5DfEs16wHJPC2RPTPHWhNl+M3aI472LLqFkFKut4SblOg==}
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
     hasBin: true
+
+  rxjs@7.8.2:
+    resolution: {integrity: sha512-dhKf903U/PQZY6boNNtAGdWbG85WAbjT/1xYoZIC7FAY0yWapOBQVsVrDl58W86//e1VpMNBtRV4MaXfdMySFA==}
 
   safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
@@ -2858,17 +2907,49 @@ snapshots:
 
   '@helpers4/array@3.1.1': {}
 
+  '@helpers4/ci@3.1.1': {}
+
+  '@helpers4/color@3.1.1': {}
+
+  '@helpers4/commit@3.1.1': {}
+
+  '@helpers4/date@3.1.1': {}
+
+  '@helpers4/function@3.1.1': {}
+
   '@helpers4/guard@3.1.1': {}
 
+  '@helpers4/id@3.1.1': {}
+
   '@helpers4/map@3.1.1': {}
+
+  '@helpers4/markdown@3.1.1': {}
+
+  '@helpers4/node@3.1.1(@types/node@20.19.0)':
+    dependencies:
+      '@types/node': 20.19.0
 
   '@helpers4/number@3.1.1': {}
 
   '@helpers4/object@3.1.1': {}
 
+  '@helpers4/observable@3.1.1(rxjs@7.8.2)':
+    dependencies:
+      rxjs: 7.8.2
+
   '@helpers4/promise@3.1.1': {}
 
+  '@helpers4/set@3.1.1': {}
+
   '@helpers4/string@3.1.1': {}
+
+  '@helpers4/structure@3.1.1': {}
+
+  '@helpers4/type@3.1.1': {}
+
+  '@helpers4/url@3.1.1': {}
+
+  '@helpers4/version@3.1.1': {}
 
   '@img/colour@1.1.0': {}
 
@@ -3939,6 +4020,33 @@ snapshots:
     dependencies:
       '@types/hast': 3.0.5
 
+  helpers4@3.1.1(@types/node@20.19.0)(rxjs@7.8.2):
+    dependencies:
+      '@helpers4/array': 3.1.1
+      '@helpers4/ci': 3.1.1
+      '@helpers4/color': 3.1.1
+      '@helpers4/commit': 3.1.1
+      '@helpers4/date': 3.1.1
+      '@helpers4/function': 3.1.1
+      '@helpers4/guard': 3.1.1
+      '@helpers4/id': 3.1.1
+      '@helpers4/map': 3.1.1
+      '@helpers4/markdown': 3.1.1
+      '@helpers4/node': 3.1.1(@types/node@20.19.0)
+      '@helpers4/number': 3.1.1
+      '@helpers4/object': 3.1.1
+      '@helpers4/observable': 3.1.1(rxjs@7.8.2)
+      '@helpers4/promise': 3.1.1
+      '@helpers4/set': 3.1.1
+      '@helpers4/string': 3.1.1
+      '@helpers4/structure': 3.1.1
+      '@helpers4/type': 3.1.1
+      '@helpers4/url': 3.1.1
+      '@helpers4/version': 3.1.1
+    transitivePeerDependencies:
+      - '@types/node'
+      - rxjs
+
   iconv-lite@0.4.24:
     dependencies:
       safer-buffer: 2.1.2
@@ -4658,6 +4766,10 @@ snapshots:
       '@rollup/rollup-win32-x64-msvc': 4.62.4
       fsevents: 2.3.3
 
+  rxjs@7.8.2:
+    dependencies:
+      tslib: 2.8.1
+
   safer-buffer@2.1.2:
     optional: true
 
@@ -4797,8 +4909,7 @@ snapshots:
     optionalDependencies:
       typescript: 7.0.2
 
-  tslib@2.8.1:
-    optional: true
+  tslib@2.8.1: {}
 
   typescript@7.0.2:
     optionalDependencies:

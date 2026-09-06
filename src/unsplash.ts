@@ -3,7 +3,7 @@
 // comes from the shared `.dev/.env` (see `vite.config.ts`), never a
 // VITE_-prefixed var, so it never reaches the client bundle.
 
-import { safeFetch } from "@helpers4/promise";
+import { safeFetch } from "helpers4/promise";
 import type { ServerEnv } from "~/server-env";
 
 const UNSPLASH_API = "https://api.unsplash.com";
