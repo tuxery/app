@@ -27,7 +27,7 @@
     "qwik": "qwik"
   },
   "dependencies": {
-    "@libsql/client": "^0.17.4",
+    "@libsql/client": "^0.18.0",
     "@qwik-ui/headless": "^0.7.7",
     "@qwikest/icons": "^0.0.13",
     "daisyui": "^5.7.22",
