@@ -590,6 +590,20 @@ export interface CategoryCount {
  * taxonomy now (see `tuxery/catalog`'s `CatalogApp.category` doc comment),
  * so the two never mix; "To Classify" is a real category like any other
  * and shows up here too, usually the largest by far.
+ *
+ * Reads a precomputed `categoryCounts:<typeFilter>` blob from `meta` —
+ * never `GROUP BY category` on `apps` at request time, same discipline as
+ * `getStats`. This used to run `SELECT category, COUNT(*) ... GROUP BY
+ * category` live: under `typeFilter: "app"` that's `WHERE content_type IS
+ * NULL`, which matches nearly the entire catalog (only games get a
+ * non-NULL content_type), so the index barely narrowed it — a near-full
+ * scan on every call regardless. Found live in Turso's own query stats the
+ * day the read quota was fully exhausted (2026-09-11), by far the largest
+ * single cost: ~165,600 rows read per call, 4.14M rows for just 25 calls
+ * in one sample window. Category counts only change when `tuxery/catalog`
+ * republishes (manual, infrequent) — `turso-client.ts`'s `publish()`
+ * computes all three variants once, in memory, from the same dataset it's
+ * already writing, and stores them alongside `generatedAt`/`totalApps`.
  */
 export async function getCategories(
   env: ServerEnv,
@@ -599,19 +613,12 @@ export async function getCategories(
   if (!db) return [];
 
   return cachedListing(`getCategories:${typeFilter}`, [], async () => {
-    const where =
-      typeFilter === "game"
-        ? "WHERE content_type = 'game'"
-        : typeFilter === "app"
-          ? "WHERE content_type IS NULL"
-          : "";
     const result = await db.execute({
-      sql: `SELECT category, COUNT(*) as count FROM apps ${where} GROUP BY category ORDER BY count DESC`,
+      sql: `SELECT value FROM meta WHERE key = ?`,
+      args: [`categoryCounts:${typeFilter}`],
     });
-    return result.rows.map((row) => ({
-      category: row.category as string,
-      count: Number(row.count),
-    }));
+    const value = result.rows[0]?.value as string | undefined;
+    return value ? (JSON.parse(value) as CategoryCount[]) : [];
   });
 }
 
