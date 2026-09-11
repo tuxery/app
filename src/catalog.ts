@@ -419,21 +419,48 @@ export async function getAppById(env: ServerEnv, id: string): Promise<CatalogApp
 
 const TRENDING_PAGE_SIZE = 60;
 
-// icon_url only — real bug, found live once the homepage's Trending row
-// split into per-type (games/apps/utils) rows: this used to also admit
-// screenshot-only apps ("either is enough to not read as a placeholder"),
-// but `AppCard` has no `screenshots` prop and never renders one — it only
-// ever puts an `<img>` for `iconUrl`, so a screenshot-only app rendered as
-// a bare placeholder-icon card regardless, the exact thing this filter
-// was supposed to prevent. Scoped to homepage/trending surfaces only (not
-// Browse or search, which stay exhaustive/findable) — a curated showcase
-// reading as polished is worth the cut. Verified live: 1,386 of the
-// 21,844 popularity-scored apps have a real icon (mostly AUR's own
-// usage-frequency signal, a source with no icon data at all) — still
-// comfortably enough for every trending bucket (216 games, 1,170 apps —
-// re-verified after the Apps/Games taxonomy redesign dropped "utility" as
-// a separate bucket) and every homepage category row.
-const HAS_VISUAL_ASSET = "icon_url IS NOT NULL";
+// The icon_url-only requirement every trending/category-preview list below
+// mentions ("HAS_VISUAL_ASSET") is enforced in `tuxery/catalog`'s
+// `turso-client.ts` now (`hasVisualAsset`), not here — these lists are
+// precomputed there, not queried live. See that function's doc comment
+// for why icon_url specifically (not screenshots too, despite the name):
+// a real bug, found live once the homepage's Trending row split into
+// per-type rows — `AppCard` has no `screenshots` prop and never renders
+// one, so a screenshot-only app rendered as a bare placeholder-icon card
+// regardless, the exact thing a broader "has *some* visual asset" filter
+// was supposed to prevent.
+
+/** Reads a precomputed ordered app-id list from `meta` (written by `tuxery/catalog`'s `turso-client.ts`, `publish()`'s `computeListingIds`) — see `getTrendingApps`'s doc comment for why this replaced a live query. */
+async function idsFromMeta(db: Client, key: string): Promise<string[]> {
+  const result = await db.execute({ sql: `SELECT value FROM meta WHERE key = ?`, args: [key] });
+  const value = result.rows[0]?.value as string | undefined;
+  return value ? (JSON.parse(value) as string[]) : [];
+}
+
+/**
+ * Resolves a precomputed ordered id list to full `AppSummary` rows via a
+ * single bounded `WHERE id IN (...)` — a PK lookup, cheap regardless of
+ * table size, same as the existing `getAppsByIds`. Order is preserved
+ * explicitly (re-keyed by id, then walked in the input list's order)
+ * since SQL's `IN (...)` doesn't guarantee row order matches — unlike
+ * `getAppsByIds`, whose callers don't care about order, these lists are
+ * pre-ranked (popularity/recency/installs) and that ranking is the point.
+ */
+async function summariesForIds(db: Client, ids: string[]): Promise<AppSummary[]> {
+  if (ids.length === 0) return [];
+  const placeholders = ids.map(() => "?").join(", ");
+  const result = await db.execute({
+    sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE id IN (${placeholders})`,
+    args: ids,
+  });
+  const rowsById = new Map(
+    result.rows.map((row) => [(row as unknown as Row).id as string, row as unknown as Row]),
+  );
+  return ids.flatMap((id) => {
+    const row = rowsById.get(id);
+    return row ? [toSummary(row)] : [];
+  });
+}
 
 /**
  * Apps with a real cross-source popularity score, highest first — see
@@ -441,7 +468,14 @@ const HAS_VISUAL_ASSET = "icon_url IS NOT NULL";
  * computed. Apps with no score are excluded entirely rather than sorted
  * to the bottom — "no signal" isn't "unpopular". `typeFilter: "game"` is
  * real positive evidence; "app" is just its complement. Also requires an
- * icon or screenshot — see `HAS_VISUAL_ASSET`.
+ * icon (not screenshot-only) — see the comment above `TRENDING_PAGE_SIZE`.
+ *
+ * Reads a precomputed `trending:<typeFilter>` id list from `meta` instead
+ * of running this `WHERE popularity IS NOT NULL ... ORDER BY popularity
+ * DESC LIMIT` live — same "precompute once at publish time, `meta` read
+ * instead of a live aggregate/scan" fix as `getCategories`, extended here
+ * once that one (found live in Turso's query stats the day the read quota
+ * was fully exhausted, 2026-09-11) proved the pattern.
  */
 export async function getTrendingApps(
   env: ServerEnv,
@@ -451,17 +485,8 @@ export async function getTrendingApps(
   if (!db) return [];
 
   return cachedListing(`getTrendingApps:${typeFilter}`, [], async () => {
-    let where = "";
-    if (typeFilter === "game") {
-      where = "AND content_type = 'game'";
-    } else if (typeFilter === "app") {
-      where = "AND content_type IS NULL";
-    }
-    const result = await db.execute({
-      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE popularity IS NOT NULL AND ${HAS_VISUAL_ASSET} ${where} ORDER BY popularity DESC LIMIT ?`,
-      args: [TRENDING_PAGE_SIZE],
-    });
-    return result.rows.map((row) => toSummary(row as unknown as Row));
+    const ids = await idsFromMeta(db, `trending:${typeFilter}`);
+    return summariesForIds(db, ids);
   });
 }
 
@@ -472,6 +497,9 @@ export async function getTrendingApps(
  * doc comment), only populated by Flathub/AppCenter today — apps with no
  * value are excluded entirely rather than sorted to the bottom, same
  * "no signal isn't evidence of anything" discipline as `getTrendingApps`.
+ *
+ * Reads a precomputed `newApps:<typeFilter>` id list — see
+ * `getTrendingApps`'s doc comment.
  */
 export async function getNewApps(
   env: ServerEnv,
@@ -481,17 +509,8 @@ export async function getNewApps(
   if (!db) return [];
 
   return cachedListing(`getNewApps:${typeFilter}`, [], async () => {
-    let where = "";
-    if (typeFilter === "game") {
-      where = "AND content_type = 'game'";
-    } else if (typeFilter === "app") {
-      where = "AND content_type IS NULL";
-    }
-    const result = await db.execute({
-      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE last_updated IS NOT NULL AND ${HAS_VISUAL_ASSET} ${where} ORDER BY last_updated DESC LIMIT ?`,
-      args: [TRENDING_PAGE_SIZE],
-    });
-    return result.rows.map((row) => toSummary(row as unknown as Row));
+    const ids = await idsFromMeta(db, `newApps:${typeFilter}`);
+    return summariesForIds(db, ids);
   });
 }
 
@@ -503,6 +522,9 @@ export async function getNewApps(
  * today (see `tuxery/catalog`'s `CatalogApp.installsLast7Days` doc
  * comment) — same "excluded entirely, not sorted to the bottom" gating as
  * `getTrendingApps`.
+ *
+ * Reads a precomputed `downloadTrending:<typeFilter>` id list — see
+ * `getTrendingApps`'s doc comment.
  */
 export async function getDownloadTrendingApps(
   env: ServerEnv,
@@ -512,17 +534,8 @@ export async function getDownloadTrendingApps(
   if (!db) return [];
 
   return cachedListing(`getDownloadTrendingApps:${typeFilter}`, [], async () => {
-    let where = "";
-    if (typeFilter === "game") {
-      where = "AND content_type = 'game'";
-    } else if (typeFilter === "app") {
-      where = "AND content_type IS NULL";
-    }
-    const result = await db.execute({
-      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE installs_last_7_days IS NOT NULL AND ${HAS_VISUAL_ASSET} ${where} ORDER BY installs_last_7_days DESC LIMIT ?`,
-      args: [TRENDING_PAGE_SIZE],
-    });
-    return result.rows.map((row) => toSummary(row as unknown as Row));
+    const ids = await idsFromMeta(db, `downloadTrending:${typeFilter}`);
+    return summariesForIds(db, ids);
   });
 }
 
@@ -532,6 +545,11 @@ export async function getDownloadTrendingApps(
  * `packages_json LIKE` match `browseApps`'s own `source` filter uses (the
  * only place per-package sources live), same popularity/visual-asset
  * gating as `getTrendingApps`.
+ *
+ * Reads a precomputed `trendingBySource:<source>` id list, sliced to
+ * `limit` (the precomputed list itself is capped at `TRENDING_PAGE_SIZE`,
+ * same as every other precomputed list here) — see `getTrendingApps`'s
+ * doc comment.
  */
 export async function getTrendingAppsBySource(
   env: ServerEnv,
@@ -542,11 +560,8 @@ export async function getTrendingAppsBySource(
   if (!db) return [];
 
   return cachedListing(`getTrendingAppsBySource:${source}:${limit}`, [], async () => {
-    const result = await db.execute({
-      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE popularity IS NOT NULL AND ${HAS_VISUAL_ASSET} AND packages_json LIKE ? ORDER BY popularity DESC LIMIT ?`,
-      args: [`%"source":"${source}"%`, limit],
-    });
-    return result.rows.map((row) => toSummary(row as unknown as Row));
+    const ids = await idsFromMeta(db, `trendingBySource:${source}`);
+    return summariesForIds(db, ids.slice(0, limit));
   });
 }
 
@@ -558,8 +573,15 @@ const CATEGORY_PREVIEW_SIZE = 12;
  * apps surface first (only ~10% of the catalog has a score — see
  * `getTrendingApps`'s doc comment), alphabetical after that so every
  * category still shows something even with zero scored apps in it,
- * rather than an empty row. Also requires an icon or screenshot — see
- * `HAS_VISUAL_ASSET`.
+ * rather than an empty row. Also requires an icon (not screenshot-only) —
+ * see the comment above `TRENDING_PAGE_SIZE`.
+ *
+ * Reads a precomputed `categoryPreview:<category>` id list, sliced to
+ * `limit` — this was the second-largest cost in Turso's own query stats
+ * the day the read quota was fully exhausted (2026-09-11): ~1,940 rows
+ * read per call, 343K rows for 177 calls in one sample window (the live
+ * query had no index covering `category` + the `popularity` sort
+ * together). See `getTrendingApps`'s doc comment for the general fix.
  */
 export async function getAppsByCategory(
   env: ServerEnv,
@@ -570,11 +592,8 @@ export async function getAppsByCategory(
   if (!db) return [];
 
   return cachedListing<AppSummary[]>(`getAppsByCategory:${category}:${limit}`, [], async () => {
-    const result = await db.execute({
-      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE category = ? AND ${HAS_VISUAL_ASSET} ORDER BY popularity IS NULL, popularity DESC, name ASC LIMIT ?`,
-      args: [category, limit],
-    });
-    return result.rows.map((row) => toSummary(row as unknown as Row));
+    const ids = await idsFromMeta(db, `categoryPreview:${category}`);
+    return summariesForIds(db, ids.slice(0, limit));
   });
 }
 
