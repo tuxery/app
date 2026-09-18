@@ -1,10 +1,11 @@
 import { test, expect } from "@playwright/test";
 
 // Firefox/Discord/0ad below use their bare Snap name as the app id
-// ("firefox", "discord", "0ad") — no "source:" prefix — since a Snap or
-// Flatpak package's own name/appId is already globally unique on its own
-// (Snap preferred when an app has both, see catalog's match/group.ts's
-// buildAppId). 0cc-famitracker has neither, so it still uses "source:appId".
+// ("firefox", "discord-canary", "0ad") — no "source:" prefix — since a
+// Snap or Flatpak package's own name/appId is already globally unique on
+// its own (Snap preferred when an app has both, see catalog's
+// match/group.ts's buildAppId). 0cc-famitracker has neither, so it still
+// uses "source:appId".
 
 test("groups packages by platform, one collapsible per group (closed by default), native package managers show a copy-paste command", async ({
   page,
@@ -31,7 +32,11 @@ test("groups packages by platform, one collapsible per group (closed by default)
 test('the "Install options" label only shows when there\'s a prerequisite or more than one option', async ({
   page,
 }) => {
-  await page.goto("/app/discord/");
+  // Discord itself no longer has a standalone app id — the matching
+  // engine now groups every Discord variant (stable + canary) under
+  // discord-canary instead, re-verified against the live dataset
+  // (2026-09-18). Same package fanout the test needs either way.
+  await page.goto("/app/discord-canary/");
   await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Arch Linux" }).click();
 
@@ -93,7 +98,7 @@ test("a native distro package with a real apt: handler (Debian) shows it as the 
 test("AppImage shows a desktop-integration setup step and a Download button, not Click to install", async ({
   page,
 }) => {
-  await page.goto("/app/discord/");
+  await page.goto("/app/discord-canary/");
   await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "AppImage" }).click();
 
@@ -192,10 +197,7 @@ test("selecting an OS collapses its non-recommended platforms behind a 'Show N o
 test("Snap's setup step links to Snapcraft's own install guide instead of an apt-only command", async ({
   page,
 }) => {
-  // Discord Canary is merged into the main Discord app as a Snap channel
-  // variant (see AUR_CHANNEL_WORD) — there's no standalone
-  // snap-snapcraft:discord-canary app id to link to directly.
-  await page.goto("/app/discord/");
+  await page.goto("/app/discord-canary/");
   await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Snap" }).click();
 
