@@ -10,6 +10,16 @@ updates:
       qwik:
         patterns:
           - "@builder.io/qwik*"
+      # Everything else that isn't qwik itself or a dev dependency — before
+      # this, daisyui/helpers4/@libsql/client/etc each got their own
+      # individual PR (5 open at once, 2026-09), most of them small patch/
+      # minor bumps that didn't need separate review cycles.
+      production:
+        dependency-type: production
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "@builder.io/qwik*"
       dev-tooling:
         dependency-type: development
         patterns:
