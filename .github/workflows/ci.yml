@@ -83,6 +83,11 @@ jobs:
         working-directory: catalog
         run: |
           curl -sSfL https://get.tur.so/install.sh | bash
+          # The installer drops sqld/turso in ~/.turso but only wires it
+          # into ~/.bashrc — a non-interactive step never sources that, so
+          # `turso dev` below fails with "sqld: executable file not found".
+          echo "$HOME/.turso" >> "$GITHUB_PATH"
+          export PATH="$HOME/.turso:$PATH"
           pnpm seed
           nohup pnpm serve > /tmp/catalog-serve.log 2>&1 &
           ready=""
@@ -164,6 +169,11 @@ jobs:
         working-directory: catalog
         run: |
           curl -sSfL https://get.tur.so/install.sh | bash
+          # The installer drops sqld/turso in ~/.turso but only wires it
+          # into ~/.bashrc — a non-interactive step never sources that, so
+          # `turso dev` below fails with "sqld: executable file not found".
+          echo "$HOME/.turso" >> "$GITHUB_PATH"
+          export PATH="$HOME/.turso:$PATH"
           pnpm seed
           nohup pnpm serve > /tmp/catalog-serve.log 2>&1 &
           ready=""
@@ -227,6 +237,11 @@ jobs:
         working-directory: catalog
         run: |
           curl -sSfL https://get.tur.so/install.sh | bash
+          # The installer drops sqld/turso in ~/.turso but only wires it
+          # into ~/.bashrc — a non-interactive step never sources that, so
+          # `turso dev` below fails with "sqld: executable file not found".
+          echo "$HOME/.turso" >> "$GITHUB_PATH"
+          export PATH="$HOME/.turso:$PATH"
           pnpm seed
           nohup pnpm serve > /tmp/catalog-serve.log 2>&1 &
           ready=""
