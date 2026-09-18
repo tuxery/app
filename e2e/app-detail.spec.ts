@@ -7,8 +7,11 @@ import { test, expect } from "@playwright/test";
 // "source:appId".
 const FIREFOX = "/app/firefox/";
 const FIREWATCH = "/app/gog%3Afirewatch/";
-const LIBREOFFICE_MAIN = "/app/libreoffice/";
-const LIBREOFFICE_WRITER = "/app/deb-debian%3Alibreoffice-writer/";
+// LibreOffice no longer carries suite_json in the live dataset (re-verified
+// 2026-09-18) — Calligra is the current real example of a suite main app
+// with a component.
+const CALLIGRA_MAIN = "/app/org.kde.calligra/";
+const CALLIGRA_PLAN = "/app/deb-debian%3Acalligraplan/";
 // AppEditor: a real elementary OS app listed on both Flathub and AppCenter
 // with two genuinely different ratings — the one app in the real dataset
 // most well-known apps don't have (they're only rated on Flathub), needed
@@ -17,8 +20,9 @@ const APP_EDITOR = "/app/com.github.donadigo.appeditor/";
 // A merged app with a large native-package fanout (many distros, all the
 // default "Stable" channel) plus a few AUR "-git" builds — the case that
 // exposed the channel-tooltip bug below (many more packages than distinct
-// channel words).
-const LUANTI = "/app/luanti/";
+// channel words). Luanti (the project's current name) still catalogs
+// under its old "minetest" app id.
+const LUANTI = "/app/minetest/";
 
 test("an app page shows an install-options drawer listing every source, each group closed by default", async ({
   page,
@@ -40,7 +44,7 @@ test("a single-source rated app's tooltip still prefixes the figure with its sou
 }) => {
   await page.goto(FIREWATCH);
   await expect(page.getByText(/\d\.\d \(\d/).first()).toBeVisible();
-  await expect(page.getByTitle("GOG: ★ 3.9 (2,174)")).toBeVisible();
+  await expect(page.getByTitle("GOG: ★ 3.9 (2,175)")).toBeVisible();
 });
 
 test("a multi-source rated app's tooltip lists every source, each prefixed by its own label", async ({
@@ -59,7 +63,7 @@ test("the build-channel badge counts distinct channels, not raw packages", async
   // tooltip naming only a handful of channels, which read as broken. The
   // badge is the channel count itself now, matching the tooltip it
   // explains. Exact channel set re-verified against the live dataset
-  // (2026-08-30) — Luanti now carries 5 distinct channel words across its
+  // (2026-09-18) — Luanti now carries 5 distinct channel words across its
   // packages (Flathub added its own "latest" branch, Snap exposes raw
   // version-numbered channels on top of the AUR git build).
   const tip = "Stable, Git, Flathub latest, 0.4.17.1, 5.7.0-dev";
@@ -71,11 +75,11 @@ test("the build-channel badge counts distinct channels, not raw packages", async
 test("the Additional information table shows a real Size row, from Flathub's own download_size", async ({
   page,
 }) => {
-  // Re-verified against the live dataset (2026-08-31) — Flathub's
+  // Re-verified against the live dataset (2026-09-18) — Flathub's
   // /api/v2/summary/org.mozilla.firefox download_size, formatted.
   await page.goto(FIREFOX);
   const sizeRow = page.getByText("Size", { exact: true }).locator("..");
-  await expect(sizeRow.getByText("119.7 MB")).toBeVisible();
+  await expect(sizeRow.getByText("120.6 MB")).toBeVisible();
 });
 
 test("a Flathub-verified app shows a Verified badge next to its developer, and on the Flatpak drawer row", async ({
@@ -154,15 +158,13 @@ test("the claim page falls back to a generic heading with no ?app given", async 
 test("suite navigation: main app lists its components, and a component links back", async ({
   page,
 }) => {
-  await page.goto(LIBREOFFICE_MAIN);
+  await page.goto(CALLIGRA_MAIN);
   await expect(page.getByRole("heading", { name: "Suite components" })).toBeVisible();
-  await page.getByRole("link", { name: "LibreOffice Writer" }).click();
+  await page.getByRole("link", { name: "Calligra Plan" }).click();
 
-  await expect(page).toHaveURL(
-    new RegExp(LIBREOFFICE_WRITER.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
-  );
-  const backLink = page.getByRole("link", { name: /Part of LibreOffice/ });
+  await expect(page).toHaveURL(new RegExp(CALLIGRA_PLAN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  const backLink = page.getByRole("link", { name: /Part of Calligra/ });
   await expect(backLink).toBeVisible();
   await backLink.click();
-  await expect(page).toHaveURL(new RegExp(LIBREOFFICE_MAIN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  await expect(page).toHaveURL(new RegExp(CALLIGRA_MAIN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 });
