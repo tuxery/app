@@ -12,6 +12,11 @@ permissions:
 jobs:
   check:
     name: Commit messages follow conventional commits + gitmoji
+    # Dependabot's own commit messages never carry a gitmoji — it has no
+    # way to know this repo's custom convention, so every dependency PR
+    # failed this check regardless of content, found live on PR #37
+    # (the first PR opened after dependabot.yml started grouping bumps).
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       # The action does its own checkout (fetch-depth 0) by default; scopes

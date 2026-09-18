@@ -29,6 +29,14 @@ jobs:
   deploy:
     name: Deploy to Cloudflare Workers
     needs: ci
+    # Dependabot-triggered pull_request runs never get repo secrets
+    # (GitHub withholds them from PRs opened by Dependabot, to stop a
+    # malicious dependency bump from exfiltrating them) — wrangler-action
+    # then fails outright on a missing CLOUDFLARE_API_TOKEN regardless of
+    # the actual change, found live on PR #37. A human merging the
+    # consolidated bump still gets a real deploy from the main-branch
+    # push right after, with full secrets access.
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     outputs:
       preview-url: ${{ steps.preview-url.outputs.url }}
