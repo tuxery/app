@@ -92,7 +92,13 @@ jobs:
           nohup pnpm serve > /tmp/catalog-serve.log 2>&1 &
           ready=""
           for _ in $(seq 1 30); do
-            if (echo > /dev/tcp/127.0.0.1/8080) 2>/dev/null; then ready=1; break; fi
+            # A bare TCP connect only proves sqld accepted the socket, not
+            # that it can actually answer a query yet — a real SELECT is
+            # what the app's own first request needs to succeed too.
+            if node -e "require('@libsql/client').createClient({url:'http://127.0.0.1:8080'}).execute('SELECT 1').then(()=>process.exit(0),()=>process.exit(1))" 2>/dev/null; then
+              ready=1
+              break
+            fi
             sleep 1
           done
           if [[ -z "$ready" ]]; then
@@ -178,7 +184,13 @@ jobs:
           nohup pnpm serve > /tmp/catalog-serve.log 2>&1 &
           ready=""
           for _ in $(seq 1 30); do
-            if (echo > /dev/tcp/127.0.0.1/8080) 2>/dev/null; then ready=1; break; fi
+            # A bare TCP connect only proves sqld accepted the socket, not
+            # that it can actually answer a query yet — a real SELECT is
+            # what the app's own first request needs to succeed too.
+            if node -e "require('@libsql/client').createClient({url:'http://127.0.0.1:8080'}).execute('SELECT 1').then(()=>process.exit(0),()=>process.exit(1))" 2>/dev/null; then
+              ready=1
+              break
+            fi
             sleep 1
           done
           if [[ -z "$ready" ]]; then
@@ -246,7 +258,13 @@ jobs:
           nohup pnpm serve > /tmp/catalog-serve.log 2>&1 &
           ready=""
           for _ in $(seq 1 30); do
-            if (echo > /dev/tcp/127.0.0.1/8080) 2>/dev/null; then ready=1; break; fi
+            # A bare TCP connect only proves sqld accepted the socket, not
+            # that it can actually answer a query yet — a real SELECT is
+            # what the app's own first request needs to succeed too.
+            if node -e "require('@libsql/client').createClient({url:'http://127.0.0.1:8080'}).execute('SELECT 1').then(()=>process.exit(0),()=>process.exit(1))" 2>/dev/null; then
+              ready=1
+              break
+            fi
             sleep 1
           done
           if [[ -z "$ready" ]]; then

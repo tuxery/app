@@ -16,6 +16,17 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   reporter: "list",
+  timeout: process.env.CI ? 60_000 : 30_000,
+  // CI's E2E jobs now seed+serve their own local catalog per run (see
+  // ci.yml) instead of hitting an already-warm, long-lived shared preview
+  // DB — the listing-heavy pages (homepage, /games/, /categories/,
+  // /sources/[id]/) run several uncached queries against a cold process on
+  // a modest shared runner, and occasionally missed the default 5s expect
+  // timeout even though the same pages render well under that locally.
+  // Single-row app-detail lookups aren't affected the same way, but a
+  // blanket bump here is simpler and safer than timeout-tuning tests
+  // one by one as new listing pages get covered.
+  expect: { timeout: process.env.CI ? 15_000 : 5_000 },
   use: {
     baseURL: "http://localhost:5173",
     trace: "on-first-retry",
