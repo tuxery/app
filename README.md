@@ -95,9 +95,13 @@ in a `server$`) into `~/catalog`/`~/unsplash` explicitly — there is no
 ambient fallback that quietly does this for you.
 
 Build locally with `pnpm build.server`, deploy with `pnpm deploy`, or
-preview with `pnpm serve` (reads `.dev.vars`, gitignored — copy the three
-keys above from `../.dev/.env.preview`, or run `pnpm cf-typegen` after
-creating it to keep `worker-configuration.d.ts`'s `Env` type in sync).
+preview with `pnpm serve` (reads `.dev.vars`, gitignored — point
+`TURSO_DB_URL` at catalog's local `turso dev` server, e.g.
+`http://localhost:8080` with `pnpm seed`/`pnpm serve` running there, same
+as plain `pnpm dev` defaults to; copy the other keys from
+`../.dev/.env.preview` if you specifically need real preview data, or run
+`pnpm cf-typegen` after creating it to keep `worker-configuration.d.ts`'s
+`Env` type in sync).
 
 ## Status
 

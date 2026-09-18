@@ -26,17 +26,23 @@ jobs:
       working-directory: .
 
   # Not folded into ci-web.yml (the shared reusable workflow every
-  # tuxery/* repo's CI calls) — this needs real Turso preview credentials
-  # as repo secrets and a `wrangler dev` run, both specific to this repo.
-  # See playwright.worker.config.ts's header for what this actually
-  # catches that the ci-web.yml `test` job (`pnpm run test`, vitest) and
-  # e2e/ (runs against `pnpm dev`, not the real Worker bundle) both miss.
-  # Requires repo secrets TURSO_PREVIEW_DB_URL/TURSO_PREVIEW_DB_AUTH_TOKEN
-  # (see README.md) — the preview DB, not a "dev" one: there is no shared
-  # dev Turso DB anymore (retired 2026-09-03), local dev emulates a local
-  # sqlite instead (see vite.config.ts), and this job is specifically
-  # exercising the Cloudflare Worker bundle, the same artifact the preview
-  # environment deploys.
+  # tuxery/* repo's CI calls) — this needs a `wrangler dev` run, specific
+  # to this repo. See playwright.worker.config.ts's header for what this
+  # actually catches that the ci-web.yml `test` job (`pnpm run test`,
+  # vitest) and e2e/ (runs against `pnpm dev`, not the real Worker bundle)
+  # both miss.
+  #
+  # Points at catalog's own local `turso dev` server (see "Seed and serve
+  # catalog" below) via `.dev.vars`, the same way local `pnpm serve`
+  # (wrangler dev) does — not the hosted Turso preview DB: that shared DB's
+  # publish pipeline broke 2026-09-04 (index-name collisions on republish,
+  # see catalog's turso-client.ts) and was never fixed before its write
+  # quota was separately exhausted, so every E2E run here inheriting a
+  # blank/unreachable preview DB failed identically regardless of PR
+  # content. A repo-committed, freshly-seeded local dataset has no quota
+  # and no shared-state cross-PR contention — this job doesn't need a real
+  # hosted DB at all, only something that speaks the same libSQL HTTP
+  # protocol `catalog.ts` uses in prod.
   #
   # Deliberately no UNSPLASH_ACCESS_KEY here, unlike local `pnpm serve`'s
   # .dev.vars: the test only cares about catalog data, and every run spins
@@ -62,11 +68,39 @@ jobs:
       - name: Install Playwright's Chromium
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Write .dev.vars from repo secrets
+      - name: Checkout catalog
+        uses: actions/checkout@v7
+        with:
+          repository: tuxery/catalog
+          path: catalog
+
+      - uses: helpers4/action/setup-pnpm@6fddd178620e7325d446a246c38a44f979569fc4 # main @ 2026-07-29
+        with:
+          node-version: "24"
+          working-directory: catalog
+
+      - name: Seed and serve catalog's local Turso dev server
+        working-directory: catalog
+        run: |
+          curl -sSfL https://get.tur.so/install.sh | bash
+          pnpm seed
+          nohup pnpm serve > /tmp/catalog-serve.log 2>&1 &
+          ready=""
+          for _ in $(seq 1 30); do
+            if (echo > /dev/tcp/127.0.0.1/8080) 2>/dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          if [[ -z "$ready" ]]; then
+            echo "::error::catalog's turso dev server never came up on :8080"
+            cat /tmp/catalog-serve.log
+            exit 1
+          fi
+
+      - name: Write .dev.vars for catalog's local dev server
         run: |
           cat > .dev.vars <<VARS
-          TURSO_DB_URL=${{ secrets.TURSO_PREVIEW_DB_URL }}
-          TURSO_DB_AUTH_TOKEN=${{ secrets.TURSO_PREVIEW_DB_AUTH_TOKEN }}
+          TURSO_DB_URL=http://localhost:8080
+          TURSO_DB_AUTH_TOKEN=local-dev
           VARS
 
       - name: Run worker e2e
@@ -91,20 +125,17 @@ jobs:
   # "failing" row with no way to tell desktop and mobile apart from the PR
   # comment alone. Against `pnpm dev` (cheaper/faster than wrangler dev —
   # this suite doesn't need the real Worker bundle, e2e-worker/ already
-  # covers that half), pointed at the real preview Turso DB via the same
-  # secrets e2e-worker uses. Safe now that both catalog's indexes and this
-  # repo's listing-query cache (catalog.ts's cachedListing) are in place —
-  # the 2026-09-03 Turso quota incident was root-caused to missing indexes
-  # turning every query into a full-table scan, not to running queries as
-  # such; a full suite run here reads a few thousand rows at most, not
-  # hundreds of millions. No UNSPLASH_ACCESS_KEY, same reasoning as
-  # e2e-worker above.
+  # covers that half), pointed at catalog's own local `turso dev` server
+  # (see "Seed and serve catalog" below and e2e-worker's own comment for
+  # why: the hosted Turso preview DB's publish pipeline is broken and its
+  # write quota is exhausted). `vite.config.ts` already defaults
+  # `TURSO_DB_URL` to `http://localhost:8080` whenever it's unset, so this
+  # job doesn't even need to set it explicitly — just needs that local
+  # server actually running first. No UNSPLASH_ACCESS_KEY, same reasoning
+  # as e2e-worker above.
   e2e-desktop:
     name: E2E (desktop)
     runs-on: ubuntu-latest
-    env:
-      TURSO_DB_URL: ${{ secrets.TURSO_PREVIEW_DB_URL }}
-      TURSO_DB_AUTH_TOKEN: ${{ secrets.TURSO_PREVIEW_DB_AUTH_TOKEN }}
     outputs:
       summary: ${{ steps.summary.outputs.summary }}
     steps:
@@ -117,6 +148,34 @@ jobs:
 
       - name: Install Playwright's Chromium
         run: pnpm exec playwright install --with-deps chromium
+
+      - name: Checkout catalog
+        uses: actions/checkout@v7
+        with:
+          repository: tuxery/catalog
+          path: catalog
+
+      - uses: helpers4/action/setup-pnpm@6fddd178620e7325d446a246c38a44f979569fc4 # main @ 2026-07-29
+        with:
+          node-version: "24"
+          working-directory: catalog
+
+      - name: Seed and serve catalog's local Turso dev server
+        working-directory: catalog
+        run: |
+          curl -sSfL https://get.tur.so/install.sh | bash
+          pnpm seed
+          nohup pnpm serve > /tmp/catalog-serve.log 2>&1 &
+          ready=""
+          for _ in $(seq 1 30); do
+            if (echo > /dev/tcp/127.0.0.1/8080) 2>/dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          if [[ -z "$ready" ]]; then
+            echo "::error::catalog's turso dev server never came up on :8080"
+            cat /tmp/catalog-serve.log
+            exit 1
+          fi
 
       - name: Run e2e (desktop)
         run: pnpm exec playwright test --project=chromium --reporter=list,json
@@ -140,9 +199,6 @@ jobs:
   e2e-mobile:
     name: E2E (mobile)
     runs-on: ubuntu-latest
-    env:
-      TURSO_DB_URL: ${{ secrets.TURSO_PREVIEW_DB_URL }}
-      TURSO_DB_AUTH_TOKEN: ${{ secrets.TURSO_PREVIEW_DB_AUTH_TOKEN }}
     outputs:
       summary: ${{ steps.summary.outputs.summary }}
     steps:
@@ -155,6 +211,34 @@ jobs:
 
       - name: Install Playwright's Chromium
         run: pnpm exec playwright install --with-deps chromium
+
+      - name: Checkout catalog
+        uses: actions/checkout@v7
+        with:
+          repository: tuxery/catalog
+          path: catalog
+
+      - uses: helpers4/action/setup-pnpm@6fddd178620e7325d446a246c38a44f979569fc4 # main @ 2026-07-29
+        with:
+          node-version: "24"
+          working-directory: catalog
+
+      - name: Seed and serve catalog's local Turso dev server
+        working-directory: catalog
+        run: |
+          curl -sSfL https://get.tur.so/install.sh | bash
+          pnpm seed
+          nohup pnpm serve > /tmp/catalog-serve.log 2>&1 &
+          ready=""
+          for _ in $(seq 1 30); do
+            if (echo > /dev/tcp/127.0.0.1/8080) 2>/dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          if [[ -z "$ready" ]]; then
+            echo "::error::catalog's turso dev server never came up on :8080"
+            cat /tmp/catalog-serve.log
+            exit 1
+          fi
 
       - name: Run e2e (mobile)
         run: pnpm exec playwright test --project=mobile-chromium --reporter=list,json
