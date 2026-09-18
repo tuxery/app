@@ -32,6 +32,14 @@ minimumReleaseAgeExclude:
 # landed in vite-imagetools@12) pulls a sharp version below the patched
 # libvips CVE fixes. sharp's build is disabled above (unused here — this
 # app doesn't use Qwik's <Image> transform), so forcing a patched version
-# is a safe, low-risk way to clear `pnpm audit --audit-level high`.
+# is a safe, low-risk way to clear `pnpm audit --audit-level high`. Bumped
+# again 2026-09-18: >=0.35.0 still included <0.35.4, which a separate
+# libheif advisory (GHSA-g89c-p67h-r497/GHSA-2jg2-4ch7-h545) covers.
+#
+# svgo comes from @builder.io/qwik-city itself (its SSG/asset pipeline),
+# not from any dependency this app controls directly — pinned above its
+# vulnerable removeScripts range (GHSA-w27v-7q3p-w38r/GHSA-4vpr-x523-8j87)
+# the same way.
 overrides:
-  sharp: ">=0.35.0"
+  sharp: ">=0.35.4"
+  svgo: ">=3.3.5"
