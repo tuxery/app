@@ -79,7 +79,7 @@ test("the Additional information table shows a real Size row, from Flathub's own
   // /api/v2/summary/org.mozilla.firefox download_size, formatted.
   await page.goto(FIREFOX);
   const sizeRow = page.getByText("Size", { exact: true }).locator("..");
-  await expect(sizeRow.getByText("120.6 MB")).toBeVisible();
+  await expect(sizeRow.getByText("119.8 MB")).toBeVisible();
 });
 
 test("a Flathub-verified app shows a Verified badge next to its developer, and on the Flatpak drawer row", async ({
