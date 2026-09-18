@@ -13,7 +13,7 @@ test("New games is sorted by release date, newest first, not a re-list of Trendi
   // newest AppStream <releases> timestamp today. Real data, not a fixed
   // fixture — expected to need re-pinning as the dataset refreshes, same
   // pattern as this repo's other real-data-pinned e2e assertions.
-  await expect(section.locator("article.card h3").first()).toHaveText("Multiplication Puzzle");
+  await expect(section.locator("article.card h3").first()).toHaveText("terminalpolyominos");
 });
 
 test("Download trends is ranked by last-7-days installs, mixes apps and games, and links to /browse/?type=all", async ({
