@@ -30,7 +30,7 @@
     "@libsql/client": "^0.18.0",
     "@qwik-ui/headless": "^0.7.7",
     "@qwikest/icons": "^0.0.13",
-    "daisyui": "^5.7.36",
+    "daisyui": "^5.7.43",
     "helpers4": "^3.1.2"
   },
   "devDependencies": {
