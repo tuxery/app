@@ -12,6 +12,10 @@ import { useSettings } from "~/settings";
 // member (Flatpak, via Flathub) gets the multi-tone treatment below.
 const VERIFIABLE_SOURCES = new Set<PackageSourceId>(["flatpak-flathub"]);
 
+function isVerifiable(group: string): boolean {
+  return SOURCE_GROUP_MEMBERS[group]?.some((source) => VERIFIABLE_SOURCES.has(source)) ?? false;
+}
+
 export interface SourceMapProps {
   sources: PackageSourceId[];
   /** Which of `sources` carries a verified package — see `VERIFIABLE_SOURCES`. */
@@ -65,8 +69,6 @@ export const SourceMap = component$<SourceMapProps>(
       SOURCE_GROUP_MEMBERS[group]?.some((source) => sourceSet.has(source)),
     );
 
-    const isVerifiable = (group: string) =>
-      SOURCE_GROUP_MEMBERS[group]?.some((source) => VERIFIABLE_SOURCES.has(source)) ?? false;
     const isVerified = (group: string) =>
       SOURCE_GROUP_MEMBERS[group]?.some((source) => verifiedSet.has(source)) ?? false;
 
