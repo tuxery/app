@@ -36,10 +36,10 @@
   "devDependencies": {
     "@builder.io/qwik": "^1.20.1",
     "@builder.io/qwik-city": "^1.20.1",
-    "@cloudflare/workers-types": "^5.20260922.1",
+    "@cloudflare/workers-types": "^5.20260927.1",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.3",
-    "@types/node": "26.6.2",
+    "@types/node": "26.6.3",
     "ignore": "^7.0.10",
     "oxfmt": "^0.70.0",
     "oxlint": "^1.85.0",
@@ -47,8 +47,8 @@
     "typescript": "7.0.2",
     "vite": "^7.3.6",
     "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "5.0.1",
-    "wrangler": "^4.136.3"
+    "vitest": "5.0.2",
+    "wrangler": "^4.142.0"
   },
   "engines": {
     "node": ">=20.0.0"
