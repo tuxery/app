@@ -6,6 +6,16 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 10
+    # @cloudflare/workers-types ships a date-stamped version daily, and
+    # wrangler/vitest release patches almost as often — without a cooldown,
+    # each one retriggers a fresh grouped PR before the last one even closes
+    # (e.g. dev-tooling PRs #43, #45, #47, #48 all within the same week).
+    # Batches same-day/week noise into the next run instead.
+    cooldown:
+      default-days: 3
+      semver-patch-days: 3
+      semver-minor-days: 7
+      semver-major-days: 14
     groups:
       qwik:
         patterns:
