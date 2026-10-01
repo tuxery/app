@@ -77,6 +77,13 @@ jobs:
           branch="${{ github.head_ref || github.ref_name }}"
           alias=$(echo "$branch" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9-]+/-/g; s/^-+//; s/-+$//')
           if [[ ! "$alias" =~ ^[a-z] ]]; then alias="b-$alias"; fi
+          # Cloudflare caps alias + script name ("tuxery-web-preview") at 62
+          # chars (error 10021); long Dependabot branch names blow past it.
+          # Truncate and append a short hash so distinct branches stay distinct.
+          if [ "${#alias}" -gt 40 ]; then
+            hash=$(echo -n "$branch" | sha1sum | cut -c1-6)
+            alias="$(echo "${alias:0:33}" | sed -E 's/-+$//')-$hash"
+          fi
           echo "alias=$alias" >> "$GITHUB_OUTPUT"
 
       - name: Deploy preview
