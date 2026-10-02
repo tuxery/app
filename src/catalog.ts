@@ -14,6 +14,18 @@ import {
   type PackageSourceId,
   type SourcedPackage,
 } from "~/catalog-types";
+import {
+  BROWSE_KEYS_META_KEY,
+  chunkIndexesFor,
+  countKey,
+  metaValue,
+  pageRange,
+  parseBrowseKeys,
+  readPinned,
+  sliceFromChunks,
+  sourceIdsChunkKey,
+  type BrowseKeys,
+} from "~/browse-keys";
 import type { ServerEnv } from "~/server-env";
 
 // Server-only half of the catalog layer — everything here touches the DB
@@ -285,11 +297,136 @@ export async function searchApps(env: ServerEnv, query: string): Promise<AppSumm
 }
 
 /**
- * Paginated listing for the /browse page. A filtered request pays for one
- * `COUNT(*)` scan (a `WHERE`-scoped count can't be precomputed) — but the
- * common unfiltered case reuses `getStats()`'s precomputed total instead
- * of re-scanning the whole table on every page load.
+ * Paginated listing for the /browse page. With no free-text query, the
+ * total comes from a precomputed count (every combination of the bounded
+ * filters — interface, type, category, source — is written to `meta` at
+ * publish time), and a source-only page also comes from a precomputed,
+ * chunked id list instead of a `packages_json LIKE` scan; see
+ * `readPrecomputedBrowse`. A dataset published before those keys existed,
+ * a free-text query, or any failure reading them falls back to the live
+ * queries below, which stay correct (just expensive).
  */
+// The current generation of catalog's precomputed browse keys, cached per
+// isolate like `cachedListing`. Only a starting guess: `readPinned` verifies
+// it against the database inside the same read transaction as every read.
+let browseKeysCache: { keys: BrowseKeys | undefined; expiresAt: number } | undefined;
+
+function rememberBrowseKeys(keys: BrowseKeys | undefined): BrowseKeys | undefined {
+  browseKeysCache = { keys, expiresAt: Date.now() + LISTING_CACHE_TTL_MS };
+  return keys;
+}
+
+async function currentBrowseKeys(db: Client): Promise<BrowseKeys | undefined> {
+  if (browseKeysCache && browseKeysCache.expiresAt > Date.now()) return browseKeysCache.keys;
+  const result = await db.execute({
+    sql: `SELECT value FROM meta WHERE key = ?`,
+    args: [BROWSE_KEYS_META_KEY],
+  });
+  return rememberBrowseKeys(parseBrowseKeys(result.rows[0]?.value));
+}
+
+interface PrecomputedBrowse {
+  total: number;
+  /** The page's app ids, in display order — only for a source-only listing; otherwise the page still comes from a live query. */
+  ids?: string[];
+}
+
+/**
+ * Reads what catalog's `publish()` precomputed for a /browse request (see
+ * `tuxery/catalog#22` and `#23`) instead of `COUNT(*)`-ing, and for a
+ * source-only listing instead of scanning `packages_json` — together
+ * ~337k rows read per uncached page before (docs/turso-quota.md in
+ * catalog), now 2-3 `meta` rows. Returns `undefined` — caller runs its live
+ * queries — when the dataset has no browse keys, or the keys don't add up.
+ *
+ * A key that doesn't exist reads as 0 (empty combinations aren't written),
+ * which is only sound while the generation the key was built from is still
+ * the live one: a republish deletes the old generation's rows. So every
+ * read goes through `readPinned`, which checks the generation in the same
+ * snapshot, and a stale one is retried once against the new generation.
+ */
+async function readPrecomputedBrowse(
+  db: Client,
+  filters: {
+    interfaceFilter: InterfaceFilter;
+    typeFilter: TypeFilter;
+    category?: string;
+    source?: PackageSourceId;
+    sort: SortOption;
+    offset: number;
+  },
+): Promise<PrecomputedBrowse | undefined> {
+  let keys = await currentBrowseKeys(db);
+  for (let attempt = 0; attempt < 2 && keys; attempt++) {
+    // Sequential on purpose: a retry only happens after the previous
+    // attempt found the generation stale, and its keys depend on that.
+    // eslint-disable-next-line no-await-in-loop
+    const count = await readPinned(db, keys.generation, [
+      {
+        sql: `SELECT value FROM meta WHERE key = ?`,
+        args: [
+          countKey(
+            keys.generation,
+            filters.interfaceFilter,
+            filters.typeFilter,
+            filters.source,
+            filters.category,
+          ),
+        ],
+      },
+    ]);
+    if (count.kind === "stale") {
+      keys = rememberBrowseKeys(count.keys);
+      continue;
+    }
+    const total = Number(metaValue(count.results[0]) ?? 0);
+
+    // Precomputed id lists exist for the single-dimension source filter
+    // (every link into a store/distro page is `/browse/?source=X`); any
+    // other combination lists live, with just the count precomputed.
+    const sourceOnly =
+      filters.source !== undefined &&
+      !filters.category &&
+      filters.interfaceFilter === "all" &&
+      filters.typeFilter === "all";
+    if (!sourceOnly) return { total };
+
+    const descending = filters.sort === "name-desc";
+    const { start, end } = pageRange(filters.offset, BROWSE_PAGE_SIZE, total, descending);
+    const indexes = chunkIndexesFor(start, end, keys.sourceIdsChunkSize);
+    if (indexes.length === 0) return { total, ids: [] };
+
+    // eslint-disable-next-line no-await-in-loop
+    const chunkRows = await readPinned(
+      db,
+      keys.generation,
+      indexes.map((index) => ({
+        sql: `SELECT value FROM meta WHERE key = ?`,
+        args: [sourceIdsChunkKey(keys?.generation ?? "", filters.source ?? "", index)],
+      })),
+    );
+    if (chunkRows.kind === "stale") {
+      keys = rememberBrowseKeys(chunkRows.keys);
+      continue;
+    }
+    const chunks = new Map(
+      indexes.map((index, i) => [
+        index,
+        JSON.parse(metaValue(chunkRows.results[i]) ?? "[]") as string[],
+      ]),
+    );
+    const ids = sliceFromChunks(chunks, start, end, keys.sourceIdsChunkSize);
+    // Catalog writes every chunk before it publishes the generation, so a
+    // short page can only mean something is off: list live instead.
+    if (ids.length !== end - start) return undefined;
+    // `ids` is a fresh array from sliceFromChunks, safe to reverse in place
+    // (toReversed() needs ES2023, past this repo's lib target).
+    // eslint-disable-next-line unicorn/no-array-reverse
+    return { total, ids: descending ? ids.reverse() : ids };
+  }
+  return undefined;
+}
+
 export interface BrowseOptions {
   interfaceFilter?: InterfaceFilter;
   typeFilter?: TypeFilter;
@@ -349,18 +486,43 @@ export async function browseApps(
     }
     const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     const fullConditionArgs = [...whereArgs, ...conditionArgs];
+    const offset = Math.max(0, page) * BROWSE_PAGE_SIZE;
 
-    const total =
-      conditions.length > 0
+    // No free-text query and at least one filter: try the precomputed
+    // count (and, for a source-only page, id list) before any live query.
+    let precomputed: PrecomputedBrowse | undefined;
+    if (!trimmed && conditions.length > 0) {
+      try {
+        precomputed = await readPrecomputedBrowse(db, {
+          interfaceFilter,
+          typeFilter,
+          category,
+          source,
+          sort,
+          offset,
+        });
+      } catch (error) {
+        console.error("[catalog] precomputed browse keys unreadable, listing live:", error);
+      }
+    }
+    if (precomputed?.ids) {
+      return {
+        apps: await summariesForIds(db, precomputed.ids),
+        total: precomputed.total,
+      };
+    }
+
+    const total: number =
+      precomputed?.total ??
+      (conditions.length > 0
         ? await db
             .execute({
               sql: `SELECT COUNT(*) as count FROM apps ${where}`,
               args: fullConditionArgs,
             })
             .then((result) => Number(result.rows[0]?.count ?? 0))
-        : await getStats(env).then((stats) => stats.total);
+        : await getStats(env).then((stats) => stats.total));
 
-    const offset = Math.max(0, page) * BROWSE_PAGE_SIZE;
     const listResult = await db.execute({
       sql: `SELECT ${SUMMARY_COLUMNS} FROM apps ${where} ORDER BY ${sortClause(sort, orderBy)} LIMIT ? OFFSET ?`,
       args: [
