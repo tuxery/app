@@ -44,7 +44,9 @@ test("a single-source rated app's tooltip still prefixes the figure with its sou
 }) => {
   await page.goto(FIREWATCH);
   await expect(page.getByText(/\d\.\d \(\d/).first()).toBeVisible();
-  await expect(page.getByTitle("GOG: ★ 3.9 (2,175)")).toBeVisible();
+  // Shape only, not the figures — the rating and its vote count move with
+  // every dataset refresh, and the prefix is what this test is about.
+  await expect(page.getByTitle(/^GOG: ★ \d\.\d \([\d,]+\)$/)).toBeVisible();
 });
 
 test("a multi-source rated app's tooltip lists every source, each prefixed by its own label", async ({
@@ -53,7 +55,9 @@ test("a multi-source rated app's tooltip lists every source, each prefixed by it
   await page.goto(APP_EDITOR);
   await expect(page.getByText(/\d\.\d \(\d/).first()).toBeVisible();
   await expect(
-    page.getByTitle("Flathub (Flatpak): ★ 3.1 (29), elementary AppCenter (Flatpak): ★ 3.3 (12)"),
+    page.getByTitle(
+      /^Flathub \(Flatpak\): ★ \d\.\d \([\d,]+\), elementary AppCenter \(Flatpak\): ★ \d\.\d \([\d,]+\)$/,
+    ),
   ).toBeVisible();
 });
 
@@ -75,11 +79,12 @@ test("the build-channel badge counts distinct channels, not raw packages", async
 test("the Additional information table shows a real Size row, from Flathub's own download_size", async ({
   page,
 }) => {
-  // Re-verified against the live dataset (2026-09-18) — Flathub's
-  // /api/v2/summary/org.mozilla.firefox download_size, formatted.
+  // Flathub's /api/v2/summary/org.mozilla.firefox download_size,
+  // formatted — matched by shape, since the exact figure changes with
+  // every Firefox release.
   await page.goto(FIREFOX);
   const sizeRow = page.getByText("Size", { exact: true }).locator("..");
-  await expect(sizeRow.getByText("119.8 MB")).toBeVisible();
+  await expect(sizeRow.getByText(/^\d+(\.\d)? MB$/)).toBeVisible();
 });
 
 test("a Flathub-verified app shows a Verified badge next to its developer, and on the Flatpak drawer row", async ({
