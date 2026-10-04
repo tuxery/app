@@ -26,6 +26,7 @@ import {
   sourceIdsChunkKey,
   type BrowseKeys,
 } from "~/browse-keys";
+import { buildFtsClause } from "~/search-fts";
 import type { ServerEnv } from "~/server-env";
 
 // Server-only half of the catalog layer — everything here touches the DB
@@ -269,6 +270,11 @@ function buildSearchClause(trimmed: string): {
   return { where, whereArgs, orderBy: `(${scoreParts.join(" + ")}) DESC, name ASC`, orderArgs };
 }
 
+/** A dataset published before catalog built `apps_fts` has no such table — fall back to the LIKE scan rather than failing the search. */
+function isMissingFtsTable(error: unknown): boolean {
+  return error instanceof Error && error.message.includes("no such table: apps_fts");
+}
+
 function sortClause(sort: SortOption, searchOrderBy: string): string {
   if (sort === "name-asc") return "name ASC";
   if (sort === "name-desc") return "name DESC";
@@ -441,6 +447,8 @@ export async function browseApps(
   query: string,
   page: number,
   options: BrowseOptions = {},
+  /** `false` skips the free-text `COUNT(*)` — for the infinite scroll's later pages, which never read `total` (see /browse's `loadMore`). */
+  countTotal = true,
 ): Promise<BrowseResult> {
   const db = getClient(env);
   if (!db) return { apps: [], total: 0 };
@@ -454,8 +462,11 @@ export async function browseApps(
 
   const trimmed = query.trim();
 
-  const runBrowseQuery = async (): Promise<BrowseResult> => {
-    const { where: searchWhere, whereArgs, orderBy, orderArgs } = buildSearchClause(trimmed);
+  const runBrowseQuery = async (useFts: boolean): Promise<BrowseResult> => {
+    const search = buildSearchClause(trimmed);
+    const fts = useFts ? buildFtsClause(trimmed) : undefined;
+    const { orderBy, orderArgs } = search;
+    const { where: searchWhere, whereArgs } = fts ?? search;
 
     const conditions: string[] = [];
     const conditionArgs: string[] = [];
@@ -512,16 +523,23 @@ export async function browseApps(
       };
     }
 
-    const total: number =
-      precomputed?.total ??
-      (conditions.length > 0
-        ? await db
-            .execute({
-              sql: `SELECT COUNT(*) as count FROM apps ${where}`,
-              args: fullConditionArgs,
-            })
-            .then((result) => Number(result.rows[0]?.count ?? 0))
-        : await getStats(env).then((stats) => stats.total));
+    const countRows = async (): Promise<number> => {
+      if (precomputed) return precomputed.total;
+      // Never read by the caller (see `countTotal`): -1 rather than a guess.
+      if (trimmed && !countTotal) return -1;
+      if (conditions.length === 0) return (await getStats(env)).total;
+      // Search alone: count the index itself, not its join back to `apps`.
+      const statement =
+        fts && conditions.length === 1
+          ? {
+              sql: `SELECT COUNT(*) as count FROM apps_fts WHERE apps_fts MATCH ?`,
+              args: fts.whereArgs,
+            }
+          : { sql: `SELECT COUNT(*) as count FROM apps ${where}`, args: fullConditionArgs };
+      const result = await db.execute(statement);
+      return Number(result.rows[0]?.count ?? 0);
+    };
+    const total = await countRows();
 
     const listResult = await db.execute({
       sql: `SELECT ${SUMMARY_COLUMNS} FROM apps ${where} ORDER BY ${sortClause(sort, orderBy)} LIMIT ? OFFSET ?`,
@@ -548,9 +566,16 @@ export async function browseApps(
   // to a source's browse/store page.
   if (!trimmed) {
     const key = `browseApps:${interfaceFilter}:${typeFilter}:${category ?? ""}:${source ?? ""}:${sort}:${page}`;
-    return cachedListing(key, { apps: [], total: 0 }, runBrowseQuery);
+    return cachedListing(key, { apps: [], total: 0 }, () => runBrowseQuery(false));
   }
-  return safely({ apps: [], total: 0 }, runBrowseQuery);
+  return safely({ apps: [], total: 0 }, async () => {
+    try {
+      return await runBrowseQuery(true);
+    } catch (error) {
+      if (!isMissingFtsTable(error)) throw error;
+      return runBrowseQuery(false);
+    }
+  });
 }
 
 /** Looks up several apps by id at once, in whatever order the DB returns them — callers that need a specific order (e.g. an editorial block referencing ids in a chosen sequence) should re-sort client-side. Missing ids are silently dropped rather than erroring, since editorial content referencing a since-removed app shouldn't break the whole page. */
