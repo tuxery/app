@@ -6,6 +6,7 @@ describe("buildFtsClause", () => {
     expect(buildFtsClause("zen browser")).toEqual({
       where: "id IN (SELECT id FROM apps_fts WHERE apps_fts MATCH ?)",
       whereArgs: ['"zen" OR "browser"'],
+      match: '"zen" OR "browser"',
     });
   });
 

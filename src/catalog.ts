@@ -433,6 +433,56 @@ async function readPrecomputedBrowse(
   return undefined;
 }
 
+/** Above this many matches, a search reports "{SEARCH_COUNT_CAP}+" instead of counting every one — see `searchFtsOnly`. */
+const SEARCH_COUNT_CAP = 1000;
+
+/**
+ * A free-text search with no other filter, answered from `apps_fts` alone
+ * until the page is known. Each step reads one row per match at most, so a
+ * search can never cost more than the two full scans of `apps` it replaced:
+ *
+ * - Ranks inside `apps_fts` — it carries the `name` and `short_description`
+ *   `buildSearchClause`'s score reads — then fetches only the page's apps.
+ *   Ranking `apps` rows matched through `id IN (...)` instead read ~4 rows
+ *   per match; this reads ~2 (preview, 2026-10-04: `lib`, 13,455 matches,
+ *   53,820 → 26,910 rows read).
+ * - Counts at most `SEARCH_COUNT_CAP` + 1 matches (`totalCapped` past that,
+ *   shown as "1,000+"): an exact count read one row per match, ~93k for a
+ *   broad trigram like `man`, which made such searches cost more than the
+ *   LIKE scans did (464,795 vs 343,666 rows read on preview).
+ *
+ * Any other filter (category, source, ...) lives on `apps`, so combined
+ * searches keep the `id IN (...)` path in `browseApps`.
+ */
+async function searchFtsOnly(
+  db: Client,
+  match: string,
+  orderBy: string,
+  orderArgs: string[],
+  offset: number,
+  countTotal: boolean,
+): Promise<BrowseResult> {
+  const idRows = await db.execute({
+    sql: `SELECT id FROM apps_fts WHERE apps_fts MATCH ? ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+    args: [match, ...orderArgs, BROWSE_PAGE_SIZE, offset],
+  });
+  const apps = await summariesForIds(
+    db,
+    idRows.rows.map((row) => row.id as string),
+  );
+  // Never read by the caller (see `browseApps`' `countTotal`).
+  if (!countTotal) return { apps, total: -1 };
+
+  const countResult = await db.execute({
+    sql: `SELECT COUNT(*) as count FROM (SELECT 1 FROM apps_fts WHERE apps_fts MATCH ? LIMIT ?)`,
+    args: [match, SEARCH_COUNT_CAP + 1],
+  });
+  const count = Number(countResult.rows[0]?.count ?? 0);
+  return count > SEARCH_COUNT_CAP
+    ? { apps, total: SEARCH_COUNT_CAP, totalCapped: true }
+    : { apps, total: count };
+}
+
 export interface BrowseOptions {
   interfaceFilter?: InterfaceFilter;
   typeFilter?: TypeFilter;
@@ -523,20 +573,26 @@ export async function browseApps(
       };
     }
 
+    if (fts && conditions.length === 1) {
+      return searchFtsOnly(
+        db,
+        fts.match,
+        sortClause(sort, orderBy),
+        sort === "relevance" ? orderArgs : [],
+        offset,
+        countTotal,
+      );
+    }
+
     const countRows = async (): Promise<number> => {
       if (precomputed) return precomputed.total;
       // Never read by the caller (see `countTotal`): -1 rather than a guess.
       if (trimmed && !countTotal) return -1;
       if (conditions.length === 0) return (await getStats(env)).total;
-      // Search alone: count the index itself, not its join back to `apps`.
-      const statement =
-        fts && conditions.length === 1
-          ? {
-              sql: `SELECT COUNT(*) as count FROM apps_fts WHERE apps_fts MATCH ?`,
-              args: fts.whereArgs,
-            }
-          : { sql: `SELECT COUNT(*) as count FROM apps ${where}`, args: fullConditionArgs };
-      const result = await db.execute(statement);
+      const result = await db.execute({
+        sql: `SELECT COUNT(*) as count FROM apps ${where}`,
+        args: fullConditionArgs,
+      });
       return Number(result.rows[0]?.count ?? 0);
     };
     const total = await countRows();
