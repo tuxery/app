@@ -283,6 +283,8 @@ export const BROWSE_PAGE_SIZE = 30;
 export interface BrowseResult {
   apps: AppSummary[];
   total: number;
+  /** `total` is a lower bound: a free-text search stops counting past it, so there are more matches than that (shown as "1,000+"). */
+  totalCapped?: boolean;
 }
 
 export function formatBytes(bytes: number): string {

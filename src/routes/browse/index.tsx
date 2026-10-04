@@ -97,22 +97,30 @@ export default component$(() => {
   const batches = useSignal<AppSummary[][]>([browse.value.apps]);
   const loadedCount = useSignal(browse.value.apps.length);
   const nextPage = useSignal(startPage + 1);
+  // A capped total ("1,000+", see `BrowseResult.totalCapped`) can't tell
+  // when the results end, so scrolling keeps going until a short page.
+  const hasMore = useSignal(
+    browse.value.totalCapped
+      ? browse.value.apps.length === BROWSE_PAGE_SIZE
+      : browse.value.apps.length < browse.value.total,
+  );
   const loading = useSignal(false);
   const sentinelRef = useSignal<HTMLElement>();
 
   const loadMore = $(async () => {
-    if (loading.value || loadedCount.value >= browse.value.total) return;
+    if (loading.value || !hasMore.value) return;
     loading.value = true;
     const result = await loadBrowsePage(query, nextPage.value, options);
     if (result.apps.length > 0) {
       batches.value = [...batches.value, result.apps];
       loadedCount.value += result.apps.length;
       nextPage.value += 1;
-    } else {
-      // Server disagrees with the client's `total` (data changed
-      // mid-scroll) — stop rather than looping on empty pages forever.
-      loadedCount.value = browse.value.total;
     }
+    // A short (or empty) page is the last one, whatever `total` said —
+    // capped, or out of date because data changed mid-scroll.
+    hasMore.value =
+      result.apps.length === BROWSE_PAGE_SIZE &&
+      (browse.value.totalCapped === true || loadedCount.value < browse.value.total);
     loading.value = false;
   });
 
@@ -256,8 +264,10 @@ export default component$(() => {
         <>
           <div class="flex items-center justify-between gap-3 flex-wrap">
             <p class="text-sm text-base-content/60">
-              Showing {browse.value.total.toLocaleString()} apps across{" "}
-              {Math.max(1, Math.ceil(browse.value.total / BROWSE_PAGE_SIZE)).toLocaleString()} pages
+              Showing {browse.value.total.toLocaleString()}
+              {browse.value.totalCapped ? "+" : ""} apps across{" "}
+              {Math.max(1, Math.ceil(browse.value.total / BROWSE_PAGE_SIZE)).toLocaleString()}
+              {browse.value.totalCapped ? "+" : ""} pages
             </p>
             <a
               href="#top"
@@ -289,7 +299,7 @@ export default component$(() => {
             ))}
           </div>
 
-          {loadedCount.value < browse.value.total && (
+          {hasMore.value && (
             <div ref={sentinelRef} class="flex justify-center py-6 text-base-content/50">
               <LuLoader2 class="animate-spin text-xl" aria-label="Loading more apps" />
             </div>
