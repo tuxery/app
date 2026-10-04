@@ -31,7 +31,9 @@ const loadBrowsePage = server$(async function (
   page: number,
   options: BrowseOptions,
 ) {
-  return browseApps(resolveServerEnv(this.platform), query, page, options);
+  // `false`: loadMore never reads a later page's `total`, so don't pay for
+  // a free-text COUNT(*) on every scroll.
+  return browseApps(resolveServerEnv(this.platform), query, page, options, false);
 });
 
 function parseInterfaceFilter(value: string | null): InterfaceFilter {
