@@ -119,6 +119,23 @@ jobs:
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: e2e-worker-report.json
 
+      - name: Turso rows read by this suite (local sqld estimate)
+        if: always()
+        run: |
+          # catalog's `pnpm serve` exposes sqld's admin API on :8081: the
+          # rows read/written counters Turso bills on, for everything this
+          # suite queried. Within a few % of the hosted DB (see catalog's
+          # AGENTS.md "Local dev"), so a read-cost regression shows here
+          # before it reaches preview/prod quota.
+          if ! stats=$(curl -sf http://127.0.0.1:8081/v1/namespaces/default/stats); then
+            echo "catalog's sqld admin API isn't reachable on :8081 — skipping."
+            exit 0
+          fi
+          {
+            echo "### Turso rows read (local sqld estimate)"
+            echo "$stats" | jq -r '"\(.rows_read_count) rows read, \(.rows_written_count) written", "", "| Rows read | Query |", "| ---: | --- |", (.top_queries | sort_by(-.rows_read)[] | "| \(.rows_read) | `\(.query | gsub("\\s+"; " ") | .[0:150] | gsub("\\|"; "\\|"))` |")'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Summarize results
         id: summary
         if: always()
@@ -204,6 +221,23 @@ jobs:
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: e2e-desktop-report.json
 
+      - name: Turso rows read by this suite (local sqld estimate)
+        if: always()
+        run: |
+          # catalog's `pnpm serve` exposes sqld's admin API on :8081: the
+          # rows read/written counters Turso bills on, for everything this
+          # suite queried. Within a few % of the hosted DB (see catalog's
+          # AGENTS.md "Local dev"), so a read-cost regression shows here
+          # before it reaches preview/prod quota.
+          if ! stats=$(curl -sf http://127.0.0.1:8081/v1/namespaces/default/stats); then
+            echo "catalog's sqld admin API isn't reachable on :8081 — skipping."
+            exit 0
+          fi
+          {
+            echo "### Turso rows read (local sqld estimate)"
+            echo "$stats" | jq -r '"\(.rows_read_count) rows read, \(.rows_written_count) written", "", "| Rows read | Query |", "| ---: | --- |", (.top_queries | sort_by(-.rows_read)[] | "| \(.rows_read) | `\(.query | gsub("\\s+"; " ") | .[0:150] | gsub("\\|"; "\\|"))` |")'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Summarize results
         id: summary
         if: always()
@@ -277,6 +311,23 @@ jobs:
         run: pnpm exec playwright test --project=mobile-chromium --reporter=list,json
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: e2e-mobile-report.json
+
+      - name: Turso rows read by this suite (local sqld estimate)
+        if: always()
+        run: |
+          # catalog's `pnpm serve` exposes sqld's admin API on :8081: the
+          # rows read/written counters Turso bills on, for everything this
+          # suite queried. Within a few % of the hosted DB (see catalog's
+          # AGENTS.md "Local dev"), so a read-cost regression shows here
+          # before it reaches preview/prod quota.
+          if ! stats=$(curl -sf http://127.0.0.1:8081/v1/namespaces/default/stats); then
+            echo "catalog's sqld admin API isn't reachable on :8081 — skipping."
+            exit 0
+          fi
+          {
+            echo "### Turso rows read (local sqld estimate)"
+            echo "$stats" | jq -r '"\(.rows_read_count) rows read, \(.rows_written_count) written", "", "| Rows read | Query |", "| ---: | --- |", (.top_queries | sort_by(-.rows_read)[] | "| \(.rows_read) | `\(.query | gsub("\\s+"; " ") | .[0:150] | gsub("\\|"; "\\|"))` |")'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Summarize results
         id: summary
