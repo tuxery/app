@@ -625,6 +625,27 @@ async function summariesForIds(db: Client, ids: string[]): Promise<AppSummary[]>
 }
 
 /**
+ * One precomputed listing (`trending:all`, `categoryPreview:<category>`,
+ * ...), capped at `limit`. Reads the summary rows catalog pre-renders under
+ * `listingRows:<key>` — one `meta` row for the whole list, run through the
+ * same `toSummary()` as a live row — instead of the id list plus a `WHERE
+ * id IN (...)` lookup that reads one row per app (60 for a trending list).
+ * A dataset published before those rows existed falls back to the id list.
+ */
+async function listingFromMeta(db: Client, key: string, limit?: number): Promise<AppSummary[]> {
+  const result = await db.execute({
+    sql: `SELECT value FROM meta WHERE key = ?`,
+    args: [`listingRows:${key}`],
+  });
+  const value = result.rows[0]?.value;
+  if (typeof value === "string") {
+    return (JSON.parse(value) as Row[]).slice(0, limit).map((row) => toSummary(row));
+  }
+  const ids = await idsFromMeta(db, key);
+  return summariesForIds(db, ids.slice(0, limit));
+}
+
+/**
  * Apps with a real cross-source popularity score, highest first — see
  * `tuxery/catalog`'s `CatalogApp.popularity` doc comment for how it's
  * computed. Apps with no score are excluded entirely rather than sorted
@@ -647,8 +668,7 @@ export async function getTrendingApps(
   if (!db) return [];
 
   return cachedListing(`getTrendingApps:${typeFilter}`, [], async () => {
-    const ids = await idsFromMeta(db, `trending:${typeFilter}`);
-    return summariesForIds(db, ids);
+    return listingFromMeta(db, `trending:${typeFilter}`);
   });
 }
 
@@ -671,8 +691,7 @@ export async function getNewApps(
   if (!db) return [];
 
   return cachedListing(`getNewApps:${typeFilter}`, [], async () => {
-    const ids = await idsFromMeta(db, `newApps:${typeFilter}`);
-    return summariesForIds(db, ids);
+    return listingFromMeta(db, `newApps:${typeFilter}`);
   });
 }
 
@@ -696,8 +715,7 @@ export async function getDownloadTrendingApps(
   if (!db) return [];
 
   return cachedListing(`getDownloadTrendingApps:${typeFilter}`, [], async () => {
-    const ids = await idsFromMeta(db, `downloadTrending:${typeFilter}`);
-    return summariesForIds(db, ids);
+    return listingFromMeta(db, `downloadTrending:${typeFilter}`);
   });
 }
 
@@ -722,8 +740,7 @@ export async function getTrendingAppsBySource(
   if (!db) return [];
 
   return cachedListing(`getTrendingAppsBySource:${source}:${limit}`, [], async () => {
-    const ids = await idsFromMeta(db, `trendingBySource:${source}`);
-    return summariesForIds(db, ids.slice(0, limit));
+    return listingFromMeta(db, `trendingBySource:${source}`, limit);
   });
 }
 
@@ -754,8 +771,7 @@ export async function getAppsByCategory(
   if (!db) return [];
 
   return cachedListing<AppSummary[]>(`getAppsByCategory:${category}:${limit}`, [], async () => {
-    const ids = await idsFromMeta(db, `categoryPreview:${category}`);
-    return summariesForIds(db, ids.slice(0, limit));
+    return listingFromMeta(db, `categoryPreview:${category}`, limit);
   });
 }
 
