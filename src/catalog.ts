@@ -803,13 +803,23 @@ export async function getCategories(
   });
 }
 
-/** Reads precomputed totals from the `meta` table — never `COUNT(*)` on `apps` at request time. */
+/**
+ * Reads precomputed totals from the `meta` table — never `COUNT(*)` on `apps` at request time.
+ *
+ * Only the two keys it needs, by primary key: `meta` also holds every
+ * precomputed browse count and source id chunk (~4.7k rows, ~6 MB), and an
+ * unfiltered `SELECT key, value FROM meta` read all of them on every
+ * homepage, /status and app detail page — found live 2026-10-04, ~4.7k rows
+ * read per call for two scalars.
+ */
 export async function getStats(env: ServerEnv): Promise<CatalogStats> {
   const db = getClient(env);
   if (!db) return EMPTY_STATS;
 
-  return safely(EMPTY_STATS, async () => {
-    const result = await db.execute(`SELECT key, value FROM meta`);
+  return cachedListing("getStats", EMPTY_STATS, async () => {
+    const result = await db.execute(
+      `SELECT key, value FROM meta WHERE key IN ('totalApps', 'generatedAt')`,
+    );
     const meta = Object.fromEntries(result.rows.map((row) => [row.key, row.value])) as Record<
       string,
       string
