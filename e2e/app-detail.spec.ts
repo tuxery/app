@@ -2,11 +2,13 @@ import { test, expect } from "@playwright/test";
 
 // Ids that carry a Flatpak or Snap package use that package's own
 // globally-unique name/appId directly (Snap preferred — see catalog's
-// match/group.ts's buildAppId), no "source:" prefix; Firewatch and
+// match/group.ts's buildAppId), no "source:" prefix; The Witcher 2 and
 // LibreOffice Writer have neither, so they still fall back to
 // "source:appId".
 const FIREFOX = "/app/firefox/";
-const FIREWATCH = "/app/gog%3Afirewatch/";
+// gog:firewatch left the dataset (2026-10-04) — The Witcher 2 is GOG-only
+// rated (no other source carries a rating) and GOG's most-rated title.
+const WITCHER_2 = "/app/gog%3Athe_witcher_2/";
 // LibreOffice no longer carries suite_json in the live dataset (re-verified
 // 2026-09-18) — Calligra is the current real example of a suite main app
 // with a component.
@@ -42,7 +44,7 @@ test("an app page shows an install-options drawer listing every source, each gro
 test("a single-source rated app's tooltip still prefixes the figure with its source", async ({
   page,
 }) => {
-  await page.goto(FIREWATCH);
+  await page.goto(WITCHER_2);
   await expect(page.getByText(/\d\.\d \(\d/).first()).toBeVisible();
   // Shape only, not the figures — the rating and its vote count move with
   // every dataset refresh, and the prefix is what this test is about.
@@ -66,14 +68,15 @@ test("the build-channel badge counts distinct channels, not raw packages", async
   // (dozens — one per distro, mostly all "Stable") right next to a
   // tooltip naming only a handful of channels, which read as broken. The
   // badge is the channel count itself now, matching the tooltip it
-  // explains. Exact channel set re-verified against the live dataset
-  // (2026-09-18) — Luanti now carries 5 distinct channel words across its
-  // packages (Flathub added its own "latest" branch, Snap exposes raw
-  // version-numbered channels on top of the AUR git build).
-  const tip = "Stable, Git, Flathub latest, 0.4.17.1, 5.7.0-dev";
+  // explains. Exact channel set re-verified against the dataset
+  // (2026-10-04) — Luanti now carries 6 distinct channel words across its
+  // dozens of packages: AUR's git build, Gentoo's "testing" keyword, and
+  // Lutris' raw Flathub-branch/version installers on top of "Stable"
+  // (Flathub and Snap now write it explicitly, same label as unset).
+  const tip = "Stable, Git, Testing, Flathub latest, 0.4.17.1, 5.7.0-dev";
   await page.goto(LUANTI);
   await expect(page.getByTitle(tip)).toBeVisible();
-  await expect(page.getByTitle(tip).locator(".badge")).toHaveText("5");
+  await expect(page.getByTitle(tip).locator(".badge")).toHaveText("6");
 });
 
 test("the Additional information table shows a real Size row, from Flathub's own download_size", async ({

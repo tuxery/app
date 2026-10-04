@@ -184,9 +184,19 @@ export interface CatalogApp {
   }[];
 }
 
-/** Human label for a build channel — `undefined` is the default/stable build, everything else (AUR's git/svn/hg/bzr/cvs/bin) gets its raw value capitalized. */
+/**
+ * Whether a package's channel is just the default build. Catalog leaves it
+ * unset for most sources, but writes an explicit `"stable"` for the ones
+ * that name their channels (Flathub, Snap — since tuxery/catalog@150c463),
+ * and both mean the same thing here.
+ */
+export function isDefaultChannel(channel: string | undefined): boolean {
+  return !channel || channel.toLowerCase() === "stable";
+}
+
+/** Human label for a build channel — the default/stable build (see `isDefaultChannel`) is "Stable", everything else (AUR's git/svn/hg/bzr/cvs/bin) gets its raw value capitalized. */
 export function channelLabel(channel: string | undefined): string {
-  if (!channel) return "Stable";
+  if (!channel || isDefaultChannel(channel)) return "Stable";
   return capitalize(channel, { lowercaseRest: false });
 }
 
@@ -210,7 +220,7 @@ export function summarizeChannels(packages: { channel?: string }[]): string[] {
 /** Human label for a package's own source, e.g. "Flathub (Flatpak)", or "AUR (git build)" for a non-default channel. */
 export function formatSourceLabel(pkg: { source: PackageSourceId; channel?: string }): string {
   const label = SOURCE_LABELS[pkg.source];
-  return pkg.channel ? `${label} (${pkg.channel} build)` : label;
+  return isDefaultChannel(pkg.channel) ? label : `${label} (${pkg.channel} build)`;
 }
 
 export interface SourceRating {
