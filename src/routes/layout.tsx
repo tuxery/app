@@ -1,5 +1,5 @@
 import { component$, Slot } from "@builder.io/qwik";
-import { routeLoader$, useLocation } from "@builder.io/qwik-city";
+import { routeLoader$, useLocation, type RequestHandler } from "@builder.io/qwik-city";
 import { LuLayoutGrid, LuMenu, LuSearch, LuSettings, LuUser } from "@qwikest/icons/lucide";
 import { Footer } from "~/components/footer/footer";
 import { TuxeryLogo } from "~/components/tuxery-logo/tuxery-logo";
@@ -7,6 +7,21 @@ import { findOsEntry } from "~/os-catalog";
 import { resolveServerEnv } from "~/server-env";
 import { useProvideSettings } from "~/settings";
 import { getHeroBackgroundPhoto } from "~/unsplash";
+
+// Every page is the same for every visitor (nothing reads cookies or
+// per-user headers server-side; settings live client-side), so it can be
+// shared from Cloudflare's edge. The cloudflare-pages adapter already
+// `cache.put`s any OK GET response carrying a Cache-Control header into the
+// datacenter's Cache API — this is what turns that on. Without it, the only
+// cache in front of Turso was `~/catalog`'s per-isolate `cachedListing`,
+// which a cold isolate (most requests in production) never hits. Same
+// 10-minute horizon as that cache: data only changes when catalog
+// republishes. Covers SSR HTML and the `q-data.json` loader requests of
+// client-side navigation (both GET); `server$` calls are POST and never
+// cached.
+export const onGet: RequestHandler = ({ cacheControl }) => {
+  cacheControl({ public: true, maxAge: 60, sMaxAge: 600, staleWhileRevalidate: 3600 });
+};
 
 // Defined at the layout level (not routes/index.tsx) so every page gets the
 // background, not just the homepage — a route can still reuse this exact
