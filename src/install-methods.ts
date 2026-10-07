@@ -217,6 +217,13 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
   gog: { kind: "link" },
   lutris: { kind: "link" },
   "github-releases": { kind: "link" },
+  // The vendor's own install page, not an `apt install` line: the package
+  // lives in the vendor's apt repo, which has to be added first and each
+  // vendor documents that step differently. `homepage` is that page.
+  "vendor-repos": {
+    kind: "link",
+    websiteLink: (pkg) => (pkg.homepage ? { url: pkg.homepage, label: "Vendor" } : undefined),
+  },
 };
 
 export function installCommand(pkg: SourcedPackage): string | undefined {
