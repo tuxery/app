@@ -27,6 +27,7 @@ const GROUPS: { title: string; sources: PackageSourceId[] }[] = [
     ],
   },
   { title: "Game storefronts", sources: ["gog", "lutris"] },
+  { title: "Vendor repositories", sources: ["vendor-repos"] },
 ];
 
 export default component$(() => {

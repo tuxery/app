@@ -64,6 +64,12 @@ const SOURCES: SourceCredit[] = [
     name: "Lutris",
     method: "Lutris's installer API, scoped to native Linux installers.",
   },
+  {
+    id: "vendor-repos",
+    name: "Vendor apt repositories",
+    method:
+      "A hand-curated list of first-party vendor apt repos (Brave, Chrome, VS Code, ...), read from each vendor's own Packages index.",
+  },
 ];
 
 export default component$(() => {

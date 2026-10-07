@@ -45,7 +45,8 @@ export type PackageSourceId =
   | "deb-mxlinux"
   | "gog"
   | "lutris"
-  | "github-releases";
+  | "github-releases"
+  | "vendor-repos";
 
 export const SOURCE_LABELS: Record<PackageSourceId, string> = {
   "flatpak-flathub": "Flathub (Flatpak)",
@@ -73,6 +74,7 @@ export const SOURCE_LABELS: Record<PackageSourceId, string> = {
   gog: "GOG",
   lutris: "Lutris",
   "github-releases": "GitHub Releases",
+  "vendor-repos": "Vendor apt repository",
 };
 
 /** Every known source, in a fixed order. Derived from `SOURCE_LABELS` so it can never drift out of sync with `PackageSourceId`. */
