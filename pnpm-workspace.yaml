@@ -46,9 +46,17 @@ minimumReleaseAgeExclude:
 # bump fixes yet: undici via wrangler>miniflare (GHSA-rfgv-xxqx-mfg5/
 # GHSA-w293-vg96-wgc3), and brace-expansion@1 + probe-image-size via
 # @builder.io/qwik's dev toolchain (GHSA-qhr7-859c-m2p7/GHSA-6j4f-fj2g-mc7p).
+#
+# 2026-10-07: sharp raised again, to >=0.35.5 (librsvg advisory); plus two
+# more transitive dev-toolchain pins under @builder.io/qwik (via
+# @qwik-ui/headless): source-map-js >=1.2.2 (event-loop DoS,
+# GHSA-68fv-2mgg-jv7q) and shell-quote >=1.11.0 (quote() command
+# injection, via launch-editor). Pinned until the parents' ranges move.
 overrides:
-  sharp: ">=0.35.4"
+  sharp: ">=0.35.5"
   svgo: ">=3.3.5"
   undici@7: "^7.29.1"
   brace-expansion@1: "^1.1.20"
   probe-image-size: ">=7.3.1"
+  source-map-js: ">=1.2.2"
+  shell-quote: ">=1.11.0"
