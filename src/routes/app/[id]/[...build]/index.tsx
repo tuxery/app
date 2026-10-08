@@ -25,6 +25,19 @@ import {
   type SourcedPackage,
 } from "~/catalog-types";
 import { BuildIndicator } from "~/components/build-indicator/build-indicator";
+import { BuildSelectors } from "~/components/build-selectors/build-selectors";
+import {
+  buildPath,
+  editionsOf,
+  buildFacts,
+  hasBuild,
+  otherSelections,
+  packagesOf,
+  parseBuildPath,
+  selectionLabel,
+  versionsByEdition,
+  type BuildSelection,
+} from "~/product-builds";
 import { SourceMap } from "~/components/source-map/source-map";
 import { UnifiedRating } from "~/components/unified-rating/unified-rating";
 import {
@@ -48,6 +61,20 @@ export const useApp = routeLoader$(async (requestEvent): Promise<CatalogApp | nu
   const app = await getAppById(resolveServerEnv(requestEvent.platform), id);
   if (!app) requestEvent.status(404);
   return app;
+});
+
+/**
+ * The edition/version combination the path names (`/app/firefox/esr/beta/`,
+ * see `parseBuildPath`). A path naming no combination this product has —
+ * a stale link, a typo — redirects to the product's own page.
+ */
+export const useBuildSelection = routeLoader$(async (requestEvent): Promise<BuildSelection> => {
+  const app = await requestEvent.resolveValue(useApp);
+  const selection = parseBuildPath((requestEvent.params.build ?? "").split("/"));
+  if (app && (!selection || !hasBuild(app.packages, selection))) {
+    throw requestEvent.redirect(302, buildPath(app.id, {}));
+  }
+  return selection ?? {};
 });
 
 export const useDetailStats = routeLoader$(async (requestEvent) =>
@@ -266,10 +293,13 @@ const SourceInstallUnit = component$<{
 
   const verified = isVerifiedPackage(pkg);
   const provenance = provenanceInfo(pkg.provenance);
+  // Sources write their own version shape (Debian's `4:25.2.3-2+deb13u6`,
+  // AUR's `157.0-1`); shown as-is, it's what the package manager reports.
+  const version = pkg.version && pkg.version !== "unknown" ? pkg.version : undefined;
 
   return (
     <div class="flex flex-col gap-2">
-      {(showLabel || verified || provenance) && (
+      {(showLabel || verified || provenance || version) && (
         <div class="flex items-center gap-2">
           {showLabel && (
             <span class="text-sm font-medium">
@@ -289,6 +319,9 @@ const SourceInstallUnit = component$<{
             <span class="tooltip badge badge-ghost badge-xs" data-tip={provenance.tip}>
               {provenance.label}
             </span>
+          )}
+          {version && (
+            <span class="text-xs text-base-content/50 font-mono truncate">{version}</span>
           )}
         </div>
       )}
@@ -536,6 +569,7 @@ function summarizeSources(packages: SourcedPackage[]) {
 
 export default component$(() => {
   const app = useApp();
+  const buildSelection = useBuildSelection();
   const stats = useDetailStats();
   const settings = useSettings();
   const a = app.value;
@@ -582,7 +616,23 @@ export default component$(() => {
   // that exist to enrich the app's name/categories, not to be installed from —
   // they have no `INSTALL_METHODS` entry, and rendering one in the drawer
   // throws, which silently wedges every later re-render (so it never closes).
-  const installablePackages = a.packages.filter((pkg) => pkg.source in INSTALL_METHODS);
+  // The edition/version combination this page shows (its path, see
+  // `useBuildSelection`). Install options and version-specific facts
+  // (rating, size, changelog) are that combination's own; descriptive
+  // content (description, screenshots, developer, ...) stays the
+  // product's. The default combination keeps the product-level facts it
+  // always showed.
+  const selection = buildSelection.value;
+  const isDefaultBuild = !selection.track && !selection.risk;
+  const selectedPackages = packagesOf(a.packages, selection);
+  const facts = isDefaultBuild
+    ? { rating: a.rating, approxSizeBytes: a.approxSizeBytes, changelog: a.changelog }
+    : buildFacts(selectedPackages);
+  const ratingPackages = isDefaultBuild ? a.packages : selectedPackages;
+  const editions = editionsOf(a.packages);
+  const versions = versionsByEdition(a.packages);
+
+  const installablePackages = selectedPackages.filter((pkg) => pkg.source in INSTALL_METHODS);
 
   const selectedOs = findOsEntry(settings.osId.value);
   const recommended = selectedOs ? recommendedGroupIds(selectedOs) : undefined;
@@ -598,6 +648,19 @@ export default component$(() => {
     ),
   );
   const sourceSummary = summarizeSources(visiblePackages);
+  // Platforms that only have other editions/versions of this product
+  // (Debian ships Firefox ESR, not Firefox) — linked from the drawer so
+  // landing on the default page never reads as "not on Debian".
+  const elsewhere = groupPackagesBySourceGroup(
+    a.packages.filter(
+      (pkg) =>
+        pkg.source in INSTALL_METHODS &&
+        !installablePackages.some((selected) => selected.source === pkg.source),
+    ),
+  ).map(([group, packages]): [string, BuildSelection[]] => [
+    group,
+    otherSelections(packages, selection),
+  ]);
 
   return (
     <div class="flex flex-col gap-10">
@@ -617,7 +680,15 @@ export default component$(() => {
                 <LuPackage class="text-base text-base-content/40" />
               )}
             </div>
-            <span class="font-medium truncate flex-1">{a.name}</span>
+            <span class="font-medium truncate">{a.name}</span>
+            <BuildSelectors
+              appId={a.id}
+              selection={selection}
+              editions={editions}
+              versionsByEdition={versions}
+              size="sm"
+            />
+            <div class="flex-1" />
             {visiblePackages.length > 0 && (
               <div class="flex items-center gap-2 mr-3">
                 <SourceMap
@@ -665,7 +736,16 @@ export default component$(() => {
         </div>
 
         <div class="flex-1 min-w-0">
-          <h1 class="text-3xl font-bold">{a.name}</h1>
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h1 class="text-3xl font-bold">{a.name}</h1>
+            <BuildSelectors
+              appId={a.id}
+              selection={selection}
+              editions={editions}
+              versionsByEdition={versions}
+              size="lg"
+            />
+          </div>
           <p class="text-base-content/70 mt-1">{a.shortDescription}</p>
           {a.developer && (
             <p class="text-sm text-base-content/60 mt-1 flex items-center gap-1.5">
@@ -691,11 +771,11 @@ export default component$(() => {
 
           <div class="flex flex-wrap items-center gap-2 mt-3">
             {a.contentType === "game" && <span class="badge badge-accent">Game</span>}
-            {a.rating && (
+            {facts.rating && (
               <UnifiedRating
-                average={a.rating.average}
-                count={a.rating.count}
-                bySource={summarizeRatingsBySource(a.packages)}
+                average={facts.rating.average}
+                count={facts.rating.count}
+                bySource={summarizeRatingsBySource(ratingPackages)}
               />
             )}
             {a.category && <span class="badge badge-outline">{a.category}</span>}
@@ -717,58 +797,58 @@ export default component$(() => {
           </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3">
-          {visiblePackages.length ? (
-            <>
-              <div class="flex items-center gap-2 mr-3">
-                <SourceMap
-                  sources={sourceSummary.sources}
-                  verifiedSources={sourceSummary.verifiedSources}
-                  tooltipPosition="bottom"
-                />
-                <BuildIndicator builds={sourceSummary.builds} tooltipPosition="bottom" />
-              </div>
-              <div class="aura aura-sm w-fit">
-                <button
-                  type="button"
-                  class="btn btn-primary btn-sm min-w-[120px]"
-                  onClick$={() => (drawerOpen.value = true)}
-                >
-                  Install
-                </button>
-              </div>
-            </>
-          ) : hiddenGroups.length > 0 ? (
-            // Every source is hidden by the selected OS's recommendations,
-            // but some exist — open the drawer to its collapsed "other
-            // platforms" section instead of claiming there's nothing.
-            <button
-              type="button"
-              class="btn btn-outline btn-sm min-w-[120px]"
-              onClick$={() => (drawerOpen.value = true)}
-            >
-              Install
-            </button>
-          ) : (
-            <span class="btn btn-disabled btn-sm" aria-disabled="true">
-              No install source available
-            </span>
-          )}
+        <div class="flex flex-col items-start md:items-end gap-2">
+          <div class="flex flex-wrap items-center gap-3">
+            {visiblePackages.length ? (
+              <>
+                <div class="flex items-center gap-2 mr-3">
+                  <SourceMap
+                    sources={sourceSummary.sources}
+                    verifiedSources={sourceSummary.verifiedSources}
+                    tooltipPosition="bottom"
+                  />
+                  <BuildIndicator builds={sourceSummary.builds} tooltipPosition="bottom" />
+                </div>
+                <div class="aura aura-sm w-fit">
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm min-w-[120px]"
+                    onClick$={() => (drawerOpen.value = true)}
+                  >
+                    Install
+                  </button>
+                </div>
+              </>
+            ) : hiddenGroups.length > 0 || elsewhere.length > 0 ? (
+              // Every source is hidden by the selected OS's recommendations,
+              // but some exist — open the drawer to its collapsed "other
+              // platforms" section instead of claiming there's nothing.
+              <button
+                type="button"
+                class="btn btn-outline btn-sm min-w-[120px]"
+                onClick$={() => (drawerOpen.value = true)}
+              >
+                Install
+              </button>
+            ) : (
+              <span class="btn btn-disabled btn-sm" aria-disabled="true">
+                No install source available
+              </span>
+            )}
+          </div>
+          {/* Starter version of the claim flow — a button and a static
+            explainer page, not the mechanism itself (that needs user
+            accounts, an ownership-verification process, and a real
+            per-field edit capability, none of which exist yet — see
+            /claim/). Only here, under the hero's Install button — not
+            duplicated on the fixed sticky-header variant that appears on
+            scroll. */}
+          <a href={`/claim/?app=${encodeURIComponent(a.id)}`} class="btn btn-ghost btn-sm gap-1.5">
+            <LuBadgeCheck class="text-base" />
+            Claim this listing
+          </a>
         </div>
       </section>
-
-      {/* Starter version of the claim flow — a button and a static
-          explainer page, not the mechanism itself (that needs user
-          accounts, an ownership-verification process, and a real per-field
-          edit capability, none of which exist yet — see /claim/). Only
-          here, in the page's own hero — not duplicated on the fixed
-          sticky-header variant that appears on scroll. */}
-      <div>
-        <a href={`/claim/?app=${encodeURIComponent(a.id)}`} class="btn btn-ghost btn-sm gap-1.5">
-          <LuBadgeCheck class="text-base" />
-          Claim this listing
-        </a>
-      </div>
 
       {/* Suite main app: link out to each separately-installable component. */}
       {a.suite?.role === "main" && a.suite.components && a.suite.components.length > 0 && (
@@ -788,74 +868,6 @@ export default component$(() => {
                 {component.name}
               </a>
             ))}
-          </div>
-        </section>
-      )}
-
-      {/* Forks, successors, unofficial clients, ... — catalog's product-families relations. */}
-      {a.relations && a.relations.length > 0 && (
-        <section>
-          <h2 class="text-lg font-semibold mb-3">Related</h2>
-          <dl class="flex flex-col gap-2">
-            {groupRelations(a.relations).map(([label, apps]) => (
-              <div key={label} class="flex flex-wrap items-center gap-2">
-                <dt class="text-sm text-base-content/60">{label}</dt>
-                {apps.map((related) => (
-                  <dd key={related.id}>
-                    <a
-                      href={`/app/${encodeURIComponent(related.id)}/`}
-                      class="btn btn-outline btn-sm"
-                    >
-                      {related.name}
-                    </a>
-                  </dd>
-                ))}
-              </div>
-            ))}
-          </dl>
-        </section>
-      )}
-
-      {/* Extensions, plugins, themes, language packs, ... — never cards of their own. */}
-      {a.companions && a.companions.length > 0 && (
-        <section>
-          <h2 class="text-lg font-semibold mb-3">Add-ons</h2>
-          <div class="flex flex-col gap-2">
-            {groupCompanions(a.companions).map(([kind, companions]) => {
-              const total = a.companionCounts?.[kind] ?? companions.length;
-              return (
-                <details key={kind} class="collapse collapse-arrow bg-base-200">
-                  <summary class="collapse-title text-sm font-medium">
-                    {COMPANION_KIND_LABELS[kind]} ({total})
-                  </summary>
-                  <div class="collapse-content">
-                    {total > companions.length && (
-                      <p class="text-xs text-base-content/60 mb-2">
-                        The {companions.length} most widely packaged of {total}.
-                      </p>
-                    )}
-                    <ul class="flex flex-col gap-1 text-sm">
-                      {companions.map((companion) => (
-                        <li key={companion.name}>
-                          <span class="font-medium">{companion.name}</span>
-                          {companion.description && (
-                            <span class="text-base-content/60"> — {companion.description}</span>
-                          )}
-                          <span class="text-xs text-base-content/50">
-                            {" "}
-                            (
-                            {unique(
-                              companion.packages.map((pkg) => SOURCE_LABELS[pkg.source]),
-                            ).join(", ")}
-                            )
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </details>
-              );
-            })}
           </div>
         </section>
       )}
@@ -912,6 +924,26 @@ export default component$(() => {
                 </div>
               </details>
             )}
+
+            {elsewhere.length > 0 && (
+              <div class="flex flex-col gap-1.5 text-sm">
+                <p class="text-base-content/60">In other editions or versions of {a.name}:</p>
+                {elsewhere.map(([group, selections]) => (
+                  <p key={group} class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span class="font-medium">{group}</span>
+                    {selections.map((other) => (
+                      <a
+                        key={buildPath(a.id, other)}
+                        href={buildPath(a.id, other)}
+                        class="link link-primary"
+                      >
+                        {selectionLabel(other)}
+                      </a>
+                    ))}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -950,10 +982,10 @@ export default component$(() => {
         </section>
       ) : null}
 
-      {a.changelog ? (
+      {facts.changelog ? (
         <section>
           <h2 class="text-lg font-semibold mb-2">Changelog</h2>
-          <p class="whitespace-pre-line text-base-content/80">{a.changelog}</p>
+          <p class="whitespace-pre-line text-base-content/80">{facts.changelog}</p>
         </section>
       ) : null}
 
@@ -1029,10 +1061,10 @@ export default component$(() => {
               <dd>{a.languages.join(", ")}</dd>
             </>
           )}
-          {a.approxSizeBytes && (
+          {facts.approxSizeBytes && (
             <>
               <dt class="text-base-content/60">Size</dt>
-              <dd>{formatBytes(a.approxSizeBytes)}</dd>
+              <dd>{formatBytes(facts.approxSizeBytes)}</dd>
             </>
           )}
           {a.permissions?.length && (
@@ -1082,6 +1114,74 @@ export default component$(() => {
           Report this app
         </a>
       </section>
+
+      {/* Forks, successors, unofficial clients, ... — catalog's product-families relations. */}
+      {a.relations && a.relations.length > 0 && (
+        <section>
+          <h2 class="text-lg font-semibold mb-3">Related</h2>
+          <dl class="flex flex-col gap-2">
+            {groupRelations(a.relations).map(([label, apps]) => (
+              <div key={label} class="flex flex-wrap items-center gap-2">
+                <dt class="text-sm text-base-content/60">{label}</dt>
+                {apps.map((related) => (
+                  <dd key={related.id}>
+                    <a
+                      href={`/app/${encodeURIComponent(related.id)}/`}
+                      class="btn btn-outline btn-sm"
+                    >
+                      {related.name}
+                    </a>
+                  </dd>
+                ))}
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+
+      {/* Extensions, plugins, themes, language packs, ... — never cards of their own. */}
+      {a.companions && a.companions.length > 0 && (
+        <section>
+          <h2 class="text-lg font-semibold mb-3">Add-ons</h2>
+          <div class="flex flex-col gap-2">
+            {groupCompanions(a.companions).map(([kind, companions]) => {
+              const total = a.companionCounts?.[kind] ?? companions.length;
+              return (
+                <details key={kind} class="collapse collapse-arrow bg-base-200">
+                  <summary class="collapse-title text-sm font-medium">
+                    {COMPANION_KIND_LABELS[kind]} ({total})
+                  </summary>
+                  <div class="collapse-content">
+                    {total > companions.length && (
+                      <p class="text-xs text-base-content/60 mb-2">
+                        The {companions.length} most widely packaged of {total}.
+                      </p>
+                    )}
+                    <ul class="flex flex-col gap-1 text-sm">
+                      {companions.map((companion) => (
+                        <li key={companion.name}>
+                          <span class="font-medium">{companion.name}</span>
+                          {companion.description && (
+                            <span class="text-base-content/60"> — {companion.description}</span>
+                          )}
+                          <span class="text-xs text-base-content/50">
+                            {" "}
+                            (
+                            {unique(
+                              companion.packages.map((pkg) => SOURCE_LABELS[pkg.source]),
+                            ).join(", ")}
+                            )
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </details>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </div>
   );
 });
