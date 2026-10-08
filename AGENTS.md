@@ -16,6 +16,20 @@ there's only ever been one deployable here. `src/` — no product logic
 beyond rendering/routing; it queries `tuxery/catalog`'s dataset via Turso,
 not reimplement matching/scoring locally.
 
+## Product families vocabulary
+
+The data model comes from `tuxery/catalog` — see its
+[`docs/product-families.md`](https://github.com/tuxery/catalog/blob/main/docs/product-families.md)
+for full definitions. In short, one card per product; each package
+carries a **track** (parallel line, shown as "Edition": Firefox ESR,
+Developer Edition), a **risk** (maturity, shown as "Version": Stable,
+Beta, Nightly), **flavors** (technical variants such as `bin` or a
+patch set, folded as "other builds") and a **provenance** (who built
+it — a trust badge, never a choice). **Companions** (add-ons) are
+listed on their parent's page; **relations** (fork of, replaces,
+wrapper of, part of, tool for) link to other cards. Don't use
+"channel" for any of these in UI copy or code.
+
 ## Rules
 
 - Don't add a local `TODO.md`/`ROADMAP.md` — track work as cards on the
