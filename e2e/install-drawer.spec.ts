@@ -129,9 +129,13 @@ test("a source with more than one channel (AUR's official/-bin/-git builds) show
   // One tab group, not three separate rows — AUR is the Arch Linux group's
   // only source here, so its own label is omitted as redundant with the
   // "Arch Linux" heading right above (see SourceInstallUnit's showLabel).
+  // A tab shows its channel ("Stable", "Bin", "Git"), but falls back to the
+  // package name when two packages of the source share a channel (Jan has
+  // both jan-bin and jan-live-bin, AUR's -appimage packages are labeled
+  // separately) — so the bin build is matched by either spelling.
   const stable = page.getByRole("tab", { name: "Stable" });
-  const bin = page.getByRole("tab", { name: "Bin" });
-  const git = page.getByRole("tab", { name: "Git" });
+  const bin = page.getByRole("tab", { name: /^(Bin|jan-bin)$/ });
+  const git = page.getByRole("tab", { name: /^(Git|jan-git)$/ });
   await expect(stable).toBeVisible();
   await expect(bin).toBeVisible();
   await expect(git).toBeVisible();
