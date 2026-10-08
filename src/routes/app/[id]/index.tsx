@@ -7,20 +7,24 @@ import { getAppById, getStats } from "~/catalog";
 import { resolveServerEnv } from "~/server-env";
 import {
   ALL_SOURCE_GROUPS,
-  channelLabel,
+  buildLabel,
   formatBytes,
   formatSourceLabel,
   isVerifiedPackage,
+  provenanceInfo,
   SOURCE_GROUP_MEMBERS,
   SOURCE_LABELS,
-  summarizeChannels,
+  summarizeBuilds,
   summarizeRatingsBySource,
   verifiedSourcesOf,
   type CatalogApp,
+  type Companion,
+  type CompanionKind,
   type PackageSourceId,
+  type Relation,
   type SourcedPackage,
 } from "~/catalog-types";
-import { BuildChannelIndicator } from "~/components/build-channel-indicator/build-channel-indicator";
+import { BuildIndicator } from "~/components/build-indicator/build-indicator";
 import { SourceMap } from "~/components/source-map/source-map";
 import { UnifiedRating } from "~/components/unified-rating/unified-rating";
 import {
@@ -127,7 +131,7 @@ function groupPackagesBySourceGroup(packages: SourcedPackage[]): [string, Source
     .map((key) => [key, byGroup.get(key) as SourcedPackage[]]);
 }
 
-/** One platform group's packages, bucketed by their exact packaging source (e.g. AUR vs Official within "Arch Linux") — packages sharing a source are channel variants of the same build (see `SourceInstallUnit`), in first-seen order. */
+/** One platform group's packages, bucketed by their exact packaging source (e.g. AUR vs Official within "Arch Linux") — packages sharing a source are different builds of the same product (see `SourceInstallUnit`), in first-seen order. */
 function groupBySource(packages: SourcedPackage[]): [PackageSourceId, SourcedPackage[]][] {
   const bySource = new Map<PackageSourceId, SourcedPackage[]>();
   for (const pkg of packages) {
@@ -139,16 +143,15 @@ function groupBySource(packages: SourcedPackage[]): [PackageSourceId, SourcedPac
 }
 
 /**
- * A source's channel tabs, falling back to the raw package name when two
- * packages would otherwise render the same label — real bug, found live:
- * Snap's `channel` field is a release track (stable/candidate/beta/edge),
- * not a build variant, so Discord and Discord Canary (both merged under
- * one app, both on Snap's "stable" track) rendered as two identical
- * "Stable" tabs with no way to tell them apart.
+ * A source's build tabs (see `buildLabel`: "Stable", "ESR · Bin",
+ * "Nightly"), falling back to the raw package name when two packages
+ * would otherwise render the same label — real bug, found live: Discord
+ * and Discord Canary, both merged under one app and both on Snap's
+ * stable risk, rendered as two identical "Stable" tabs.
  */
 function tabLabel(pkg: SourcedPackage, packages: SourcedPackage[]): string {
-  const label = channelLabel(pkg.channel);
-  const collides = packages.some((p) => p !== pkg && channelLabel(p.channel) === label);
+  const label = buildLabel(pkg);
+  const collides = packages.some((p) => p !== pkg && buildLabel(p) === label);
   return collides ? pkg.name : label;
 }
 
@@ -177,7 +180,7 @@ const Or = component$(() => (
  * resort). When more than one package shares this source (AUR's
  * official/`-bin`/`-git` builds of the same app, merged into one app but
  * still genuinely different installs), a small tab group picks which
- * channel's actions show — real bug, found live: these used to render as
+ * build's actions show — real bug, found live: these used to render as
  * separate flat rows differing only in a "(git build)" parenthetical,
  * easy to miss scanning a long list.
  */
@@ -262,10 +265,11 @@ const SourceInstallUnit = component$<{
   });
 
   const verified = isVerifiedPackage(pkg);
+  const provenance = provenanceInfo(pkg.provenance);
 
   return (
     <div class="flex flex-col gap-2">
-      {(showLabel || verified) && (
+      {(showLabel || verified || provenance) && (
         <div class="flex items-center gap-2">
           {showLabel && (
             <span class="text-sm font-medium">
@@ -281,17 +285,22 @@ const SourceInstallUnit = component$<{
               Verified
             </span>
           )}
+          {provenance && (
+            <span class="tooltip badge badge-ghost badge-xs" data-tip={provenance.tip}>
+              {provenance.label}
+            </span>
+          )}
         </div>
       )}
 
       {/* Classic underlined tabs, not the tabs-box pill group this had before
-          — the channel-selector state (`selectedIndex`) lives here, one
+          — the build-selector state (`selectedIndex`) lives here, one
           level below the group's own `<summary>` in SourceGroupSection, so
           moving it up into the summary itself (replacing its "(N)" count)
           would need that state lifted a level up and shared across every
           source in the group, not just this one — a real restructure, not
           a style tweak, and still ambiguous for a group where more than one
-          source has its own channels. Left as a classic tab row instead. */}
+          source has its own builds. Left as a classic tab row instead. */}
       {packages.length > 1 && (
         <div role="tablist" class="tabs tabs-border tabs-sm w-fit">
           {packages.map((p, i) => (
@@ -471,11 +480,56 @@ const SourceGroupSection = component$<{
   );
 });
 
-/** `SourceMap`/`BuildChannelIndicator`'s combined props, derived from a full package list — used for the hero/sticky-header install summary, sitting to the left of the Install button (replaces the old "Install options (N)" count that used to live on the button itself). */
+const RELATION_LABELS: Record<`${Relation["type"]}:${Relation["direction"]}`, string> = {
+  "forkOf:outgoing": "Fork of",
+  "forkOf:incoming": "Forks",
+  "replaces:outgoing": "Replaces",
+  "replaces:incoming": "Replaced by",
+  "wrapperOf:outgoing": "Unofficial client for",
+  "wrapperOf:incoming": "Unofficial clients",
+  "partOf:outgoing": "Part of",
+  "partOf:incoming": "Components",
+  "toolFor:outgoing": "Tool for",
+  "toolFor:incoming": "Tools",
+};
+
+/** A product's relations grouped under one label each ("Fork of", "Forks", ...), in `RELATION_LABELS` order. */
+function groupRelations(relations: Relation[]): [string, Relation["app"][]][] {
+  const byLabel = new Map<string, Relation["app"][]>();
+  for (const relation of relations) {
+    const label = RELATION_LABELS[`${relation.type}:${relation.direction}`];
+    byLabel.set(label, [...(byLabel.get(label) ?? []), relation.app]);
+  }
+  return Object.values(RELATION_LABELS)
+    .filter((label) => byLabel.has(label))
+    .map((label) => [label, byLabel.get(label) ?? []]);
+}
+
+const COMPANION_KIND_LABELS: Record<CompanionKind, string> = {
+  extension: "Extensions",
+  plugin: "Plugins",
+  theme: "Themes",
+  localization: "Language packs",
+  data: "Data packs",
+  "native-host": "Native messaging hosts",
+  config: "Configuration",
+};
+
+/** A product's companions grouped by kind, in `COMPANION_KIND_LABELS` order. */
+function groupCompanions(companions: Companion[]): [CompanionKind, Companion[]][] {
+  return (Object.keys(COMPANION_KIND_LABELS) as CompanionKind[])
+    .map((kind): [CompanionKind, Companion[]] => [
+      kind,
+      companions.filter((companion) => companion.kind === kind),
+    ])
+    .filter(([, list]) => list.length > 0);
+}
+
+/** `SourceMap`/`BuildIndicator`'s combined props, derived from a full package list — used for the hero/sticky-header install summary, sitting to the left of the Install button (replaces the old "Install options (N)" count that used to live on the button itself). */
 function summarizeSources(packages: SourcedPackage[]) {
   return {
     sources: unique(packages.map((pkg) => pkg.source)),
-    channels: summarizeChannels(packages),
+    builds: summarizeBuilds(packages),
     verifiedSources: verifiedSourcesOf(packages),
   };
 }
@@ -571,7 +625,7 @@ export default component$(() => {
                   verifiedSources={sourceSummary.verifiedSources}
                   tooltipPosition="bottom"
                 />
-                <BuildChannelIndicator channels={sourceSummary.channels} tooltipPosition="bottom" />
+                <BuildIndicator builds={sourceSummary.builds} tooltipPosition="bottom" />
               </div>
             )}
             <div class="aura aura-sm w-fit">
@@ -672,7 +726,7 @@ export default component$(() => {
                   verifiedSources={sourceSummary.verifiedSources}
                   tooltipPosition="bottom"
                 />
-                <BuildChannelIndicator channels={sourceSummary.channels} tooltipPosition="bottom" />
+                <BuildIndicator builds={sourceSummary.builds} tooltipPosition="bottom" />
               </div>
               <div class="aura aura-sm w-fit">
                 <button
@@ -734,6 +788,74 @@ export default component$(() => {
                 {component.name}
               </a>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Forks, successors, unofficial clients, ... — catalog's product-families relations. */}
+      {a.relations && a.relations.length > 0 && (
+        <section>
+          <h2 class="text-lg font-semibold mb-3">Related</h2>
+          <dl class="flex flex-col gap-2">
+            {groupRelations(a.relations).map(([label, apps]) => (
+              <div key={label} class="flex flex-wrap items-center gap-2">
+                <dt class="text-sm text-base-content/60">{label}</dt>
+                {apps.map((related) => (
+                  <dd key={related.id}>
+                    <a
+                      href={`/app/${encodeURIComponent(related.id)}/`}
+                      class="btn btn-outline btn-sm"
+                    >
+                      {related.name}
+                    </a>
+                  </dd>
+                ))}
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+
+      {/* Extensions, plugins, themes, language packs, ... — never cards of their own. */}
+      {a.companions && a.companions.length > 0 && (
+        <section>
+          <h2 class="text-lg font-semibold mb-3">Add-ons</h2>
+          <div class="flex flex-col gap-2">
+            {groupCompanions(a.companions).map(([kind, companions]) => {
+              const total = a.companionCounts?.[kind] ?? companions.length;
+              return (
+                <details key={kind} class="collapse collapse-arrow bg-base-200">
+                  <summary class="collapse-title text-sm font-medium">
+                    {COMPANION_KIND_LABELS[kind]} ({total})
+                  </summary>
+                  <div class="collapse-content">
+                    {total > companions.length && (
+                      <p class="text-xs text-base-content/60 mb-2">
+                        The {companions.length} most widely packaged of {total}.
+                      </p>
+                    )}
+                    <ul class="flex flex-col gap-1 text-sm">
+                      {companions.map((companion) => (
+                        <li key={companion.name}>
+                          <span class="font-medium">{companion.name}</span>
+                          {companion.description && (
+                            <span class="text-base-content/60"> — {companion.description}</span>
+                          )}
+                          <span class="text-xs text-base-content/50">
+                            {" "}
+                            (
+                            {unique(
+                              companion.packages.map((pkg) => SOURCE_LABELS[pkg.source]),
+                            ).join(", ")}
+                            )
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </details>
+              );
+            })}
           </div>
         </section>
       )}

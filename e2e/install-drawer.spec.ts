@@ -1,7 +1,20 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+
+/**
+ * Discord's product page: every Discord build (stable, Canary, ...) is one
+ * product. Catalog datasets published before product families named it
+ * after the Canary snap (`discord-canary`); newer ones name it after its
+ * default build (`discord`). Tries the new id first, so these tests pass
+ * on either dataset while app and catalog land separately — drop the
+ * fallback once catalog's product-families dataset is published.
+ */
+async function gotoDiscord(page: Page): Promise<void> {
+  const response = await page.goto("/app/discord/");
+  if (response?.status() === 404) await page.goto("/app/discord-canary/");
+}
 
 // Firefox/Discord/0ad below use their bare Snap name as the app id
-// ("firefox", "discord-canary", "0ad") — no "source:" prefix — since a
+// ("firefox", "discord", "0ad") — no "source:" prefix — since a
 // Snap or Flatpak package's own name/appId is already globally unique on
 // its own (Snap preferred when an app has both, see catalog's
 // match/group.ts's buildAppId). 0cc-famitracker has neither, so it still
@@ -32,11 +45,7 @@ test("groups packages by platform, one collapsible per group (closed by default)
 test('the "Install options" label only shows when there\'s a prerequisite or more than one option', async ({
   page,
 }) => {
-  // Discord itself no longer has a standalone app id — the matching
-  // engine now groups every Discord variant (stable + canary) under
-  // discord-canary instead, re-verified against the live dataset
-  // (2026-09-18). Same package fanout the test needs either way.
-  await page.goto("/app/discord-canary/");
+  await gotoDiscord(page);
   await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Arch Linux" }).click();
 
@@ -98,7 +107,7 @@ test("a native distro package with a real apt: handler (Debian) shows it as the 
 test("AppImage shows a desktop-integration setup step and a Download button, not Click to install", async ({
   page,
 }) => {
-  await page.goto("/app/discord-canary/");
+  await gotoDiscord(page);
   await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "AppImage" }).click();
 
@@ -119,7 +128,7 @@ test("a native-package-only app shows a copy-paste command, even when it has an 
   await expect(page.getByText("yay -S 0cc-famitracker")).toBeVisible();
 });
 
-test("a source with more than one channel (AUR's official/-bin/-git builds) shows a channel tab group, not stacked rows", async ({
+test("a source with more than one build (AUR's official/-bin/-git builds) shows a build tab group, not stacked rows", async ({
   page,
 }) => {
   await page.goto("/app/jan-ai/");
@@ -129,8 +138,8 @@ test("a source with more than one channel (AUR's official/-bin/-git builds) show
   // One tab group, not three separate rows — AUR is the Arch Linux group's
   // only source here, so its own label is omitted as redundant with the
   // "Arch Linux" heading right above (see SourceInstallUnit's showLabel).
-  // A tab shows its channel ("Stable", "Bin", "Git"), but falls back to the
-  // package name when two packages of the source share a channel (Jan has
+  // A tab shows its build ("Stable", "Bin", "Git"), but falls back to the
+  // package name when two packages of the source share a build (Jan has
   // both jan-bin and jan-live-bin, AUR's -appimage packages are labeled
   // separately) — so the bin build is matched by either spelling.
   const stable = page.getByRole("tab", { name: "Stable" });
@@ -201,7 +210,7 @@ test("selecting an OS collapses its non-recommended platforms behind a 'Show N o
 test("Snap's setup step links to Snapcraft's own install guide instead of an apt-only command", async ({
   page,
 }) => {
-  await page.goto("/app/discord-canary/");
+  await gotoDiscord(page);
   await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Snap" }).click();
 
