@@ -34,6 +34,13 @@ updates:
         exclude-patterns:
           - "vite"
           - "vite-tsconfig-paths"
+    # A vite major can't build with Qwik yet (see the exclude-patterns note
+    # above and the pnpm override in pnpm-workspace.yaml): don't open a PR
+    # that is red by construction. Drop this together with the override once
+    # @builder.io/qwik's peer range allows vite 8.
+    ignore:
+      - dependency-name: "vite"
+        update-types: ["version-update:semver-major"]
     labels:
       - dependencies
 
