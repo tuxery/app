@@ -1,4 +1,4 @@
-import { component$ } from "@builder.io/qwik";
+import { component$ } from "@qwik.dev/core";
 import { ALL_SOURCE_GROUPS, SOURCE_GROUP_MEMBERS, type PackageSourceId } from "~/catalog-types";
 import { tooltipClass, type TooltipPosition } from "~/components/tooltip-position";
 import { findOsEntry, recommendedGroupIds } from "~/os-catalog";

@@ -1,4 +1,4 @@
-import { component$ } from "@builder.io/qwik";
+import { component$ } from "@qwik.dev/core";
 import { TuxeryLogo } from "~/components/tuxery-logo/tuxery-logo";
 import { useHeroBackground } from "~/routes/layout";
 

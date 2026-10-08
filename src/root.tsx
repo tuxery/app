@@ -1,5 +1,5 @@
-import { component$, isDev } from "@builder.io/qwik";
-import { QwikCityProvider, RouterOutlet } from "@builder.io/qwik-city";
+import { component$, isDev } from "@qwik.dev/core";
+import { QwikRouterProvider, RouterOutlet } from "@qwik.dev/router";
 import { RouterHead } from "./components/router-head/router-head";
 
 import "./global.css";
@@ -18,7 +18,7 @@ const ANTI_FOUC_SCRIPT = `(function(){
 
 export default component$(() => {
   return (
-    <QwikCityProvider>
+    <QwikRouterProvider>
       <head>
         <meta charset="utf-8" />
         <script dangerouslySetInnerHTML={ANTI_FOUC_SCRIPT} />
@@ -28,6 +28,6 @@ export default component$(() => {
       <body lang="en">
         <RouterOutlet />
       </body>
-    </QwikCityProvider>
+    </QwikRouterProvider>
   );
 });

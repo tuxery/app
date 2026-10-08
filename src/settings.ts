@@ -5,7 +5,7 @@ import {
   useSignal,
   useVisibleTask$,
   type Signal,
-} from "@builder.io/qwik";
+} from "@qwik.dev/core";
 import { toMapByKey } from "helpers4/map";
 import { safeJsonParse } from "helpers4/object";
 

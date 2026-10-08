@@ -1,4 +1,4 @@
-import { component$ } from "@builder.io/qwik";
+import { component$ } from "@qwik.dev/core";
 import { LuPackage } from "@qwikest/icons/lucide";
 import { BuildChannelIndicator } from "~/components/build-channel-indicator/build-channel-indicator";
 import { SourceMap } from "~/components/source-map/source-map";

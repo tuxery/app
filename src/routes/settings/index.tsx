@@ -1,6 +1,6 @@
-import { component$, type Signal } from "@builder.io/qwik";
-import { useLocation } from "@builder.io/qwik-city";
-import type { DocumentHead } from "@builder.io/qwik-city";
+import { component$, type Signal } from "@qwik.dev/core";
+import { useLocation } from "@qwik.dev/router";
+import type { DocumentHead } from "@qwik.dev/router";
 import { findOsEntry, recommendedGroupIds, OS_CATALOG, type OsCatalogEntry } from "~/os-catalog";
 import {
   CROSS_DISTRO_GROUP_IDS,

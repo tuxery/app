@@ -1,6 +1,6 @@
-import { component$ } from "@builder.io/qwik";
-import { routeLoader$ } from "@builder.io/qwik-city";
-import type { DocumentHead } from "@builder.io/qwik-city";
+import { component$ } from "@qwik.dev/core";
+import { routeLoader$ } from "@qwik.dev/router";
+import type { DocumentHead } from "@qwik.dev/router";
 import { toMapByKey } from "helpers4/map";
 import { AppCardLink } from "~/components/app-card/app-card";
 import { getAppsByIds } from "~/catalog";

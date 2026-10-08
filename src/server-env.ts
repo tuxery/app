@@ -23,6 +23,6 @@ export type ServerEnv = Partial<
   Pick<Env, "TURSO_DB_URL" | "TURSO_DB_AUTH_TOKEN" | "UNSPLASH_ACCESS_KEY">
 >;
 
-export function resolveServerEnv(platform: QwikCityPlatform | undefined): ServerEnv {
+export function resolveServerEnv(platform: QwikRouterPlatform | undefined): ServerEnv {
   return { ...process.env, ...(platform?.env as ServerEnv | undefined) };
 }
