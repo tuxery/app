@@ -206,12 +206,14 @@ test("Firefox's Edition and Version pickers switch to that release line's own pa
   page,
 }) => {
   await page.goto(FIREFOX);
-  const edition = page.getByRole("combobox", { name: "Edition" }).first();
+  const edition = page.getByRole("button", { name: "Edition: Standard" }).first();
   // Catalog datasets published before product families carry no tracks.
   test.skip((await edition.count()) === 0, "dataset predates catalog's product families");
 
-  await edition.selectOption({ label: "ESR" });
+  await edition.click();
+  await page.getByRole("menuitem", { name: "ESR" }).first().click();
   await expect(page).toHaveURL(/\/app\/firefox\/esr\/$/);
+  await expect(page.getByRole("button", { name: "Edition: ESR" }).first()).toBeVisible();
   await page.getByRole("button", { name: "Install" }).first().click();
   await page.locator("summary", { hasText: "Debian" }).click();
   await expect(page.getByText("sudo apt install firefox-esr")).toBeVisible();
