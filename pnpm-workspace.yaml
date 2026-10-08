@@ -29,33 +29,32 @@ minimumReleaseAgeExclude:
   - '@helpers4/version@3.1.2'
   - helpers4@3.1.2
 
-# vite-imagetools (a qwik-city dependency, pinned to ^9.0.0 — the fix only
-# landed in vite-imagetools@12) pulls a sharp version below the patched
-# libvips CVE fixes. sharp's build is disabled above (unused here — this
-# app doesn't use Qwik's <Image> transform), so forcing a patched version
-# is a safe, low-risk way to clear `pnpm audit --audit-level high`. Bumped
-# again 2026-09-18: >=0.35.0 still included <0.35.4, which a separate
-# libheif advisory (GHSA-g89c-p67h-r497/GHSA-2jg2-4ch7-h545) covers.
+# Security floors for transitive deps whose parents' declared ranges still
+# allow a vulnerable version — drop one once its parent's range moves past
+# the advisory.
 #
-# svgo comes from @builder.io/qwik-city itself (its SSG/asset pipeline),
-# not from any dependency this app controls directly — pinned above its
-# vulnerable removeScripts range (GHSA-w27v-7q3p-w38r/GHSA-4vpr-x523-8j87)
-# the same way.
-#
-# Same treatment, 2026-10-03, for transitive deps no direct dependency
-# bump fixes yet: undici via wrangler>miniflare (GHSA-rfgv-xxqx-mfg5/
-# GHSA-w293-vg96-wgc3), and brace-expansion@1 + probe-image-size via
-# @builder.io/qwik's dev toolchain (GHSA-qhr7-859c-m2p7/GHSA-6j4f-fj2g-mc7p).
-#
-# 2026-10-07: sharp raised again, to >=0.35.5 (librsvg advisory); plus two
-# more transitive dev-toolchain pins under @builder.io/qwik (via
-# @qwik-ui/headless): source-map-js >=1.2.2 (event-loop DoS,
-# GHSA-68fv-2mgg-jv7q) and shell-quote >=1.11.0 (quote() command
-# injection, via launch-editor). Pinned until the parents' ranges move.
+# - sharp: vite-imagetools@10 (a @qwik.dev/router dependency) asks for
+#   ^0.34.1 and miniflare (via wrangler) pins 0.35.4 — both below the
+#   libvips/libheif/librsvg fixes (GHSA-g89c-p67h-r497/GHSA-2jg2-4ch7-h545
+#   and the 0.35.5 librsvg advisory). sharp's build is disabled above
+#   (unused here — this app doesn't use Qwik's <Image> transform), so
+#   forcing a patched version is safe.
+# - brace-expansion@1 (via glob@7 > minimatch@3, under vite's stylus peer;
+#   GHSA-qhr7-859c-m2p7/GHSA-6j4f-fj2g-mc7p) and probe-image-size (via
+#   vite's less peer; GHSA-gjj5-9665-rwrc).
+# - source-map-js >=1.2.2 (event-loop DoS, GHSA-68fv-2mgg-jv7q): css-tree@2
+#   (via @qwik.dev/router > svgo > csso) still allows ^1.0.1.
+# - shell-quote >=1.11.0 (quote() command injection): launch-editor (a
+#   @qwik.dev/core dependency) still allows ^1.8.4.
 overrides:
+  # @qwikest/icons has no Qwik 2 release and declares a peer on
+  # @builder.io/qwik (Qwik 1) — redirect that to the v2 package so a single
+  # Qwik runtime is installed (two copies → Code(Q30) at runtime). Pinned
+  # to the exact rc: a `^2` range doesn't match prereleases. Bump together
+  # with @qwik.dev/core in package.json; drop once the icons are replaced
+  # or the lib ships a v2 build.
+  "@builder.io/qwik": "npm:@qwik.dev/core@2.0.0-rc.2"
   sharp: ">=0.35.5"
-  svgo: ">=3.3.5"
-  undici@7: "^7.29.1"
   brace-expansion@1: "^1.1.20"
   probe-image-size: ">=7.3.1"
   source-map-js: ">=1.2.2"

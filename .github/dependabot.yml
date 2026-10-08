@@ -9,7 +9,7 @@ updates:
     groups:
       qwik:
         patterns:
-          - "@builder.io/qwik*"
+          - "@qwik.dev/*"
       # Everything else that isn't qwik itself or a dev dependency — before
       # this, daisyui/helpers4/@libsql/client/etc each got their own
       # individual PR (5 open at once, 2026-09), most of them small patch/
@@ -19,21 +19,13 @@ updates:
         patterns:
           - "*"
         exclude-patterns:
-          - "@builder.io/qwik*"
+          - "@qwik.dev/*"
       dev-tooling:
         dependency-type: development
         patterns:
           - "*"
-        # @builder.io/qwik's peer dependency caps vite at <8 (Qwik 2, which
-        # lifts that cap, is still a 2.0.0-beta.x prerelease under a
-        # different package name, @qwik.dev/core — not a drop-in bump).
-        # Excluded so a blocked vite major doesn't hold back every other
-        # harmless dev-tooling bump in the same group PR; these two get
-        # their own individual PR instead, expected to stay unmergeable
-        # until Qwik's peer range moves.
         exclude-patterns:
-          - "vite"
-          - "vite-tsconfig-paths"
+          - "@qwik.dev/*"
     labels:
       - dependencies
 
