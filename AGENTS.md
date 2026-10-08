@@ -30,6 +30,14 @@ listed on their parent's page; **relations** (fork of, replaces,
 wrapper of, part of, tool for) link to other cards. Don't use
 "channel" for any of these in UI copy or code.
 
+A product page shows one edition/version combination, named by its path:
+`/app/<id>/` (Standard · Stable), `/app/<id>/<edition>/`,
+`/app/<id>/<version>/` (a risk word: candidate, beta, nightly, git) and
+`/app/<id>/<edition>/<version>/` — see `src/product-builds.ts`. Install
+options and release facts (rating, size, changelog) are that
+combination's own; description, screenshots and the rest are the
+product's.
+
 ## Rules
 
 - Don't add a local `TODO.md`/`ROADMAP.md` — track work as cards on the

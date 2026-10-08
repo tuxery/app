@@ -94,7 +94,9 @@ test("Flatpak's install button is the appstream:// deep link, with a terminal co
 test("a native distro package with a real apt: handler (Debian) shows it as the install button", async ({
   page,
 }) => {
-  await page.goto("/app/firefox/");
+  // Debian ships Firefox ESR only: its own page on a dataset with product
+  // families, the plain product page on an older one (redirected there).
+  await page.goto("/app/firefox/esr/");
   await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Debian" }).click();
 
@@ -128,31 +130,35 @@ test("a native-package-only app shows a copy-paste command, even when it has an 
   await expect(page.getByText("yay -S 0cc-famitracker")).toBeVisible();
 });
 
-test("a source with more than one build (AUR's official/-bin/-git builds) shows a build tab group, not stacked rows", async ({
+test("a source with more than one build (AUR's official/-bin builds) shows a build tab group, and the git build is its own version", async ({
   page,
 }) => {
   await page.goto("/app/jan-ai/");
-  await page.getByRole("button", { name: "Install" }).click();
+  await page.getByRole("button", { name: "Install" }).first().click();
   await page.locator("summary", { hasText: "Arch Linux" }).click();
 
-  // One tab group, not three separate rows — AUR is the Arch Linux group's
-  // only source here, so its own label is omitted as redundant with the
-  // "Arch Linux" heading right above (see SourceInstallUnit's showLabel).
-  // A tab shows its build ("Stable", "Bin", "Git"), but falls back to the
-  // package name when two packages of the source share a build (Jan has
-  // both jan-bin and jan-live-bin, AUR's -appimage packages are labeled
-  // separately) — so the bin build is matched by either spelling.
+  // One tab group, not separate rows — AUR is the Arch Linux group's only
+  // source here, so its own label is omitted as redundant with the "Arch
+  // Linux" heading right above (see SourceInstallUnit's showLabel). A tab
+  // shows its build ("Stable", "Bin"), but falls back to the package name
+  // when two packages of the source share a build (Jan has both jan-bin
+  // and jan-live-bin) — so the bin build is matched by either spelling.
   const stable = page.getByRole("tab", { name: "Stable" });
   const bin = page.getByRole("tab", { name: /^(Bin|jan-bin)$/ });
-  const git = page.getByRole("tab", { name: /^(Git|jan-git)$/ });
   await expect(stable).toBeVisible();
   await expect(bin).toBeVisible();
-  await expect(git).toBeVisible();
-
   await expect(page.getByText("yay -S jan", { exact: true })).toBeVisible();
   await bin.click();
   await expect(page.getByText("yay -S jan-bin", { exact: true })).toBeVisible();
-  await git.click();
+
+  // The -git build is the Git version, at its own URL. A dataset published
+  // before product families has no versions: that URL redirects back to
+  // the product, where the git build is one more tab.
+  await page.goto("/app/jan-ai/git/");
+  await page.getByRole("button", { name: "Install" }).first().click();
+  await page.locator("summary", { hasText: "Arch Linux" }).click();
+  const git = page.getByRole("tab", { name: /^(Git|jan-git)$/ });
+  if ((await git.count()) > 0) await git.click();
   await expect(page.getByText("yay -S jan-git", { exact: true })).toBeVisible();
 });
 
@@ -187,7 +193,7 @@ test("selecting an OS collapses its non-recommended platforms behind a 'Show N o
     .poll(() => page.evaluate(() => localStorage.getItem("tuxery:settings")), { timeout: 15_000 })
     .toContain('"osId":"fedora"');
 
-  await page.goto("/app/firefox/");
+  await page.goto("/app/nicotine-plus/");
   await page.getByRole("button", { name: "Install" }).click();
 
   // Fedora and the always-recommended cross-distro formats show directly.
