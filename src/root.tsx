@@ -1,5 +1,5 @@
 import { component$, isDev } from "@qwik.dev/core";
-import { QwikRouterProvider, RouterOutlet } from "@qwik.dev/router";
+import { RouterOutlet, useQwikRouter } from "@qwik.dev/router";
 import { RouterHead } from "./components/router-head/router-head";
 
 import "./global.css";
@@ -17,8 +17,13 @@ const ANTI_FOUC_SCRIPT = `(function(){
 })();`;
 
 export default component$(() => {
+  // The root reads no signals, so the hook is enough — no need for the
+  // reactive <QwikRouterProvider> wrapper. `viewTransition` (opt-in in Qwik
+  // Router) animates SPA navigations with the View Transition API.
+  useQwikRouter({ viewTransition: true });
+
   return (
-    <QwikRouterProvider>
+    <>
       <head>
         <meta charset="utf-8" />
         <script dangerouslySetInnerHTML={ANTI_FOUC_SCRIPT} />
@@ -28,6 +33,6 @@ export default component$(() => {
       <body lang="en">
         <RouterOutlet />
       </body>
-    </QwikRouterProvider>
+    </>
   );
 });

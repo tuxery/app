@@ -73,7 +73,7 @@ export const useGameCategories = routeLoader$(async (requestEvent) =>
 export const useFeaturedCreator = routeLoader$(async () => getInfluencerPage("baxyz"));
 
 // One loader per curated row on the "Homepage: full section layout" board
-// card — Qwik City loaders have to be individually exported consts, not
+// card — Qwik Router loaders have to be individually exported consts, not
 // built from a loop. Category strings match catalog's own
 // config/categories-apps.json/categories-games.json labels exactly (kept
 // in sync by hand, same convention as catalog-types.ts's own mirrors). No

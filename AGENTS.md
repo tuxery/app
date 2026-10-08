@@ -11,7 +11,7 @@ messages, issues, pull requests, and configuration. No exceptions.
 
 ## Scope
 
-This whole repo is one Qwik City app — no `apps/*`/`packages/*` nesting,
+This whole repo is one Qwik (Qwik Router) app — no `apps/*`/`packages/*` nesting,
 there's only ever been one deployable here. `src/` — no product logic
 beyond rendering/routing; it queries `tuxery/catalog`'s dataset via Turso,
 not reimplement matching/scoring locally.

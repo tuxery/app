@@ -10,12 +10,15 @@ import { resolveServerEnv } from "~/server-env";
 // explainer either way, no per-app content. A bad/missing id just falls
 // back to the generic heading rather than a 404, since arriving here
 // straight from a bookmark or a shared link should still work.
-export const useClaimedApp = routeLoader$(async (requestEvent) => {
-  const appId = requestEvent.url.searchParams.get("app");
-  if (!appId) return null;
-  const app = await getAppById(resolveServerEnv(requestEvent.platform), appId);
-  return app ? { id: app.id, name: app.name } : null;
-});
+export const useClaimedApp = routeLoader$(
+  async (requestEvent) => {
+    const appId = requestEvent.url.searchParams.get("app");
+    if (!appId) return null;
+    const app = await getAppById(resolveServerEnv(requestEvent.platform), appId);
+    return app ? { id: app.id, name: app.name } : null;
+  },
+  { search: ["app"] },
+);
 
 const PREREQUISITES = [
   {
