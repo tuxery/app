@@ -1,5 +1,5 @@
-import { component$, Slot } from "@builder.io/qwik";
-import { routeLoader$, useLocation, type RequestHandler } from "@builder.io/qwik-city";
+import { component$, Slot } from "@qwik.dev/core";
+import { routeLoader$, useLocation, type RequestHandler } from "@qwik.dev/router";
 import { LuLayoutGrid, LuMenu, LuSearch, LuSettings, LuUser } from "@qwikest/icons/lucide";
 import { Footer } from "~/components/footer/footer";
 import { TuxeryLogo } from "~/components/tuxery-logo/tuxery-logo";

@@ -1,4 +1,4 @@
-import { component$ } from "@builder.io/qwik";
+import { component$ } from "@qwik.dev/core";
 import { LuLayers } from "@qwikest/icons/lucide";
 import { tooltipClass, type TooltipPosition } from "~/components/tooltip-position";
 

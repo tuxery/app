@@ -1,6 +1,6 @@
-import { $, component$, Fragment, useSignal, useVisibleTask$ } from "@builder.io/qwik";
-import { routeLoader$, server$, useLocation } from "@builder.io/qwik-city";
-import type { DocumentHead, RequestEventBase } from "@builder.io/qwik-city";
+import { $, component$, Fragment, useSignal, useVisibleTask$ } from "@qwik.dev/core";
+import { routeLoader$, server$, useLocation } from "@qwik.dev/router";
+import type { DocumentHead, RequestEventBase } from "@qwik.dev/router";
 import { LuArrowUp, LuLoader2 } from "@qwikest/icons/lucide";
 import { AppCardLink } from "~/components/app-card/app-card";
 import {

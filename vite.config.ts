@@ -4,8 +4,8 @@
  */
 /// <reference types="vitest/config" />
 import { defineConfig, loadEnv, type UserConfig } from "vite";
-import { qwikVite } from "@builder.io/qwik/optimizer";
-import { qwikCity } from "@builder.io/qwik-city/vite";
+import { qwikVite } from "@qwik.dev/core/optimizer";
+import { qwikRouter } from "@qwik.dev/router/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
 
@@ -44,7 +44,7 @@ const SHARED_ENV_DIR = "../.dev";
 const LOCAL_TURSO_URL = "http://localhost:8080";
 
 /**
- * Note that Vite normally starts from `index.html` but the qwikCity plugin makes start at `src/entry.ssr.tsx` instead.
+ * Note that Vite normally starts from `index.html` but the qwikRouter plugin makes start at `src/entry.ssr.tsx` instead.
  */
 export default defineConfig(({ mode }): UserConfig => {
   // dev only ever talks to the local turso dev server above — see
@@ -64,7 +64,7 @@ export default defineConfig(({ mode }): UserConfig => {
 
   return {
     envDir: SHARED_ENV_DIR,
-    plugins: [qwikCity(), qwikVite(), tsconfigPaths({ root: "." }), tailwindcss()],
+    plugins: [qwikRouter(), qwikVite(), tsconfigPaths({ root: "." }), tailwindcss()],
     // This tells Vite which dependencies to pre-build in dev mode.
     optimizeDeps: {
       // Put problematic deps that break bundling here, mostly those with binaries.

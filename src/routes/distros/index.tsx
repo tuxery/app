@@ -1,5 +1,5 @@
-import { component$ } from "@builder.io/qwik";
-import type { DocumentHead } from "@builder.io/qwik-city";
+import { component$ } from "@qwik.dev/core";
+import type { DocumentHead } from "@qwik.dev/router";
 import { SOURCE_LABELS, type PackageSourceId } from "~/catalog-types";
 
 // Grouped by package format rather than listed flat — same "provider vs.

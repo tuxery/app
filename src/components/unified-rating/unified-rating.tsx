@@ -1,4 +1,4 @@
-import { component$ } from "@builder.io/qwik";
+import { component$ } from "@qwik.dev/core";
 import type { SourceRating } from "~/catalog-types";
 import { tooltipClass, type TooltipPosition } from "~/components/tooltip-position";
 

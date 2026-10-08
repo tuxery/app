@@ -1,4 +1,4 @@
-import { component$, useId } from "@builder.io/qwik";
+import { component$, useId } from "@qwik.dev/core";
 
 /**
  * The brand mark: a penguin silhouette (Linux/Tux) whose belly doubles as a

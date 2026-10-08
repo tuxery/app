@@ -1,4 +1,4 @@
-import { component$, Slot, useSignal } from "@builder.io/qwik";
+import { component$, Slot, useSignal } from "@qwik.dev/core";
 import { LuChevronLeft, LuChevronRight } from "@qwikest/icons/lucide";
 
 /**
