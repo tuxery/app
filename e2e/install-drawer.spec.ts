@@ -205,3 +205,22 @@ test("Snap's setup step links to Snapcraft's own install guide instead of an apt
     page.getByRole("link", { name: "https://snapcraft.io/docs/installing-snapd" }),
   ).toBeVisible();
 });
+
+// Regression: the catalog's metadata-only `*-appstream` packages have no
+// install method, and rendering one in the drawer threw — wedging the next
+// re-render, so neither close control worked. 0ad carries several of them.
+test("the drawer closes from both the ✕ button and the backdrop", async ({ page }) => {
+  await page.goto("/app/0ad/");
+  const heading = page.getByRole("heading", { name: "Install options" });
+  const close = page.getByRole("button", { name: "Close install options" });
+
+  await page.getByRole("button", { name: "Install" }).first().click();
+  await expect(heading).toBeVisible();
+  await close.last().click();
+  await expect(heading).toBeHidden();
+
+  await page.getByRole("button", { name: "Install" }).first().click();
+  await expect(heading).toBeVisible();
+  await close.first().click({ position: { x: 5, y: 5 } });
+  await expect(heading).toBeHidden();
+});

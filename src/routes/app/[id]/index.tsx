@@ -524,16 +524,22 @@ export default component$(() => {
   // its source is hidden by the selected OS.
   const hasVerifiedPackage = a.packages.some(isVerifiedPackage);
 
+  // The catalog also carries metadata-only sources (the `*-appstream` feeds)
+  // that exist to enrich the app's name/categories, not to be installed from —
+  // they have no `INSTALL_METHODS` entry, and rendering one in the drawer
+  // throws, which silently wedges every later re-render (so it never closes).
+  const installablePackages = a.packages.filter((pkg) => pkg.source in INSTALL_METHODS);
+
   const selectedOs = findOsEntry(settings.osId.value);
   const recommended = selectedOs ? recommendedGroupIds(selectedOs) : undefined;
-  const visiblePackages = a.packages.filter((pkg) =>
+  const visiblePackages = installablePackages.filter((pkg) =>
     isSourceVisible(pkg.source, settings.installGroups.value, recommended),
   );
   // Non-empty only once an OS is selected and it doesn't recommend every
   // group — with no OS selected, "auto" shows everything (see
   // isGroupEffectivelyShown), so nothing's ever hidden here by default.
   const hiddenGroups = groupPackagesBySourceGroup(
-    a.packages.filter(
+    installablePackages.filter(
       (pkg) => !isSourceVisible(pkg.source, settings.installGroups.value, recommended),
     ),
   );
