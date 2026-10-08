@@ -11,7 +11,7 @@ product brief and roadmap.
 
 ## Layout
 
-One Qwik City app at the repo root — no `apps/*`/`packages/*` nesting,
+One Qwik (Qwik Router) app at the repo root — no `apps/*`/`packages/*` nesting,
 there's only ever been one deployable here.
 
 ```text

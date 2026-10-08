@@ -14,13 +14,12 @@ interface Dependency {
 // often enough that a manual list will drift.
 const DEPENDENCIES: Dependency[] = [
   { name: "Qwik", license: "MIT", url: "https://github.com/QwikDev/qwik" },
-  { name: "Qwik City", license: "MIT", url: "https://github.com/QwikDev/qwik" },
+  { name: "Qwik Router", license: "MIT", url: "https://github.com/QwikDev/qwik" },
   {
     name: "@libsql/client",
     license: "MIT",
     url: "https://github.com/tursodatabase/libsql-client-ts",
   },
-  { name: "@qwik-ui/headless", license: "MIT", url: "https://github.com/qwikifiers/qwik-ui" },
   { name: "@qwikest/icons", license: "MIT", url: "https://github.com/qwikest/icons" },
   { name: "daisyUI", license: "MIT", url: "https://github.com/saadeghi/daisyui" },
   { name: "Tailwind CSS", license: "MIT", url: "https://github.com/tailwindlabs/tailwindcss" },

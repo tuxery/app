@@ -52,29 +52,37 @@ function parseSort(value: string | null): SortOption {
   return value === "name-asc" || value === "name-desc" ? value : "relevance";
 }
 
-export const useBrowse = routeLoader$(async (requestEvent) => {
-  const { url } = requestEvent;
-  const query = url.searchParams.get("q") ?? "";
-  const page = Math.max(0, Number(url.searchParams.get("page") ?? "1") - 1);
-  return browseApps(resolveServerEnv(requestEvent.platform), query, page, {
-    interfaceFilter: parseInterfaceFilter(url.searchParams.get("interface")),
-    typeFilter: parseTypeFilter(url.searchParams.get("type")),
-    category: url.searchParams.get("category") ?? undefined,
-    source: parseSource(url.searchParams.get("source")),
-    sort: parseSort(url.searchParams.get("sort")),
-  });
-});
+// `search` lists every query param this loader reads: Qwik Router v2 strips
+// the others from its request event (and only re-fetches it when a listed
+// one changes). Same for useBrowseCategories below.
+export const useBrowse = routeLoader$(
+  async (requestEvent) => {
+    const { url } = requestEvent;
+    const query = url.searchParams.get("q") ?? "";
+    const page = Math.max(0, Number(url.searchParams.get("page") ?? "1") - 1);
+    return browseApps(resolveServerEnv(requestEvent.platform), query, page, {
+      interfaceFilter: parseInterfaceFilter(url.searchParams.get("interface")),
+      typeFilter: parseTypeFilter(url.searchParams.get("type")),
+      category: url.searchParams.get("category") ?? undefined,
+      source: parseSource(url.searchParams.get("source")),
+      sort: parseSort(url.searchParams.get("sort")),
+    });
+  },
+  { search: ["q", "page", "interface", "type", "category", "source", "sort"] },
+);
 
 // Scoped to the current Type filter — apps and games each draw from their
 // own taxonomy now (see `tuxery/catalog`'s `CatalogApp.category` doc
 // comment), so a mixed "all types" dropdown would show two disjoint label
 // sets at once, e.g. "Strategy" (a game genre) next to "Productivity" (an
 // app category), neither meaningful to the other type.
-export const useBrowseCategories = routeLoader$(async (requestEvent) =>
-  getCategories(
-    resolveServerEnv(requestEvent.platform),
-    parseTypeFilter(requestEvent.url.searchParams.get("type")),
-  ),
+export const useBrowseCategories = routeLoader$(
+  async (requestEvent) =>
+    getCategories(
+      resolveServerEnv(requestEvent.platform),
+      parseTypeFilter(requestEvent.url.searchParams.get("type")),
+    ),
+  { search: ["type"] },
 );
 
 export default component$(() => {
