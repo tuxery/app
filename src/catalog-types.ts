@@ -136,6 +136,9 @@ export interface SourcedPackage {
   /** Datasets published before product families carried one overloaded word here instead of `track`/`risk`/`flavors` — still read so an older dataset keeps rendering. */
   channel?: string;
   homepage?: string;
+  /** This listing's own download size and newest changelog, when its source has them (Flathub today) — see `buildFacts`. */
+  approxSizeBytes?: number;
+  changelog?: string;
   /** A crowd rating from this specific source, when it has one — see `tuxery/catalog`'s `SourcedPackage.rating` doc comment for which sources populate this. */
   rating?: { average: number; count: number };
   /** Upstream store collections this specific package appears in — see `tuxery/catalog`'s `SourcedPackage.storeCollections` doc comment. Today only Flathub populates `"verified"` (developer-identity-verified) here; no other source has an equivalent signal. */
@@ -250,6 +253,17 @@ function flavorLabel(flavor: string): string {
   return FLAVOR_LABELS[flavor] ?? capitalize(flavor, { lowercaseRest: false });
 }
 
+/** Display name of a track ("ESR", "Developer Edition", "LTS-22"); the default track is "Standard". */
+export function trackLabel(track: string | undefined): string {
+  if (!track) return "Standard";
+  return TRACK_LABELS[track] ?? capitalize(track, { lowercaseRest: false });
+}
+
+/** Display name of a risk; no risk is "Stable". */
+export function riskLabel(risk: Risk | undefined): string {
+  return risk ? RISK_LABELS[risk] : "Stable";
+}
+
 type BuildFields = Pick<SourcedPackage, "track" | "risk" | "flavors" | "channel">;
 
 /** Whether a package is its product's default build: default track, stable, no flavor (or, on an older dataset, no channel / "stable"). */
@@ -269,8 +283,8 @@ export function buildLabel(pkg: BuildFields): string {
     return capitalize(pkg.channel ?? "", { lowercaseRest: false });
   }
   return [
-    pkg.track ? (TRACK_LABELS[pkg.track] ?? capitalize(pkg.track, { lowercaseRest: false })) : "",
-    pkg.risk ? RISK_LABELS[pkg.risk] : "",
+    pkg.track ? trackLabel(pkg.track) : "",
+    pkg.risk ? riskLabel(pkg.risk) : "",
     ...(pkg.flavors ?? []).map(flavorLabel),
   ]
     .filter(Boolean)

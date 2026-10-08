@@ -50,11 +50,13 @@ test("the install drawer opens and a platform section expands, both by tap", asy
   await page.goto("/app/firefox/");
   await page.getByRole("button", { name: "Install" }).tap();
 
-  const debianSummary = page.locator("summary", { hasText: "Debian" });
-  await expect(debianSummary).toBeVisible();
+  // Ubuntu, not Debian: Debian ships Firefox ESR only, a separate edition
+  // page once catalog has product families.
+  const ubuntuSummary = page.locator("summary", { hasText: "Ubuntu" });
+  await expect(ubuntuSummary).toBeVisible();
   await expect(page.getByText("sudo apt install firefox").first()).not.toBeVisible();
 
-  await debianSummary.tap();
+  await ubuntuSummary.tap();
   await expect(page.getByText("sudo apt install firefox").first()).toBeVisible();
 });
 

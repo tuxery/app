@@ -69,13 +69,12 @@ test("the build badge counts distinct builds, not raw packages", async ({ page }
   // tooltip naming only a handful of builds, which read as broken. The
   // badge is the build count itself now, matching the tooltip it
   // explains. Luanti carries dozens of packages but only a handful of
-  // builds (the default one, AUR's git build, Gentoo's testing ebuild,
-  // Lutris installers) — matched by shape rather than an exact list, which
-  // depends on the dataset's vocabulary (an older catalog wrote one
-  // `channel` word, a newer one track/risk/flavors: "Testing" became
-  // "Candidate").
+  // builds (the default one plus Lutris installers; AUR's git build and
+  // Gentoo's testing ebuild too on a dataset older than product families,
+  // which has no Version selector to move them to) — matched by shape
+  // rather than an exact list, which depends on the dataset.
   await page.goto(LUANTI);
-  const indicator = page.getByTitle(/^Stable, .*\bGit\b/);
+  const indicator = page.getByTitle(/^Stable, /);
   await expect(indicator).toBeVisible();
   const builds = ((await indicator.getAttribute("title")) ?? "").split(", ");
   expect(builds.length).toBeGreaterThan(2);
@@ -201,4 +200,23 @@ test("a product page lists its relations and add-ons, linking related products",
   await expect(languagePacks).toBeVisible();
   await languagePacks.click();
   await expect(page.getByText(/^The 100 most widely packaged of \d+\.$/)).toBeVisible();
+});
+
+test("Firefox's Edition and Version pickers switch to that release line's own page", async ({
+  page,
+}) => {
+  await page.goto(FIREFOX);
+  const edition = page.getByRole("combobox", { name: "Edition" }).first();
+  // Catalog datasets published before product families carry no tracks.
+  test.skip((await edition.count()) === 0, "dataset predates catalog's product families");
+
+  await edition.selectOption({ label: "ESR" });
+  await expect(page).toHaveURL(/\/app\/firefox\/esr\/$/);
+  await page.getByRole("button", { name: "Install" }).first().click();
+  await page.locator("summary", { hasText: "Debian" }).click();
+  await expect(page.getByText("sudo apt install firefox-esr")).toBeVisible();
+
+  // A path naming no release line of this product goes back to its page.
+  await page.goto("/app/firefox/no-such-edition/");
+  await expect(page).toHaveURL(/\/app\/firefox\/$/);
 });
