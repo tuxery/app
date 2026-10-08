@@ -4,7 +4,7 @@ import { createClient, type Client } from "@libsql/client";
 import {
   BROWSE_PAGE_SIZE,
   EMPTY_STATS,
-  summarizeChannels,
+  summarizeBuilds,
   summarizeRatingsBySource,
   verifiedSourcesOf,
   type AppSummary,
@@ -122,10 +122,10 @@ function toSummary(row: Row): AppSummary {
     ratingsBySource: summarizeRatingsBySource(packages),
     // Deduplicated — a merged app can carry two packages from the same
     // source now (e.g. AUR's official + -git build), and a summary card
-    // only needs to say "AUR" once, not distinguish the channel — that's
-    // what channels is for instead.
+    // only needs to say "AUR" once, not distinguish the build — that's
+    // what builds is for instead.
     sources: unique(packages.map((pkg) => pkg.source)),
-    channels: summarizeChannels(packages),
+    builds: summarizeBuilds(packages),
     verifiedSources: verifiedSourcesOf(packages),
   };
 }
@@ -182,6 +182,11 @@ function toCatalogApp(row: Row): CatalogApp {
     suite: json(row.suite_json),
     compatibilityWarnings: json(row.compat_warnings_json),
     packages: json(row.packages_json) ?? [],
+    // Absent columns on a dataset published before product families read
+    // as `undefined`, like any other empty column.
+    companions: json(row.companions_json),
+    companionCounts: json(row.companion_counts_json),
+    relations: json(row.relations_json),
   };
 }
 

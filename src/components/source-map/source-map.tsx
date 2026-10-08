@@ -33,7 +33,7 @@ export interface SourceMapProps {
  * the `.tooltip`/`data-tip` on the same element is the fast, no-hover-
  * delay one for contexts with room for it.
  *
- * Was half of `SourceSummary` (paired with `BuildChannelIndicator`, its other
+ * Was half of `SourceSummary` (paired with `BuildIndicator`, its other
  * half) — the combined dot-map + package-count badge + one shared info
  * icon was too wide for many listing cards, wrapping to two lines on some
  * and not others depending on content. Two narrower, single-purpose
@@ -43,7 +43,7 @@ export interface SourceMapProps {
  * A verifiable group's dot carries four tiers instead of the plain
  * present/absent two every other group has — muted daisyUI semantic
  * tones throughout (never a saturated/attention-grabbing color; this is
- * informative, not a callout, same restraint as `BuildChannelIndicator`),
+ * informative, not a callout, same restraint as `BuildIndicator`),
  * automatically theme-correct in light/dark since none are hardcoded.
  * Color is reserved for an actual verified signal; "just present" gets no
  * color at all, only a neutral gray a step up from "absent":

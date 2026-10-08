@@ -125,12 +125,52 @@ export interface SourcedPackage {
   version: string;
   appId?: string;
   iconFilename?: string;
+  /** The product's parallel line this package belongs to (`esr`, `devedition`, `17`) — see catalog's docs/product-families.md. Absent: the default line. */
+  track?: string;
+  /** How mature this build is. Absent: stable. */
+  risk?: Risk;
+  /** Technical variants of the same release (`bin`, `appimage`, a patch set, `locale:de`, a Lutris installer label). */
+  flavors?: string[];
+  /** Who built the binaries — a trust hint, never a choice. Absent: unknown. */
+  provenance?: Provenance;
+  /** Datasets published before product families carried one overloaded word here instead of `track`/`risk`/`flavors` — still read so an older dataset keeps rendering. */
   channel?: string;
   homepage?: string;
   /** A crowd rating from this specific source, when it has one — see `tuxery/catalog`'s `SourcedPackage.rating` doc comment for which sources populate this. */
   rating?: { average: number; count: number };
   /** Upstream store collections this specific package appears in — see `tuxery/catalog`'s `SourcedPackage.storeCollections` doc comment. Today only Flathub populates `"verified"` (developer-identity-verified) here; no other source has an equivalent signal. */
   storeCollections?: string[];
+}
+
+export type Risk = "candidate" | "beta" | "nightly" | "git";
+
+export type Provenance = "upstream" | "distro" | "community-repack" | "community-patched";
+
+export type CompanionKind =
+  | "extension"
+  | "plugin"
+  | "theme"
+  | "localization"
+  | "data"
+  | "native-host"
+  | "config";
+
+/** Something that adds to a product (extension, plugin, theme, language pack, ...) — listed on its page, never a card of its own. */
+export interface Companion {
+  name: string;
+  kind: CompanionKind;
+  description: string;
+  packages: { source: PackageSourceId; name: string }[];
+}
+
+export type RelationType = "forkOf" | "replaces" | "wrapperOf" | "partOf" | "toolFor";
+
+/** A link to another product, from this product's side: `outgoing` reads "this <type> app", `incoming` "app <type> this". */
+export interface Relation {
+  type: RelationType;
+  direction: "outgoing" | "incoming";
+  app: { id: string; name: string };
+  origin: "formal" | "curated";
 }
 
 export interface CatalogApp {
@@ -184,22 +224,80 @@ export interface CatalogApp {
     issue: string;
     fix?: string;
   }[];
+  /** At most 100 per kind — `companionCounts` has the full numbers. */
+  companions?: Companion[];
+  companionCounts?: Partial<Record<CompanionKind, number>>;
+  relations?: Relation[];
+}
+
+const RISK_LABELS: Record<Risk, string> = {
+  candidate: "Candidate",
+  beta: "Beta",
+  nightly: "Nightly",
+  git: "Git",
+};
+
+const TRACK_LABELS: Record<string, string> = {
+  esr: "ESR",
+  lts: "LTS",
+  devedition: "Developer Edition",
+};
+
+const FLAVOR_LABELS: Record<string, string> = { appimage: "AppImage" };
+
+function flavorLabel(flavor: string): string {
+  if (flavor.startsWith("locale:")) return flavor.slice("locale:".length);
+  return FLAVOR_LABELS[flavor] ?? capitalize(flavor, { lowercaseRest: false });
+}
+
+type BuildFields = Pick<SourcedPackage, "track" | "risk" | "flavors" | "channel">;
+
+/** Whether a package is its product's default build: default track, stable, no flavor (or, on an older dataset, no channel / "stable"). */
+export function isDefaultBuild(pkg: BuildFields): boolean {
+  if (pkg.track || pkg.risk || pkg.flavors?.length) return false;
+  return !pkg.channel || pkg.channel.toLowerCase() === "stable";
 }
 
 /**
- * Whether a package's channel is just the default build. Catalog leaves it
- * unset for most sources, but writes an explicit `"stable"` for the ones
- * that name their channels (Flathub, Snap — since tuxery/catalog@150c463),
- * and both mean the same thing here.
+ * Human label for one build of a product — its track, risk and flavors
+ * ("ESR · Bin", "Nightly", "Vaapi"), or "Stable" for the default build.
+ * Reads an older dataset's single `channel` word the way it always did.
  */
-export function isDefaultChannel(channel: string | undefined): boolean {
-  return !channel || channel.toLowerCase() === "stable";
+export function buildLabel(pkg: BuildFields): string {
+  if (isDefaultBuild(pkg)) return "Stable";
+  if (!pkg.track && !pkg.risk && !pkg.flavors?.length) {
+    return capitalize(pkg.channel ?? "", { lowercaseRest: false });
+  }
+  return [
+    pkg.track ? (TRACK_LABELS[pkg.track] ?? capitalize(pkg.track, { lowercaseRest: false })) : "",
+    pkg.risk ? RISK_LABELS[pkg.risk] : "",
+    ...(pkg.flavors ?? []).map(flavorLabel),
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
-/** Human label for a build channel — the default/stable build (see `isDefaultChannel`) is "Stable", everything else (AUR's git/svn/hg/bzr/cvs/bin) gets its raw value capitalized. */
-export function channelLabel(channel: string | undefined): string {
-  if (!channel || isDefaultChannel(channel)) return "Stable";
-  return capitalize(channel, { lowercaseRest: false });
+const PROVENANCE_LABELS: Record<Provenance, string> = {
+  upstream: "Official build",
+  distro: "Distribution build",
+  "community-repack": "Community repack",
+  "community-patched": "Community build, patched",
+};
+
+const PROVENANCE_TIPS: Record<Provenance, string> = {
+  upstream: "Built by the project itself",
+  distro: "Rebuilt from source by the distribution",
+  "community-repack": "The project's own binaries, repackaged by a community maintainer",
+  "community-patched": "Built by a community maintainer with extra patches",
+};
+
+/** Short label and longer explanation for who built a package, when known. */
+export function provenanceInfo(
+  provenance: Provenance | undefined,
+): { label: string; tip: string } | undefined {
+  return provenance
+    ? { label: PROVENANCE_LABELS[provenance], tip: PROVENANCE_TIPS[provenance] }
+    : undefined;
 }
 
 /** Whether this specific package is from a developer-identity-verified listing — today only ever true for a `flatpak-flathub` package carrying Flathub's own "verified" collection tag. */
@@ -214,15 +312,15 @@ export function verifiedSourcesOf(
   return unique(packages.filter(isVerifiedPackage).map((pkg) => pkg.source));
 }
 
-/** Every distinct build-channel word present across a set of packages — the "channels: ..." line in `BuildChannelIndicator`'s tooltip, on both a `CatalogApp`'s full `packages` and an `AppSummary`'s already-summarized `channels`. Deduplicated: this counts build *variants* (e.g. "Stable"/"Git"), not raw packages — an app with a dozen native-distro packages (all the same default "Stable" channel) still has exactly one entry here. */
-export function summarizeChannels(packages: { channel?: string }[]): string[] {
-  return unique(packages.map((pkg) => channelLabel(pkg.channel)));
+/** Every distinct build across a set of packages (see `buildLabel`) — `BuildIndicator`'s tooltip, on both a `CatalogApp`'s full `packages` and an `AppSummary`'s already-summarized `builds`. Deduplicated: an app with a dozen native-distro packages, all the default build, has exactly one entry here. */
+export function summarizeBuilds(packages: BuildFields[]): string[] {
+  return unique(packages.map(buildLabel));
 }
 
-/** Human label for a package's own source, e.g. "Flathub (Flatpak)", or "AUR (git build)" for a non-default channel. */
-export function formatSourceLabel(pkg: { source: PackageSourceId; channel?: string }): string {
+/** Human label for a package's own source, e.g. "Flathub (Flatpak)", or "AUR (Git build)" for a build other than the default one. */
+export function formatSourceLabel(pkg: { source: PackageSourceId } & BuildFields): string {
   const label = SOURCE_LABELS[pkg.source];
-  return isDefaultChannel(pkg.channel) ? label : `${label} (${pkg.channel} build)`;
+  return isDefaultBuild(pkg) ? label : `${label} (${buildLabel(pkg)} build)`;
 }
 
 export interface SourceRating {
@@ -248,13 +346,12 @@ export function summarizeRatingsBySource(packages: SourcedPackage[]): SourceRati
  * The subset of `CatalogApp` a search result card needs — cheap to select
  * and stream in bulk, unlike the full row. `sources` is deduplicated by
  * source id (a merged app can carry two packages from the same source,
- * e.g. AUR's official + `-git` build); `channels` describes the distinct
- * build variants across that same underlying `packages` list — not
- * derivable from `sources` alone, so carried separately for
- * `BuildChannelIndicator`'s badge/tooltip. `ratingsBySource` is the same
- * "per-package breakdown" data `UnifiedRating`'s tooltip needs — free to
- * derive from `packages_json`, already selected for `sources`/`channels`
- * above.
+ * e.g. AUR's official + `-git` build); `builds` describes the distinct
+ * builds across that same underlying `packages` list — not derivable
+ * from `sources` alone, so carried separately for `BuildIndicator`'s
+ * badge/tooltip. `ratingsBySource` is the same "per-package breakdown"
+ * data `UnifiedRating`'s tooltip needs — free to derive from
+ * `packages_json`, already selected for `sources`/`builds` above.
  */
 export interface AppSummary {
   id: string;
@@ -268,7 +365,7 @@ export interface AppSummary {
   rating?: { average: number; count: number };
   ratingsBySource: SourceRating[];
   sources: PackageSourceId[];
-  channels: string[];
+  builds: string[];
   /** Which of `sources` has at least one verified package — see `verifiedSourcesOf`. Almost always `[]` or `["flatpak-flathub"]` today, no other source has an equivalent signal. */
   verifiedSources: PackageSourceId[];
 }
