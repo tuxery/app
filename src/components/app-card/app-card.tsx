@@ -1,6 +1,6 @@
 import { component$ } from "@qwik.dev/core";
 import { LuPackage } from "@qwikest/icons/lucide";
-import { BuildChannelIndicator } from "~/components/build-channel-indicator/build-channel-indicator";
+import { BuildIndicator } from "~/components/build-indicator/build-indicator";
 import { SourceMap } from "~/components/source-map/source-map";
 import { UnifiedRating } from "~/components/unified-rating/unified-rating";
 import type { AppSummary, PackageSourceId, SourceRating } from "~/catalog-types";
@@ -11,7 +11,7 @@ export interface AppCardProps {
   description: string;
   sources: PackageSourceId[];
   verifiedSources?: PackageSourceId[];
-  channels: string[];
+  builds: string[];
   contentType?: "game";
   category?: string;
   rating?: { average: number; count: number };
@@ -26,10 +26,10 @@ export interface AppCardProps {
  * Layout: logo + name/category on top, description below, and a bottom row
  * — pinned to the card's bottom edge via `mt-auto` so it lines up across
  * cards regardless of description length — `SourceMap`,
- * `BuildChannelIndicator`, then (when this app has one) `UnifiedRating` in
+ * `BuildIndicator`, then (when this app has one) `UnifiedRating` in
  * its "short" (stars-only) mode, left-aligned in that fixed order rather
  * than spread with `justify-between`: with that, a card carrying no rating
- * had nothing to hold `BuildChannelIndicator` at its own centered spot, so
+ * had nothing to hold `BuildIndicator` at its own centered spot, so
  * it drifted to the row's right edge instead. Three narrow pieces instead
  * of one wide combined summary + rating: that used to wrap to two lines on
  * some cards and not others depending on content.
@@ -41,7 +41,7 @@ export const AppCard = component$<AppCardProps>(
     description,
     sources,
     verifiedSources,
-    channels,
+    builds,
     category,
     rating,
     ratingsBySource,
@@ -75,7 +75,7 @@ export const AppCard = component$<AppCardProps>(
           <p class="text-sm text-base-content/70 line-clamp-2">{description}</p>
           <div class="flex flex-wrap items-center gap-4 mt-auto pt-1">
             <SourceMap sources={sources} verifiedSources={verifiedSources} />
-            <BuildChannelIndicator channels={channels} />
+            <BuildIndicator builds={builds} />
             {rating && (
               <UnifiedRating
                 average={rating.average}
@@ -108,7 +108,7 @@ export const AppCardLink = component$<{ app: AppSummary; linkClass?: string }>(
         description={app.shortDescription}
         sources={app.sources}
         verifiedSources={app.verifiedSources}
-        channels={app.channels}
+        builds={app.builds}
         contentType={app.contentType}
         category={app.category}
         rating={app.rating}

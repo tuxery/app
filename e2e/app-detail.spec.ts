@@ -20,9 +20,9 @@ const CALLIGRA_PLAN = "/app/deb-debian%3Acalligraplan/";
 // to exercise UnifiedRating's per-source breakdown at all.
 const APP_EDITOR = "/app/com.github.donadigo.appeditor/";
 // A merged app with a large native-package fanout (many distros, all the
-// default "Stable" channel) plus a few AUR "-git" builds — the case that
-// exposed the channel-tooltip bug below (many more packages than distinct
-// channel words). Luanti (the project's current name) still catalogs
+// default "Stable" build) plus a few AUR "-git" builds — the case that
+// exposed the build-tooltip bug below (many more packages than distinct
+// builds). Luanti (the project's current name) still catalogs
 // under its old "minetest" app id.
 const LUANTI = "/app/minetest/";
 
@@ -63,20 +63,23 @@ test("a multi-source rated app's tooltip lists every source, each prefixed by it
   ).toBeVisible();
 });
 
-test("the build-channel badge counts distinct channels, not raw packages", async ({ page }) => {
+test("the build badge counts distinct builds, not raw packages", async ({ page }) => {
   // Real bug, found live: an earlier version badged the *package* count
   // (dozens — one per distro, mostly all "Stable") right next to a
-  // tooltip naming only a handful of channels, which read as broken. The
-  // badge is the channel count itself now, matching the tooltip it
-  // explains. Exact channel set re-verified against the dataset
-  // (2026-10-04) — Luanti now carries 6 distinct channel words across its
-  // dozens of packages: AUR's git build, Gentoo's "testing" keyword, and
-  // Lutris' raw Flathub-branch/version installers on top of "Stable"
-  // (Flathub and Snap now write it explicitly, same label as unset).
-  const tip = "Stable, Git, Testing, Flathub latest, 0.4.17.1, 5.7.0-dev";
+  // tooltip naming only a handful of builds, which read as broken. The
+  // badge is the build count itself now, matching the tooltip it
+  // explains. Luanti carries dozens of packages but only a handful of
+  // builds (the default one, AUR's git build, Gentoo's testing ebuild,
+  // Lutris installers) — matched by shape rather than an exact list, which
+  // depends on the dataset's vocabulary (an older catalog wrote one
+  // `channel` word, a newer one track/risk/flavors: "Testing" became
+  // "Candidate").
   await page.goto(LUANTI);
-  await expect(page.getByTitle(tip)).toBeVisible();
-  await expect(page.getByTitle(tip).locator(".badge")).toHaveText("6");
+  const indicator = page.getByTitle(/^Stable, .*\bGit\b/);
+  await expect(indicator).toBeVisible();
+  const builds = ((await indicator.getAttribute("title")) ?? "").split(", ");
+  expect(builds.length).toBeGreaterThan(2);
+  await expect(indicator.locator(".badge")).toHaveText(String(builds.length));
 });
 
 test("the Additional information table shows a real Size row, from Flathub's own download_size", async ({
@@ -175,4 +178,27 @@ test("suite navigation: main app lists its components, and a component links bac
   await expect(backLink).toBeVisible();
   await backLink.click();
   await expect(page).toHaveURL(new RegExp(CALLIGRA_MAIN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+});
+
+test("a product page lists its relations and add-ons, linking related products", async ({
+  page,
+}) => {
+  await page.goto(FIREFOX);
+  const related = page.getByRole("heading", { name: "Related", exact: true });
+  // Catalog datasets published before product families carry neither.
+  test.skip((await related.count()) === 0, "dataset predates catalog's product families");
+
+  // Firefox's curated forks (catalog's config/family-relations.json).
+  await expect(page.getByText("Forks", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "LibreWolf" })).toHaveAttribute(
+    "href",
+    /^\/app\/[^/]+\/$/,
+  );
+
+  // Hundreds of language packs, collapsed by kind with their full count.
+  await expect(page.getByRole("heading", { name: "Add-ons", exact: true })).toBeVisible();
+  const languagePacks = page.locator("summary", { hasText: /^Language packs \(\d+\)$/ });
+  await expect(languagePacks).toBeVisible();
+  await languagePacks.click();
+  await expect(page.getByText(/^The 100 most widely packaged of \d+\.$/)).toBeVisible();
 });
