@@ -25,6 +25,7 @@ jobs:
     uses: tuxery/.github/.github/workflows/ci-web.yml@a93f7e556b3778cdc3b23bff815b4bba650c7b47 # main @ 2026-09-04
     with:
       working-directory: .
+      node-version: "26"
 
   deploy:
     name: Deploy to Cloudflare Workers
@@ -45,7 +46,7 @@ jobs:
 
       - uses: helpers4/action/setup-pnpm@6fddd178620e7325d446a246c38a44f979569fc4 # main @ 2026-07-29
         with:
-          node-version: "24"
+          node-version: "26"
           working-directory: .
 
       - name: Build
