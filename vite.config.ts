@@ -6,7 +6,6 @@
 import { defineConfig, loadEnv, type UserConfig } from "vite";
 import { qwikVite } from "@qwik.dev/core/optimizer";
 import { qwikRouter } from "@qwik.dev/router/vite";
-import tsconfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
 
 // Tuxery has three environments, each reading its own Turso credentials
@@ -64,7 +63,9 @@ export default defineConfig(({ mode }): UserConfig => {
 
   return {
     envDir: SHARED_ENV_DIR,
-    plugins: [qwikRouter(), qwikVite(), tsconfigPaths({ root: "." }), tailwindcss()],
+    plugins: [qwikRouter(), qwikVite(), tailwindcss()],
+    // Resolves tsconfig.json's `~/*` alias (Vite's built-in support).
+    resolve: { tsconfigPaths: true },
     // This tells Vite which dependencies to pre-build in dev mode.
     optimizeDeps: {
       // Put problematic deps that break bundling here, mostly those with binaries.
