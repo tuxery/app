@@ -14,7 +14,9 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
     command: "pnpm exec vite --mode ssr --port 5176",
-    url: "http://localhost:5176",
+    // Not "/": with no catalog it answers 503 by design, and Playwright
+    // only counts a 2xx/3xx as "server up". The docs render without it.
+    url: "http://localhost:5176/docs/",
     reuseExistingServer: false,
     env: { TURSO_DB_URL: "" },
   },

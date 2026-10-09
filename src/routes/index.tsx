@@ -26,6 +26,7 @@ import {
   getAppsByIds,
 } from "~/catalog";
 import { getInfluencerPage } from "~/data/influencer-pages";
+import { useCatalogUnavailable } from "~/routes/layout";
 import { resolveServerEnv } from "~/server-env";
 import type { AppSummary } from "~/catalog-types";
 
@@ -353,6 +354,7 @@ export default component$(() => {
   const casualGames = useCasualGames();
   const puzzleGames = usePuzzleGames();
   const mustHaveApps = useMustHaveApps();
+  const catalogUnavailable = useCatalogUnavailable().value;
 
   return (
     <div class="flex flex-col gap-14">
@@ -388,11 +390,17 @@ export default component$(() => {
       </section>
 
       {stats.value.total === 0 ? (
-        <p class="text-center text-base-content/70">
-          No catalog data loaded — run <code class="font-mono">pnpm seed</code> then{" "}
-          <code class="font-mono">pnpm serve</code> in <code class="font-mono">tuxery/catalog</code>{" "}
-          first.
-        </p>
+        // Unreachable database: the layout's outage banner already says so.
+        // Reachable but empty only happens on a fresh local setup — the
+        // seeding hint is for developers, never shown in production.
+        !catalogUnavailable &&
+        import.meta.env.DEV && (
+          <p class="text-center text-base-content/70">
+            No catalog data loaded — run <code class="font-mono">pnpm seed</code> then{" "}
+            <code class="font-mono">pnpm serve</code> in{" "}
+            <code class="font-mono">tuxery/catalog</code> first.
+          </p>
+        )
       ) : (
         <>
           {/* Events & collections: a featured-creator slider (left, 2/3) next
