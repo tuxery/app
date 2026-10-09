@@ -65,7 +65,7 @@ export default component$(() => {
 
       <p class="text-sm text-base-content/60">
         Got a question, or a problem in the meantime?{" "}
-        <a href="/contribute/" class="link link-primary">
+        <a href="/docs/contribute/" class="link link-primary">
           Get in touch
         </a>
         .

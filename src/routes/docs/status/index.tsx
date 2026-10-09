@@ -45,24 +45,29 @@ export default component$(() => {
 
       <p class="text-base-content/70">
         For the full per-source breakdown — what's implemented, how each one is retrieved — see{" "}
-        <a href="/sources/" class="link link-primary">
+        <a href="/docs/sources/" class="link link-primary">
           Sources
         </a>
         .
       </p>
 
       <section>
-        <h2 class="text-lg font-semibold mb-2">Roadmap</h2>
-        <ul class="list-disc list-inside text-base-content/80 flex flex-col gap-1">
-          <li>More distributions and sources supported.</li>
-          <li>A voting system so you can help surface your favorite apps and games.</li>
-          <li>
-            Real need for help from distro maintainers and contributors to clean up and correct the
-            data.
-          </li>
-          <li>An "influencer" mode for sharing your own discoveries with others.</li>
-          <li>A personal space to fine-tune filters and track your installs.</li>
-        </ul>
+        <h2 class="text-lg font-semibold mb-2">What's next</h2>
+        <p class="text-base-content/80">
+          Planned work and how it's tracked is on the{" "}
+          <a href="/docs/roadmap/" class="link link-primary">
+            Roadmap
+          </a>{" "}
+          page; what already shipped, on the{" "}
+          <a href="/docs/changelog/" class="link link-primary">
+            Changelog
+          </a>
+          . Known gaps in each source's data are listed on the{" "}
+          <a href="/docs/coverage/" class="link link-primary">
+            per-source to-do
+          </a>
+          .
+        </p>
       </section>
 
       <section>
@@ -70,7 +75,7 @@ export default component$(() => {
         <p class="text-base-content/80">
           Tuxery is a small, entirely community-run project — there's real work to do, and outside
           help matters most on the data itself and on the site/pipeline code. See{" "}
-          <a href="/contribute/" class="link link-primary">
+          <a href="/docs/contribute/" class="link link-primary">
             How to contribute
           </a>{" "}
           for the concrete ways in.
@@ -95,7 +100,7 @@ export const head: DocumentHead = {
   meta: [
     {
       name: "description",
-      content: "Where Tuxery stands: catalog size, the roadmap, and how to help.",
+      content: "Where Tuxery stands: catalog size, what's next, and how to help.",
     },
   ],
 };
