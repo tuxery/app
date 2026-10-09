@@ -3,6 +3,8 @@ import { routeLoader$, useLocation } from "@qwik.dev/router";
 import type { DocumentHead } from "@qwik.dev/router";
 import { unique } from "helpers4/array";
 import { LuBadgeCheck, LuExternalLink, LuFlag, LuPackage } from "@qwikest/icons/lucide";
+import { isCatalogUnavailable } from "~/catalog-status";
+import { useCatalogUnavailable } from "~/routes/layout";
 import { reportDataProblemUrl } from "~/contribute-links";
 import { getAppById, getStats } from "~/catalog";
 import { resolveServerEnv } from "~/server-env";
@@ -61,7 +63,9 @@ import {
 export const useApp = routeLoader$(async (requestEvent): Promise<CatalogApp | null> => {
   const id = decodeURIComponent(requestEvent.params.id ?? "");
   const app = await getAppById(resolveServerEnv(requestEvent.platform), id);
-  if (!app) requestEvent.status(404);
+  // During an outage the layout already answered 503: missing here means
+  // "couldn't load", not "doesn't exist".
+  if (!app && !isCatalogUnavailable(requestEvent.sharedMap)) requestEvent.status(404);
   return app;
 });
 
@@ -582,6 +586,7 @@ function summarizeSources(packages: SourcedPackage[]) {
 
 export default component$(() => {
   const location = useLocation();
+  const catalogUnavailable = useCatalogUnavailable().value;
   const app = useApp();
   const buildSelection = useBuildSelection();
   const stats = useDetailStats();
@@ -608,11 +613,13 @@ export default component$(() => {
   if (!a) {
     return (
       <div class="text-center py-24">
-        <h1 class="text-2xl font-bold mb-2">App not found</h1>
+        <h1 class="text-2xl font-bold mb-2">
+          {catalogUnavailable ? "This app can't be loaded right now" : "App not found"}
+        </h1>
         <p class="text-base-content/70 mb-4">
-          It may not be in the loaded dataset — run <code class="font-mono">pnpm seed</code> then{" "}
-          <code class="font-mono">pnpm serve</code> in <code class="font-mono">tuxery/catalog</code>{" "}
-          for a local one.
+          {catalogUnavailable
+            ? "The catalog is temporarily unavailable — please try again in a few minutes."
+            : "No app has this address. It may have been renamed or merged into another one."}
         </p>
         <a href="/" class="link link-primary">
           Back to search
@@ -1209,8 +1216,13 @@ export default component$(() => {
 
 export const head: DocumentHead = ({ resolveValue }) => {
   const app = resolveValue(useApp);
+  const unavailable = resolveValue(useCatalogUnavailable);
   return {
-    title: app ? `${app.name} — Tuxery` : "App not found — Tuxery",
+    title: app
+      ? `${app.name} — Tuxery`
+      : unavailable
+        ? "Temporarily unavailable — Tuxery"
+        : "App not found — Tuxery",
     meta: app ? [{ name: "description", content: app.shortDescription }] : [],
   };
 };

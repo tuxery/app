@@ -1,6 +1,15 @@
 import { component$, Slot } from "@qwik.dev/core";
 import { routeLoader$, useLocation, type RequestHandler } from "@qwik.dev/router";
-import { LuLayoutGrid, LuMenu, LuSearch, LuSettings, LuUser } from "@qwikest/icons/lucide";
+import {
+  LuCloudOff,
+  LuLayoutGrid,
+  LuMenu,
+  LuSearch,
+  LuSettings,
+  LuUser,
+} from "@qwikest/icons/lucide";
+import { isCatalogAvailable } from "~/catalog";
+import { CATALOG_UNAVAILABLE_KEY, isCatalogUnavailable, needsCatalog } from "~/catalog-status";
 import { Footer } from "~/components/footer/footer";
 import { Logo } from "~/components/logo/logo";
 import { OS_LOGOS } from "~/data/logos";
@@ -23,9 +32,26 @@ import { getHeroBackgroundPhoto } from "~/unsplash";
 // requests of client-side navigation (both GET — a Cache-Control set here
 // takes precedence over Qwik Router v2's per-loader `private, no-cache`
 // default); `server$` calls are POST and never cached.
-export const onGet: RequestHandler = ({ cacheControl }) => {
+//
+// Unless the catalog database is down: then nothing is cached (an empty
+// page cached at the edge would outlive a seconds-long outage by up to ten
+// minutes, more with stale-while-revalidate), pages that need the catalog
+// answer 503, and `useCatalogUnavailable` tells the layout to show the
+// outage message. Decided here, before any page loader runs, so they all
+// see the same verdict (`~/catalog-status`).
+export const onGet: RequestHandler = async ({ cacheControl, platform, sharedMap, status, url }) => {
+  if (!(await isCatalogAvailable(resolveServerEnv(platform)))) {
+    sharedMap.set(CATALOG_UNAVAILABLE_KEY, true);
+    cacheControl({ noStore: true });
+    if (needsCatalog(url.pathname)) status(503);
+    return;
+  }
   cacheControl({ public: true, maxAge: 60, sMaxAge: 600, staleWhileRevalidate: 3600 });
 };
+
+export const useCatalogUnavailable = routeLoader$(({ sharedMap }) =>
+  isCatalogUnavailable(sharedMap),
+);
 
 // Defined at the layout level (not routes/index.tsx) so every page gets the
 // background, not just the homepage. The footer reuses it for the photo
@@ -54,6 +80,7 @@ export default component$(() => {
   const bg = useHeroBackground().value;
   const location = useLocation();
   const docsDoor = docsDoorOf(location.url.pathname);
+  const catalogUnavailable = useCatalogUnavailable().value;
   const osEntry = findOsEntry(settings.osId.value);
 
   return (
@@ -173,6 +200,17 @@ export default component$(() => {
       )}
 
       <main class="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-14 min-h-[60vh]">
+        {catalogUnavailable && (
+          <div class="alert alert-warning mb-8">
+            <LuCloudOff class="text-xl shrink-0" />
+            <div>
+              <p class="font-semibold">The catalog is temporarily unavailable.</p>
+              <p class="text-sm">
+                Apps and games can't be loaded right now — please try again in a few minutes.
+              </p>
+            </div>
+          </div>
+        )}
         <Slot />
       </main>
 
