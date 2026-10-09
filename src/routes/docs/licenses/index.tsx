@@ -74,6 +74,29 @@ export default component$(() => {
         </section>
       ))}
 
+      {/* Copied into the repo rather than installed, so the generated
+          list above can't see them — kept by hand. */}
+      <section class="flex flex-col gap-2">
+        <h2 class="text-lg font-semibold">Assets</h2>
+        <p class="text-sm text-base-content/70">
+          Files copied into the site rather than installed as packages.
+        </p>
+        <ul class="list-disc pl-5 text-base-content/80 flex flex-col gap-1">
+          <li>
+            Distribution and install-format logos (settings page, the header's OS button), from{" "}
+            <a
+              href="https://simpleicons.org"
+              target="_blank"
+              rel="noopener"
+              class="link link-primary"
+            >
+              Simple Icons
+            </a>{" "}
+            — CC0-1.0. The logos remain their owners' trademarks.
+          </li>
+        </ul>
+      </section>
+
       <section class="flex flex-col gap-2">
         <h2 class="text-lg font-semibold">Services</h2>
         <p class="text-sm text-base-content/70">
