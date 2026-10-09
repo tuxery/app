@@ -31,9 +31,8 @@ interface PickerProps {
  */
 const Picker = component$<PickerProps>(({ caption, current, others, size }) => (
   <div class="dropdown">
-    <div
-      tabIndex={0}
-      role="button"
+    <button
+      type="button"
       aria-label={`${caption}: ${current}`}
       aria-haspopup="menu"
       class={[
@@ -46,7 +45,7 @@ const Picker = component$<PickerProps>(({ caption, current, others, size }) => (
       )}
       <span class={size === "lg" ? "text-base font-semibold" : "font-medium"}>{current}</span>
       <LuChevronDown class="text-xs text-base-content/50" />
-    </div>
+    </button>
     <ul
       tabIndex={0}
       role="menu"
