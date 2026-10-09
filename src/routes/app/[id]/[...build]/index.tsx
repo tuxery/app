@@ -28,6 +28,7 @@ import { BuildIndicator } from "~/components/build-indicator/build-indicator";
 import { BuildSelectors } from "~/components/build-selectors/build-selectors";
 import {
   buildPath,
+  defaultSelection,
   editionsOf,
   buildFacts,
   hasBuild,
@@ -70,11 +71,17 @@ export const useApp = routeLoader$(async (requestEvent): Promise<CatalogApp | nu
  */
 export const useBuildSelection = routeLoader$(async (requestEvent): Promise<BuildSelection> => {
   const app = await requestEvent.resolveValue(useApp);
-  const selection = parseBuildPath((requestEvent.params.build ?? "").split("/"));
-  if (app && (!selection || !hasBuild(app.packages, selection))) {
+  const parsed = parseBuildPath((requestEvent.params.build ?? "").split("/"));
+  if (!app) return parsed ?? {};
+  // `/app/<id>/` shows the product's default combination, which isn't
+  // Standard · Stable for a product published only as a nightly or git
+  // build (`defaultSelection`) — redirecting it to itself looped.
+  const selection =
+    parsed && !parsed.track && !parsed.risk ? defaultSelection(app.packages) : parsed;
+  if (!selection || !hasBuild(app.packages, selection)) {
     throw requestEvent.redirect(302, buildPath(app.id, {}));
   }
-  return selection ?? {};
+  return selection;
 });
 
 export const useDetailStats = routeLoader$(async (requestEvent) =>

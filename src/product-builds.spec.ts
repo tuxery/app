@@ -3,6 +3,7 @@ import type { SourcedPackage } from "~/catalog-types";
 import {
   buildFacts,
   buildPath,
+  defaultSelection,
   editionsOf,
   hasBuild,
   packagesOf,
@@ -95,6 +96,23 @@ describe("buildFacts", () => {
       rating: undefined,
       approxSizeBytes: undefined,
       changelog: undefined,
+    });
+  });
+});
+
+describe("defaultSelection", () => {
+  it("is Standard · Stable when the product has it", () => {
+    expect(defaultSelection(firefox)).toEqual({});
+  });
+
+  it("falls back to the most mature version of a product without one", () => {
+    expect(defaultSelection([pkg({ risk: "git" }), pkg({ risk: "nightly" })])).toEqual({
+      track: undefined,
+      risk: "nightly",
+    });
+    expect(defaultSelection([pkg({ track: "24", risk: "beta" })])).toEqual({
+      track: "24",
+      risk: "beta",
     });
   });
 });
