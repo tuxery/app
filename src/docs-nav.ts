@@ -27,12 +27,12 @@ export const DOCS_SECTIONS: DocsSection[] = [
       { href: "/docs/status/", title: "Status" },
       { href: "/docs/roadmap/", title: "Roadmap", markdown: mdx("roadmap") },
       { href: "/docs/changelog/", title: "Changelog" },
-      { href: "/docs/faq/", title: "FAQ", markdown: mdx("faq") },
     ],
   },
   {
     title: "Guides",
     pages: [
+      { href: "/docs/faq/", title: "FAQ", markdown: mdx("faq") },
       { href: "/docs/formats/", title: "Which format to choose", markdown: mdx("formats") },
       { href: "/docs/rankings/", title: "How rankings work", markdown: mdx("rankings") },
       { href: "/docs/glossary/", title: "Glossary", markdown: mdx("glossary") },
@@ -63,6 +63,23 @@ export const DOCS_SECTIONS: DocsSection[] = [
 ];
 
 export const DOCS_PAGES: DocsPage[] = DOCS_SECTIONS.flatMap((section) => section.pages);
+
+/**
+ * The header's two doors into the docs: "Guides" for help using Tuxery
+ * (FAQ, formats, glossary...), "About" for everything else (the project,
+ * its data, legal). Same section and sidebar behind both.
+ */
+export const GUIDES_SECTION = "Guides";
+export const GUIDES_HREF = "/docs/faq/";
+
+/** Which header door a docs URL belongs to, `undefined` outside `/docs/`. */
+export function docsDoorOf(pathname: string): "guides" | "about" | undefined {
+  if (!normalize(pathname).startsWith("/docs/")) return undefined;
+  const section = DOCS_SECTIONS.find((candidate) =>
+    candidate.pages.some((page) => page.href === normalize(pathname)),
+  );
+  return section?.title === GUIDES_SECTION ? "guides" : "about";
+}
 
 const REPO_EDIT_BASE = "https://github.com/tuxery/app/edit/main/";
 
