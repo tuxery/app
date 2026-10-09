@@ -1,0 +1,75 @@
+---
+title: Accessibility — Tuxery
+description: Tuxery's accessibility target (WCAG 2.1 AA), what has been checked, the known gaps, and how to report a problem.
+---
+
+# Accessibility
+
+Tuxery should be usable by everyone, whatever the way they browse: with
+a keyboard, a screen reader, a magnifier, high contrast or reduced
+motion. This page says where the site stands today, honestly.
+
+## Target
+
+[WCAG 2.1](https://www.w3.org/TR/WCAG21/) level **AA**, in both the light
+and the dark theme.
+
+**Current status: partially conformant.** Some parts of the site don't
+meet the target yet; they are listed below.
+
+## What was checked
+
+Audit of 9 October 2026, on the homepage, search results, an app page
+(Firefox), the apps, games and categories pages, settings, a store page,
+a creator page and the docs pages:
+
+- **Automated checks** with [axe-core](https://github.com/dequelabs/axe-core)
+  (WCAG 2.0/2.1 A and AA rules, plus best practices), in the light and
+  dark themes, at desktop and phone widths.
+- **Keyboard navigation**: every link, button and menu reached with
+  `Tab`, in a logical order, with a visible focus indicator.
+- **Screen reader labels**: icon-only buttons (menu, settings, account,
+  close) have a text label; lists such as the catalog pipeline are real
+  lists; pages have one `h1` and landmarks (header, navigation, main,
+  footer).
+- **Reduced motion**: smooth scrolling is turned off when your system
+  asks for less motion.
+
+Fixed during this audit: menu items had no visible keyboard focus; the
+inert account button and footer headings used invalid markup.
+
+## Known gaps
+
+- **Color contrast.** The blue used for links and some secondary text
+  (light grey, small captions) are below the 4.5:1 contrast ratio
+  required for normal text, in both themes. This affects most pages and
+  is the main gap left; fixing it means adjusting the theme colors.
+- **Accessible names that differ from the visible text** on category
+  tiles, a homepage call to action, and the Edition/Version pickers of an
+  app page: a voice-control user saying the visible label may not reach
+  them.
+- **The screenshot row on app pages** scrolls sideways but can't be
+  scrolled with the keyboard on a phone-sized screen.
+- **Headings** skip a level in search results.
+- **Not checked yet**: a full manual test with screen readers (Orca,
+  NVDA, VoiceOver), 200% zoom and text spacing, Windows high-contrast
+  mode, and the install drawer's focus handling.
+
+These are tracked as work to do; this page will be updated as they are
+fixed.
+
+## Report a problem
+
+If something on Tuxery is hard or impossible for you to use, please tell
+us — it is a bug, and a priority one. Open an issue on the
+[app repository](https://github.com/tuxery/app/issues/new) describing
+the page, what you tried to do and what assistive technology you use,
+if any. Data problems (an app's description or screenshots) go to the
+[catalog repository](https://github.com/tuxery/catalog/issues/new).
+
+## Legal context
+
+In France, an accessibility statement following the RGAA is required of
+public bodies and large companies. Tuxery is neither: this statement is
+voluntary, written because it is good practice and because we want to
+know where we stand.
