@@ -22,7 +22,7 @@ export default component$(() => {
       <div>
         <h1 class="text-3xl font-bold mb-2">Games</h1>
         <p class="text-base-content/70">
-          Confirmed Linux games only — see{" "}
+          Every Linux game, deduplicated across sources — only titles confirmed as games. See{" "}
           <a href="/browse/?type=game" class="link link-primary">
             the full games list
           </a>{" "}

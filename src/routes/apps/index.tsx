@@ -22,11 +22,11 @@ export default component$(() => {
       <div>
         <h1 class="text-3xl font-bold mb-2">Apps</h1>
         <p class="text-base-content/70">
-          Every Linux app, deduplicated across sources — everything not a confirmed{" "}
-          <a href="/games/" class="link link-primary">
-            game
-          </a>
-          .
+          Every Linux app, deduplicated across sources — everything not confirmed as a game. See{" "}
+          <a href="/browse/?type=app" class="link link-primary">
+            the full apps list
+          </a>{" "}
+          for everything, not just what's trending.
         </p>
       </div>
 
@@ -35,7 +35,7 @@ export default component$(() => {
           <div class="flex items-baseline justify-between mb-3">
             <h2 class="text-lg font-semibold">Trending apps</h2>
             <a href="/browse/?type=app" class="link link-primary text-sm">
-              Browse all →
+              Browse all apps →
             </a>
           </div>
           <div class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
@@ -52,13 +52,6 @@ export default component$(() => {
           <CategoryTileGrid categories={categories.value} />
         </section>
       )}
-
-      <section>
-        <h2 class="text-lg font-semibold mb-2">Editorial picks</h2>
-        <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/70">
-          Staff-curated "must-have" collections are coming soon.
-        </div>
-      </section>
     </div>
   );
 });
