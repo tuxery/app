@@ -1,0 +1,60 @@
+{
+  "syncedAt": "2026-10-09T08:54:03.140Z",
+  "repo": "tuxery/catalog",
+  "items": [
+    {
+      "number": 61,
+      "title": "Flathub: beta branch never fetched, channel field unpopulated",
+      "url": "https://github.com/tuxery/catalog/issues/61",
+      "sources": ["flatpak-flathub"]
+    },
+    {
+      "number": 62,
+      "title": "Flatpak add-ons/extensions are deliberately excluded — revisit for user-relevant ones",
+      "url": "https://github.com/tuxery/catalog/issues/62",
+      "sources": ["flatpak-flathub"]
+    },
+    {
+      "number": 63,
+      "title": "Snap: only one channel per snap is captured, real channel-map has many more",
+      "url": "https://github.com/tuxery/catalog/issues/63",
+      "sources": ["snap-snapcraft"]
+    },
+    {
+      "number": 64,
+      "title": "Filter: drop test/hello-world snaps and other non-app noise (snapd fixtures, fortunes, injection-test package)",
+      "url": "https://github.com/tuxery/catalog/issues/64",
+      "sources": ["snap-snapcraft"]
+    },
+    {
+      "number": 65,
+      "title": "Nixpkgs: fetches nixos-unstable, not the stable numbered channel",
+      "url": "https://github.com/tuxery/catalog/issues/65",
+      "sources": ["nix-nixpkgs"]
+    },
+    {
+      "number": 66,
+      "title": "openSUSE: only Tumbleweed (rolling) fetched, Leap (stable) never connected",
+      "url": "https://github.com/tuxery/catalog/issues/66",
+      "sources": ["rpm-opensuse"]
+    },
+    {
+      "number": 67,
+      "title": "Slackware: fetches -current (rolling), not a numbered stable release",
+      "url": "https://github.com/tuxery/catalog/issues/67",
+      "sources": ["slackware"]
+    },
+    {
+      "number": 68,
+      "title": "Filter is far less effective on AUR/Arch than Debian/Ubuntu",
+      "url": "https://github.com/tuxery/catalog/issues/68",
+      "sources": ["pacman-arch", "pacman-aur"]
+    },
+    {
+      "number": 69,
+      "title": "catalog: add AppImageHub.com as a second AppImage source (OCS API works again)",
+      "url": "https://github.com/tuxery/catalog/issues/69",
+      "sources": ["appimage"]
+    }
+  ]
+}
