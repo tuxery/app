@@ -10,7 +10,7 @@ import { test, expect } from "@playwright/test";
 test("the status page shows a real catalog count and snapshot date, not the empty/degraded state", async ({
   page,
 }) => {
-  await page.goto("/status/");
+  await page.goto("/docs/status/");
 
   const total = await page.locator(".stat-value.text-primary").innerText();
   expect(Number(total.replace(/[^0-9]/g, ""))).toBeGreaterThan(0);

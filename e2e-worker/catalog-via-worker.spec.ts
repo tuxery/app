@@ -6,7 +6,7 @@ import { test, expect } from "@playwright/test";
 // any particular app's page. See playwright.worker.config.ts's header for
 // why this needs its own config/runner instead of living in e2e/.
 test("the catalog loads through the real Worker bundle, not just Vite dev", async ({ page }) => {
-  await page.goto("/status/");
+  await page.goto("/docs/status/");
 
   const total = await page.locator(".stat-value.text-primary").innerText();
   expect(Number(total.replace(/[^0-9]/g, ""))).toBeGreaterThan(0);
