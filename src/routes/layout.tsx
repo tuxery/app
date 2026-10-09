@@ -103,7 +103,7 @@ export default component$(() => {
         <div class="navbar-center hidden sm:flex">
           <form action="/browse" method="get" class="w-full max-w-xs">
             <label class="input input-sm flex items-center gap-2">
-              <LuSearch class="text-base-content/50" />
+              <LuSearch class="text-base-content/70" />
               <input
                 type="search"
                 name="q"

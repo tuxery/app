@@ -26,19 +26,19 @@ export const Footer = component$(() => {
                 Tux<span class="text-tuxery-gradient">ery</span>
               </span>
             </p>
-            <p class="text-sm text-base-content/60">
+            <p class="text-sm text-base-content/70">
               Never installs anything itself.
               <br />
               Every button leads straight to the real source.
             </p>
-            <p class="text-sm text-base-content/60">
+            <p class="text-sm text-base-content/70">
               <a href="/docs/license/" class="link link-hover">
                 AGPL v3
               </a>
             </p>
 
             {bg && (
-              <p class="text-xs text-base-content/40 mt-3">
+              <p class="text-xs text-base-content/70 mt-3">
                 <a href={bg.photoUrl} target="_blank" rel="noopener" class="link link-hover">
                   Background photo
                 </a>{" "}

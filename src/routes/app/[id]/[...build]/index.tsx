@@ -199,7 +199,7 @@ function tabLabel(pkg: SourcedPackage, packages: SourcedPackage[]): string {
  * full row width would end up wider than anything it's dividing.
  */
 const Or = component$(() => (
-  <span class="text-xs text-base-content/40" aria-hidden="true">
+  <span class="text-xs text-base-content/70" aria-hidden="true">
     or
   </span>
 ));
@@ -334,7 +334,7 @@ const SourceInstallUnit = component$<{
             </a>
           )}
           {version && (
-            <span class="text-xs text-base-content/50 font-mono truncate">{version}</span>
+            <span class="text-xs text-base-content/70 font-mono truncate">{version}</span>
           )}
         </div>
       )}
@@ -380,11 +380,11 @@ const SourceInstallUnit = component$<{
       {/* (0) One-time setup/activation, before any install action — applies to link-kind sources (Flatpak's own remote) just as much as command-kind ones (the AUR helper, Universe, ...), so this no longer lives inside the command-only branch below. Label flush left, content indented under it (pl-3) — the label-to-content gap (gap-1) stays tighter than the gap to whatever's above/below it, so it reads as "this belongs together" rather than one more item in a flat list. */}
       {needsSetup && method.setup && (
         <div class="flex flex-col gap-1">
-          <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
+          <span class="text-xs font-semibold text-base-content/70 uppercase tracking-wide">
             Prerequisites
           </span>
           <div class="bg-base-200 rounded-field p-2 flex flex-col gap-2 ml-3">
-            <p class="text-xs text-base-content/60">{method.setup.note}</p>
+            <p class="text-xs text-base-content/70">{method.setup.note}</p>
             {method.setup.kind === "link" ? (
               <a
                 href={method.setup.url}
@@ -413,7 +413,7 @@ const SourceInstallUnit = component$<{
       {(primaryLink || command || showWebsiteFallback) && (
         <div class={["flex flex-col gap-1", needsSetup && method.setup && "mt-2"]}>
           {showInstallOptionsLabel && (
-            <span class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
+            <span class="text-xs font-semibold text-base-content/70 uppercase tracking-wide">
               Install options
             </span>
           )}
@@ -450,7 +450,7 @@ const SourceInstallUnit = component$<{
                 </a>
               ))}
             {!primaryLink && method.kind === "link" && (
-              <p class="text-sm text-base-content/60">No direct link available yet.</p>
+              <p class="text-sm text-base-content/70">No direct link available yet.</p>
             )}
 
             {/* (2) The terminal command, and its copy button, on one line — a shorter button label than before leaves more room for the command itself. */}
@@ -506,7 +506,7 @@ const SourceGroupSection = component$<{
       <summary class="collapse-title min-h-0 py-3 font-medium text-sm">
         {group}
         {packages.length > 1 && (
-          <span class="text-base-content/50 font-normal"> ({packages.length})</span>
+          <span class="text-base-content/70 font-normal"> ({packages.length})</span>
         )}
       </summary>
       <div class="collapse-content">
@@ -609,7 +609,7 @@ export default component$(() => {
     return (
       <div class="text-center py-24">
         <h1 class="text-2xl font-bold mb-2">App not found</h1>
-        <p class="text-base-content/60 mb-4">
+        <p class="text-base-content/70 mb-4">
           It may not be in the loaded dataset — run <code class="font-mono">pnpm seed</code> then{" "}
           <code class="font-mono">pnpm serve</code> in <code class="font-mono">tuxery/catalog</code>{" "}
           for a local one.
@@ -691,7 +691,7 @@ export default component$(() => {
                   class="w-full h-full object-cover"
                 />
               ) : (
-                <LuPackage class="text-base text-base-content/40" />
+                <LuPackage class="text-base text-base-content/70" />
               )}
             </div>
             <span class="font-medium truncate">{a.name}</span>
@@ -745,7 +745,7 @@ export default component$(() => {
           {a.iconUrl ? (
             <img src={a.iconUrl} alt="" width={80} height={80} class="w-full h-full object-cover" />
           ) : (
-            <LuPackage class="text-4xl text-base-content/40" />
+            <LuPackage class="text-4xl text-base-content/70" />
           )}
         </div>
 
@@ -762,7 +762,7 @@ export default component$(() => {
           </div>
           <p class="text-base-content/70 mt-1">{a.shortDescription}</p>
           {a.developer && (
-            <p class="text-sm text-base-content/60 mt-1 flex items-center gap-1.5">
+            <p class="text-sm text-base-content/70 mt-1 flex items-center gap-1.5">
               by{" "}
               {a.homepage ? (
                 <a href={a.homepage} class="link link-hover" target="_blank" rel="noopener">
@@ -868,7 +868,7 @@ export default component$(() => {
       {a.suite?.role === "main" && a.suite.components && a.suite.components.length > 0 && (
         <section>
           <h2 class="text-lg font-semibold mb-1">Suite components</h2>
-          <p class="text-sm text-base-content/60 mb-3">
+          <p class="text-sm text-base-content/70 mb-3">
             {a.name} bundles these into one install where a source offers it — each is also
             separately installable on its own.
           </p>
@@ -907,7 +907,7 @@ export default component$(() => {
                 ✕
               </button>
             </div>
-            <p class="text-sm text-base-content/60 -mt-2">
+            <p class="text-sm text-base-content/70 -mt-2">
               Not sure which to pick?{" "}
               <a href="/docs/formats/" class="link link-primary">
                 Which format to choose
@@ -925,7 +925,7 @@ export default component$(() => {
 
             {hiddenGroups.length > 0 && (
               <details class="collapse collapse-arrow bg-base-100 border border-dashed border-base-300">
-                <summary class="collapse-title min-h-0 py-3 text-sm text-base-content/60">
+                <summary class="collapse-title min-h-0 py-3 text-sm text-base-content/70">
                   Show{" "}
                   {hiddenGroups.length === 1
                     ? "1 other platform"
@@ -947,7 +947,7 @@ export default component$(() => {
 
             {elsewhere.length > 0 && (
               <div class="flex flex-col gap-1.5 text-sm">
-                <p class="text-base-content/60">In other editions or versions of {a.name}:</p>
+                <p class="text-base-content/70">In other editions or versions of {a.name}:</p>
                 {elsewhere.map(([group, selections]) => (
                   <p key={group} class="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span class="font-medium">{group}</span>
@@ -1037,7 +1037,7 @@ export default component$(() => {
         <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-sm">
           {a.developer && (
             <>
-              <dt class="text-base-content/60">Developer</dt>
+              <dt class="text-base-content/70">Developer</dt>
               <dd>
                 {a.homepage ? (
                   <a href={a.homepage} class="link link-hover" target="_blank" rel="noopener">
@@ -1051,7 +1051,7 @@ export default component$(() => {
           )}
           {a.publisher && (
             <>
-              <dt class="text-base-content/60">Publisher</dt>
+              <dt class="text-base-content/70">Publisher</dt>
               <dd>
                 {a.homepage ? (
                   <a href={a.homepage} class="link link-hover" target="_blank" rel="noopener">
@@ -1065,43 +1065,43 @@ export default component$(() => {
           )}
           {a.license && (
             <>
-              <dt class="text-base-content/60">License</dt>
+              <dt class="text-base-content/70">License</dt>
               <dd>{a.license}</dd>
             </>
           )}
           {a.category && (
             <>
-              <dt class="text-base-content/60">Category</dt>
+              <dt class="text-base-content/70">Category</dt>
               <dd>{a.category}</dd>
             </>
           )}
           {a.languages?.length && (
             <>
-              <dt class="text-base-content/60">Languages</dt>
+              <dt class="text-base-content/70">Languages</dt>
               <dd>{a.languages.join(", ")}</dd>
             </>
           )}
           {facts.approxSizeBytes && (
             <>
-              <dt class="text-base-content/60">Size</dt>
+              <dt class="text-base-content/70">Size</dt>
               <dd>{formatBytes(facts.approxSizeBytes)}</dd>
             </>
           )}
           {a.permissions?.length && (
             <>
-              <dt class="text-base-content/60">Permissions</dt>
+              <dt class="text-base-content/70">Permissions</dt>
               <dd>{a.permissions.join(", ")}</dd>
             </>
           )}
           {a.gdprCompliant !== undefined && (
             <>
-              <dt class="text-base-content/60">GDPR</dt>
+              <dt class="text-base-content/70">GDPR</dt>
               <dd>{a.gdprCompliant ? "Compliant" : "Not stated"}</dd>
             </>
           )}
           {a.homepage && (
             <>
-              <dt class="text-base-content/60">Homepage</dt>
+              <dt class="text-base-content/70">Homepage</dt>
               <dd>
                 <a href={a.homepage} class="link link-primary" target="_blank" rel="noopener">
                   {a.homepage}
@@ -1109,14 +1109,14 @@ export default component$(() => {
               </dd>
             </>
           )}
-          <dt class="text-base-content/60">Available via</dt>
+          <dt class="text-base-content/70">Available via</dt>
           <dd>{a.packages.map((pkg) => formatSourceLabel(pkg)).join(", ")}</dd>
           {stats.value.generatedAt && (
             <>
-              <dt class="text-base-content/60">Catalog data as of</dt>
+              <dt class="text-base-content/70">Catalog data as of</dt>
               <dd>
                 {new Date(stats.value.generatedAt).toLocaleDateString()}{" "}
-                <span class="text-base-content/50">
+                <span class="text-base-content/70">
                   (dataset snapshot date — per-app update dates aren't tracked yet)
                 </span>
               </dd>
@@ -1143,7 +1143,7 @@ export default component$(() => {
           <dl class="flex flex-col gap-2">
             {groupRelations(a.relations).map(([label, apps]) => (
               <div key={label} class="flex flex-wrap items-center gap-2">
-                <dt class="text-sm text-base-content/60">{label}</dt>
+                <dt class="text-sm text-base-content/70">{label}</dt>
                 {apps.map((related) => (
                   <dd key={related.id}>
                     <a
@@ -1174,7 +1174,7 @@ export default component$(() => {
                   </summary>
                   <div class="collapse-content">
                     {total > companions.length && (
-                      <p class="text-xs text-base-content/60 mb-2">
+                      <p class="text-xs text-base-content/70 mb-2">
                         The {companions.length} most widely packaged of {total}.
                       </p>
                     )}
@@ -1183,9 +1183,9 @@ export default component$(() => {
                         <li key={companion.name}>
                           <span class="font-medium">{companion.name}</span>
                           {companion.description && (
-                            <span class="text-base-content/60"> — {companion.description}</span>
+                            <span class="text-base-content/70"> — {companion.description}</span>
                           )}
-                          <span class="text-xs text-base-content/50">
+                          <span class="text-xs text-base-content/70">
                             {" "}
                             (
                             {unique(

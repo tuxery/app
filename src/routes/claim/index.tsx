@@ -54,7 +54,7 @@ export default component$(() => {
       <ul class="flex flex-col gap-4">
         {PREREQUISITES.map(({ icon: Icon, title, body }) => (
           <li key={title} class="flex gap-3">
-            <Icon class="text-xl text-base-content/50 shrink-0 mt-0.5" />
+            <Icon class="text-xl text-base-content/70 shrink-0 mt-0.5" />
             <div>
               <p class="font-medium">{title}</p>
               <p class="text-sm text-base-content/70">{body}</p>
@@ -63,7 +63,7 @@ export default component$(() => {
         ))}
       </ul>
 
-      <p class="text-sm text-base-content/60">
+      <p class="text-sm text-base-content/70">
         Got a question, or a problem in the meantime?{" "}
         <a href="/docs/contribute/" class="link link-primary">
           Get in touch

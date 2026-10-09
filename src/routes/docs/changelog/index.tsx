@@ -47,7 +47,7 @@ export default component$(() => (
             ] as const
           ).map(([title, items]) => (
             <div key={title}>
-              <h3 class="text-sm font-semibold uppercase tracking-wide text-base-content/60 mb-2">
+              <h3 class="text-sm font-semibold uppercase tracking-wide text-base-content/70 mb-2">
                 {title}
               </h3>
               <ul class="list-disc pl-5 text-base-content/80 flex flex-col gap-1.5">

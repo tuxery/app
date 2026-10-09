@@ -60,13 +60,13 @@ export const AppCard = component$<AppCardProps>(
                   class="w-full h-full object-cover"
                 />
               ) : (
-                <LuPackage class="text-2xl text-base-content/40" />
+                <LuPackage class="text-2xl text-base-content/70" />
               )}
             </div>
             <div class="min-w-0">
               <h3 class="card-title text-base line-clamp-1">{name}</h3>
               {category && (
-                <p class="text-sm text-base-content/60 line-clamp-1 break-words" title={category}>
+                <p class="text-sm text-base-content/70 line-clamp-1 break-words" title={category}>
                   {category}
                 </p>
               )}

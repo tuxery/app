@@ -38,7 +38,7 @@ export default component$(() => {
           the catalog repo, labelled with its source — pick one up, or open a new one with the right{" "}
           <code class="text-sm">source:&lt;id&gt;</code> label.
         </p>
-        <p class="text-sm text-base-content/60">
+        <p class="text-sm text-base-content/70">
           Item list synced {synced} ·{" "}
           <a
             href={`${ISSUES_URL}?q=is%3Aissue+is%3Aopen+label%3Asource%3A*`}
@@ -77,14 +77,14 @@ export default component$(() => {
                     >
                       {SOURCE_LABELS[source]}
                     </a>
-                    <div class="text-xs text-base-content/50 font-mono">{source}</div>
+                    <div class="text-xs text-base-content/70 font-mono">{source}</div>
                   </td>
                   <td class="text-right tabular-nums">
                     {count === undefined ? "—" : count.toLocaleString("en")}
                   </td>
                   <td>
                     {items.length === 0 ? (
-                      <span class="text-base-content/40">None tracked yet</span>
+                      <span class="text-base-content/70">None tracked yet</span>
                     ) : (
                       <ul class="flex flex-col gap-1">
                         {items.map((item) => (
@@ -96,7 +96,7 @@ export default component$(() => {
                               rel="noopener"
                               class="link link-hover"
                             >
-                              {item.title} <span class="text-base-content/50">#{item.number}</span>
+                              {item.title} <span class="text-base-content/70">#{item.number}</span>
                             </a>
                           </li>
                         ))}
@@ -110,7 +110,7 @@ export default component$(() => {
         </table>
       </div>
 
-      <p class="text-sm text-base-content/60">
+      <p class="text-sm text-base-content/70">
         "Apps" counts published apps with at least one package from that source, after filtering and
         merging — not the raw package count. Finer coverage figures (share classified, icons and
         licenses filled) need the catalog to publish them per source first.

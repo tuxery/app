@@ -38,12 +38,15 @@ a creator page and the docs pages:
 Fixed during this audit: menu items had no visible keyboard focus; the
 inert account button and footer headings used invalid markup.
 
+Fixed since: **color contrast**. Links, secondary text, the green
+"Verified" badges, section and table headings were below the 4.5:1 ratio
+WCAG AA asks for normal text. The light theme's blue and green are now
+deeper, secondary text is never fainter than 70% of the text color, and
+the automated checks report no contrast issue in either theme, background
+photo included (re-checked 9 October 2026, 18 pages).
+
 ## Known gaps
 
-- **Color contrast.** The blue used for links and some secondary text
-  (light grey, small captions) are below the 4.5:1 contrast ratio
-  required for normal text, in both themes. This affects most pages and
-  is the main gap left; fixing it means adjusting the theme colors.
 - **Accessible names that differ from the visible text** on category
   tiles, a homepage call to action, and the Edition/Version pickers of an
   app page: a voice-control user saying the visible label may not reach

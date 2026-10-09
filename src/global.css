@@ -34,6 +34,21 @@ body {
   overflow-x: clip;
 }
 
+/* nord's stock primary (#5e81ac) is 3.5:1 on its own background, below
+   the 4.5:1 WCAG AA asks for text — and links are primary-colored text.
+   Same hue, deeper: #46658e is 5.2:1 on base-100 and 4.9:1 on base-200.
+   Text on the primary (buttons, the active sidebar item) turns light to
+   match: nord's dark primary-content would fall to ~3:1 on the deeper
+   blue, the light one is ~5.5:1. */
+[data-theme="nord"] {
+  --color-primary: #46658e;
+  --color-primary-content: #eceff4;
+  /* Same reason for nord's green (#a3be8c, 1.8:1 as text — the
+     "Verified" badges): #4e6b3a is 5.2:1. */
+  --color-success: #4e6b3a;
+  --color-success-content: #eceff4;
+}
+
 /* daisyUI's stock dim theme ships a green primary (hue ~139) against
    nord's blue (hue ~254) — the accent color would silently flip hue when
    the theme switches. Same lightness/chroma dim already used for its own
@@ -223,4 +238,17 @@ body {
 [data-theme="nord"] .page-photo {
   filter: blur(8px) grayscale(1) contrast(0.5) brightness(1.6);
   opacity: 0.2;
+}
+
+/* daisyUI dims a few parts' text by opacity or a translucent color —
+   footer and menu section titles, inactive tabs, table headers — which
+   put them below WCAG AA's 4.5:1 in both themes (2.2–4:1, found by the
+   audit behind /docs/accessibility/). Same look, just less faint: the
+   site-wide minimum for secondary text is base-content at 70%. */
+.footer-title,
+.menu-title,
+.tabs .tab:not(.tab-active),
+.table :where(thead, tfoot) :where(th, td) {
+  opacity: 1;
+  color: color-mix(in oklab, var(--color-base-content) 75%, transparent);
 }

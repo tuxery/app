@@ -157,7 +157,7 @@ export default component$(() => {
         </section>
       ))}
 
-      <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
+      <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/70">
         A few forms of contribution are planned but don't exist yet: an in-app "propose a merge" /
         "flag a match" flow, an app/game submission form, and a developer claim-a-page flow. Until
         those ship, the GitHub forms above are the way in for all of it.

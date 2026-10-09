@@ -38,7 +38,7 @@ export const BuildIndicator = component$<BuildIndicatorProps>(
         >
           {builds.length}
         </span>
-        <LuLayers class="text-sm text-base-content/50" />
+        <LuLayers class="text-sm text-base-content/70" />
       </div>
     );
   },
