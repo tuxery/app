@@ -1,6 +1,13 @@
 import { component$, Slot } from "@qwik.dev/core";
 import { routeLoader$, useLocation, type RequestHandler } from "@qwik.dev/router";
-import { LuLayoutGrid, LuMenu, LuSearch, LuSettings, LuUser } from "@qwikest/icons/lucide";
+import {
+  LuBookOpen,
+  LuLayoutGrid,
+  LuMenu,
+  LuSearch,
+  LuSettings,
+  LuUser,
+} from "@qwikest/icons/lucide";
 import { Footer } from "~/components/footer/footer";
 import { TuxeryLogo } from "~/components/tuxery-logo/tuxery-logo";
 import { findOsEntry } from "~/os-catalog";
@@ -44,6 +51,9 @@ export default component$(() => {
   const bg = useHeroBackground().value;
   const location = useLocation();
   const isHome = location.url.pathname === "/";
+  // About, Status and every other static page live under /docs/ — one
+  // header entry for all of them (the footer still lists each one).
+  const isDocs = location.url.pathname.startsWith("/docs/");
   const osEntry = findOsEntry(settings.osId.value);
 
   return (
@@ -64,6 +74,10 @@ export default component$(() => {
                   <a href={link.href}>{link.label}</a>
                 </li>
               ))}
+              {/* The header's own Docs button is hidden below `sm`. */}
+              <li class="sm:hidden">
+                <a href="/docs/">Docs</a>
+              </li>
             </ul>
           </div>
 
@@ -111,23 +125,26 @@ export default component$(() => {
               </a>
             </div>
           )}
-          <a href="/about" class="btn btn-ghost hidden sm:inline-flex">
-            About
-          </a>
-          <a href="/status" class="btn btn-ghost hidden sm:inline-flex">
-            Status
+          <a
+            href="/docs/"
+            class={["btn btn-ghost hidden sm:inline-flex", isDocs && "btn-active"]}
+            aria-current={isDocs ? "true" : undefined}
+          >
+            <LuBookOpen class="text-base" />
+            Docs
           </a>
           <a href="/settings" class="btn btn-ghost btn-square" aria-label="Settings">
             <LuSettings class="text-lg" />
           </a>
           {/* No user space yet — inert placeholder for the future account entry point. */}
-          <span
-            class="btn btn-ghost btn-square btn-disabled"
-            aria-disabled="true"
+          <button
+            type="button"
+            class="btn btn-ghost btn-square"
+            disabled
             aria-label="Account (coming soon)"
           >
             <LuUser class="text-lg" />
-          </span>
+          </button>
         </div>
       </header>
 

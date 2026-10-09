@@ -1,15 +1,25 @@
 import { component$ } from "@qwik.dev/core";
 import { TuxeryLogo } from "~/components/tuxery-logo/tuxery-logo";
+import { DOCS_SECTIONS } from "~/docs-nav";
 import { useHeroBackground } from "~/routes/layout";
 
+const CATALOG_LINKS = [
+  { href: "/apps/", title: "Apps" },
+  { href: "/games/", title: "Games" },
+  { href: "/categories/", title: "Categories" },
+  { href: "/docs/sources/", title: "Browse by source" },
+];
+
+// Every docs page, one column per docs section — the same list as the docs
+// sidebar (`DOCS_SECTIONS`), so the two can't drift.
 export const Footer = component$(() => {
   const bg = useHeroBackground().value;
 
   return (
     <footer class="border-t border-base-300 bg-base-200/50 mt-16">
       <div class="max-w-6xl mx-auto px-4 md:px-6 py-10">
-        <div class="footer sm:footer-horizontal">
-          <aside>
+        <div class="footer grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-x-6">
+          <aside class="col-span-2 md:col-span-4 lg:col-span-2">
             <p class="text-lg font-bold flex items-center gap-2">
               <TuxeryLogo size={22} cutoutColor="var(--color-base-100)" />
               <span>
@@ -22,7 +32,7 @@ export const Footer = component$(() => {
               Every button leads straight to the real source.
             </p>
             <p class="text-sm text-base-content/60">
-              <a href="/license/" class="link link-hover">
+              <a href="/docs/license/" class="link link-hover">
                 AGPL v3
               </a>
             </p>
@@ -54,45 +64,24 @@ export const Footer = component$(() => {
               </p>
             )}
           </aside>
-          <nav>
-            <h6 class="footer-title">Catalog</h6>
-            <a href="/apps/" class="link link-hover">
-              Apps
-            </a>
-            <a href="/games/" class="link link-hover">
-              Games
-            </a>
-            <a href="/categories/" class="link link-hover">
-              Categories
-            </a>
-            <a href="/distros/" class="link link-hover">
-              Browse by source
-            </a>
+          <nav aria-label="Catalog">
+            <h2 class="footer-title">Catalog</h2>
+            {CATALOG_LINKS.map((link) => (
+              <a key={link.href} href={link.href} class="link link-hover">
+                {link.title}
+              </a>
+            ))}
           </nav>
-          <nav>
-            <h6 class="footer-title">Project</h6>
-            <a href="/about/" class="link link-hover">
-              About
-            </a>
-            <a href="/status/" class="link link-hover">
-              Status
-            </a>
-            <a href="/contribute/" class="link link-hover">
-              How to contribute
-            </a>
-            <a href="/sources/" class="link link-hover">
-              Source credits
-            </a>
-          </nav>
-          <nav>
-            <h6 class="footer-title">Legal</h6>
-            <a href="/license/" class="link link-hover">
-              License
-            </a>
-            <a href="/licenses/" class="link link-hover">
-              Third-party licenses
-            </a>
-          </nav>
+          {DOCS_SECTIONS.map((section) => (
+            <nav key={section.title} aria-label={section.title}>
+              <h2 class="footer-title">{section.title}</h2>
+              {section.pages.map((page) => (
+                <a key={page.href} href={page.href} class="link link-hover">
+                  {page.title}
+                </a>
+              ))}
+            </nav>
+          ))}
         </div>
       </div>
     </footer>
