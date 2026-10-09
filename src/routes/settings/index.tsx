@@ -1,14 +1,16 @@
-import { component$, type Signal } from "@qwik.dev/core";
+import { component$, useSignal, type Signal } from "@qwik.dev/core";
 import { useLocation } from "@qwik.dev/router";
 import type { DocumentHead } from "@qwik.dev/router";
-import { LuMonitor, LuMoon, LuSun } from "@qwikest/icons/lucide";
+import { LuCheck, LuCopy, LuMonitor, LuMoon, LuSun } from "@qwikest/icons/lucide";
 import { requestAdditionUrl } from "~/contribute-links";
+import { OS_LOGO_PATHS } from "~/data/os-logos";
 import { findOsEntry, recommendedGroupIds, OS_CATALOG, type OsCatalogEntry } from "~/os-catalog";
 import {
   CROSS_DISTRO_GROUP_IDS,
   groupsWhere,
   isGroupEffectivelyShown,
   isRepoEffectivelyActivated,
+  resetSettings,
   setGroupShown,
   setSourceActivated,
   useSettings,
@@ -16,6 +18,7 @@ import {
   type Theme,
   type TriState,
 } from "~/settings";
+import { autoActivatedNote, autoShownNote } from "~/settings-auto";
 
 const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "system", label: "Match system" },
@@ -47,6 +50,17 @@ const ACTIVATED_OPTIONS: { value: TriState; label: string }[] = [
   { value: "on", label: "Done" },
 ];
 
+/** A distribution's logo (see `~/data/os-logos`), decorative — the label next to it names the OS. */
+const OsLogo = ({ osId, class: className }: { osId: string; class: string }) => {
+  const path = OS_LOGO_PATHS[osId];
+  if (!path) return null;
+  return (
+    <svg viewBox="0 0 24 24" class={className} aria-hidden="true">
+      <path fill="currentColor" d={path} />
+    </svg>
+  );
+};
+
 /**
  * Hide/Auto/Show for one `InstallFormatGroup.shown`, looked up by `index`
  * from the live signal on every render (not received as a plain `value`
@@ -67,7 +81,8 @@ const GroupShownControl = component$<{
 }>(({ installGroups, index, label }) => {
   const value = installGroups.value[index]?.shown ?? "auto";
   return (
-    <div class="join" aria-label={`Show ${label}`}>
+    <fieldset class="join shrink-0">
+      <legend class="sr-only">Show {label}</legend>
       {SHOWN_OPTIONS.map((option) => (
         <button
           key={option.value}
@@ -79,7 +94,7 @@ const GroupShownControl = component$<{
           {option.label}
         </button>
       ))}
-    </div>
+    </fieldset>
   );
 });
 
@@ -94,7 +109,8 @@ const RepoActivatedControl = component$<{
     .find((r) => r.id === repoId);
   const value = repo?.activated ?? "auto";
   return (
-    <div class="join" aria-label={`${label} activated`}>
+    <fieldset class="join shrink-0">
+      <legend class="sr-only">{label} activated</legend>
       {ACTIVATED_OPTIONS.map((option) => (
         <button
           key={option.value}
@@ -106,6 +122,34 @@ const RepoActivatedControl = component$<{
           {option.label}
         </button>
       ))}
+    </fieldset>
+  );
+});
+
+/**
+ * A setup command, kept on one line (scrolling sideways when long — a
+ * command wrapped mid-word was hard to read and to select) with a button
+ * copying it exactly.
+ */
+const CommandBlock = component$<{ command: string }>(({ command }) => {
+  const copied = useSignal(false);
+  return (
+    <div class="flex items-start gap-2 bg-base-300/40 rounded-field">
+      <pre class="grow min-w-0 overflow-x-auto px-2 py-1.5 text-xs font-mono">
+        <code>{command}</code>
+      </pre>
+      <button
+        type="button"
+        class="btn btn-ghost btn-xs gap-1 shrink-0 m-0.5"
+        onClick$={async () => {
+          await navigator.clipboard.writeText(command);
+          copied.value = true;
+          setTimeout(() => (copied.value = false), 2000);
+        }}
+      >
+        {copied.value ? <LuCheck class="text-sm" /> : <LuCopy class="text-sm" />}
+        <span aria-live="polite">{copied.value ? "Copied" : "Copy"}</span>
+      </button>
     </div>
   );
 });
@@ -122,10 +166,18 @@ interface InstallGroupListProps {
   /** The selected OS's recommendation, or `undefined` with none selected — see `isGroupEffectivelyShown`. */
   recommended: Set<string> | undefined;
   preActivated: Set<string> | undefined;
+  /** The selected OS's name, for the "Auto: …" notes. */
+  osLabel: string | undefined;
 }
 
+/**
+ * One card per list: a row per group (label, what Auto resolves to, the
+ * Hide/Auto/Show control), its one-time setups nested under it with the
+ * same row layout — label left, control right, one fixed indent — so
+ * every control lines up whatever the label's length.
+ */
 const InstallGroupList = component$<InstallGroupListProps>(
-  ({ title, groups, recommended, preActivated }) => {
+  ({ title, groups, recommended, preActivated, osLabel }) => {
     const settings = useSettings();
 
     return (
@@ -133,26 +185,42 @@ const InstallGroupList = component$<InstallGroupListProps>(
         <h3 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
           {title}
         </h3>
-        <ul class="list bg-base-100 border border-base-300 rounded-box">
+        <ul class="bg-base-100 border border-base-300 rounded-box divide-y divide-base-300">
           {groups.map(({ group, index }) => {
             const shown = isGroupEffectivelyShown(group, recommended);
             return (
-              <li key={group.id} class="list-row items-center">
-                <span class="font-medium text-sm">{group.label}</span>
-                <GroupShownControl
-                  installGroups={settings.installGroups}
-                  index={index}
-                  label={group.label}
-                />
+              <li key={group.id} class="p-3 flex flex-col gap-3">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="font-medium text-sm">{group.label}</p>
+                    {group.shown === "auto" && (
+                      <p class="text-xs text-base-content/60">
+                        {autoShownNote(group.id, recommended, osLabel)}
+                      </p>
+                    )}
+                  </div>
+                  <GroupShownControl
+                    installGroups={settings.installGroups}
+                    index={index}
+                    label={group.label}
+                  />
+                </div>
 
                 {shown && group.specialRepos.length > 0 && (
-                  <div class="list-col-wrap flex flex-col gap-2 pt-2">
+                  <ul class="flex flex-col gap-3 border-l-2 border-base-300 pl-3">
                     {group.specialRepos.map((repo) => {
                       const activated = isRepoEffectivelyActivated(repo, preActivated);
                       return (
-                        <div key={repo.id} class="flex flex-col gap-1">
-                          <div class="flex items-center justify-between gap-2 text-sm">
-                            <span>{repo.label}</span>
+                        <li key={repo.id} class="flex flex-col gap-2">
+                          <div class="flex items-center justify-between gap-3">
+                            <div class="min-w-0">
+                              <p class="text-sm">{repo.label}</p>
+                              {repo.activated === "auto" && (
+                                <p class="text-xs text-base-content/60">
+                                  {autoActivatedNote(repo.id, preActivated, osLabel)}
+                                </p>
+                              )}
+                            </div>
                             <RepoActivatedControl
                               installGroups={settings.installGroups}
                               repoId={repo.id}
@@ -160,28 +228,26 @@ const InstallGroupList = component$<InstallGroupListProps>(
                             />
                           </div>
                           {!activated && (
-                            <div class="flex flex-col gap-1 bg-base-200 rounded-field p-2">
-                              <p class="text-xs text-base-content/60">{repo.setup.note}</p>
+                            <div class="flex flex-col gap-1.5 bg-base-200 rounded-field p-2">
+                              <p class="text-xs text-base-content/70">{repo.setup.note}</p>
                               {repo.setup.kind === "link" ? (
                                 <a
                                   href={repo.setup.url}
-                                  class="link link-primary text-xs"
+                                  class="link link-primary text-xs break-all"
                                   target="_blank"
                                   rel="noopener"
                                 >
                                   {repo.setup.url}
                                 </a>
                               ) : (
-                                <code class="text-xs font-mono break-all">
-                                  {repo.setup.command}
-                                </code>
+                                <CommandBlock command={repo.setup.command} />
                               )}
                             </div>
                           )}
-                        </div>
+                        </li>
                       );
                     })}
-                  </div>
+                  </ul>
                 )}
               </li>
             );
@@ -200,13 +266,14 @@ const SourcesTab = component$(() => {
 
   return (
     <section class="flex flex-col gap-3">
-      <p class="text-sm text-base-content/60">
-        Hide/Show always win, regardless of your OS. Auto follows whatever the{" "}
+      <p class="text-sm text-base-content/70">
+        Choose which install methods Tuxery shows you, and which one-time setups you've already
+        done. <strong>Auto</strong> follows your{" "}
         <a href="?tab=os" class="link link-primary">
-          Operating system
-        </a>{" "}
-        tab has selected — or, with none selected, shows everything and assumes nothing's set up
-        yet, same as before this tab existed.
+          operating system
+        </a>
+        {selectedOs ? ` (${selectedOs.label})` : ""}; any other choice always wins.
+        {!selectedOs && " With none picked, Auto shows everything and assumes nothing is set up."}
       </p>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <InstallGroupList
@@ -216,6 +283,7 @@ const SourcesTab = component$(() => {
           )}
           recommended={recommended}
           preActivated={preActivated}
+          osLabel={selectedOs?.label}
         />
         <InstallGroupList
           title="Distro packages"
@@ -225,9 +293,63 @@ const SourcesTab = component$(() => {
           )}
           recommended={recommended}
           preActivated={preActivated}
+          osLabel={selectedOs?.label}
         />
       </div>
     </section>
+  );
+});
+
+/** Back to defaults, behind a confirmation — it also forgets the picked OS. */
+const ResetSettings = component$(() => {
+  const settings = useSettings();
+  const confirming = useSignal(false);
+  const done = useSignal(false);
+
+  return (
+    <li class="p-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <div class="min-w-0">
+        <p class="font-medium text-sm">Reset all settings</p>
+        <p class="text-xs text-base-content/60" aria-live="polite">
+          {done.value
+            ? "Done — back to the defaults."
+            : "Forgets your operating system, your source choices and your theme, as on a first visit."}
+        </p>
+      </div>
+      {confirming.value ? (
+        <div class="flex gap-1 shrink-0">
+          <button
+            type="button"
+            class="btn btn-xs btn-error"
+            onClick$={() => {
+              resetSettings(settings);
+              confirming.value = false;
+              done.value = true;
+            }}
+          >
+            Yes, reset
+          </button>
+          <button
+            type="button"
+            class="btn btn-xs btn-ghost"
+            onClick$={() => (confirming.value = false)}
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          class="btn btn-xs btn-outline shrink-0"
+          onClick$={() => {
+            confirming.value = true;
+            done.value = false;
+          }}
+        >
+          Reset…
+        </button>
+      )}
+    </li>
   );
 });
 
@@ -235,23 +357,20 @@ const DisplayTab = component$(() => {
   const settings = useSettings();
 
   return (
-    <section class="flex flex-col gap-3">
+    <section class="flex flex-col gap-6">
       <div>
         <h3 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
           Appearance
         </h3>
-        <ul class="list bg-base-100 border border-base-300 rounded-box">
-          <li class="list-row flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-            <div class="grow">
+        <ul class="bg-base-100 border border-base-300 rounded-box">
+          <li class="p-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div class="min-w-0">
               <p class="font-medium text-sm">Theme</p>
               <p class="text-xs text-base-content/60">
                 "Match system" follows your device's light or dark mode.
               </p>
             </div>
-            {/* Same size and pressed-state markup as the Sources tab's
-                Hide/Auto/Show controls — this tab used to render full-size
-                buttons, the only control on the page that didn't match. */}
-            <fieldset class="join">
+            <fieldset class="join shrink-0">
               <legend class="sr-only">Theme</legend>
               {THEME_OPTIONS.map(({ value, label }) => (
                 <button
@@ -274,13 +393,22 @@ const DisplayTab = component$(() => {
           </li>
         </ul>
       </div>
-      <p class="text-xs text-base-content/60">
-        Every setting is saved in this browser only — never sent to Tuxery's server. See the{" "}
-        <a href="/docs/legal/#privacy" class="link link-primary">
-          privacy policy
-        </a>
-        .
-      </p>
+
+      <div>
+        <h3 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
+          Your settings
+        </h3>
+        <ul class="bg-base-100 border border-base-300 rounded-box">
+          <ResetSettings />
+        </ul>
+        <p class="text-xs text-base-content/60 mt-2">
+          Every setting is saved in this browser only — never sent to Tuxery's server. See the{" "}
+          <a href="/docs/legal/#privacy" class="link link-primary">
+            privacy policy
+          </a>
+          .
+        </p>
+      </div>
     </section>
   );
 });
@@ -302,6 +430,7 @@ const OsJumbo = component$<{ entry: OsCatalogEntry }>(({ entry }) => {
     <div class="flex flex-col gap-6">
       <div class="hero bg-base-200 rounded-box py-10">
         <div class="hero-content text-center flex-col gap-3">
+          <OsLogo osId={entry.id} class="w-12 h-12 text-base-content/70" />
           <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">Your OS</p>
           <h2 class="text-3xl font-bold">{entry.label}</h2>
           <button
@@ -319,6 +448,7 @@ const OsJumbo = component$<{ entry: OsCatalogEntry }>(({ entry }) => {
         groups={groups}
         recommended={recommended}
         preActivated={preActivated}
+        osLabel={entry.label}
       />
     </div>
   );
@@ -334,9 +464,10 @@ const OsTileGrid = component$(() => {
         <button
           key={entry.id}
           type="button"
-          class="card bg-base-100 border border-base-300 hover:border-primary/40 hover:shadow-md transition-shadow p-4 text-sm font-medium text-center"
+          class="card bg-base-100 border border-base-300 hover:border-primary/40 hover:shadow-md transition-shadow p-4 text-sm font-medium text-center items-center gap-2"
           onClick$={() => (settings.osId.value = entry.id)}
         >
+          <OsLogo osId={entry.id} class="w-7 h-7 text-base-content/70" />
           {entry.label}
         </button>
       ))}
@@ -349,7 +480,7 @@ const OsTileGrid = component$(() => {
         href={requestAdditionUrl()}
         target="_blank"
         rel="noopener"
-        class="card border border-dashed border-base-300 hover:border-primary/40 transition-colors p-4 text-sm font-medium text-center text-base-content/60"
+        class="card border border-dashed border-base-300 hover:border-primary/40 transition-colors p-4 text-sm font-medium text-center justify-center text-base-content/60"
       >
         Your distro not here?
       </a>
@@ -363,9 +494,13 @@ const OsSelectorTab = component$(() => {
 
   return (
     <section class="flex flex-col gap-4">
-      <p class="text-sm text-base-content/60">
-        Picking an OS pre-fills the Sources tab's "Auto" choices — it never overrides a choice
-        you've made explicitly yourself.
+      <p class="text-sm text-base-content/70">
+        Pick your operating system: Tuxery then shows the install methods that work on it, and knows
+        which setups it already comes with. It only fills in what you've left on "Auto" in{" "}
+        <a href="?tab=sources" class="link link-primary">
+          Sources
+        </a>
+        .
       </p>
       {entry ? <OsJumbo entry={entry} /> : <OsTileGrid />}
     </section>
@@ -386,18 +521,21 @@ export default component$(() => {
     <div class="flex flex-col gap-6 max-w-3xl">
       <h1 class="text-3xl font-bold">Settings</h1>
 
-      <div role="tablist" class="tabs tabs-border">
+      {/* Plain links styled as tabs, not an ARIA tablist: each section is
+          its own URL (?tab=...), and role="tab" would promise arrow-key
+          navigation and aria-selected these links don't have. */}
+      <nav class="tabs tabs-border" aria-label="Settings sections">
         {TABS.map((t) => (
           <a
             key={t.id}
             href={`?tab=${t.id}`}
-            role="tab"
             class={["tab", tab === t.id && "tab-active"]}
+            aria-current={tab === t.id ? "page" : undefined}
           >
             {t.label}
           </a>
         ))}
-      </div>
+      </nav>
 
       {tab === "os" && <OsSelectorTab />}
       {tab === "sources" && <SourcesTab />}
