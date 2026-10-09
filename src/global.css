@@ -9,6 +9,13 @@ html {
   scroll-behavior: smooth;
 }
 
+/* No smooth scrolling for people who asked their system for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 /* Guards against horizontal page scroll on narrow viewports — root cause
    found live: daisyUI tooltip bubbles (`.tooltip::before`) are sized and
    positioned for their full content even at rest (opacity: 0, not
@@ -191,4 +198,14 @@ body {
 }
 .docs-prose :is(h2, h3):hover > a[aria-hidden="true"] {
   opacity: 0.4;
+}
+
+/* daisyUI's menu items (docs sidebar, header dropdown, edition/version
+   pickers) and collapse titles showed no focus indicator at all — found by
+   the accessibility audit behind /docs/accessibility/: keyboard focus
+   moved through them invisibly. Same outline daisyUI gives its inputs. */
+.menu li > :is(a, button, summary):focus-visible,
+.collapse > summary:focus-visible {
+  outline: 2px solid var(--color-base-content);
+  outline-offset: -2px;
 }
