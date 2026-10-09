@@ -1,0 +1,115 @@
+---
+title: Data philosophy — Tuxery
+description: How Tuxery thinks about its data — what counts as one app, why nothing is invented, where language models help and how they are checked, and what Tuxery never does.
+---
+
+# Data philosophy
+
+Tuxery lists Linux software from dozens of sources that were never meant
+to agree with each other. This page explains the rules we follow when
+turning them into one catalog. The technical detail lives in the catalog
+repository: [product families](https://github.com/tuxery/catalog/blob/main/docs/product-families.md),
+[sources](https://github.com/tuxery/catalog/blob/main/docs/sources.md) and
+[hand-tuned config](https://github.com/tuxery/catalog/blob/main/config/README.md).
+
+## One app, one card
+
+A search for "firefox" used to return 61 cards: Firefox itself, its builds
+from the AUR, its Developer Edition once per source, its extensions,
+language packs and helper tools. Today it returns one. An app is one card,
+whatever the number of places it is packaged in, and inside that card:
+
+- **editions** (Firefox ESR, Developer Edition) and **versions** (Beta,
+  Nightly) are choices on the same page;
+- **other builds** (a prebuilt binary, a patched build) are folded away
+  for those who need them;
+- **add-ons** (extensions, themes, language packs) are listed on their
+  app's page, not as apps of their own;
+- **related apps** (a fork, a successor, a component of a suite) are
+  separate cards, linked both ways.
+
+The [glossary](/docs/glossary/) defines each of these words.
+
+## Upstream data first, never invented
+
+Everything Tuxery shows comes from a source: a name, a version, a
+category, a license, a screenshot. When two sources disagree, we pick
+from the most authoritative one rather than averaging them into
+something neither said. When no source says anything, the field stays
+empty — an empty field is honest, a guessed one is not.
+
+The same rule holds for links between packages: **nothing is merged,
+attached or linked without a verifiable signal.** In order of strength:
+
+1. what the packages themselves declare — a Flatpak id, a Debian
+   `Source:`, an AppStream `<extends>`, an AUR `provides` and `conflicts`;
+2. a hand-reviewed entry in the catalog's config, each with its reason;
+3. naming conventions (`-git`, `-bin`, `-beta`), only to back up the
+   above;
+4. language-model verdicts, as corroboration only.
+
+Two apps whose names look alike are not merged on that alone. Generic
+names (Calculator, Weather, Notes, Clock) are on a blocklist precisely
+because unrelated programs share them.
+
+## Where language models help
+
+A large part of the catalog has no category from any source: the long tail
+of the AUR, Nixpkgs and distribution repositories. Language models
+classify those packages — app, game, library or other, plus a category —
+from their name and description. They work under constraints:
+
+- **Upstream wins.** A category from a store or the app's own metadata
+  always takes precedence; a model only fills what no source answered,
+  and outranks only Tuxery's own keyword heuristics.
+- **Every verdict carries a confidence** (high, medium, low) and the
+  model that produced it. Only a high-confidence "library" or "other"
+  verdict removes a package from the catalog.
+- **Verdicts are reviewed.** Low-confidence results are audited by hand;
+  corrections are committed with the reviewer's mark and an updated
+  confidence.
+- **Relations are never left to a model.** A model may suggest that two
+  apps are related; the link only appears once someone has reviewed it
+  and committed it to the config.
+
+Every verdict is public, in
+[`config/llm-classifications.json`](https://github.com/tuxery/catalog/blob/main/config/llm-classifications.json).
+
+## Settling conflicts between sources
+
+When sources disagree about the same app, Tuxery keeps each one's answer
+where it is useful and picks one where a single value is needed:
+
+- **Install options and versions are per source**: Debian's version is
+  Debian's, Flathub's is Flathub's. Different versions across sources are
+  normal (stable distributions freeze them), not an error.
+- **Descriptions, screenshots, icons and licenses** come from the richest
+  metadata available — AppStream (Flathub, AppCenter, the distributions'
+  AppStream files) first, then the stores, then plain package indexes.
+- **Ratings** are combined across sources, weighted by number of votes.
+- **The app's name and address** come from its default build: the plain
+  stable package, never a nightly or a patched build.
+
+## Trust signals mean one thing each
+
+- **Verified** means a store checked who publishes the app (today:
+  Flathub's verified developers). It says nothing about the code.
+- **Official build** means the project built what you install; a
+  distribution build, that your distribution rebuilt it from source. When
+  the origin is unknown, no badge is shown — unknown is never presented as
+  official.
+- An unofficial build stays installable: Tuxery tells you who built it, it
+  doesn't decide for you.
+
+## What Tuxery doesn't do
+
+- **No installer.** Every button hands off to the real source; Tuxery
+  never hosts a package or runs installer code.
+- **No paid ranking.** Nothing on the site is sponsored placement. How
+  each list is ordered is explained in [how rankings work](/docs/rankings/).
+- **No tracking.** No analytics, no advertising, no account. Your settings
+  (theme, operating system, preferred formats) stay in your browser.
+- **No favorites among distributions.** Every source sits side by side.
+
+If something on the site breaks one of these rules, it's a bug —
+[tell us](/docs/contribute/).
