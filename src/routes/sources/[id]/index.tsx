@@ -24,7 +24,7 @@ export const useStorePage = routeLoader$(async (requestEvent) => {
 
 export default component$(() => {
   const data = useStorePage();
-  if (!data.value) return <p class="text-base-content/60">Store not found.</p>;
+  if (!data.value) return <p class="text-base-content/70">Store not found.</p>;
 
   const { store, apps } = data.value;
 
@@ -34,7 +34,7 @@ export default component$(() => {
         <div class="hero-content text-center py-12">
           <div class="max-w-xl flex flex-col items-center gap-4">
             <h1 class="text-3xl font-bold">{store.name}</h1>
-            <p class="text-base-content/70">{store.tagline}</p>
+            <p class="text-base-content/80">{store.tagline}</p>
             <a
               href={store.externalUrl}
               target="_blank"
@@ -69,7 +69,7 @@ export default component$(() => {
           </a>
         </div>
         {apps.length === 0 ? (
-          <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
+          <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/70">
             No trending data available yet.
           </div>
         ) : (

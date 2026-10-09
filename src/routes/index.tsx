@@ -150,7 +150,7 @@ const CategoryRow = component$<{ title: string; category: string; apps: AppSumma
         </a>
       </div>
       {apps.length === 0 ? (
-        <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
+        <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/70">
           No {title.toLowerCase()} catalogued yet.
         </div>
       ) : (
@@ -194,7 +194,7 @@ const AppScrollRow = component$<{
       <div class="flex items-center gap-1.5">
         <h2 class="text-lg font-semibold">{title}</h2>
         <div class="tooltip tooltip-right" data-tip={tip}>
-          <LuInfo class="text-sm text-base-content/40 cursor-help" aria-label={tip} />
+          <LuInfo class="text-sm text-base-content/70 cursor-help" aria-label={tip} />
         </div>
       </div>
       <a href={`/browse/?type=${typeFilter}`} class="link link-primary text-sm">
@@ -202,7 +202,7 @@ const AppScrollRow = component$<{
       </a>
     </div>
     {apps.length === 0 ? (
-      <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
+      <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/70">
         {emptyMessage}
       </div>
     ) : (
@@ -330,7 +330,7 @@ const InfluencerSlider = component$<{
 const ComingSoonSection = component$<{ title: string; note: string }>(({ title, note }) => (
   <section>
     <h2 class="text-lg font-semibold mb-2">{title}</h2>
-    <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
+    <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/70">
       {note}
     </div>
   </section>
@@ -368,7 +368,7 @@ export default component$(() => {
             </p>
             <form action="/browse" method="get" class="flex justify-center">
               <label class="input input-lg w-full max-w-md flex items-center gap-2">
-                <LuSearch class="text-base-content/50" />
+                <LuSearch class="text-base-content/70" />
                 <input
                   type="search"
                   name="q"
@@ -379,7 +379,7 @@ export default component$(() => {
               </label>
             </form>
             {stats.value.total > 0 && (
-              <p class="text-sm mt-4 text-base-content/50">
+              <p class="text-sm mt-4 text-base-content/70">
                 {stats.value.total.toLocaleString()} apps and games catalogued
               </p>
             )}
@@ -388,7 +388,7 @@ export default component$(() => {
       </section>
 
       {stats.value.total === 0 ? (
-        <p class="text-center text-base-content/60">
+        <p class="text-center text-base-content/70">
           No catalog data loaded — run <code class="font-mono">pnpm seed</code> then{" "}
           <code class="font-mono">pnpm serve</code> in <code class="font-mono">tuxery/catalog</code>{" "}
           first.
@@ -458,7 +458,7 @@ export default component$(() => {
           <section>
             <h2 class="text-lg font-semibold mb-3">Must-have apps</h2>
             {mustHaveApps.value.length === 0 ? (
-              <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
+              <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/70">
                 No must-have apps catalogued yet.
               </div>
             ) : (
@@ -530,7 +530,7 @@ export default component$(() => {
           {(appCategories.value.length > 0 || gameCategories.value.length > 0) && (
             <section>
               <h2 class="text-lg font-semibold mb-3">Browse by category</h2>
-              <p class="text-sm text-base-content/60 mb-3">
+              <p class="text-sm text-base-content/70 mb-3">
                 Every category, including the ones without a dedicated row above — apps and games
                 each draw from their own taxonomy, same split Trending uses.
               </p>
@@ -538,7 +538,7 @@ export default component$(() => {
               <div class="flex flex-col gap-4">
                 {appCategories.value.length > 0 && (
                   <div>
-                    <h3 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
+                    <h3 class="text-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2">
                       Apps
                     </h3>
                     <CategoryTileGrid categories={appCategories.value} />
@@ -547,7 +547,7 @@ export default component$(() => {
 
                 {gameCategories.value.length > 0 && (
                   <div>
-                    <h3 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
+                    <h3 class="text-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2">
                       Games
                     </h3>
                     <CategoryTileGrid categories={gameCategories.value} />

@@ -55,7 +55,7 @@ export default component$(() => {
 
       <section>
         <h2 class="text-lg font-semibold mb-2">Editorial picks</h2>
-        <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/60">
+        <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/70">
           Staff-curated "must-have" collections are coming soon.
         </div>
       </section>

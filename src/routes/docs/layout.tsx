@@ -44,7 +44,7 @@ export default component$(() => {
       <details class="group lg:hidden rounded-box bg-base-100 border border-base-300">
         <summary class="list-none [&::-webkit-details-marker]:hidden cursor-pointer px-4 py-3 flex items-center gap-2 font-medium">
           <LuMenu />
-          Docs{page && <span class="text-base-content/60 font-normal">· {page.title}</span>}
+          Docs{page && <span class="text-base-content/70 font-normal">· {page.title}</span>}
           <LuChevronDown class="ml-auto transition-transform group-open:rotate-180" />
         </summary>
         <nav class="px-2 pb-2" aria-label="Docs menu">
@@ -73,7 +73,7 @@ export default component$(() => {
                 href={editUrl}
                 target="_blank"
                 rel="noopener"
-                class="link link-hover text-sm text-base-content/60 inline-flex items-center gap-1.5 self-start"
+                class="link link-hover text-sm text-base-content/70 inline-flex items-center gap-1.5 self-start"
               >
                 <LuPencil class="text-xs" />
                 Edit this page on GitHub
@@ -85,7 +85,7 @@ export default component$(() => {
                   href={prev.href}
                   class="btn btn-ghost h-auto py-2 justify-start text-left flex-col items-start gap-0"
                 >
-                  <span class="text-xs text-base-content/50 inline-flex items-center gap-1">
+                  <span class="text-xs text-base-content/70 inline-flex items-center gap-1">
                     <LuArrowLeft class="text-xs" /> Previous
                   </span>
                   <span>{prev.title}</span>
@@ -98,7 +98,7 @@ export default component$(() => {
                   href={next.href}
                   class="btn btn-ghost h-auto py-2 justify-end text-right flex-col items-end gap-0"
                 >
-                  <span class="text-xs text-base-content/50 inline-flex items-center gap-1">
+                  <span class="text-xs text-base-content/70 inline-flex items-center gap-1">
                     Next <LuArrowRight class="text-xs" />
                   </span>
                   <span>{next.title}</span>

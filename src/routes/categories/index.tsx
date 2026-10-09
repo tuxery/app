@@ -32,7 +32,7 @@ export default component$(() => {
       </div>
 
       {appCategories.value.length === 0 && gameCategories.value.length === 0 ? (
-        <p class="text-base-content/60">No category data loaded yet.</p>
+        <p class="text-base-content/70">No category data loaded yet.</p>
       ) : (
         <>
           {appCategories.value.length > 0 && (

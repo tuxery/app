@@ -57,7 +57,7 @@ const AppsBlockView = component$<{
 
 export default component$(() => {
   const data = usePage();
-  if (!data.value) return <p class="text-base-content/60">Page not found.</p>;
+  if (!data.value) return <p class="text-base-content/70">Page not found.</p>;
 
   const { page, appsById } = data.value;
 
@@ -74,7 +74,7 @@ export default component$(() => {
               </div>
             )}
             <h1 class="text-3xl font-bold">{page.name}</h1>
-            <p class="text-base-content/70 mt-2">{page.tagline}</p>
+            <p class="text-base-content/80 mt-2">{page.tagline}</p>
           </div>
         </div>
       </div>

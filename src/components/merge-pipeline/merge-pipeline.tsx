@@ -21,20 +21,20 @@ export const MergePipeline = component$(() => (
       {STAGES.map((stage, index) => (
         <li key={stage.name} class="mt-0! flex flex-col md:flex-row md:flex-1 items-center">
           <div class="w-full h-full rounded-box border border-base-300 bg-base-100 p-3 text-center flex flex-col gap-1">
-            <span class="text-xs text-base-content/50">Step {index + 1}</span>
+            <span class="text-xs text-base-content/70">Step {index + 1}</span>
             <span class="font-semibold text-base-content">{stage.name}</span>
             <span class="text-xs text-base-content/70 leading-snug">{stage.detail}</span>
             {stage.figure && <span class="text-xs font-medium text-primary">{stage.figure}</span>}
           </div>
           {index < STAGES.length - 1 && (
-            <span aria-hidden="true" class="text-base-content/40 px-1 md:rotate-0 rotate-90">
+            <span aria-hidden="true" class="text-base-content/70 px-1 md:rotate-0 rotate-90">
               →
             </span>
           )}
         </li>
       ))}
     </ol>
-    <figcaption class="text-xs text-base-content/50 text-center mt-2">
+    <figcaption class="text-xs text-base-content/70 text-center mt-2">
       The catalog pipeline, rerun each time sources are refreshed.
     </figcaption>
   </figure>

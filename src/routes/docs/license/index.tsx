@@ -104,7 +104,7 @@ export default component$(() => {
       </section>
 
       <section>
-        <p class="text-sm text-base-content/60">
+        <p class="text-sm text-base-content/70">
           This page is a plain-language summary for convenience, not legal advice — the license text
           in each repository is what actually governs. Full text:{" "}
           <a

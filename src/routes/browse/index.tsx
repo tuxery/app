@@ -230,7 +230,7 @@ export default component$(() => {
 
       {(category || source) && (
         <div class="flex flex-wrap gap-2 items-center text-sm">
-          <span class="text-base-content/60">Filtering by:</span>
+          <span class="text-base-content/70">Filtering by:</span>
           {category && (
             <a href="/browse/" class="badge badge-outline gap-1 hover:badge-error">
               {category}
@@ -241,7 +241,7 @@ export default component$(() => {
         </div>
       )}
 
-      <p class="text-sm text-base-content/60">
+      <p class="text-sm text-base-content/70">
         "Games" is a confirmed match, "Apps" its complement — a rare undetected game may still show
         up as an app. "GUI"/"CLI" is a separate best-effort split by desktop-file detection, not a
         guarantee.
@@ -266,13 +266,13 @@ export default component$(() => {
       )}
 
       {browse.value.apps.length === 0 ? (
-        <p class="text-center text-base-content/60 mt-4">
+        <p class="text-center text-base-content/70 mt-4">
           No apps found{query ? ` for "${query}"` : ""}.
         </p>
       ) : (
         <>
           <div class="flex items-center justify-between gap-3 flex-wrap">
-            <p class="text-sm text-base-content/60">
+            <p class="text-sm text-base-content/70">
               Showing {browse.value.total.toLocaleString()}
               {browse.value.totalCapped ? "+" : ""} apps across{" "}
               {Math.max(1, Math.ceil(browse.value.total / BROWSE_PAGE_SIZE)).toLocaleString()}
@@ -280,7 +280,7 @@ export default component$(() => {
             </p>
             <a
               href="#top"
-              class="link link-hover text-sm text-base-content/60 flex items-center gap-1"
+              class="link link-hover text-sm text-base-content/70 flex items-center gap-1"
             >
               <LuArrowUp aria-hidden="true" />
               Top
@@ -291,7 +291,7 @@ export default component$(() => {
             {batches.value.map((batch, batchIndex) => (
               <Fragment key={`page-${startPage + batchIndex}`}>
                 {batchIndex > 0 && (
-                  <div class="col-span-full flex items-center gap-3 text-xs text-base-content/40 my-1">
+                  <div class="col-span-full flex items-center gap-3 text-xs text-base-content/70 my-1">
                     <span class="flex-1 border-t border-base-300" />
                     Page {startPage + batchIndex + 1}
                     <span class="flex-1 border-t border-base-300" />
@@ -309,7 +309,7 @@ export default component$(() => {
           </div>
 
           {hasMore.value && (
-            <div ref={sentinelRef} class="flex justify-center py-6 text-base-content/50">
+            <div ref={sentinelRef} class="flex justify-center py-6 text-base-content/70">
               <LuLoader2 class="animate-spin text-xl" aria-label="Loading more apps" />
             </div>
           )}

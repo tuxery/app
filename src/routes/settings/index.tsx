@@ -183,7 +183,7 @@ const InstallGroupList = component$<InstallGroupListProps>(
       <section class="flex flex-col gap-2">
         <div>
           <h2 class="font-semibold">{title}</h2>
-          {description && <p class="text-sm text-base-content/60">{description}</p>}
+          {description && <p class="text-sm text-base-content/70">{description}</p>}
         </div>
         <ul class="divide-y divide-base-300 border-y border-base-300">
           {groups.map(({ group, index }) => {
@@ -195,13 +195,13 @@ const InstallGroupList = component$<InstallGroupListProps>(
                     <span class="w-5 shrink-0 flex justify-center">
                       <Logo
                         slug={INSTALL_GROUP_LOGOS[group.id]}
-                        class="w-5 h-5 text-base-content/60"
+                        class="w-5 h-5 text-base-content/70"
                       />
                     </span>
                     <div class="min-w-0">
                       <p class="font-medium text-sm">{group.label}</p>
                       {group.shown === "auto" && (
-                        <p class="text-xs text-base-content/60">
+                        <p class="text-xs text-base-content/70">
                           {autoShownNote(group.id, recommended, osLabel)}
                         </p>
                       )}
@@ -224,7 +224,7 @@ const InstallGroupList = component$<InstallGroupListProps>(
                             <div class="min-w-0">
                               <p class="text-sm">{repo.label}</p>
                               {repo.activated === "auto" && (
-                                <p class="text-xs text-base-content/60">
+                                <p class="text-xs text-base-content/70">
                                   {autoActivatedNote(repo.id, preActivated, osLabel)}
                                 </p>
                               )}
@@ -320,7 +320,7 @@ const ResetSettings = component$(() => {
     <li class="p-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       <div class="min-w-0">
         <p class="font-medium text-sm">Reset all settings</p>
-        <p class="text-xs text-base-content/60" aria-live="polite">
+        <p class="text-xs text-base-content/70" aria-live="polite">
           {done.value
             ? "Done — back to the defaults."
             : "Forgets your operating system, your source choices and your theme, as on a first visit."}
@@ -369,14 +369,14 @@ const DisplayTab = component$(() => {
   return (
     <section class="flex flex-col gap-6">
       <div>
-        <h3 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
+        <h3 class="text-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2">
           Appearance
         </h3>
         <ul class="bg-base-100 border border-base-300 rounded-box">
           <li class="p-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <div class="min-w-0">
               <p class="font-medium text-sm">Theme</p>
-              <p class="text-xs text-base-content/60">
+              <p class="text-xs text-base-content/70">
                 "Match system" follows your device's light or dark mode.
               </p>
             </div>
@@ -405,13 +405,13 @@ const DisplayTab = component$(() => {
       </div>
 
       <div>
-        <h3 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
+        <h3 class="text-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2">
           Your settings
         </h3>
         <ul class="bg-base-100 border border-base-300 rounded-box">
           <ResetSettings />
         </ul>
-        <p class="text-xs text-base-content/60 mt-2">
+        <p class="text-xs text-base-content/70 mt-2">
           Every setting is saved in this browser only — never sent to Tuxery's server. See the{" "}
           <a href="/docs/legal/#privacy" class="link link-primary">
             privacy policy
@@ -441,7 +441,7 @@ const OsJumbo = component$<{ entry: OsCatalogEntry }>(({ entry }) => {
       <div class="hero bg-base-200 rounded-box py-10">
         <div class="hero-content text-center flex-col gap-3">
           <Logo slug={OS_LOGOS[entry.id]} class="w-12 h-12 text-base-content/70" />
-          <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">Your OS</p>
+          <p class="text-xs font-semibold text-base-content/70 uppercase tracking-wide">Your OS</p>
           <h2 class="text-3xl font-bold">{entry.label}</h2>
           <button
             type="button"
@@ -478,7 +478,7 @@ const OsTileGrid = component$(() => {
     <div class="flex flex-col gap-6">
       {OS_FAMILIES.map((family) => (
         <section key={family.title} class="flex flex-col gap-2">
-          <h2 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
+          <h2 class="text-xs font-semibold text-base-content/70 uppercase tracking-wide">
             {family.title}
           </h2>
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
@@ -500,7 +500,7 @@ const OsTileGrid = component$(() => {
           </div>
         </section>
       ))}
-      <p class="text-sm text-base-content/60">
+      <p class="text-sm text-base-content/70">
         Your distribution isn't listed?{" "}
         <a href={requestAdditionUrl()} target="_blank" rel="noopener" class="link link-primary">
           Ask for it

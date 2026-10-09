@@ -66,7 +66,7 @@ export const UnifiedRating = component$<UnifiedRatingProps>(
           ))}
         </div>
         {mode === "normal" && (
-          <span class="text-sm text-base-content/60">
+          <span class="text-sm text-base-content/70">
             {average.toFixed(1)} ({count.toLocaleString()})
           </span>
         )}
