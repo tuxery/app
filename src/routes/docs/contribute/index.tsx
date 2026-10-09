@@ -1,6 +1,13 @@
 import { component$ } from "@qwik.dev/core";
 import type { DocumentHead } from "@qwik.dev/router";
-import { LuCode, LuFlag, LuGithub, LuHeartHandshake, LuPackage } from "@qwikest/icons/lucide";
+import {
+  LuCode,
+  LuFlag,
+  LuGithub,
+  LuHeartHandshake,
+  LuListTodo,
+  LuPackage,
+} from "@qwikest/icons/lucide";
 
 // No payment processor (GitHub Sponsors, Open Collective, ...) is set up
 // yet — direct email is the only channel until one is. Kept as a named
@@ -31,6 +38,13 @@ const WAYS = [
     cta: "Propose a source",
   },
   {
+    icon: LuListTodo,
+    title: "Pick a per-source to-do",
+    body: "Each known gap in a source's data (a missing beta branch, a weak filter, a release not fetched) is its own issue on the catalog repo, labelled with its source.",
+    href: "/docs/coverage/",
+    cta: "See the per-source to-do",
+  },
+  {
     icon: LuHeartHandshake,
     title: "Support financially",
     body: "No sponsorship platform is set up yet — for now, reach out directly and we'll figure it out.",
@@ -46,7 +60,7 @@ export default component$(() => {
         <h1 class="text-3xl font-bold mb-2">How to contribute</h1>
         <p class="text-base-content/70">
           Tuxery is a small, open project. Here's what you can actually do today — see{" "}
-          <a href="/about/" class="link link-primary">
+          <a href="/docs/" class="link link-primary">
             About
           </a>{" "}
           for the philosophy behind it.
@@ -58,8 +72,9 @@ export default component$(() => {
           <a
             key={way.title}
             href={way.href}
-            target="_blank"
-            rel="noopener"
+            // Only links leaving the site open a new tab.
+            target={way.href.startsWith("/") ? undefined : "_blank"}
+            rel={way.href.startsWith("/") ? undefined : "noopener"}
             aria-label={`${way.title}: ${way.cta}`}
             class="card bg-base-100 border border-base-300 hover:border-primary/40 hover:shadow-md transition-shadow"
           >
