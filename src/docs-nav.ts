@@ -57,6 +57,7 @@ export const DOCS_SECTIONS: DocsSection[] = [
     pages: [
       { href: "/docs/license/", title: "License" },
       { href: "/docs/licenses/", title: "Third-party licenses" },
+      { href: "/docs/legal/", title: "Legal notice & privacy", markdown: mdx("legal") },
       { href: "/docs/accessibility/", title: "Accessibility", markdown: mdx("accessibility") },
     ],
   },
