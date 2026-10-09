@@ -164,3 +164,19 @@ export function otherSelections(
   }
   return [...counts.values()].toSorted((a, b) => b.count - a.count).map((entry) => entry.selection);
 }
+
+/**
+ * The combination a product's plain `/app/<id>/` page shows: Standard ·
+ * Stable when the product has it, else — a product published only on a
+ * Snap `edge` channel, or only as an AUR `-git` build — its default
+ * edition's most mature version (any edition's, when it has no default
+ * one either).
+ */
+export function defaultSelection(packages: readonly SourcedPackage[]): BuildSelection {
+  if (hasBuild(packages, {})) return {};
+  const editions = editionsOf(packages);
+  const track = editions.some((edition) => edition.value === undefined)
+    ? undefined
+    : editions[0]?.value;
+  return { track, risk: versionsOf(packages, track)[0]?.value };
+}
