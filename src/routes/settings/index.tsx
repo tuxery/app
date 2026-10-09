@@ -3,8 +3,15 @@ import { useLocation } from "@qwik.dev/router";
 import type { DocumentHead } from "@qwik.dev/router";
 import { LuCheck, LuCopy, LuMonitor, LuMoon, LuSun } from "@qwikest/icons/lucide";
 import { requestAdditionUrl } from "~/contribute-links";
-import { OS_LOGO_PATHS } from "~/data/os-logos";
-import { findOsEntry, recommendedGroupIds, OS_CATALOG, type OsCatalogEntry } from "~/os-catalog";
+import { Logo } from "~/components/logo/logo";
+import { INSTALL_GROUP_LOGOS, OS_LOGOS } from "~/data/logos";
+import {
+  findOsEntry,
+  recommendedGroupIds,
+  OS_CATALOG,
+  OS_FAMILIES,
+  type OsCatalogEntry,
+} from "~/os-catalog";
 import {
   CROSS_DISTRO_GROUP_IDS,
   groupsWhere,
@@ -49,17 +56,6 @@ const ACTIVATED_OPTIONS: { value: TriState; label: string }[] = [
   { value: "auto", label: "Auto" },
   { value: "on", label: "Done" },
 ];
-
-/** A distribution's logo (see `~/data/os-logos`), decorative — the label next to it names the OS. */
-const OsLogo = ({ osId, class: className }: { osId: string; class: string }) => {
-  const path = OS_LOGO_PATHS[osId];
-  if (!path) return null;
-  return (
-    <svg viewBox="0 0 24 24" class={className} aria-hidden="true">
-      <path fill="currentColor" d={path} />
-    </svg>
-  );
-};
 
 /**
  * Hide/Auto/Show for one `InstallFormatGroup.shown`, looked up by `index`
@@ -134,7 +130,7 @@ const RepoActivatedControl = component$<{
 const CommandBlock = component$<{ command: string }>(({ command }) => {
   const copied = useSignal(false);
   return (
-    <div class="flex items-start gap-2 bg-base-300/40 rounded-field">
+    <div class="flex items-start gap-2 bg-base-100 border border-base-300 rounded-field">
       <pre class="grow min-w-0 overflow-x-auto px-2 py-1.5 text-xs font-mono">
         <code>{command}</code>
       </pre>
@@ -162,6 +158,7 @@ function parseTab(value: string | null): TabId {
 
 interface InstallGroupListProps {
   title: string;
+  description?: string;
   groups: { group: InstallFormatGroup; index: number }[];
   /** The selected OS's recommendation, or `undefined` with none selected — see `isGroupEffectivelyShown`. */
   recommended: Set<string> | undefined;
@@ -171,33 +168,44 @@ interface InstallGroupListProps {
 }
 
 /**
- * One card per list: a row per group (label, what Auto resolves to, the
- * Hide/Auto/Show control), its one-time setups nested under it with the
- * same row layout — label left, control right, one fixed indent — so
- * every control lines up whatever the label's length.
+ * One section per list: a heading and a sentence saying what it holds,
+ * then a row per group — logo, label, what Auto resolves to, and the
+ * Hide/Auto/Show control on the right — separated by thin rules rather
+ * than boxed. A group's one-time setups sit under its label in a tinted
+ * panel, each with the same label-left/control-right layout, so every
+ * control lines up whatever the label's length.
  */
 const InstallGroupList = component$<InstallGroupListProps>(
-  ({ title, groups, recommended, preActivated, osLabel }) => {
+  ({ title, description, groups, recommended, preActivated, osLabel }) => {
     const settings = useSettings();
 
     return (
-      <div>
-        <h3 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
-          {title}
-        </h3>
-        <ul class="bg-base-100 border border-base-300 rounded-box divide-y divide-base-300">
+      <section class="flex flex-col gap-2">
+        <div>
+          <h2 class="font-semibold">{title}</h2>
+          {description && <p class="text-sm text-base-content/60">{description}</p>}
+        </div>
+        <ul class="divide-y divide-base-300 border-y border-base-300">
           {groups.map(({ group, index }) => {
             const shown = isGroupEffectivelyShown(group, recommended);
             return (
-              <li key={group.id} class="p-3 flex flex-col gap-3">
+              <li key={group.id} class="py-3 flex flex-col gap-3">
                 <div class="flex items-center justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="font-medium text-sm">{group.label}</p>
-                    {group.shown === "auto" && (
-                      <p class="text-xs text-base-content/60">
-                        {autoShownNote(group.id, recommended, osLabel)}
-                      </p>
-                    )}
+                  <div class="flex items-center gap-3 min-w-0">
+                    <span class="w-5 shrink-0 flex justify-center">
+                      <Logo
+                        slug={INSTALL_GROUP_LOGOS[group.id]}
+                        class="w-5 h-5 text-base-content/60"
+                      />
+                    </span>
+                    <div class="min-w-0">
+                      <p class="font-medium text-sm">{group.label}</p>
+                      {group.shown === "auto" && (
+                        <p class="text-xs text-base-content/60">
+                          {autoShownNote(group.id, recommended, osLabel)}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <GroupShownControl
                     installGroups={settings.installGroups}
@@ -207,7 +215,7 @@ const InstallGroupList = component$<InstallGroupListProps>(
                 </div>
 
                 {shown && group.specialRepos.length > 0 && (
-                  <ul class="flex flex-col gap-3 border-l-2 border-base-300 pl-3">
+                  <ul class="ml-8 flex flex-col gap-3 bg-base-200/60 rounded-box p-3">
                     {group.specialRepos.map((repo) => {
                       const activated = isRepoEffectivelyActivated(repo, preActivated);
                       return (
@@ -228,7 +236,7 @@ const InstallGroupList = component$<InstallGroupListProps>(
                             />
                           </div>
                           {!activated && (
-                            <div class="flex flex-col gap-1.5 bg-base-200 rounded-field p-2">
+                            <div class="flex flex-col gap-1.5">
                               <p class="text-xs text-base-content/70">{repo.setup.note}</p>
                               {repo.setup.kind === "link" ? (
                                 <a
@@ -253,7 +261,7 @@ const InstallGroupList = component$<InstallGroupListProps>(
             );
           })}
         </ul>
-      </div>
+      </section>
     );
   },
 );
@@ -275,9 +283,10 @@ const SourcesTab = component$(() => {
         {selectedOs ? ` (${selectedOs.label})` : ""}; any other choice always wins.
         {!selectedOs && " With none picked, Auto shows everything and assumes nothing is set up."}
       </p>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="flex flex-col gap-8 mt-2">
         <InstallGroupList
           title="Cross-distro formats"
+          description="Work the same on any distribution."
           groups={groupsWhere(settings.installGroups.value, (group) =>
             CROSS_DISTRO_GROUP_IDS.has(group.id),
           )}
@@ -287,6 +296,7 @@ const SourcesTab = component$(() => {
         />
         <InstallGroupList
           title="Distro packages"
+          description="Each distribution's own repositories."
           groups={groupsWhere(
             settings.installGroups.value,
             (group) => !CROSS_DISTRO_GROUP_IDS.has(group.id),
@@ -430,7 +440,7 @@ const OsJumbo = component$<{ entry: OsCatalogEntry }>(({ entry }) => {
     <div class="flex flex-col gap-6">
       <div class="hero bg-base-200 rounded-box py-10">
         <div class="hero-content text-center flex-col gap-3">
-          <OsLogo osId={entry.id} class="w-12 h-12 text-base-content/70" />
+          <Logo slug={OS_LOGOS[entry.id]} class="w-12 h-12 text-base-content/70" />
           <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">Your OS</p>
           <h2 class="text-3xl font-bold">{entry.label}</h2>
           <button
@@ -454,36 +464,49 @@ const OsJumbo = component$<{ entry: OsCatalogEntry }>(({ entry }) => {
   );
 });
 
-/** State 1 of the OS Selector tab — every `~/os-catalog` entry as a small tile, picking one moves to `OsJumbo`. */
+/**
+ * State 1 of the OS Selector tab — every `~/os-catalog` entry as a tile,
+ * grouped by lineage (`OS_FAMILIES`) under a heading each; picking one
+ * moves to `OsJumbo`. Tiles are light (no border until hovered) so the
+ * groups read as groups rather than one wall of boxes.
+ */
 const OsTileGrid = component$(() => {
   const settings = useSettings();
+  const byId = new Map(OS_CATALOG.map((entry) => [entry.id, entry]));
 
   return (
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-      {OS_CATALOG.map((entry) => (
-        <button
-          key={entry.id}
-          type="button"
-          class="card bg-base-100 border border-base-300 hover:border-primary/40 hover:shadow-md transition-shadow p-4 text-sm font-medium text-center items-center gap-2"
-          onClick$={() => (settings.osId.value = entry.id)}
-        >
-          <OsLogo osId={entry.id} class="w-7 h-7 text-base-content/70" />
-          {entry.label}
-        </button>
+    <div class="flex flex-col gap-6">
+      {OS_FAMILIES.map((family) => (
+        <section key={family.title} class="flex flex-col gap-2">
+          <h2 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">
+            {family.title}
+          </h2>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+            {family.osIds.map((id) => {
+              const entry = byId.get(id);
+              if (!entry) return null;
+              return (
+                <button
+                  key={entry.id}
+                  type="button"
+                  class="flex items-center gap-3 rounded-box border border-transparent bg-base-200/60 hover:bg-base-200 hover:border-base-300 px-3 py-3 text-sm font-medium text-left transition-colors"
+                  onClick$={() => (settings.osId.value = entry.id)}
+                >
+                  <Logo slug={OS_LOGOS[entry.id]} class="w-6 h-6 shrink-0 text-base-content/70" />
+                  {entry.label}
+                </button>
+              );
+            })}
+          </div>
+        </section>
       ))}
-      {/* Dashed border, not a real choice among the tiles above — same
-          "honest, not a placeholder pretending to be content" convention
-          as this app's ComingSoon sections. Deep-links straight to
-          catalog's own issue template (?template=..., a real GitHub
-          feature) rather than catalog's bare issues page. */}
-      <a
-        href={requestAdditionUrl()}
-        target="_blank"
-        rel="noopener"
-        class="card border border-dashed border-base-300 hover:border-primary/40 transition-colors p-4 text-sm font-medium text-center justify-center text-base-content/60"
-      >
-        Your distro not here?
-      </a>
+      <p class="text-sm text-base-content/60">
+        Your distribution isn't listed?{" "}
+        <a href={requestAdditionUrl()} target="_blank" rel="noopener" class="link link-primary">
+          Ask for it
+        </a>{" "}
+        — the closest one above usually works meanwhile.
+      </p>
     </div>
   );
 });

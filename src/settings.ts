@@ -88,7 +88,7 @@ const STORAGE_KEY = "tuxery:settings";
 // precise enough to surface in a specific app's install drawer, vs. ones
 // like Universe/non-oss that only apply to *some* packages from a shared
 // source and so only ever show here, generically, not per-app).
-const defaultInstallGroups = (): InstallFormatGroup[] => [
+export const defaultInstallGroups = (): InstallFormatGroup[] => [
   {
     id: "Flatpak",
     label: "Flatpak",
@@ -123,14 +123,18 @@ const defaultInstallGroups = (): InstallFormatGroup[] => [
     label: "Snap",
     shown: "auto",
     specialRepos: [
+      // The id stays "snap-store" (persisted choices, the install drawer's
+      // leaf map) but the question is snapd: every Snap comes from the one
+      // store snapd talks to, so a "Snap Store" row under "Snap" only
+      // repeated it.
       {
         id: "snap-store",
-        label: "Snap Store",
+        label: "snapd installed",
         activated: "auto",
         setup: {
           kind: "link",
           url: "https://snapcraft.io/docs/installing-snapd",
-          note: "One-time — installs snapd if it isn't already. The exact command depends on your distro, so this links to Snapcraft's own install guide rather than assuming apt.",
+          note: "One-time — Snap apps need snapd. The command depends on your distro, so this links to Snapcraft's own guide.",
         },
       },
     ],
@@ -250,33 +254,32 @@ function isCurrentShape(value: unknown): value is InstallFormatGroup[] {
 }
 
 /**
- * A user's persisted `installGroups` unconditionally overrode the fresh
- * default on load — real bug, found live: anyone who'd visited /settings
- * before `defaultInstallGroups` grew stayed stuck on their old, incomplete
- * persisted list forever, since the stored value always won outright with
- * no reconciliation. Preserves the user's own `shown`/`activated` state for
- * groups (and, within them, special repos) they already have, and appends
- * whatever's new in `defaults` that their stored copy predates.
+ * Rebuilds `installGroups` from the current defaults, keeping only what
+ * the user chose — each group's `shown` and each setup's `activated` —
+ * from their persisted copy. Defaults own everything else: order, labels,
+ * setup commands and notes (a stored copy used to keep its own, so a
+ * renamed setup or a fixed command never reached anyone who had visited
+ * before), and which groups and setups exist (new ones appear, removed
+ * ones go). Exported for its unit test (settings.spec.ts).
  */
-function mergeInstallGroups(
+export function mergeInstallGroups(
   stored: InstallFormatGroup[],
   defaults: InstallFormatGroup[],
 ): InstallFormatGroup[] {
-  const defaultsById = toMapByKey(defaults, (group) => group.id);
-
-  const merged = stored.map((group) => {
-    const def = defaultsById.get(group.id);
-    if (!def) return group;
-    const storedRepoIds = new Set(group.specialRepos.map((repo) => repo.id));
-    const missingRepos = def.specialRepos.filter((repo) => !storedRepoIds.has(repo.id));
-    return missingRepos.length
-      ? { ...group, specialRepos: [...group.specialRepos, ...missingRepos] }
-      : group;
+  const storedById = toMapByKey(stored, (group) => group.id);
+  return defaults.map((def) => {
+    const group = storedById.get(def.id);
+    if (!group) return def;
+    const storedRepos = toMapByKey(group.specialRepos, (repo) => repo.id);
+    return {
+      ...def,
+      shown: group.shown,
+      specialRepos: def.specialRepos.map((repo) => ({
+        ...repo,
+        activated: storedRepos.get(repo.id)?.activated ?? repo.activated,
+      })),
+    };
   });
-
-  const mergedIds = new Set(merged.map((group) => group.id));
-  const missingGroups = defaults.filter((group) => !mergedIds.has(group.id));
-  return [...merged, ...missingGroups];
 }
 
 export const SettingsContext = createContextId<SettingsState>("tuxery.settings");
