@@ -1,14 +1,6 @@
 import { component$, Slot } from "@qwik.dev/core";
 import { routeLoader$, useLocation, type RequestHandler } from "@qwik.dev/router";
-import {
-  LuBookOpen,
-  LuInfo,
-  LuLayoutGrid,
-  LuMenu,
-  LuSearch,
-  LuSettings,
-  LuUser,
-} from "@qwikest/icons/lucide";
+import { LuLayoutGrid, LuMenu, LuSearch, LuSettings, LuUser } from "@qwikest/icons/lucide";
 import { Footer } from "~/components/footer/footer";
 import { Logo } from "~/components/logo/logo";
 import { OS_LOGOS } from "~/data/logos";
@@ -48,8 +40,8 @@ export const useHeroBackground = routeLoader$(async (requestEvent) => {
 // or everything about the project (status, data, legal). "Docs" alone
 // undersold the second. The footer still lists every page.
 const DOCS_DOORS = [
-  { id: "guides", href: GUIDES_HREF, label: "Guides", icon: LuBookOpen },
-  { id: "about", href: "/docs/", label: "About", icon: LuInfo },
+  { id: "guides", href: GUIDES_HREF, label: "Guides" },
+  { id: "about", href: "/docs/", label: "About" },
 ] as const;
 
 const NAV_LINKS = [
@@ -145,7 +137,6 @@ export default component$(() => {
               class={["btn btn-ghost hidden sm:inline-flex", docsDoor === door.id && "btn-active"]}
               aria-current={docsDoor === door.id ? "true" : undefined}
             >
-              <door.icon class="text-base" />
               {door.label}
             </a>
           ))}
