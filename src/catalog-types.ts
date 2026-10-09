@@ -331,6 +331,25 @@ export function summarizeBuilds(packages: BuildFields[]): string[] {
   return unique(packages.map(buildLabel));
 }
 
+/**
+ * Whether a package comes from a source you install from. The catalog also
+ * ships packages from sources that only add metadata to apps listed
+ * elsewhere — the distributions' AppStream files (`deb-debian-appstream`,
+ * `rpm-fedora-appstream`, ...) — which have no `SOURCE_LABELS` entry and
+ * must not be listed as a way to get the app (they rendered as empty
+ * items in "Available via").
+ */
+export function isInstallSource(source: string): source is PackageSourceId {
+  return Object.hasOwn(SOURCE_LABELS, source);
+}
+
+/** Every distinct way to get an app, as labels ("Flathub (Flatpak)", "AUR (Git build)"), in first-seen order — one per source and build, however many packages share it (Nixpkgs ships several attribute paths of one build), metadata-only sources left out. */
+export function availableViaLabels(
+  packages: ({ source: PackageSourceId } & BuildFields)[],
+): string[] {
+  return unique(packages.filter((pkg) => isInstallSource(pkg.source)).map(formatSourceLabel));
+}
+
 /** Human label for a package's own source, e.g. "Flathub (Flatpak)", or "AUR (Git build)" for a build other than the default one. */
 export function formatSourceLabel(pkg: { source: PackageSourceId } & BuildFields): string {
   const label = SOURCE_LABELS[pkg.source];
