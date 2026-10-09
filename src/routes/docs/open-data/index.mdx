@@ -1,0 +1,78 @@
+---
+title: Open data — Tuxery
+description: How to get Tuxery's data — per-source downloads today, the merged dataset and an API later — with formats, licenses and update frequency.
+---
+
+# Open data
+
+Everything Tuxery shows comes from public sources, and everything it
+gathers is public too. Here is what you can get today, and what is
+planned.
+
+## Download, now
+
+### Per-source data
+
+Each source's cleaned listing is committed to the catalog repository, one
+file per source:
+[`src/sources/cache/`](https://github.com/tuxery/catalog/tree/main/src/sources/cache)
+on GitHub. Download a file from there, or clone the repository to get all
+of them (about 200 MB).
+
+- **Format**: [NDJSON](https://github.com/ndjson/ndjson-spec) — one JSON
+  object per line, one line per package as the source lists it (before
+  any merging). Each source keeps its own fields, described in
+  `src/sources/<source>/types.ts`; there is no shared schema across
+  sources, because upstream shapes differ.
+- **Metadata**: next to each `<source>.ndjson`, a `<source>.meta.json`
+  says when it was fetched (`fetchedAt`), from which URL, and how many
+  entries it holds.
+- **Biggest files**: the AUR (about 37 MB), Ubuntu (29 MB) and Debian
+  (27 MB). Everything else is smaller.
+- **Update frequency**: every source is refetched weekly (Saturday,
+  04:00 UTC); the changes land through a pull request, so a file's
+  `fetchedAt` is the date to trust.
+
+```sh
+# One source, straight from GitHub
+curl -LO https://raw.githubusercontent.com/tuxery/catalog/main/src/sources/cache/flatpak-flathub.ndjson
+```
+
+### Classifications
+
+The apps-or-games verdicts and categories Tuxery assigned with the help of
+language models (about 164,000 entries) are committed too:
+[`config/llm-classifications.json`](https://github.com/tuxery/catalog/blob/main/config/llm-classifications.json).
+Each entry carries the model that produced it and a confidence level —
+see the [data philosophy](/docs/philosophy/#where-language-models-help)
+for how they are used and checked.
+
+### The merged catalog
+
+The merged dataset — one record per app, with its packages, editions,
+add-ons and related apps, as the site shows them — is not downloadable
+yet. It is rebuilt from the files above by the catalog's pipeline, and
+where to publish it (GitHub Releases is the likely candidate) is still
+being decided. Until then, you can rebuild it yourself from the
+[catalog repository](https://github.com/tuxery/catalog#development).
+
+## API, later
+
+There is no public API today. One is planned, but serving queries to
+everyone costs more than the free tiers Tuxery runs on, so it will come
+once that is funded — see [Status](/docs/status/). Tell us what you would
+use it for on the [catalog's issues](https://github.com/tuxery/catalog/issues):
+it shapes what gets built first.
+
+## Licenses
+
+- **Tuxery's code** (connectors, pipeline, this site) is
+  [AGPL-3.0-or-later](/docs/license/).
+- **The data itself** comes from each source, and each source's own terms
+  still apply to it. AppStream metadata (Flathub, elementary AppCenter,
+  the distributions' AppStream files) is published under permissive
+  metadata licenses, usually CC0-1.0; distribution package indexes and
+  store APIs each have their own terms. Check the source's terms before
+  redistributing its data. Tuxery has not yet chosen a license for what
+  it adds on top (merges, classifications); until it does, ask before
+  reusing those in bulk.
