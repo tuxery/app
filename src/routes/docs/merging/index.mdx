@@ -1,0 +1,116 @@
+---
+title: How sources are merged — Tuxery
+description: How Tuxery turns 600,000+ packages from about thirty sources into one card per app — fetching, filtering, matching, enriching — with real examples and known limits.
+---
+
+import { MergePipeline } from "../../../components/merge-pipeline/merge-pipeline";
+
+# How sources are merged
+
+Firefox is packaged by Flathub, the Snap Store, Debian, Ubuntu, Fedora,
+Arch, the AUR, Nixpkgs and a dozen more — plus its beta, nightly and
+ESR builds, and hundreds of extensions and language packs. On Tuxery it
+is one card. Here is how.
+
+<MergePipeline />
+
+## 1. Fetch
+
+About thirty sources are read on a weekly schedule: universal stores
+(Flathub, the Snap Store, the AppImage feed), the package repositories of
+some twenty distributions, game storefronts (GOG, Lutris), vendors' own
+repositories (Chrome, VS Code, Brave...) and GitHub releases. A few more
+sources don't list apps but add details to them: the AppStream metadata
+distributions publish, GNOME's rating service and Flathub's download
+statistics. Each source is read the way its own tools read it — the same
+index file `apt` or `dnf` downloads, the same feed a store's client uses.
+The full list is on the [sources](/docs/sources/) page.
+
+That is more than 600,000 packages. Most of them are not apps.
+
+## 2. Filter
+
+Distributions package everything a system needs: libraries, development
+headers, documentation, fonts, language modules, kernel drivers. The
+filter drops those, using what each source says about its packages (a
+Debian `Section: libs`, an openSUSE `System/Libraries` group, a Gentoo
+category) and naming conventions (`lib*`, `-dev`, `-doc`, `-dkms`).
+
+Each rule is checked against real data before it is used, because
+patterns lie: `lib*` would drop LibreOffice, and Debian's `python`
+section is full of real tools. Exceptions are kept by name, each with its
+reason. On Debian, Fedora and Ubuntu the filter removes about half the
+packages; on Nixpkgs, 80%.
+
+## 3. Match
+
+What remains is grouped into apps, from the strongest evidence to the
+weakest:
+
+- **Hand-reviewed decisions** — forced merges and forbidden ones, each
+  with its reason.
+- **Shared identifiers** — the same Flatpak or AppStream id, or a package
+  that declares itself a drop-in build of another (an AUR `firefox-bin`
+  that `provides` and `conflicts` with `firefox`, and whose description is
+  about Firefox).
+- **The same name**, normalized, except generic names (Calculator,
+  Weather, Notes, Clock...), which unrelated programs share.
+
+There is no fuzzy matching: two packages with similar names and no shared
+signal stay separate. Missing a merge is better than inventing one.
+
+Builds of the same app are then sorted into [editions, versions and other
+builds](/docs/glossary/#apps-and-their-variants), and add-ons are attached
+to their app through what they declare (an AppStream `<extends>`, a
+`firefox-extension-` prefix on an existing app's name).
+
+## 4. Enrich
+
+Each app gets its details from the best source that has them:
+descriptions, screenshots, icons, licenses and categories from AppStream
+metadata first, then stores, then package indexes. Ratings are combined
+across sources; popularity and download figures come from the sources
+that publish them. Apps no source categorizes are classified by keyword
+rules, then by language models under the constraints in the
+[data philosophy](/docs/philosophy/#where-language-models-help).
+
+## 5. Publish
+
+The result — about 100,000 apps — is written to the database the site
+reads, along with precomputed lists (trending, new, per category) so
+pages stay fast.
+
+## Examples
+
+- **Firefox**: 61 search results before editions and add-ons existed,
+  one card now. The AUR's `firefox-bin`, `-vaapi` and `-pure` became other
+  builds; Firefox ESR and Developer Edition, editions; Beta and Nightly,
+  versions; 609 extensions, language packs and helpers, add-ons.
+- **GNOME Calendar** is `org.gnome.Calendar` on Flathub and
+  `gnome-calendar` on Debian and Fedora. The distributions' own AppStream
+  files say that their `gnome-calendar` package is the app
+  `org.gnome.Calendar`, so all three land on one card — and Debian's
+  version is still shown as Debian's.
+- **Zen Browser** shows both failure modes. Flathub calls it "Zen", and an
+  unrelated AUR package is literally named `zen`: they were merged by
+  name until "zen" joined the generic-name blocklist. The real Zen
+  packages on the AUR (`zen-browser`) share no identifier with Flathub's,
+  so a hand-reviewed rule joins them.
+
+## Known limits
+
+- **Some merges are missed.** Two packagings with no shared identifier and
+  different names stay two cards, until someone adds a rule.
+- **Some sources are partial.** The Snap Store has no full listing to
+  download; the AppImage feed only lists what its community submits;
+  some sources are fetched from their rolling branch only. Each gap is
+  tracked on the [per-source to-do](/docs/coverage/).
+- **Categories are uneven.** Apps from the big stores have upstream
+  categories; the long tail relies on rules and language models, and
+  some apps are still "To Classify".
+- **Versions differ between sources** — on purpose: each source's version
+  is what you'll actually get from it.
+
+Spotted a wrong merge or a missing one?
+[Report it](https://github.com/tuxery/catalog/issues/new) with the app's
+address on Tuxery.
