@@ -2,6 +2,7 @@ import { $, component$, Fragment, useSignal, useVisibleTask$ } from "@qwik.dev/c
 import { routeLoader$, server$, useLocation } from "@qwik.dev/router";
 import type { DocumentHead, RequestEventBase } from "@qwik.dev/router";
 import { LuArrowUp, LuLoader2 } from "@qwikest/icons/lucide";
+import { reportDataProblemUrl } from "~/contribute-links";
 import { AppCardLink } from "~/components/app-card/app-card";
 import {
   browseApps,
@@ -254,7 +255,7 @@ export default component$(() => {
             catalog lands here rather than a guess. Know what one of these actually is?
           </p>
           <a
-            href="https://github.com/tuxery/catalog/issues/new?template=report-problem.yml"
+            href={reportDataProblemUrl()}
             target="_blank"
             rel="noopener"
             class="btn btn-sm btn-outline shrink-0"

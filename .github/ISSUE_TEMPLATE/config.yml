@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: An app's data is wrong, missing or duplicated
+    url: https://github.com/tuxery/catalog/issues/new?template=report-problem.yml
+    about: Wrong merge, wrong category, missing app, outdated info — the catalog's data lives in tuxery/catalog.
