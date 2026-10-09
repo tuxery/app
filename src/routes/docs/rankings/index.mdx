@@ -1,0 +1,91 @@
+---
+title: How rankings work — Tuxery
+description: What each list on Tuxery is ordered by — trending, new games, download trends, category rows, editorial picks, search — which sources the figures come from, and why nothing is paid placement.
+---
+
+# How rankings work
+
+Every list on Tuxery is ordered by a signal a source actually publishes.
+This page says which one, for each list. Two rules apply everywhere:
+
+- **Nothing is paid placement.** No app can buy its way into a list.
+- **No signal means no rank.** An app without a figure is left out of a
+  ranked list, not ranked last: having no data says nothing about an app.
+
+Trending, category and store lists also only show apps with an icon, so
+a row doesn't fill up with blank cards.
+
+## Trending apps and trending games
+
+Ordered by **popularity**, a score between 0 and 1 built from the sources
+that publish one:
+
+- the **AUR's own popularity** figure (how often Arch users install the
+  package through AUR helpers), ranked as a percentile across the AUR;
+- **Flathub's "Popular" list**, the same one flathub.org shows, scored by
+  position — only its top 250.
+
+When an app has both, the two are averaged. Each source's figure is
+scaled within that source first, since the raw numbers can't be compared
+directly. Apps found only in sources that publish no popularity figure
+(Debian, Fedora, the Snap Store, GOG...) can't appear here, however
+popular they are elsewhere — which answers most "why isn't X trending?"
+questions.
+
+The same score orders each store page's trending row, restricted to the
+apps that store carries.
+
+## New games
+
+Ordered by the date of the newest release, as the game's own AppStream
+metadata states it. Only Flathub and elementary AppCenter publish that
+date today, so this row only covers games found there. A "New apps" row
+will follow once more sources carry a release date.
+
+## Download trends
+
+Ordered by **installs over the last 7 days** — not all-time totals, which
+would always favor long-established apps over the ones people are picking
+up right now. The figure comes from Flathub's public statistics, so it
+counts Flathub installs only: it says what Flathub users install, not
+what all Linux users install. No other source publishes download counts.
+
+## Category rows
+
+Rows such as "Productivity apps" or "Puzzle games" list apps of one
+category, popularity-scored apps first, then alphabetically — so a
+category with no scored app still shows something.
+
+## Must-have apps and creator picks
+
+**Must-have apps** on the homepage is an editorial list: about fifteen
+widely used apps (Firefox, VLC, LibreOffice, GIMP...), chosen by hand by
+the Tuxery team. **Creator pages** list the apps one person actually
+uses, chosen by them. Both are opinions, and say so.
+
+Stores also publish their own selections (Flathub's recently added and
+recently updated apps, the Snap Store's featured snaps). Tuxery records
+them but doesn't show them as rankings yet; Flathub's verified list is
+used for the **Verified** badge.
+
+## Search and browse
+
+Search results are ordered by relevance to what you typed: an exact name
+match first, then names starting with your words, then matches in the
+name and description, with shorter, closer names ahead of long ones (so
+"zen browser" finds the Zen browser before its extensions). Popularity
+plays no part in search. Browse lists without a search are alphabetical.
+
+## How often lists change
+
+Sources are refetched weekly. The lists are recomputed each time the
+catalog is republished from that data, so they move in steps, not
+continuously; the date of the current data is on the
+[Status](/docs/status/) page.
+
+## Planned
+
+- Popularity from more sources, so trending stops leaning on Arch and
+  Flathub users.
+- Votes from Tuxery users, to surface apps no source ranks.
+- More editorial picks, checked per creator and per source.
