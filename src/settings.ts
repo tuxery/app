@@ -385,6 +385,13 @@ export const setSourceActivated = (
   }));
 };
 
+/** Back to a first visit: system theme, no OS picked, every group and setup on Auto. The persisting task then saves these defaults. */
+export const resetSettings = (state: SettingsState) => {
+  state.theme.value = "system";
+  state.osId.value = undefined;
+  state.installGroups.value = defaultInstallGroups();
+};
+
 /**
  * The subset of `installGroups` matching `predicate`, each paired with its
  * own index into the *original* list — `InstallGroupList`'s rows mutate a
