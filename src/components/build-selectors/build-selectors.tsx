@@ -20,6 +20,8 @@ interface PickerProps {
   current: string;
   /** The other choices, each with the URL of the combination it leads to. */
   others: { label: string; href: string }[];
+  /** The glossary entry explaining this choice, last in the menu. */
+  help: { label: string; href: string };
   size: "sm" | "lg";
 }
 
@@ -29,7 +31,7 @@ interface PickerProps {
  * one is too heavy next to a title, and a link per combination needs no
  * client state (each combination is its own page, see `buildPath`).
  */
-const Picker = component$<PickerProps>(({ caption, current, others, size }) => (
+const Picker = component$<PickerProps>(({ caption, current, others, help, size }) => (
   <div class="dropdown">
     <button
       type="button"
@@ -58,6 +60,11 @@ const Picker = component$<PickerProps>(({ caption, current, others, size }) => (
           </Link>
         </li>
       ))}
+      <li role="none" class="border-t border-base-300 mt-1 pt-1">
+        <a role="menuitem" href={help.href} class="text-xs text-base-content/60">
+          {help.label}
+        </a>
+      </li>
     </ul>
   </div>
 ));
@@ -82,6 +89,7 @@ export const BuildSelectors = component$<BuildSelectorsProps>(
           <Picker
             caption="Edition"
             current={currentEdition.label}
+            help={{ label: "What's an edition?", href: "/docs/glossary/#edition" }}
             size={size}
             others={editions
               .filter((edition) => edition !== currentEdition)
@@ -95,6 +103,7 @@ export const BuildSelectors = component$<BuildSelectorsProps>(
           <Picker
             caption="Version"
             current={currentVersion.label}
+            help={{ label: "What's a version?", href: "/docs/glossary/#version" }}
             size={size}
             others={versions
               .filter((version) => version !== currentVersion)
