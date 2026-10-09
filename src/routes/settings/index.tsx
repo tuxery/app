@@ -1,6 +1,7 @@
 import { component$, type Signal } from "@qwik.dev/core";
 import { useLocation } from "@qwik.dev/router";
 import type { DocumentHead } from "@qwik.dev/router";
+import { LuMonitor, LuMoon, LuSun } from "@qwikest/icons/lucide";
 import { requestAdditionUrl } from "~/contribute-links";
 import { findOsEntry, recommendedGroupIds, OS_CATALOG, type OsCatalogEntry } from "~/os-catalog";
 import {
@@ -21,6 +22,15 @@ const THEME_OPTIONS: { value: Theme; label: string }[] = [
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },
 ];
+
+// Picked by value rather than stored on THEME_OPTIONS: a component function
+// inside the options would be captured by the buttons' `onClick$`, which
+// Qwik can't serialize (Q34).
+const ThemeIcon = ({ theme }: { theme: Theme }) => {
+  if (theme === "light") return <LuSun class="text-sm" />;
+  if (theme === "dark") return <LuMoon class="text-sm" />;
+  return <LuMonitor class="text-sm" />;
+};
 
 // Same three underlying TriState values, worded per what the control
 // actually asks — "Off/Auto/On" read as one generic toggle language for
@@ -226,24 +236,51 @@ const DisplayTab = component$(() => {
 
   return (
     <section class="flex flex-col gap-3">
-      <h2 class="text-lg font-semibold">Theme</h2>
-      <div class="join">
-        {THEME_OPTIONS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            class={[
-              "btn join-item",
-              settings.theme.value === option.value ? "btn-primary" : "btn-ghost",
-            ]}
-            onClick$={() => {
-              settings.theme.value = option.value;
-            }}
-          >
-            {option.label}
-          </button>
-        ))}
+      <div>
+        <h3 class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">
+          Appearance
+        </h3>
+        <ul class="list bg-base-100 border border-base-300 rounded-box">
+          <li class="list-row flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <div class="grow">
+              <p class="font-medium text-sm">Theme</p>
+              <p class="text-xs text-base-content/60">
+                "Match system" follows your device's light or dark mode.
+              </p>
+            </div>
+            {/* Same size and pressed-state markup as the Sources tab's
+                Hide/Auto/Show controls — this tab used to render full-size
+                buttons, the only control on the page that didn't match. */}
+            <fieldset class="join">
+              <legend class="sr-only">Theme</legend>
+              {THEME_OPTIONS.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={settings.theme.value === value}
+                  class={[
+                    "btn btn-xs join-item gap-1",
+                    settings.theme.value === value ? "btn-primary" : "btn-ghost",
+                  ]}
+                  onClick$={() => {
+                    settings.theme.value = value;
+                  }}
+                >
+                  <ThemeIcon theme={value} />
+                  {label}
+                </button>
+              ))}
+            </fieldset>
+          </li>
+        </ul>
       </div>
+      <p class="text-xs text-base-content/60">
+        Every setting is saved in this browser only — never sent to Tuxery's server. See the{" "}
+        <a href="/docs/legal/#privacy" class="link link-primary">
+          privacy policy
+        </a>
+        .
+      </p>
     </section>
   );
 });
