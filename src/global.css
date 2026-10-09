@@ -209,3 +209,18 @@ body {
   outline: 2px solid var(--color-base-content);
   outline-offset: -2px;
 }
+
+/* The layout's full-page background photo, normal blending in both
+   themes. Dark theme: half opacity, the photo itself darkened so its light
+   areas don't come up behind text. Light theme: any visible photo darkens
+   a near-white page (soft-light barely shows at all there), so the photo
+   is first turned into a pale grey texture and kept faint — the light
+   theme shows less of it than the dark one, on purpose. */
+.page-photo {
+  filter: blur(8px) brightness(0.45);
+  opacity: 0.5;
+}
+[data-theme="nord"] .page-photo {
+  filter: blur(8px) grayscale(1) contrast(0.5) brightness(1.6);
+  opacity: 0.2;
+}

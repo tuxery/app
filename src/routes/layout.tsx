@@ -28,10 +28,9 @@ export const onGet: RequestHandler = ({ cacheControl }) => {
 };
 
 // Defined at the layout level (not routes/index.tsx) so every page gets the
-// background, not just the homepage — a route can still reuse this exact
-// loader (see routes/index.tsx's own, taller hero treatment) without a
-// second fetch, since Qwik Router resolves one loader instance per request
-// regardless of how many components call it.
+// background, not just the homepage. The footer reuses it for the photo
+// credit without a second fetch: Qwik Router resolves one loader instance
+// per request however many components call it.
 export const useHeroBackground = routeLoader$(async (requestEvent) => {
   return getHeroBackgroundPhoto(resolveServerEnv(requestEvent.platform));
 });
@@ -54,7 +53,6 @@ export default component$(() => {
   const settings = useProvideSettings();
   const bg = useHeroBackground().value;
   const location = useLocation();
-  const isHome = location.url.pathname === "/";
   const docsDoor = docsDoorOf(location.url.pathname);
   const osEntry = findOsEntry(settings.osId.value);
 
@@ -156,31 +154,22 @@ export default component$(() => {
       </header>
 
       {bg && (
-        // One element, rendered here (not inside <main>) so it's a sibling
-        // of <main>, not a descendant — <main> has its own max-w-6xl
-        // mx-auto, which would cap the background's width to the content
-        // column instead of the real viewport if it were nested inside
-        // (that was the actual bug: a homepage-only version nested in
-        // routes/index.tsx negative-margined its way past <main>'s own
-        // padding but was still bounded by <main>'s max-width, so it never
-        // reached the true page edges). `position: fixed` covers the full
-        // viewport width and stays pinned behind the sticky header on
-        // every route. Taller and more dramatic on the homepage (its hero
-        // is built for it — white text, centered) than the short band
-        // every other route gets, fully resolved to base-100 well before
-        // <main>'s own top padding ends either way, so it can never sit
-        // behind a page's actual heading text.
+        // One element, rendered here as a sibling of <main> (not inside
+        // it: <main>'s max-w-6xl would cap the photo to the content
+        // column) and `position: fixed`, so it covers the whole viewport
+        // behind every route and stays put while the page scrolls.
+        // The photo itself, slightly blurred, as a texture behind the whole
+        // page — no gradient, no overlay; opacity and blending per theme in
+        // global.css (`.page-photo`). Pushed past the viewport edges
+        // (-inset-8) so the blur doesn't fade them to a lighter rim.
         <div
-          class="fixed inset-x-0 top-0 -z-10"
+          class="page-photo fixed -inset-8 -z-10"
           style={{
-            height: isHome ? "640px" : "168px",
             backgroundImage: `url(${bg.imageUrl})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
-        >
-          <div class="absolute inset-0 bg-gradient-to-b from-black/60 to-base-100" />
-        </div>
+        />
       )}
 
       <main class="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-14 min-h-[60vh]">
