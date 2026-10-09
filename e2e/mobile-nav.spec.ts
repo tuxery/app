@@ -11,6 +11,7 @@ const DESTINATIONS = [
   { label: "Apps", url: /\/apps\/?$/, heading: "Apps" },
   { label: "Games", url: /\/games\/?$/, heading: "Games" },
   { label: "Categories", url: /\/categories\/?$/, heading: "Categories" },
+  { label: "Docs", url: /\/docs\/?$/, heading: "About Tuxery" },
 ] as const;
 
 for (const { label, url, heading } of DESTINATIONS) {
@@ -27,7 +28,8 @@ for (const { label, url, heading } of DESTINATIONS) {
     await link.tap();
 
     await expect(page).toHaveURL(url);
-    await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+    // Level 1: the footer repeats some section names as its own headings.
+    await expect(page.getByRole("heading", { name: heading, exact: true, level: 1 })).toBeVisible();
   });
 }
 

@@ -1,11 +1,13 @@
 import { test, expect } from "@playwright/test";
 
-// /sources/[id]/ (a dedicated per-store page, e.g. Flathub/Snap Store/GOG/
-// Lutris) is a real route but currently isn't linked from anywhere in the
-// UI — /sources/ and /distros/ both link straight to /browse/?source=...
-// instead — so it had no coverage at all. Testing it directly by URL,
-// since that's the only way anyone (a shared link, a bookmark) reaches it
-// today.
+// /sources/[id]/ — a dedicated per-store page (Flathub, Snap Store, GOG,
+// Lutris), linked from each of those sources on /docs/sources/.
+test("the sources page links to a store's own page", async ({ page }) => {
+  await page.goto("/docs/sources/");
+  await page.getByRole("link", { name: "Store page" }).first().click();
+  await expect(page).toHaveURL(/\/sources\/flatpak-flathub\/$/);
+});
+
 test("a per-source store page shows real trending apps from that source", async ({ page }) => {
   await page.goto("/sources/flatpak-flathub/");
   await expect(page.getByRole("heading", { name: "Flathub", level: 1 })).toBeVisible();

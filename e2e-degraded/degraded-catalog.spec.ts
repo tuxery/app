@@ -6,7 +6,17 @@ import { test, expect } from "@playwright/test";
 // empty result via safely() rather than throwing. This is the regression
 // test for that whole design: every page should still render its real
 // empty state, never a 500.
-const PAGES = ["/", "/browse/", "/apps/", "/games/", "/categories/", "/distros/", "/about/"];
+const PAGES = [
+  "/",
+  "/browse/",
+  "/apps/",
+  "/games/",
+  "/categories/",
+  "/docs/",
+  "/docs/status/",
+  "/docs/coverage/",
+  "/docs/glossary/",
+];
 
 for (const path of PAGES) {
   test(`${path} renders without a server error when the catalog is unreachable`, async ({
