@@ -35,7 +35,7 @@ export default component$(() => {
           Every third-party library actually shipped in this site's bundle, and its license.
           Tuxery's own catalog pipeline has its own build-time-only dependencies that never reach
           your browser, so they aren't listed here — see the{" "}
-          <a href="/license/" class="link link-primary">
+          <a href="/docs/license/" class="link link-primary">
             License
           </a>{" "}
           page for Tuxery's own.

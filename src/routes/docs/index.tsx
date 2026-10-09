@@ -19,11 +19,12 @@ export default component$(() => {
           becomes a real conversation instead of a wish into the void.
         </p>
         <p class="text-base-content/80 mt-3">
-          Under the hood, Tuxery pulls listings from Flathub, the Snap Store, AppImageHub, and the
-          native package repositories of major distributions, then automatically matches the same
-          app across all of them into a single card — so an app shows up once, not four times. Every
-          "Install" button hands off straight to the official source; Tuxery itself never runs
-          installer code or hosts a package.
+          Under the hood, Tuxery pulls listings from Flathub, the Snap Store, the AppImage community
+          feed, game storefronts, vendor repositories and the native package repositories of some
+          twenty distributions, then automatically matches the same app across all of them into a
+          single card — so an app shows up once, not twenty times. Every "Install" button hands off
+          straight to the official source; Tuxery itself never runs installer code or hosts a
+          package.
         </p>
       </section>
 
@@ -43,18 +44,65 @@ export default component$(() => {
           </li>
         </ul>
         <p class="text-base-content/70 mt-3">
-          For the full source-by-source breakdown, the roadmap, and how to help, see the{" "}
-          <a href="/status/" class="link link-primary">
-            Status
-          </a>{" "}
-          page.
+          How we treat the data is spelled out in the{" "}
+          <a href="/docs/philosophy/" class="link link-primary">
+            data philosophy
+          </a>
+          , and how dozens of sources become one card per app in{" "}
+          <a href="/docs/merging/" class="link link-primary">
+            how sources are merged
+          </a>
+          .
         </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-semibold mb-2">Where to go next</h2>
+        <ul class="list-disc list-inside text-base-content/80 flex flex-col gap-1">
+          <li>
+            New to Linux apps?{" "}
+            <a href="/docs/formats/" class="link link-primary">
+              Which format to choose
+            </a>{" "}
+            and the{" "}
+            <a href="/docs/glossary/" class="link link-primary">
+              glossary
+            </a>
+            .
+          </li>
+          <li>
+            Where the project stands:{" "}
+            <a href="/docs/status/" class="link link-primary">
+              status
+            </a>
+            ,{" "}
+            <a href="/docs/roadmap/" class="link link-primary">
+              roadmap
+            </a>{" "}
+            and{" "}
+            <a href="/docs/changelog/" class="link link-primary">
+              changelog
+            </a>
+            .
+          </li>
+          <li>
+            Something missing or wrong? The{" "}
+            <a href="/docs/faq/" class="link link-primary">
+              FAQ
+            </a>{" "}
+            and{" "}
+            <a href="/docs/contribute/" class="link link-primary">
+              how to contribute
+            </a>
+            .
+          </li>
+        </ul>
       </section>
 
       <section>
         <p class="text-base-content/70">
           Tuxery is licensed{" "}
-          <a href="/license/" class="link link-primary">
+          <a href="/docs/license/" class="link link-primary">
             AGPL-3.0-or-later
           </a>
           .
