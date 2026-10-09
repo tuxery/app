@@ -1,0 +1,185 @@
+---
+title: Glossary — Tuxery
+description: The words Tuxery uses for apps, editions, versions, builds, sources and trust badges, in plain language.
+---
+
+# Glossary
+
+The words Tuxery uses on app pages and in filters, in plain language. Each
+entry can be linked to directly (hover a heading for its `#` link). The
+technical version of this vocabulary lives in the catalog's
+[product families](https://github.com/tuxery/catalog/blob/main/docs/product-families.md)
+document.
+
+## Apps and their variants
+
+### App
+
+One piece of software, shown as one card and one page — whatever the
+number of places it is packaged in. Firefox is one app even though Flathub,
+the Snap Store, Debian, Fedora, the AUR and a dozen others each ship it.
+Tuxery's data calls this a _product_.
+
+### Edition
+
+A parallel line of an app that lives its own life next to the main one and
+never merges back into it: Firefox ESR (extended support) and Firefox
+Developer Edition, Java 17 and Java 21, an LTS line. The main line is
+called **Standard**. The Edition picker only appears on an app page when
+there is more than one.
+
+### Version
+
+How mature a release is, inside one edition:
+
+- **Stable** — the regular release, the default.
+- **Candidate** — the next stable release, in its last round of testing.
+- **Beta** — a preview of upcoming features; mostly works, may break.
+- **Nightly** — rebuilt from the latest code every day or so; expect bugs.
+- **Git** — built straight from the project's development branch.
+
+Firefox Beta and Nightly are versions of Firefox; Firefox ESR is an
+edition. The Version picker only appears when there is more than one. The
+release _number_ (`128.3.1`) is shown next to each install option, as the
+package manager reports it.
+
+### Other builds
+
+Technical variants of the same release, for niche needs: a prebuilt
+upstream binary repackaged (`bin`), an AppImage repackaged as a distro
+package, a build with extra patches (`vaapi`), a full build in another
+language, a 32-bit build, an old release kept on purpose (pinned, shown
+with a warning). They are folded under "other builds" rather than shown
+as separate apps.
+
+### Channel
+
+A word stores use for what Tuxery splits into [edition](#edition) and
+[version](#version). A Snap channel such as `latest/edge` is the Standard
+edition, Nightly version; `v11/stable` is edition 11, Stable. Tuxery does
+not use "channel" itself, because stores put very different things behind
+it.
+
+### Add-on
+
+Something that is not usable on its own and extends one app: a browser
+or editor extension, a plugin, a theme, a language pack, a dictionary, a
+native-messaging host, a configuration package. Add-ons are listed on
+their app's page, not as cards of their own. The catalog calls them
+_companions_.
+
+### Related apps
+
+Links between two different apps, shown on both pages:
+
+- **Fork of** — a separate project that started from the other's code
+  (LibreWolf from Firefox).
+- **Replaces** — the declared successor of another app.
+- **Unofficial client of** — a wrapper or third-party client around
+  another product.
+- **Part of** — a component of a suite (LibreOffice Writer, part of
+  LibreOffice).
+- **Tool for** — a standalone app that works on another app's data.
+
+Every link needs evidence: something the packages themselves declare, or
+an entry reviewed by hand. Tuxery never links apps because their names
+look alike.
+
+## Who built it
+
+### Provenance
+
+Who produced the files you install. Shown as a badge on each install
+option — a piece of information, never a filter:
+
+- **Official build** — built by the project or vendor itself.
+- **Distribution build** — rebuilt from source by the distribution
+  (Debian, Fedora, Arch...). The normal case for distro packages.
+- **Community repack** — the project's own binaries, repackaged by a
+  community maintainer (AUR `-bin` packages, for example).
+- **Community build, patched** — built by a community maintainer with
+  extra patches.
+
+When Tuxery has no reliable signal, no badge is shown: unknown is not the
+same as official.
+
+### Verified
+
+The publisher's identity was checked by the store itself. Today that is
+Flathub's verified developers, shown as a **Verified** badge. It says who
+publishes the app on that store, not that the code was audited.
+
+### Official
+
+See [provenance](#provenance): an official build comes from the project
+itself. A distribution build is not "unofficial" in a worrying sense — it
+is how most Linux software reaches users.
+
+## Where apps come from
+
+### Source
+
+One place Tuxery reads app listings from: a store (Flathub), a
+distribution's package repository (Debian), a community repository (AUR)
+or a vendor's own repository. See the [list of sources](/docs/sources/).
+
+### Store
+
+A source with its own browsable storefront: Flathub, the Snap Store,
+elementary AppCenter, GOG, Lutris.
+
+### Distribution (distro)
+
+A complete Linux operating system — Debian, Ubuntu, Fedora, Arch Linux,
+openSUSE, Mint... Each ships its own repository of packages, installed
+with its own package manager.
+
+### Package
+
+The installable unit of one source: a `.deb` in Debian, an `.rpm` in
+Fedora, a Flatpak on Flathub. One app usually has many packages.
+
+### Package manager
+
+The tool that installs packages from a repository and keeps them up to
+date: `apt`, `dnf`, `pacman`, `zypper`, `flatpak`, `snap`... or a
+graphical front-end such as GNOME Software or KDE Discover.
+
+### Repository
+
+A server a package manager reads packages from. A **vendor repository**
+is one run by the software's own publisher (Google Chrome, VS Code,
+Brave...), added to your system on top of the distribution's.
+
+### AUR
+
+The Arch User Repository: build recipes contributed by Arch users, built
+on your machine. Huge and useful, but not reviewed by Arch itself.
+
+### Rolling and stable releases
+
+A **rolling** distribution (Arch, openSUSE Tumbleweed, Void) updates
+continuously, so apps are always recent. A **stable** (fixed-release)
+distribution (Debian, Ubuntu, Fedora, openSUSE Leap) freezes app versions
+for the life of a release and ships mostly security fixes, so apps can be
+older but change less.
+
+## Formats
+
+### Flatpak, Snap, AppImage
+
+Universal formats that work across distributions. See
+[which format to choose](/docs/formats/).
+
+### Sandbox
+
+Isolation between an app and the rest of your system: the app only sees
+the files and devices it was granted. Flatpak and Snap apps run sandboxed,
+with permissions their packager declares; distro packages and AppImages
+normally don't.
+
+### Runtime
+
+A shared set of libraries Flatpak apps are built against (GNOME, KDE or
+freedesktop runtimes). Installed once and shared between apps, which is
+why the first Flatpak you install is a larger download.

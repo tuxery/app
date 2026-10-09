@@ -1,0 +1,106 @@
+---
+title: FAQ — Tuxery
+description: Common questions about Tuxery — missing apps, wrong merges, differing versions, ratings, update frequency and what to do if you're an app's developer.
+---
+
+# FAQ
+
+## Is Tuxery an app store or an installer?
+
+No. Tuxery is a catalog: it finds every way an app can be installed on
+Linux and points you to the right one. Every Install button hands off to
+the real source — Flathub, the Snap Store, your distribution's software
+center or package manager, the developer's website. Tuxery never hosts a
+package or runs installer code.
+
+## Why isn't my app listed?
+
+Usually one of these:
+
+- **It's in a source Tuxery doesn't read yet** — see the
+  [sources](/docs/sources/) list, and [propose one](https://github.com/tuxery/catalog/issues/new).
+- **The filter took it for a non-app**: libraries, fonts, documentation,
+  plugins and test packages are left out on purpose, and the rules
+  sometimes get it wrong.
+- **It's listed under another name**, merged into an app it belongs to:
+  editions, other builds and add-ons appear on their main app's page.
+  Search for the main app.
+
+If it should be there, [open an issue](https://github.com/tuxery/catalog/issues/new)
+with the app's name and where it's packaged.
+
+## An app is merged wrongly, or shows up twice. How do I report it?
+
+[Open an issue](https://github.com/tuxery/catalog/issues/new) on the
+catalog repository with the address of the app's page on Tuxery and what
+looks wrong. Merges are fixed with a reviewed rule, so the fix stays. An
+in-site "flag this match" button is planned. See
+[how sources are merged](/docs/merging/) for why mistakes happen.
+
+## The category is wrong. Can I fix it?
+
+Yes, the same way: an issue on the catalog repository. Categories come
+from the app's own metadata when it has some, otherwise from rules and
+language models — see the [data philosophy](/docs/philosophy/).
+
+## Why do versions differ between sources?
+
+Because each source ships its own. Stable distributions (Debian, Ubuntu
+LTS) freeze versions for the life of a release and only add security
+fixes; Flathub, Snap and rolling distributions follow new releases
+closely. Tuxery shows each source's version as that source reports it,
+so you know what you'd actually get. See
+[which format to choose](/docs/formats/).
+
+## Where do ratings come from?
+
+From the people who rate apps on their own stores: GNOME's review
+service (behind GNOME Software's and Flathub's stars) and GOG's reviews.
+When an app has ratings from several sources, they are combined, weighted
+by number of votes, and the per-source ratings are shown on the app's
+page. Tuxery has no ratings of its own yet.
+
+## How are "trending" and the other lists ordered?
+
+By figures sources publish — never by payment. Details, and why an app
+might not be trending, in [how rankings work](/docs/rankings/).
+
+## How often is the data updated?
+
+Every source is refetched weekly, and the catalog is republished from
+that data. The date of the data currently shown is on the
+[Status](/docs/status/) page.
+
+## I'm the developer of an app. How do I fix its page?
+
+Most of what Tuxery shows comes from your app's own metadata —
+particularly its AppStream file (name, description, screenshots,
+categories, license, release dates). Fixing it upstream fixes it on
+Flathub, in software centers and on Tuxery at the next refresh. For
+anything else — a wrong merge, a missing source, an edition shown the
+wrong way — open an issue on the catalog repository. A way to claim your
+app's page is planned; see [claim](/claim/).
+
+## Can I submit an app or game?
+
+Not through the site yet — a submission form is planned. For now,
+[open an issue](https://github.com/tuxery/catalog/issues/new); the best
+long-term route is getting the app into a source Tuxery reads (Flathub,
+a distribution, the AUR...).
+
+## Does Tuxery track me?
+
+No analytics, no advertising, no account. Your settings (theme,
+operating system, preferred formats) are stored in your own browser and
+never sent anywhere. Like any website, the server that hosts it
+(Cloudflare) keeps technical request logs.
+
+## Can I reuse Tuxery's data?
+
+Yes — see [open data](/docs/open-data/).
+
+## How can I help?
+
+See [how to contribute](/docs/contribute/): reporting bad data is the
+most useful thing anyone can do, and the [per-source to-do](/docs/coverage/)
+lists concrete work on each source.

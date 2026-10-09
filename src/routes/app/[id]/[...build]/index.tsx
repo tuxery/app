@@ -307,18 +307,23 @@ const SourceInstallUnit = component$<{
             </span>
           )}
           {verified && (
-            <span
+            <a
+              href="/docs/glossary/#verified"
               class="tooltip badge badge-success badge-outline badge-xs gap-1"
               data-tip="Developer-identity-verified on Flathub"
             >
               <LuBadgeCheck class="text-xs" />
               Verified
-            </span>
+            </a>
           )}
           {provenance && (
-            <span class="tooltip badge badge-ghost badge-xs" data-tip={provenance.tip}>
+            <a
+              href="/docs/glossary/#provenance"
+              class="tooltip badge badge-ghost badge-xs"
+              data-tip={provenance.tip}
+            >
               {provenance.label}
-            </span>
+            </a>
           )}
           {version && (
             <span class="text-xs text-base-content/50 font-mono truncate">{version}</span>
@@ -893,6 +898,12 @@ export default component$(() => {
                 ✕
               </button>
             </div>
+            <p class="text-sm text-base-content/60 -mt-2">
+              Not sure which to pick?{" "}
+              <a href="/docs/formats/" class="link link-primary">
+                Which format to choose
+              </a>
+            </p>
             {groupPackagesBySourceGroup(visiblePackages).map(([group, packages]) => (
               <SourceGroupSection
                 key={group}
