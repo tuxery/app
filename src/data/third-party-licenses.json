@@ -1,0 +1,181 @@
+{
+  "groups": [
+    {
+      "id": "website",
+      "title": "Website",
+      "description": "Shipped to your browser or run by the server that renders these pages.",
+      "packages": [
+        {
+          "name": "@libsql/client",
+          "version": "0.18.0",
+          "license": "MIT",
+          "url": "https://github.com/tursodatabase/libsql-client-ts"
+        },
+        {
+          "name": "@qwik.dev/core",
+          "version": "2.0.0-rc.2",
+          "license": "MIT",
+          "url": "https://github.com/QwikDev/qwik"
+        },
+        {
+          "name": "@qwik.dev/router",
+          "version": "2.0.0-rc.2",
+          "license": "MIT",
+          "url": "https://github.com/QwikDev/qwik"
+        },
+        {
+          "name": "@qwikest/icons",
+          "version": "0.0.13",
+          "license": "MIT",
+          "url": "https://github.com/qwikest/icons"
+        },
+        {
+          "name": "daisyui",
+          "version": "5.7.47",
+          "license": "MIT",
+          "url": "https://github.com/saadeghi/daisyui"
+        },
+        {
+          "name": "helpers4",
+          "version": "3.1.2",
+          "license": "LGPL-3.0",
+          "url": "https://github.com/helpers4/typescript"
+        },
+        {
+          "name": "tailwindcss",
+          "version": "4.3.3",
+          "license": "MIT",
+          "url": "https://github.com/tailwindlabs/tailwindcss"
+        }
+      ]
+    },
+    {
+      "id": "pipeline",
+      "title": "Data pipeline",
+      "description": "Run by tuxery/catalog to fetch, merge and publish the data — never sent to your browser.",
+      "packages": [
+        {
+          "name": "@libsql/client",
+          "version": "0.17.4",
+          "license": "MIT",
+          "url": "https://github.com/tursodatabase/libsql-client-ts"
+        },
+        {
+          "name": "fast-xml-parser",
+          "version": "5.10.1",
+          "license": "MIT",
+          "url": "https://github.com/NaturalIntelligence/fast-xml-parser"
+        },
+        {
+          "name": "helpers4",
+          "version": "3.1.2",
+          "license": "LGPL-3.0",
+          "url": "https://github.com/helpers4/typescript"
+        },
+        {
+          "name": "plist",
+          "version": "5.0.0",
+          "license": "MIT",
+          "url": "https://github.com/TooTallNate/plist.js"
+        },
+        {
+          "name": "tar",
+          "version": "7.5.22",
+          "license": "BlueOak-1.0.0",
+          "url": "https://github.com/isaacs/node-tar"
+        },
+        {
+          "name": "xz-decompress",
+          "version": "0.2.3",
+          "license": "MIT",
+          "url": "https://github.com/httptoolkit/xz-decompress"
+        },
+        {
+          "name": "zod",
+          "version": "4.4.3",
+          "license": "MIT",
+          "url": "https://github.com/colinhacks/zod"
+        }
+      ]
+    },
+    {
+      "id": "tooling",
+      "title": "Development tooling",
+      "description": "Used to build, check and test both repos, on developers' machines and in CI only.",
+      "packages": [
+        {
+          "name": "@cloudflare/workers-types",
+          "version": "5.20261005.1",
+          "license": "MIT OR Apache-2.0",
+          "url": "https://github.com/cloudflare/workerd"
+        },
+        {
+          "name": "@playwright/test",
+          "version": "1.63.0",
+          "license": "Apache-2.0",
+          "url": "https://github.com/microsoft/playwright"
+        },
+        {
+          "name": "@tailwindcss/vite",
+          "version": "4.3.3",
+          "license": "MIT",
+          "url": "https://github.com/tailwindlabs/tailwindcss"
+        },
+        {
+          "name": "@types/node",
+          "version": "26.6.4",
+          "license": "MIT",
+          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped"
+        },
+        {
+          "name": "ignore",
+          "version": "7.0.12",
+          "license": "MIT",
+          "url": "https://github.com/kaelzhang/node-ignore"
+        },
+        {
+          "name": "oxfmt",
+          "version": "0.72.0",
+          "license": "MIT",
+          "url": "https://github.com/oxc-project/oxc"
+        },
+        {
+          "name": "oxlint",
+          "version": "1.87.0",
+          "license": "MIT",
+          "url": "https://github.com/oxc-project/oxc"
+        },
+        {
+          "name": "tsx",
+          "version": "4.23.12",
+          "license": "MIT",
+          "url": "https://github.com/privatenumber/tsx"
+        },
+        {
+          "name": "typescript",
+          "version": "7.0.2",
+          "license": "Apache-2.0",
+          "url": "https://github.com/microsoft/TypeScript"
+        },
+        {
+          "name": "vite",
+          "version": "8.3.3",
+          "license": "MIT",
+          "url": "https://github.com/vitejs/vite"
+        },
+        {
+          "name": "vitest",
+          "version": "5.0.3",
+          "license": "MIT",
+          "url": "https://github.com/vitest-dev/vitest"
+        },
+        {
+          "name": "wrangler",
+          "version": "4.147.0",
+          "license": "MIT OR Apache-2.0",
+          "url": "https://github.com/cloudflare/workers-sdk"
+        }
+      ]
+    }
+  ]
+}
