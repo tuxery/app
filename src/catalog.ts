@@ -2,6 +2,7 @@ import { unique } from "helpers4/array";
 import { isNullish } from "helpers4/guard";
 import { createClient, type Client } from "@libsql/client";
 import {
+  ALL_PACKAGE_SOURCE_IDS,
   BROWSE_PAGE_SIZE,
   EMPTY_STATS,
   summarizeBuilds,
@@ -927,5 +928,48 @@ export async function getStats(env: ServerEnv): Promise<CatalogStats> {
       string
     >;
     return { total: Number(meta.totalApps ?? 0), generatedAt: meta.generatedAt ?? "" };
+  });
+}
+
+/**
+ * How many published apps carry at least one package from each source —
+ * the docs' per-source coverage page. Read from the same precomputed
+ * `count:` keys `/browse/?source=X` uses (one `meta` row per source, all in
+ * one pinned read), never a `packages_json LIKE` scan. Empty when the
+ * dataset predates browse keys; a source with no key has no apps.
+ */
+export async function getSourceCounts(
+  env: ServerEnv,
+): Promise<Partial<Record<PackageSourceId, number>>> {
+  const db = getClient(env);
+  if (!db) return {};
+
+  return cachedListing("getSourceCounts", {}, async () => {
+    let keys = await currentBrowseKeys(db);
+    for (let attempt = 0; attempt < 2 && keys; attempt++) {
+      const generation = keys.generation;
+      // Sequential on purpose, same as `readPrecomputedBrowse`: a retry
+      // only happens once the previous attempt found the generation stale.
+      // eslint-disable-next-line no-await-in-loop
+      const read = await readPinned(
+        db,
+        generation,
+        ALL_PACKAGE_SOURCE_IDS.map((source) => ({
+          sql: `SELECT value FROM meta WHERE key = ?`,
+          args: [countKey(generation, "all", "all", source, undefined)],
+        })),
+      );
+      if (read.kind === "stale") {
+        keys = rememberBrowseKeys(read.keys);
+        continue;
+      }
+      return Object.fromEntries(
+        ALL_PACKAGE_SOURCE_IDS.map((source, i) => [
+          source,
+          Number(metaValue(read.results[i]) ?? 0),
+        ]),
+      );
+    }
+    return {};
   });
 }
