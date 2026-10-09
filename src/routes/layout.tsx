@@ -10,6 +10,8 @@ import {
   LuUser,
 } from "@qwikest/icons/lucide";
 import { Footer } from "~/components/footer/footer";
+import { Logo } from "~/components/logo/logo";
+import { OS_LOGOS } from "~/data/logos";
 import { docsDoorOf, GUIDES_HREF } from "~/docs-nav";
 import { TuxeryLogo } from "~/components/tuxery-logo/tuxery-logo";
 import { findOsEntry } from "~/os-catalog";
@@ -125,7 +127,8 @@ export default component$(() => {
 
         <div class="navbar-end gap-1">
           {osEntry ? (
-            <a href="/settings/?tab=os" class="btn btn-soft hidden sm:inline-flex">
+            <a href="/settings/?tab=os" class="btn btn-soft hidden sm:inline-flex gap-2">
+              <Logo slug={OS_LOGOS[osEntry.id]} class="w-4 h-4" />
               {osEntry.label}
             </a>
           ) : (

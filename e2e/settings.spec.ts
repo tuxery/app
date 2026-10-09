@@ -66,14 +66,14 @@ test("a pre-tri-state persisted payload (old boolean shown/activated shape) is d
   // Fresh defaults, not a broken merge of the old boolean shape — Snap (a
   // real current-shape group id) resolves Auto -> effectively shown (no OS
   // selected), not stuck hidden by an old-shape "shown: false" that no
-  // longer applies. Its special repo ("Snap Store") only renders at all
+  // longer applies. Its setup ("snapd installed") only renders at all
   // when the group resolves shown, so its presence proves the group is
   // effectively shown.
   const snapAuto = page
     .getByRole("group", { name: "Show Snap" })
     .getByRole("button", { name: "Auto" });
   await expect(snapAuto).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByText("Snap Store", { exact: true })).toBeVisible();
+  await expect(page.getByText("snapd installed", { exact: true })).toBeVisible();
 });
 
 test("checking a special repo in Settings persists and is Auto by default", async ({ page }) => {

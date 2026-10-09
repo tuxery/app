@@ -66,19 +66,19 @@ test("selecting an OS pre-fills Auto sources on the Sources tab without overridi
     .poll(() => page.evaluate(() => localStorage.getItem("tuxery:settings")), { timeout: 15_000 })
     .toContain('"osId":"ubuntu"');
 
-  // Back on Sources: Ubuntu's own Auto row now resolves to Snap Store
-  // being pre-activated (Ubuntu ships snapd), but Fedora's explicit Off
+  // Back on Sources: Ubuntu's own Auto row now counts snapd as
+  // pre-activated (Ubuntu ships it), but Fedora's explicit Off
   // survived the OS pick untouched.
   await page.goto("/settings/?tab=sources");
   await expect(
     page.getByRole("group", { name: "Show Fedora" }).getByRole("button", { name: "Hide" }),
   ).toHaveAttribute("aria-pressed", "true");
-  const snapStoreRow = page.getByRole("group", { name: "Snap Store activated" });
+  const snapStoreRow = page.getByRole("group", { name: "snapd installed activated" });
   await expect(snapStoreRow.getByRole("button", { name: "Auto" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
   // Auto + Ubuntu selected -> effectively activated, so the setup note
-  // (only shown when NOT effectively activated) is gone for Snap Store.
-  await expect(page.getByText("installs snapd if it isn't already")).toHaveCount(0);
+  // (only shown when NOT effectively activated) is gone for snapd.
+  await expect(page.getByText("Snap apps need snapd")).toHaveCount(0);
 });

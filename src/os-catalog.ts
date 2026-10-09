@@ -121,3 +121,28 @@ export function findOsEntry(id: string | undefined): OsCatalogEntry | undefined 
 export function recommendedGroupIds(entry: OsCatalogEntry): Set<string> {
   return new Set([entry.distroGroupId, ...CROSS_DISTRO_GROUP_IDS]);
 }
+
+/**
+ * The OS tiles grouped by lineage, for the settings page — 19 tiles in one
+ * undivided grid were hard to scan. Every `OS_CATALOG` id belongs to
+ * exactly one family (pinned by os-catalog.spec.ts); order is display
+ * order.
+ */
+export const OS_FAMILIES: { title: string; osIds: string[] }[] = [
+  {
+    title: "Ubuntu and Debian based",
+    osIds: [
+      "ubuntu",
+      "debian",
+      "linux-mint",
+      "pop-os",
+      "elementary",
+      "zorin",
+      "deepin",
+      "mx-linux",
+    ],
+  },
+  { title: "Fedora and openSUSE", osIds: ["fedora", "opensuse-tumbleweed", "opensuse-leap"] },
+  { title: "Arch based", osIds: ["arch", "manjaro"] },
+  { title: "Independent", osIds: ["alpine", "void", "slackware", "solus", "gentoo", "nixos"] },
+];
