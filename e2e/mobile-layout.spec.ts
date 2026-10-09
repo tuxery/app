@@ -7,7 +7,15 @@ import { test, expect } from "@playwright/test";
 // full text even at `opacity: 0`) never fails any element's own visibility
 // check; it just quietly widens the page. `scrollWidth` catches that class
 // of bug regardless of which element causes it next time.
-const PAGES = ["/", "/browse/", "/app/firefox/", "/categories/", "/games/", "/status/"];
+const PAGES = [
+  "/",
+  "/browse/",
+  "/app/firefox/",
+  "/categories/",
+  "/games/",
+  "/docs/status/",
+  "/docs/glossary/",
+];
 
 for (const path of PAGES) {
   test(`${path} has no horizontal overflow on a mobile viewport`, async ({ page }) => {
