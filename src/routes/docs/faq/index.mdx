@@ -93,11 +93,60 @@ a distribution, the AUR...).
 No analytics, no advertising, no account. Your settings (theme,
 operating system, preferred formats) are stored in your own browser and
 never sent anywhere. Like any website, the server that hosts it
-(Cloudflare) keeps technical request logs.
+(Cloudflare) keeps technical request logs, for at most 7 days. Everything
+is spelled out in the [privacy policy](/docs/legal/#privacy).
 
 ## Can I reuse Tuxery's data?
 
-Yes — see [open data](/docs/open-data/).
+Yes — see [open data](/docs/open-data/). Everything Tuxery shows is built
+from public data: open feeds and package indexes, plus public listings
+we read the way a browser or an app store client would. Nothing comes
+from a private agreement or a paid feed, so nothing can be withdrawn
+from you: what Tuxery gathers stays available, and the code to gather it
+again is open source.
+
+## Where does the data come from?
+
+Most sources publish their whole catalog as a file or a feed meant to be
+read by machines: Flathub's AppStream feed, the distributions' package
+indexes, the AUR's metadata dump, Nixpkgs' channel file. Reading those
+is simple and cheap for everyone.
+
+Some don't, and Tuxery has to work around it:
+
+- **The Snap Store** has no full listing — only a search that stops at
+  100 results. Tuxery sweeps it by category and by ever-longer search
+  prefixes, about 100,000 requests per refresh, and still can't be sure
+  it has everything.
+- **GOG** has no documented catalog API; Tuxery reads an undocumented
+  one that launchers such as Heroic and Lutris also rely on.
+- **Lutris** ignores the filter for native Linux installers, so every
+  page of installers is read and filtered afterwards, then each game is
+  looked up for its genres and description.
+- **GitHub** search returns at most 1,000 results per query, so the
+  search is split by creation date until each part fits, and each
+  AppImage in the community feed is checked against its repository.
+
+If you run one of these stores, a downloadable export of your catalog
+(a file, an AppStream feed, a paginated API) would make Tuxery's
+listing of your apps complete and lighter on your servers. You'd be very
+welcome — [get in touch](https://github.com/tuxery/catalog/issues/new).
+
+## Does Tuxery use AI?
+
+Yes, in two places, and always with a person in the loop:
+
+- **Writing code.** Language models help write and review Tuxery's code;
+  every change is reviewed by a maintainer before it lands.
+- **Cleaning the data.** For apps no source categorizes, a model suggests
+  whether a package is an app, a game or a library, and its category. Each
+  verdict records the model and a confidence; low-confidence ones are
+  checked by hand, and upstream categories always win. Links between apps
+  are never left to a model. Details in the
+  [data philosophy](/docs/philosophy/#where-language-models-help).
+
+Models never write the descriptions, screenshots or ratings you see:
+those come from the sources.
 
 ## How can I help?
 
