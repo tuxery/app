@@ -12,7 +12,8 @@ import {
   ALL_SOURCE_GROUPS,
   buildLabel,
   formatBytes,
-  formatSourceLabel,
+  availableViaLabels,
+  isInstallSource,
   isVerifiedPackage,
   provenanceInfo,
   SOURCE_GROUP_MEMBERS,
@@ -1117,7 +1118,7 @@ export default component$(() => {
             </>
           )}
           <dt class="text-base-content/70">Available via</dt>
-          <dd>{a.packages.map((pkg) => formatSourceLabel(pkg)).join(", ")}</dd>
+          <dd>{availableViaLabels(a.packages).join(", ")}</dd>
           {stats.value.generatedAt && (
             <>
               <dt class="text-base-content/70">Catalog data as of</dt>
@@ -1196,7 +1197,9 @@ export default component$(() => {
                             {" "}
                             (
                             {unique(
-                              companion.packages.map((pkg) => SOURCE_LABELS[pkg.source]),
+                              companion.packages
+                                .filter((pkg) => isInstallSource(pkg.source))
+                                .map((pkg) => SOURCE_LABELS[pkg.source]),
                             ).join(", ")}
                             )
                           </span>
