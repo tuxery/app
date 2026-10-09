@@ -19,6 +19,7 @@
     "preview": "qwik build preview && vite preview --open",
     "serve": "wrangler dev",
     "start": "vite --open --mode ssr",
+    "sync:source-todos": "node scripts/sync-source-todos.ts",
     "test": "vitest run",
     "test.e2e": "playwright test",
     "test.e2e.degraded": "playwright test --config=playwright.degraded.config.ts",
