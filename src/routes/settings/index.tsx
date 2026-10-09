@@ -1,6 +1,7 @@
 import { component$, type Signal } from "@qwik.dev/core";
 import { useLocation } from "@qwik.dev/router";
 import type { DocumentHead } from "@qwik.dev/router";
+import { requestAdditionUrl } from "~/contribute-links";
 import { findOsEntry, recommendedGroupIds, OS_CATALOG, type OsCatalogEntry } from "~/os-catalog";
 import {
   CROSS_DISTRO_GROUP_IDS,
@@ -308,7 +309,7 @@ const OsTileGrid = component$(() => {
           catalog's own issue template (?template=..., a real GitHub
           feature) rather than catalog's bare issues page. */}
       <a
-        href="https://github.com/tuxery/catalog/issues/new?template=add-something.yml"
+        href={requestAdditionUrl()}
         target="_blank"
         rel="noopener"
         class="card border border-dashed border-base-300 hover:border-primary/40 transition-colors p-4 text-sm font-medium text-center text-base-content/60"

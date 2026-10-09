@@ -1,8 +1,9 @@
 import { $, component$, useSignal, useVisibleTask$ } from "@qwik.dev/core";
-import { routeLoader$ } from "@qwik.dev/router";
+import { routeLoader$, useLocation } from "@qwik.dev/router";
 import type { DocumentHead } from "@qwik.dev/router";
 import { unique } from "helpers4/array";
 import { LuBadgeCheck, LuExternalLink, LuFlag, LuPackage } from "@qwikest/icons/lucide";
+import { reportDataProblemUrl } from "~/contribute-links";
 import { getAppById, getStats } from "~/catalog";
 import { resolveServerEnv } from "~/server-env";
 import {
@@ -580,6 +581,7 @@ function summarizeSources(packages: SourcedPackage[]) {
 }
 
 export default component$(() => {
+  const location = useLocation();
   const app = useApp();
   const buildSelection = useBuildSelection();
   const stats = useDetailStats();
@@ -1123,7 +1125,8 @@ export default component$(() => {
         </dl>
 
         <a
-          href={`https://github.com/tuxery/app/issues/new?title=${encodeURIComponent(`Report: ${a.name}`)}`}
+          // A data problem: catalog's form, with this page's link filled in.
+          href={reportDataProblemUrl({ name: a.name, pageUrl: location.url.href })}
           class="btn btn-ghost btn-sm gap-1.5 mt-4"
           target="_blank"
           rel="noopener"

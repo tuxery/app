@@ -1,0 +1,28 @@
+name: Website problem
+description: Something on tuxery.store itself is broken, confusing or hard to use (not an app's data — that goes to tuxery/catalog)
+title: "[site] "
+labels: ["bug"]
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Page
+      description: The address of the page where it happens.
+      placeholder: https://tuxery.store/...
+    validations:
+      required: false
+  - type: textarea
+    id: description
+    attributes:
+      label: What's wrong?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: setup
+    attributes:
+      label: Browser and device
+      description: Browser, operating system, and any assistive technology you use (screen reader, zoom, keyboard only...).
+      placeholder: e.g. Firefox 131 on Fedora, keyboard only
+    validations:
+      required: false
