@@ -28,7 +28,7 @@ export default component$(() => {
 
       <p class="text-base-content/70">
         Any help or support getting there is welcome — see{" "}
-        <a href="/contribute/" class="link link-primary">
+        <a href="/docs/contribute/" class="link link-primary">
           How to contribute
         </a>{" "}
         for what that can look like right now.
