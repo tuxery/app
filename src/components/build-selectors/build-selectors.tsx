@@ -43,10 +43,10 @@ const Picker = component$<PickerProps>(({ caption, current, others, help, size }
       ]}
     >
       {size === "lg" && (
-        <span class="text-[10px] uppercase tracking-wide text-base-content/50">{caption}</span>
+        <span class="text-[10px] uppercase tracking-wide text-base-content/70">{caption}</span>
       )}
       <span class={size === "lg" ? "text-base font-semibold" : "font-medium"}>{current}</span>
-      <LuChevronDown class="text-xs text-base-content/50" />
+      <LuChevronDown class="text-xs text-base-content/70" />
     </button>
     <ul
       tabIndex={0}
@@ -61,7 +61,7 @@ const Picker = component$<PickerProps>(({ caption, current, others, help, size }
         </li>
       ))}
       <li role="none" class="border-t border-base-300 mt-1 pt-1">
-        <a role="menuitem" href={help.href} class="text-xs text-base-content/60">
+        <a role="menuitem" href={help.href} class="text-xs text-base-content/70">
           {help.label}
         </a>
       </li>
