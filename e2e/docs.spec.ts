@@ -20,16 +20,29 @@ for (const [from, to] of Object.entries(MOVED_TO_DOCS)) {
   });
 }
 
-test("the header's Docs entry leads to the docs, with the current page highlighted", async ({
+test("the header's Guides and About entries lead into the docs, each highlighted on its pages", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("banner").getByRole("link", { name: "Docs" }).click();
+  const header = page.getByRole("banner");
+  await header.getByRole("link", { name: "Guides" }).click();
+  await expect(page).toHaveURL(/\/docs\/faq\/$/);
+  await expect(header.getByRole("link", { name: "Guides" })).toHaveAttribute(
+    "aria-current",
+    "true",
+  );
+
+  await header.getByRole("link", { name: "About" }).click();
   await expect(page).toHaveURL(/\/docs\/$/);
   await expect(page.getByRole("heading", { name: "About Tuxery", level: 1 })).toBeVisible();
+  await expect(header.getByRole("link", { name: "About" })).toHaveAttribute("aria-current", "true");
 
   const sidebar = page.getByRole("navigation", { name: "Docs sidebar" });
   await sidebar.getByRole("link", { name: "Glossary" }).click();
+  await expect(header.getByRole("link", { name: "Guides" })).toHaveAttribute(
+    "aria-current",
+    "true",
+  );
   await expect(page).toHaveURL(/\/docs\/glossary\/$/);
   await expect(sidebar.getByRole("link", { name: "Glossary" })).toHaveAttribute(
     "aria-current",

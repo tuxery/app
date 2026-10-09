@@ -2,6 +2,7 @@ import { component$, Slot } from "@qwik.dev/core";
 import { routeLoader$, useLocation, type RequestHandler } from "@qwik.dev/router";
 import {
   LuBookOpen,
+  LuInfo,
   LuLayoutGrid,
   LuMenu,
   LuSearch,
@@ -9,6 +10,7 @@ import {
   LuUser,
 } from "@qwikest/icons/lucide";
 import { Footer } from "~/components/footer/footer";
+import { docsDoorOf, GUIDES_HREF } from "~/docs-nav";
 import { TuxeryLogo } from "~/components/tuxery-logo/tuxery-logo";
 import { findOsEntry } from "~/os-catalog";
 import { resolveServerEnv } from "~/server-env";
@@ -40,6 +42,14 @@ export const useHeroBackground = routeLoader$(async (requestEvent) => {
   return getHeroBackgroundPhoto(resolveServerEnv(requestEvent.platform));
 });
 
+// Two doors into the same /docs/ section, by intent: help using Tuxery,
+// or everything about the project (status, data, legal). "Docs" alone
+// undersold the second. The footer still lists every page.
+const DOCS_DOORS = [
+  { id: "guides", href: GUIDES_HREF, label: "Guides", icon: LuBookOpen },
+  { id: "about", href: "/docs/", label: "About", icon: LuInfo },
+] as const;
+
 const NAV_LINKS = [
   { href: "/apps/", label: "Apps" },
   { href: "/games/", label: "Games" },
@@ -51,9 +61,7 @@ export default component$(() => {
   const bg = useHeroBackground().value;
   const location = useLocation();
   const isHome = location.url.pathname === "/";
-  // About, Status and every other static page live under /docs/ — one
-  // header entry for all of them (the footer still lists each one).
-  const isDocs = location.url.pathname.startsWith("/docs/");
+  const docsDoor = docsDoorOf(location.url.pathname);
   const osEntry = findOsEntry(settings.osId.value);
 
   return (
@@ -74,10 +82,12 @@ export default component$(() => {
                   <a href={link.href}>{link.label}</a>
                 </li>
               ))}
-              {/* The header's own Docs button is hidden below `sm`. */}
-              <li class="sm:hidden">
-                <a href="/docs/">Docs</a>
-              </li>
+              {/* The header's own Guides/About buttons are hidden below `sm`. */}
+              {DOCS_DOORS.map((door) => (
+                <li key={door.id} class="sm:hidden">
+                  <a href={door.href}>{door.label}</a>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -125,14 +135,17 @@ export default component$(() => {
               </a>
             </div>
           )}
-          <a
-            href="/docs/"
-            class={["btn btn-ghost hidden sm:inline-flex", isDocs && "btn-active"]}
-            aria-current={isDocs ? "true" : undefined}
-          >
-            <LuBookOpen class="text-base" />
-            Docs
-          </a>
+          {DOCS_DOORS.map((door) => (
+            <a
+              key={door.id}
+              href={door.href}
+              class={["btn btn-ghost hidden sm:inline-flex", docsDoor === door.id && "btn-active"]}
+              aria-current={docsDoor === door.id ? "true" : undefined}
+            >
+              <door.icon class="text-base" />
+              {door.label}
+            </a>
+          ))}
           <a href="/settings" class="btn btn-ghost btn-square" aria-label="Settings">
             <LuSettings class="text-lg" />
           </a>

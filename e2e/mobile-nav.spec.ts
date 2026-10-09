@@ -11,7 +11,8 @@ const DESTINATIONS = [
   { label: "Apps", url: /\/apps\/?$/, heading: "Apps" },
   { label: "Games", url: /\/games\/?$/, heading: "Games" },
   { label: "Categories", url: /\/categories\/?$/, heading: "Categories" },
-  { label: "Docs", url: /\/docs\/?$/, heading: "About Tuxery" },
+  { label: "Guides", url: /\/docs\/faq\/?$/, heading: "FAQ" },
+  { label: "About", url: /\/docs\/?$/, heading: "About Tuxery" },
 ] as const;
 
 for (const { label, url, heading } of DESTINATIONS) {

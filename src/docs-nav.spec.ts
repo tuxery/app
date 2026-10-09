@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   adjacentDocsPages,
   DOCS_PAGES,
+  docsDoorOf,
   docsEditUrl,
   findDocsPage,
+  GUIDES_HREF,
+  GUIDES_SECTION,
+  DOCS_SECTIONS,
   MOVED_TO_DOCS,
 } from "~/docs-nav";
 
@@ -23,8 +27,8 @@ describe("docs nav", () => {
   it("links prev/next across section boundaries, none past either end", () => {
     expect(adjacentDocsPages("/docs/").prev).toBeUndefined();
     expect(adjacentDocsPages("/docs/").next?.href).toBe("/docs/status/");
-    const lastFaqNext = adjacentDocsPages("/docs/faq/").next;
-    expect(lastFaqNext?.href).toBe("/docs/formats/");
+    // Changelog ends "About Tuxery", FAQ starts "Guides".
+    expect(adjacentDocsPages("/docs/changelog/").next?.href).toBe("/docs/faq/");
     expect(adjacentDocsPages(DOCS_PAGES.at(-1)?.href ?? "").next).toBeUndefined();
     expect(adjacentDocsPages("/elsewhere/")).toEqual({});
   });
@@ -40,5 +44,14 @@ describe("docs nav", () => {
     for (const target of Object.values(MOVED_TO_DOCS)) {
       expect(findDocsPage(target)?.href).toBe(target);
     }
+  });
+
+  it("sends Guides pages to the Guides door and every other docs page to About", () => {
+    const guides = DOCS_SECTIONS.find((section) => section.title === GUIDES_SECTION);
+    expect(guides?.pages[0]?.href).toBe(GUIDES_HREF);
+    expect(docsDoorOf("/docs/glossary")).toBe("guides");
+    expect(docsDoorOf("/docs/status/")).toBe("about");
+    expect(docsDoorOf("/docs/")).toBe("about");
+    expect(docsDoorOf("/apps/")).toBeUndefined();
   });
 });
