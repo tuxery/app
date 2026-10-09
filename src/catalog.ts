@@ -51,12 +51,49 @@ function getClient(env: ServerEnv): Client | null {
   return client;
 }
 
-/** A reachable-but-not-actually-running local `turso dev` server (connection refused, etc.) degrades the same way as no TURSO_DB_URL at all, rather than 500ing the page. */
+/**
+ * Whether the database answers, as `isCatalogAvailable` last saw it — per
+ * isolate, rechecked after `HEALTH_TTL_MS`. Any failed catalog query also
+ * marks it unavailable right away (`markUnavailable`), so an outage is
+ * noticed by the next request without waiting for the next check.
+ */
+let health: { available: boolean; checkedAt: number } | undefined;
+const HEALTH_TTL_MS = 30 * 1000;
+
+function markUnavailable(): void {
+  health = { available: false, checkedAt: Date.now() };
+}
+
+/**
+ * Whether the catalog database can be reached, for the root layout to
+ * decide — before any page loader runs — whether to show the outage
+ * message and answer 503 uncached. A `SELECT 1` (no table, so no rows read
+ * against the Turso quota), at most once per `HEALTH_TTL_MS` per isolate;
+ * no `TURSO_DB_URL` at all counts as unavailable.
+ */
+export async function isCatalogAvailable(env: ServerEnv): Promise<boolean> {
+  if (health && Date.now() - health.checkedAt < HEALTH_TTL_MS) return health.available;
+  const db = getClient(env);
+  let available = false;
+  if (db) {
+    try {
+      await db.execute("SELECT 1");
+      available = true;
+    } catch (error) {
+      console.error("[catalog] health check failed:", error);
+    }
+  }
+  health = { available, checkedAt: Date.now() };
+  return available;
+}
+
+/** A reachable-but-not-actually-running local `turso dev` server (connection refused, etc.) degrades the same way as no TURSO_DB_URL at all, rather than 500ing the page — and marks the catalog unavailable (see `markUnavailable`). */
 async function safely<T>(fallback: T, fn: () => Promise<T>): Promise<T> {
   try {
     return await fn();
   } catch (error) {
     console.error("[catalog] query failed, degrading to empty:", error);
+    markUnavailable();
     return fallback;
   }
 }
@@ -97,6 +134,7 @@ async function cachedListing<T>(key: string, fallback: T, fn: () => Promise<T>):
     return value;
   } catch (error) {
     console.error("[catalog] query failed, degrading to empty:", error);
+    markUnavailable();
     return fallback;
   }
 }
