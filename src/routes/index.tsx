@@ -26,7 +26,6 @@ import {
   getAppsByIds,
 } from "~/catalog";
 import { getInfluencerPage } from "~/data/influencer-pages";
-import { useHeroBackground } from "~/routes/layout";
 import { resolveServerEnv } from "~/server-env";
 import type { AppSummary } from "~/catalog-types";
 
@@ -346,8 +345,6 @@ export default component$(() => {
   const appCategories = useAppCategories();
   const gameCategories = useGameCategories();
   const featuredCreator = useFeaturedCreator();
-  const heroBackground = useHeroBackground();
-  const bg = heroBackground.value;
   const productivityApps = useProductivityApps();
   const creativityApps = useCreativityApps();
   const learningApps = useLearningApps();
@@ -360,12 +357,12 @@ export default component$(() => {
   return (
     <div class="flex flex-col gap-14">
       <section class="hero rounded-box px-4 md:px-6">
-        <div class={`hero-content text-center py-14 ${bg ? "text-white" : ""}`}>
+        <div class="hero-content text-center py-14">
           <div class="max-w-2xl">
             <h1 class="text-4xl md:text-5xl font-bold md:text-nowrap">
               Search <span class="text-primary">every</span> Linux app.
             </h1>
-            <p class={`py-4 ${bg ? "text-white/80" : "text-base-content/70"}`}>
+            <p class="py-4 text-base-content/70">
               Tuxery aggregates Flathub, the Snap Store, AppImage, and every distro's own repos into
               one catalog — search once, install from wherever it's shipped.
             </p>
@@ -382,7 +379,7 @@ export default component$(() => {
               </label>
             </form>
             {stats.value.total > 0 && (
-              <p class={`text-sm mt-4 ${bg ? "text-white/60" : "text-base-content/50"}`}>
+              <p class="text-sm mt-4 text-base-content/50">
                 {stats.value.total.toLocaleString()} apps and games catalogued
               </p>
             )}
