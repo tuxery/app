@@ -1,0 +1,117 @@
+---
+title: Which format to choose — Tuxery
+description: Flatpak, Snap, AppImage, your distribution's package, a vendor repository or the AUR — what each is, their trade-offs, and which to pick.
+---
+
+# Which format to choose
+
+The same app often installs several ways on Linux. None is "the right
+one" for everyone; each trades something for something else. Here is
+what they are, and a simple way to choose.
+
+## The short answer
+
+1. **Your distribution's package** if it has the app and you're happy
+   with its version — it's the best integrated and updates with the rest
+   of your system.
+2. **Flatpak (from Flathub)** if your distribution doesn't have the app,
+   ships an old version, or you want the app sandboxed. It works the same
+   on every distribution.
+3. **The publisher's own option** (Snap on Ubuntu, a vendor repository,
+   an AppImage) when that's what the app's developers recommend.
+
+Tuxery's [settings](/settings/?tab=os) let you pick your operating system
+and order formats by preference; the Install button then follows that
+order.
+
+## Distribution packages
+
+`.deb` (Debian, Ubuntu, Mint), `.rpm` (Fedora, openSUSE), pacman (Arch)
+and the like, installed with your package manager or software center.
+
+- **Pros**: smallest download, shares libraries with the rest of the
+  system, best integration with your desktop (themes, fonts, file
+  dialogs), updated with the system, reviewed by your distribution's
+  maintainers.
+- **Cons**: on a stable distribution (Debian, Ubuntu LTS), app versions
+  are frozen for the life of the release — you get security fixes, not
+  new features. Not every app is packaged by every distribution.
+
+## Flatpak
+
+Apps bundled with their own libraries (or shared "runtimes"), installed
+from Flathub or elementary AppCenter. Works on any distribution once
+Flatpak is set up (preinstalled on Fedora, Mint, elementary, Pop!\_OS...).
+
+- **Pros**: the newest version, usually published by the developers
+  themselves (look for the **Verified** badge); runs in a **sandbox** with
+  permissions you can inspect and change (Flatseal, or your software
+  center); identical on every distribution.
+- **Cons**: larger downloads, especially the first app that needs a
+  runtime; the sandbox can get in the way of apps that need deep system
+  access (some developer tools, system utilities); integration with your
+  theme is sometimes imperfect.
+
+## Snap
+
+Canonical's universal format, installed from the Snap Store.
+Preinstalled on Ubuntu.
+
+- **Pros**: newest versions, often published by the developers; sandboxed
+  ("strict" confinement); automatic background updates; well suited to
+  command-line tools and server software too.
+- **Cons**: the store is run by one company and its server side isn't
+  open; apps can start slower the first time; automatic updates are hard
+  to postpone; "classic" snaps run without the sandbox.
+
+## AppImage
+
+One file you download, make executable and run. No installation.
+
+- **Pros**: no root rights needed, runs from anywhere (even a USB stick),
+  easy to keep several versions side by side.
+- **Cons**: no sandbox, and usually no automatic updates; you download it
+  from a website, so check that it is the developer's own; it may not
+  integrate with your menus without a helper tool; some need extra
+  libraries (FUSE) to start.
+
+## Vendor repositories
+
+Some companies run their own package repository for their app (Google
+Chrome, Microsoft Edge, VS Code, Brave, Signal, Spotify...). You add it
+once, then the app updates with your system like a distribution package.
+
+- **Pros**: the vendor's own build, newest version, native integration.
+- **Cons**: you trust that vendor with packages that run with system
+  rights at install; adding the repository is a manual step.
+
+## The AUR (Arch-based systems)
+
+Build recipes contributed by Arch users, built on your machine with an
+AUR helper.
+
+- **Pros**: an enormous catalog — almost everything is there; the newest
+  versions, including `-git` builds.
+- **Cons**: **not reviewed by Arch**: a recipe can do anything when built,
+  so read it (or trust its maintainer) before installing; builds can
+  break after system updates. Tuxery shows who built each package — see
+  [provenance](/docs/glossary/#provenance).
+
+## Unofficial packages
+
+On any format, a package may come from someone other than the app's
+developers: a distribution maintainer (normal and trustworthy for
+distribution packages), or a community member repackaging the app
+(common on the AUR, Snap and AppImage). Tuxery shows a provenance badge
+when it knows who built a package, and a **Verified** badge when a store
+checked the publisher. When in doubt, prefer an official build or your
+distribution's own package, and check the app's website for what its
+developers recommend.
+
+## Freshness or stability?
+
+If you want the newest features, a rolling distribution, Flatpak or Snap
+gets them first. If you want things to change as little as possible, a
+stable distribution's packages are the safest — at the cost of older
+versions. Mixing is fine: plenty of people use their distribution's
+packages for the system and Flatpak for a few desktop apps.
