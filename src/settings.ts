@@ -296,6 +296,15 @@ export const useProvideSettings = (): SettingsState => {
   const hydrated = useSignal(false);
 
   // Load persisted state on mount, then persist on every subsequent change.
+  //
+  // The first run can come late — on a slow first load the visitor may
+  // already have clicked something before this task first ran. Real bug,
+  // reproduced with a throttled CPU (5 runs in 6 lost the choice) and the
+  // cause of the settings e2e specs failing on CI's cold first attempt:
+  // that first run used to load the stored settings over the fresh click,
+  // then return without saving it. Now a stored value only fills a field
+  // still at its default, and the run goes on to save, so a choice made
+  // before hydration is kept and persisted.
   useVisibleTask$(({ track }) => {
     track(() => theme.value);
     track(() => JSON.stringify(installGroups.value));
@@ -307,18 +316,21 @@ export const useProvideSettings = (): SettingsState => {
         const raw = localStorage.getItem(STORAGE_KEY);
         const stored = raw ? safeJsonParse<Partial<PersistedSettings>>(raw) : null;
         if (stored) {
-          if (stored.theme) theme.value = stored.theme;
-          if (isCurrentShape(stored.installGroups)) {
+          if (stored.theme && theme.value === "system") theme.value = stored.theme;
+          const groupsUntouched =
+            JSON.stringify(installGroups.value) === JSON.stringify(defaultInstallGroups());
+          if (groupsUntouched && isCurrentShape(stored.installGroups)) {
             installGroups.value = mergeInstallGroups(stored.installGroups, defaultInstallGroups());
           }
-          if (typeof stored.osId === "string") osId.value = stored.osId;
+          if (typeof stored.osId === "string" && osId.value === undefined) {
+            osId.value = stored.osId;
+          }
         }
       } catch {
         // localStorage itself unavailable (private-browsing edge cases,
         // site data blocked, ...) — safeJsonParse already handles bad
         // JSON without throwing, this only guards getItem itself.
       }
-      return;
     }
 
     const payload: PersistedSettings = {
@@ -326,7 +338,11 @@ export const useProvideSettings = (): SettingsState => {
       installGroups: installGroups.value,
       osId: osId.value,
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      // Same: storage unavailable or full — settings just don't persist.
+    }
   });
 
   // Keep <html data-theme> in sync with the chosen theme (and OS changes in "system" mode).
