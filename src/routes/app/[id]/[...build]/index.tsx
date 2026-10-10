@@ -29,6 +29,7 @@ import {
   ALL_SOURCE_GROUPS,
   buildLabel,
   formatBytes,
+  formatSourceLabel,
   availableViaLabels,
   isInstallSource,
   isVerifiedPackage,
@@ -1362,6 +1363,48 @@ export default component$(() => {
           </div>
         </div>
       </section>
+
+      {/* What each source says, side by side — where the merged card's
+          name, version or license came from, and where sources differ. */}
+      {installSourcePackages.length > 1 && (
+        <section>
+          <details class="collapse collapse-arrow bg-base-100/70 border border-base-300">
+            <summary class="collapse-title font-medium">
+              How each source lists it ({installSourcePackages.length})
+            </summary>
+            <div class="collapse-content overflow-x-auto">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Source</th>
+                    <th>Name</th>
+                    <th>Version</th>
+                    <th>Built by</th>
+                    <th>License</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {installSourcePackages.map((pkg) => (
+                    <tr key={`${pkg.source}:${pkg.name}`} class="align-top">
+                      <td class="whitespace-nowrap">{formatSourceLabel(pkg)}</td>
+                      <td class="font-mono text-xs break-all">{pkg.name}</td>
+                      <td class="font-mono text-xs break-all">
+                        {pkg.version && pkg.version !== "unknown" ? pkg.version : "—"}
+                      </td>
+                      <td class="whitespace-nowrap">
+                        {provenanceInfo(pkg.provenance)?.label ?? "—"}
+                      </td>
+                      <td class="text-xs min-w-24 break-words">{pkg.license ?? "—"}</td>
+                      <td class="text-xs min-w-60">{pkg.description ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </section>
+      )}
 
       {/* Forks, successors, unofficial clients, ... — catalog's product-families relations. */}
       {a.relations && a.relations.length > 0 && (
