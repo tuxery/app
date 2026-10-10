@@ -74,7 +74,11 @@ test("the build badge counts distinct builds, not raw packages", async ({ page }
   // which has no Version selector to move them to) — matched by shape
   // rather than an exact list, which depends on the dataset.
   await page.goto(LUANTI);
-  const indicator = page.getByTitle(/^Stable, /);
+  // The page header's own indicator — the related rows' cards have theirs.
+  const indicator = page
+    .locator("section")
+    .first()
+    .getByTitle(/^Stable, /);
   await expect(indicator).toBeVisible();
   const builds = ((await indicator.getAttribute("title")) ?? "").split(", ");
   expect(builds.length).toBeGreaterThan(2);
@@ -150,7 +154,8 @@ test("Claim this listing links to the claim explainer, personalized with the app
   page,
 }) => {
   await page.goto(FIREFOX);
-  await page.getByRole("link", { name: "Claim this listing" }).click();
+  // In the header, under Install (the info cards repeat it further down).
+  await page.getByRole("link", { name: "Claim this listing" }).first().click();
 
   await expect(page).toHaveURL("/claim/?app=firefox");
   await expect(page.getByRole("heading", { name: "Claim Firefox" })).toBeVisible();
@@ -189,10 +194,12 @@ test("a product page lists its relations and add-ons, linking related products",
 
   // Firefox's curated forks (catalog's config/family-relations.json).
   await expect(page.getByText("Forks", { exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "LibreWolf" })).toHaveAttribute(
+  // Related apps are cards now; the similar-apps row follows.
+  await expect(page.getByRole("link").filter({ hasText: "LibreWolf" }).first()).toHaveAttribute(
     "href",
     /^\/app\/[^/]+\/$/,
   );
+  await expect(page.getByText(/^Similar apps: /)).toBeVisible();
 
   // Hundreds of language packs, collapsed by kind with their full count.
   await expect(page.getByRole("heading", { name: "Add-ons", exact: true })).toBeVisible();
@@ -227,14 +234,15 @@ test("the license, Flathub installs and latest release show on the default build
   page,
 }) => {
   await page.goto("/app/firefox/");
-  const badge = page.getByRole("link", { name: "Free software" });
-  await expect(badge).toHaveAttribute("href", "/docs/glossary/#free-software");
-  await expect(page.getByText(/installs on Flathub$/).first()).toBeVisible();
+  // Links to what the license lets you do, in the licenses guide.
+  const badge = page.getByRole("link", { name: /Free software/ });
+  await expect(badge).toHaveAttribute("href", "/docs/open-source-licenses/#mpl-20");
+  await expect(page.getByText("Installs", { exact: true })).toBeVisible();
   await expect(page.getByText("Latest release", { exact: true })).toBeVisible();
 
   // An edition the Flathub figures don't describe: no installs, no date.
   await page.goto("/app/firefox/esr/");
-  await expect(page.getByRole("link", { name: "Free software" })).toBeVisible();
-  await expect(page.getByText(/installs on Flathub$/)).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Free software/ })).toBeVisible();
+  await expect(page.getByText("Installs", { exact: true })).toHaveCount(0);
   await expect(page.getByText("Latest release", { exact: true })).toHaveCount(0);
 });
