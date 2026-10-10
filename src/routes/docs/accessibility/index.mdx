@@ -45,14 +45,16 @@ deeper, secondary text is never fainter than 70% of the text color, and
 the automated checks report no contrast issue in either theme, background
 photo included (re-checked 9 October 2026, 18 pages).
 
+Fixed since: the **screenshot row** on app pages couldn't be reached from
+the keyboard; each screenshot is now a button opening a full-size viewer
+(arrow keys to browse, Escape to close).
+
 ## Known gaps
 
 - **Accessible names that differ from the visible text** on category
   tiles, a homepage call to action, and the Edition/Version pickers of an
   app page: a voice-control user saying the visible label may not reach
   them.
-- **The screenshot row on app pages** scrolls sideways but can't be
-  scrolled with the keyboard on a phone-sized screen.
 - **Headings** skip a level in search results.
 - **Not checked yet**: a full manual test with screen readers (Orca,
   NVDA, VoiceOver), 200% zoom and text spacing, Windows high-contrast

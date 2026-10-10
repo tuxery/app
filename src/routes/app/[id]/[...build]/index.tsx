@@ -62,6 +62,7 @@ import {
   type BuildSelection,
 } from "~/product-builds";
 import { SourceMap } from "~/components/source-map/source-map";
+import { ScreenshotGallery } from "~/components/screenshot-gallery/screenshot-gallery";
 import { UnifiedRating } from "~/components/unified-rating/unified-rating";
 import {
   INSTALL_METHODS,
@@ -1123,10 +1124,10 @@ export default component$(() => {
       {a.screenshots?.length || a.videos?.length ? (
         <section>
           <h2 class="text-lg font-semibold mb-3">Screenshots & videos</h2>
-          <div class="flex gap-3 overflow-x-auto">
-            {a.screenshots?.map((src) => (
-              <img key={src} src={src} alt="" class="h-48 rounded-box shrink-0" />
-            ))}
+          <div class="flex gap-3 overflow-x-auto p-1">
+            {a.screenshots?.length ? (
+              <ScreenshotGallery screenshots={a.screenshots} appName={a.name} />
+            ) : null}
             {a.videos?.map((src) => (
               <video key={src} src={src} controls class="h-48 rounded-box shrink-0">
                 <track kind="captions" label="No captions available" />
