@@ -1481,9 +1481,7 @@ export default component$(() => {
           {relatedApps.value.similar.length > 0 && (
             <div>
               <div class="flex items-baseline justify-between mb-2">
-                <h3 class="text-sm font-semibold text-base-content/70">
-                  Similar {a.contentType === "game" ? "games" : "apps"}: {a.category}
-                </h3>
+                <h3 class="text-sm font-semibold text-base-content/70">{a.category}</h3>
                 <a
                   href={`/browse/?category=${encodeURIComponent(a.category)}`}
                   class="link link-primary text-sm"
