@@ -1,4 +1,13 @@
 import { test, expect } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
+
+/** The tooltip text a `HoverTip` trigger is described by (focusable triggers, on the product page). */
+async function tipText(page: Page, trigger: Locator): Promise<string> {
+  const id = await trigger
+    .locator("xpath=ancestor-or-self::button[1]")
+    .getAttribute("aria-describedby");
+  return (await page.locator(`[id="${id}"]`).textContent()) ?? "";
+}
 
 // Ids that carry a Flatpak or Snap package use that package's own
 // globally-unique name/appId directly (Snap preferred — see catalog's
@@ -45,44 +54,44 @@ test("a single-source rated app's tooltip still prefixes the figure with its sou
   page,
 }) => {
   await page.goto(WITCHER_2);
-  await expect(page.getByText(/\d\.\d \(\d/).first()).toBeVisible();
+  const rating = page.getByText(/\d\.\d \(\d/).first();
+  await expect(rating).toBeVisible();
   // Shape only, not the figures — the rating and its vote count move with
   // every dataset refresh, and the prefix is what this test is about.
-  await expect(page.getByTitle(/^GOG: ★ \d\.\d \([\d,]+\)$/)).toBeVisible();
+  expect(await tipText(page, rating)).toMatch(/^GOG: ★ \d\.\d \([\d,]+\)$/);
+  await rating.hover();
+  await expect(page.locator("[popover]:popover-open")).toHaveText(/^GOG: ★/);
 });
 
 test("a multi-source rated app's tooltip lists every source, each prefixed by its own label", async ({
   page,
 }) => {
   await page.goto(APP_EDITOR);
-  await expect(page.getByText(/\d\.\d \(\d/).first()).toBeVisible();
-  await expect(
-    page.getByTitle(
-      /^Flathub \(Flatpak\): ★ \d\.\d \([\d,]+\), elementary AppCenter \(Flatpak\): ★ \d\.\d \([\d,]+\)$/,
-    ),
-  ).toBeVisible();
+  const rating = page.getByText(/\d\.\d \(\d/).first();
+  await expect(rating).toBeVisible();
+  expect(await tipText(page, rating)).toMatch(
+    /^Flathub \(Flatpak\): ★ \d\.\d \([\d,]+\)\nelementary AppCenter \(Flatpak\): ★ \d\.\d \([\d,]+\)$/,
+  );
 });
 
-test("the build badge counts distinct builds, not raw packages", async ({ page }) => {
-  // Real bug, found live: an earlier version badged the *package* count
-  // (dozens — one per distro, mostly all "Stable") right next to a
-  // tooltip naming only a handful of builds, which read as broken. The
-  // badge is the build count itself now, matching the tooltip it
-  // explains. Luanti carries dozens of packages but only a handful of
-  // builds (the default one plus Lutris installers; AUR's git build and
-  // Gentoo's testing ebuild too on a dataset older than product families,
-  // which has no Version selector to move them to) — matched by shape
-  // rather than an exact list, which depends on the dataset.
+test("the build indicator's count matches the builds its tooltip names", async ({ page }) => {
+  // Real bug, found live: an earlier badge counted *packages* (dozens, one
+  // per distro, mostly the same build) next to a tooltip naming a handful
+  // of builds. The indicator now says it in words ("3 builds", "2
+  // versions") — checked against its own tooltip, by shape, since the
+  // exact builds depend on the dataset.
   await page.goto(LUANTI);
-  // The page header's own indicator — the related rows' cards have theirs.
-  const indicator = page
-    .locator("section")
-    .first()
-    .getByTitle(/^Stable, /);
-  await expect(indicator).toBeVisible();
-  const builds = ((await indicator.getAttribute("title")) ?? "").split(", ");
-  expect(builds.length).toBeGreaterThan(2);
-  await expect(indicator.locator(".badge")).toHaveText(String(builds.length));
+  const header = page.locator("section").first();
+  const trigger = header.getByRole("button", { name: /^\d+ (builds|versions|editions)/ }).first();
+  await expect(trigger).toBeVisible();
+  const [, count, kind] = /^(\d+) (builds|versions|editions)/.exec(await trigger.innerText()) ?? [];
+  const tip = await tipText(page, trigger);
+  const line = { builds: "Other builds", versions: "Versions", editions: "Editions" }[
+    kind ?? "builds"
+  ];
+  const names = new RegExp(`^${line}: (.+)$`, "m").exec(tip)?.[1]?.split(", ") ?? [];
+  // "N builds" counts the default build too; versions and editions list them all.
+  expect(Number(count)).toBe(kind === "builds" ? names.length + 1 : names.length);
 });
 
 test("the Additional information table shows a real Size row, from Flathub's own download_size", async ({
@@ -113,15 +122,16 @@ test("the source dot-map's Flatpak dot names its verified status in the tooltip"
   page,
 }) => {
   await page.goto(FIREFOX);
-  await expect(page.locator('[title*="Flatpak ✓ verified"]').first()).toBeVisible();
+  const dotMap = page.locator("section").first().locator("span.grid.grid-rows-2");
+  expect(await tipText(page, dotMap)).toContain("Flatpak ✓ verified");
 });
 
 test("the dot-map's verified dot turns bg-info/70 once the selected OS actually recommends that group, dim bg-primary/50 before that", async ({
   page,
 }) => {
   await page.goto(FIREFOX);
-  const dotMap = page.locator("div.grid.grid-rows-2").first();
-  await expect(dotMap).toHaveAttribute("title", /Flatpak ✓ verified(?!,\s*recommended)/);
+  const dotMap = page.locator("section").first().locator("span.grid.grid-rows-2");
+  expect(await tipText(page, dotMap)).toMatch(/Flatpak ✓ verified(?!, recommended)/);
   await expect(dotMap.locator("span").first()).toHaveClass(/bg-primary\/50/);
 
   // Flatpak is always cross-distro-recommended, so any OS pick flips it.
@@ -132,11 +142,11 @@ test("the dot-map's verified dot turns bg-info/70 once the selected OS actually 
     .toContain('"osId":"fedora"');
 
   await page.goto(FIREFOX);
-  const dotMapWithOs = page.locator("div.grid.grid-rows-2").first();
-  await expect(dotMapWithOs).toHaveAttribute(
-    "title",
-    /Flatpak ✓ verified, recommended for your OS/,
-  );
+  const dotMapWithOs = page.locator("section").first().locator("span.grid.grid-rows-2");
+  // The OS pick applies client-side after load: poll, like the dot's class below.
+  await expect
+    .poll(() => tipText(page, dotMapWithOs))
+    .toContain("Flatpak ✓ verified, recommended for your OS");
   await expect(dotMapWithOs.locator("span").first()).toHaveClass(/bg-info\/70/);
 });
 
@@ -145,8 +155,8 @@ test("a present-but-unverified group's dot is a plain neutral gray, distinct fro
 }) => {
   // LM Studio: on Flathub but not in its "verified" collection.
   await page.goto("/app/ai.lmstudio.lm-studio/");
-  const dotMap = page.locator("div.grid.grid-rows-2").first();
-  await expect(dotMap).toHaveAttribute("title", "Flatpak, Arch Linux");
+  const dotMap = page.locator("section").first().locator("span.grid.grid-rows-2");
+  expect(await tipText(page, dotMap)).toBe("Flatpak\nArch Linux");
   await expect(dotMap.locator("span").first()).toHaveClass(/bg-base-content\/25/);
 });
 

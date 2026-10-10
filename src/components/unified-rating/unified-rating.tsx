@@ -1,6 +1,6 @@
 import { component$ } from "@qwik.dev/core";
 import type { SourceRating } from "~/catalog-types";
-import { tooltipClass, type TooltipPosition } from "~/components/tooltip-position";
+import { HoverTip, type TipPlacement } from "~/components/hover-tip/hover-tip";
 
 // Half-star granularity (10 positions across 5 stars) — the finest
 // daisyUI's `rating-half` supports. `average` rarely lands on a clean half
@@ -16,7 +16,7 @@ function starsTitle(average: number, count: number, bySource: SourceRating[]): s
   }
   return bySource
     .map((s) => `${s.label}: ★ ${s.average.toFixed(1)} (${s.count.toLocaleString()})`)
-    .join(", ");
+    .join("\n");
 }
 
 export interface UnifiedRatingProps {
@@ -26,7 +26,9 @@ export interface UnifiedRatingProps {
   bySource?: SourceRating[];
   /** "normal" (stars + figure, the fiche layout) or "short" (stars only, for cramped card rows). */
   mode?: "normal" | "short";
-  tooltipPosition?: TooltipPosition;
+  placement?: TipPlacement;
+  /** On the product page, where it isn't inside a link: takes keyboard focus for its tooltip. */
+  focusable?: boolean;
 }
 
 /**
@@ -43,38 +45,36 @@ export interface UnifiedRatingProps {
  * separate info icon needed for either.
  */
 export const UnifiedRating = component$<UnifiedRatingProps>(
-  ({ average, count, bySource = [], mode = "normal", tooltipPosition = "top" }) => {
+  ({ average, count, bySource = [], mode = "normal", placement = "top", focusable = false }) => {
     const rounded = Math.round(average * 2) / 2;
     const tip = starsTitle(average, count, bySource);
 
     return (
-      <span
-        class={tooltipClass(tooltipPosition, "inline-flex items-center gap-1.5")}
-        title={tip}
-        data-tip={tip}
-      >
-        <div class="rating rating-xs rating-half" aria-hidden="true">
-          {STAR_HALVES.map((position, i) => (
-            <div
-              key={position}
-              class={[
-                // Full opacity: daisyUI's `rating` dims every child to 20%
-                // unless it's a checked radio input, which these aren't.
-                "mask mask-star-2 opacity-100!",
-                i % 2 === 0 ? "mask-half-1" : "mask-half-2",
-                // A fixed amber, not the theme's warning color: nord's is a
-                // pale yellow that barely shows against its light background.
-                position <= rounded ? "bg-amber-500" : "bg-base-content/20",
-              ]}
-            />
-          ))}
-        </div>
-        {mode === "normal" && (
-          <span class="text-sm text-base-content/70">
-            {average.toFixed(1)} ({count.toLocaleString()})
+      <HoverTip text={tip} placement={placement} focusable={focusable}>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="rating rating-xs rating-half" aria-hidden="true">
+            {STAR_HALVES.map((position, i) => (
+              <span
+                key={position}
+                class={[
+                  // Full opacity: daisyUI's `rating` dims every child to 20%
+                  // unless it's a checked radio input, which these aren't.
+                  "mask mask-star-2 opacity-100!",
+                  i % 2 === 0 ? "mask-half-1" : "mask-half-2",
+                  // A fixed amber, not the theme's warning color: nord's is a
+                  // pale yellow that barely shows against its light background.
+                  position <= rounded ? "bg-amber-500" : "bg-base-content/20",
+                ]}
+              />
+            ))}
           </span>
-        )}
-      </span>
+          {mode === "normal" && (
+            <span class="text-sm text-base-content/70">
+              {average.toFixed(1)} ({count.toLocaleString()})
+            </span>
+          )}
+        </span>
+      </HoverTip>
     );
   },
 );

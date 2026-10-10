@@ -3,7 +3,7 @@ import { LuPackage } from "@qwikest/icons/lucide";
 import { BuildIndicator } from "~/components/build-indicator/build-indicator";
 import { SourceMap } from "~/components/source-map/source-map";
 import { UnifiedRating } from "~/components/unified-rating/unified-rating";
-import type { AppSummary, PackageSourceId, SourceRating } from "~/catalog-types";
+import type { AppSummary, PackageSourceId, ReleaseLines, SourceRating } from "~/catalog-types";
 
 export interface AppCardProps {
   iconUrl?: string;
@@ -11,7 +11,7 @@ export interface AppCardProps {
   description: string;
   sources: PackageSourceId[];
   verifiedSources?: PackageSourceId[];
-  builds: string[];
+  releaseLines: ReleaseLines;
   contentType?: "game";
   category?: string;
   rating?: { average: number; count: number };
@@ -41,7 +41,7 @@ export const AppCard = component$<AppCardProps>(
     description,
     sources,
     verifiedSources,
-    builds,
+    releaseLines,
     category,
     rating,
     ratingsBySource,
@@ -75,14 +75,13 @@ export const AppCard = component$<AppCardProps>(
           <p class="text-sm text-base-content/70 line-clamp-2">{description}</p>
           <div class="flex flex-wrap items-center gap-4 mt-auto pt-1">
             <SourceMap sources={sources} verifiedSources={verifiedSources} />
-            <BuildIndicator builds={builds} />
+            <BuildIndicator lines={releaseLines} />
             {rating && (
               <UnifiedRating
                 average={rating.average}
                 count={rating.count}
                 bySource={ratingsBySource}
                 mode="short"
-                tooltipPosition="top"
               />
             )}
           </div>
@@ -108,7 +107,7 @@ export const AppCardLink = component$<{ app: AppSummary; linkClass?: string }>(
         description={app.shortDescription}
         sources={app.sources}
         verifiedSources={app.verifiedSources}
-        builds={app.builds}
+        releaseLines={app.releaseLines}
         contentType={app.contentType}
         category={app.category}
         rating={app.rating}

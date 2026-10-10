@@ -6,6 +6,7 @@ import {
   isInstallSource,
   provenanceInfo,
   summarizeBuilds,
+  summarizeReleaseLines,
   type PackageSourceId,
 } from "~/catalog-types";
 
@@ -69,5 +70,23 @@ describe("availableViaLabels", () => {
     expect(isInstallSource("flatpak-flathub")).toBe(true);
     expect(isInstallSource("rpm-fedora-appstream")).toBe(false);
     expect(isInstallSource("toString")).toBe(false);
+  });
+});
+
+describe("summarizeReleaseLines", () => {
+  it("lists editions, versions and other builds once each, as the pickers name them", () => {
+    expect(
+      summarizeReleaseLines([
+        {},
+        { risk: "nightly" },
+        { track: "esr" },
+        { track: "esr", flavors: ["bin"] },
+        { flavors: ["bin", "locale:zh"] },
+      ]),
+    ).toEqual({
+      editions: ["Standard", "ESR"],
+      versions: ["Stable", "Nightly"],
+      otherBuilds: ["Bin", "zh"],
+    });
   });
 });

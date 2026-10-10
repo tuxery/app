@@ -36,7 +36,7 @@ import {
   provenanceInfo,
   SOURCE_GROUP_MEMBERS,
   SOURCE_LABELS,
-  summarizeBuilds,
+  summarizeReleaseLines,
   summarizeRatingsBySource,
   verifiedSourcesOf,
   type AppSummary,
@@ -632,7 +632,7 @@ function groupCompanions(companions: Companion[]): [CompanionKind, Companion[]][
 function summarizeSources(packages: SourcedPackage[]) {
   return {
     sources: unique(packages.map((pkg) => pkg.source)),
-    builds: summarizeBuilds(packages),
+    lines: summarizeReleaseLines(packages),
     verifiedSources: verifiedSourcesOf(packages),
   };
 }
@@ -815,9 +815,10 @@ export default component$(() => {
                 <SourceMap
                   sources={sourceSummary.sources}
                   verifiedSources={sourceSummary.verifiedSources}
-                  tooltipPosition="bottom"
+                  placement="bottom"
+                  focusable
                 />
-                <BuildIndicator builds={sourceSummary.builds} tooltipPosition="bottom" />
+                <BuildIndicator lines={sourceSummary.lines} placement="bottom" focusable />
               </div>
             )}
             <div class="aura aura-sm w-fit">
@@ -953,6 +954,7 @@ export default component$(() => {
                   average={facts.rating.average}
                   count={facts.rating.count}
                   bySource={summarizeRatingsBySource(ratingPackages)}
+                  focusable
                 />
               )}
               {facts.installsTotal !== undefined && (
@@ -987,9 +989,10 @@ export default component$(() => {
                   <SourceMap
                     sources={sourceSummary.sources}
                     verifiedSources={sourceSummary.verifiedSources}
-                    tooltipPosition="bottom"
+                    placement="bottom"
+                    focusable
                   />
-                  <BuildIndicator builds={sourceSummary.builds} tooltipPosition="bottom" />
+                  <BuildIndicator lines={sourceSummary.lines} placement="bottom" focusable />
                 </div>
                 <div class="aura aura-sm w-fit">
                   <button
