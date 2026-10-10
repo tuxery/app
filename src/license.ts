@@ -61,19 +61,23 @@ export function classifyLicense(license: string | undefined): LicenseKind {
 /** The docs page explaining the common free licenses, one section per family. */
 export const LICENSE_GUIDE_PATH = "/docs/open-source-licenses/";
 
-// Section of the guide for a single license term, by family. Checked in
-// order, so "LGPL" and "AGPL" are tried before "GPL".
+// Section of the guide for a single license term, by family — the ids
+// the docs' Markdown generates from each heading ("GPL 3.0" → "gpl-30").
+// Checked in order, so "LGPL" and "AGPL" are tried before "GPL".
 const GUIDE_SECTIONS: [RegExp, string][] = [
-  [/^AGPL/, "agpl-3.0"],
+  [/^AGPL/, "agpl-30"],
   [/^LGPL/, "lgpl"],
-  [/^GPL[-V]?2|^GPL-2/, "gpl-2.0"],
-  [/^GPL/, "gpl-3.0"],
-  [/^MPL/, "mpl-2.0"],
-  [/^APACHE/, "apache-2.0"],
+  [/^GPL[-V]?2|^GPL-2/, "gpl-20"],
+  [/^GPL/, "gpl-30"],
+  [/^MPL/, "mpl-20"],
+  [/^APACHE/, "apache-20"],
   [/^BSD|^0BSD/, "bsd"],
   [/^(MIT|X11|ISC)/, "mit"],
   [/^(UNLICENSE|CC0|PUBLIC ?DOMAIN|WTFPL)/, "public-domain"],
 ];
+
+/** Every section `licenseInfoHref` links to — pinned against the page by e2e/docs.spec.ts. */
+export const LICENSE_GUIDE_SECTIONS = [...GUIDE_SECTIONS.map(([, id]) => id), "several-licenses"];
 
 // A bare SPDX identifier (no spaces, no Arch "custom:"), for the SPDX
 // license list when the guide has no section for it.

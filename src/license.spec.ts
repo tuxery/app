@@ -61,14 +61,14 @@ describe("classifyLicense", () => {
 describe("licenseInfoHref", () => {
   it("points common free licenses to their section of the guide", () => {
     const guide = "/docs/open-source-licenses/#";
-    expect(licenseInfoHref("MPL-2.0")).toBe(`${guide}mpl-2.0`);
-    expect(licenseInfoHref("GPL3")).toBe(`${guide}gpl-3.0`);
-    expect(licenseInfoHref("GPL-3.0-or-later")).toBe(`${guide}gpl-3.0`);
-    expect(licenseInfoHref("GPL-2.0-only")).toBe(`${guide}gpl-2.0`);
-    expect(licenseInfoHref("GPL2")).toBe(`${guide}gpl-2.0`);
+    expect(licenseInfoHref("MPL-2.0")).toBe(`${guide}mpl-20`);
+    expect(licenseInfoHref("GPL3")).toBe(`${guide}gpl-30`);
+    expect(licenseInfoHref("GPL-3.0-or-later")).toBe(`${guide}gpl-30`);
+    expect(licenseInfoHref("GPL-2.0-only")).toBe(`${guide}gpl-20`);
+    expect(licenseInfoHref("GPL2")).toBe(`${guide}gpl-20`);
     expect(licenseInfoHref("LGPL-2.1-or-later")).toBe(`${guide}lgpl`);
-    expect(licenseInfoHref("AGPL3")).toBe(`${guide}agpl-3.0`);
-    expect(licenseInfoHref("Apache")).toBe(`${guide}apache-2.0`);
+    expect(licenseInfoHref("AGPL3")).toBe(`${guide}agpl-30`);
+    expect(licenseInfoHref("Apache")).toBe(`${guide}apache-20`);
     expect(licenseInfoHref("BSD-3-Clause")).toBe(`${guide}bsd`);
     expect(licenseInfoHref("ISC")).toBe(`${guide}mit`);
     expect(licenseInfoHref("Unlicense")).toBe(`${guide}public-domain`);

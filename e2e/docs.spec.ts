@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { DOCS_PAGES, MOVED_TO_DOCS } from "../src/docs-nav";
+import { LICENSE_GUIDE_PATH, LICENSE_GUIDE_SECTIONS } from "../src/license";
 
 // Every page listed in the docs sidebar (`DOCS_PAGES`) renders a real h1 —
 // covers both the component pages and the Markdown (MDX) ones, so a page
@@ -54,7 +55,7 @@ test("the header's Guides and About entries lead into the docs, each highlighted
   );
   await expect(page.getByRole("link", { name: /Next/ })).toHaveAttribute(
     "href",
-    "/docs/philosophy/",
+    "/docs/open-source-licenses/",
   );
 });
 
@@ -71,4 +72,11 @@ test("the per-source to-do lists real app counts and its tracked issues", async 
   await expect(
     flathub.locator("a[href^='https://github.com/tuxery/catalog/issues/']").first(),
   ).toBeVisible();
+});
+
+test("every license section the app pages link to exists on the guide", async ({ page }) => {
+  await page.goto(LICENSE_GUIDE_PATH);
+  for (const id of LICENSE_GUIDE_SECTIONS) {
+    await expect(page.locator(`h2#${id}`), id).toHaveCount(1);
+  }
 });
