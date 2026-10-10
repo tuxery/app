@@ -122,19 +122,19 @@ test("the source dot-map's Flatpak dot names its verified status in the tooltip"
   page,
 }) => {
   await page.goto(FIREFOX);
-  const dotMap = page.locator("section").first().locator("span.grid.grid-rows-2");
-  expect(await tipText(page, dotMap)).toContain("Flatpak ✓ verified");
+  const stack = page.locator("section").first().locator(".flex.-space-x-2");
+  expect(await tipText(page, stack)).toContain("Flatpak (✓ verified)");
 });
 
-test("the dot-map's verified dot turns bg-info/70 once the selected OS actually recommends that group, dim bg-primary/50 before that", async ({
+test("the source stack rings a verified logo and puts the selected OS's platforms first", async ({
   page,
 }) => {
   await page.goto(FIREFOX);
-  const dotMap = page.locator("section").first().locator("span.grid.grid-rows-2");
-  expect(await tipText(page, dotMap)).toMatch(/Flatpak ✓ verified(?!, recommended)/);
-  await expect(dotMap.locator("span").first()).toHaveClass(/bg-primary\/50/);
+  const stack = page.locator("section").first().locator(".flex.-space-x-2");
+  // Flatpak leads (catalog order) and is ringed: Flathub's verified developer.
+  await expect(stack.locator(":scope > span").first()).toHaveClass(/border-primary/);
+  expect(await tipText(page, stack)).toMatch(/^Flatpak \(✓ verified\)/);
 
-  // Flatpak is always cross-distro-recommended, so any OS pick flips it.
   await page.goto("/settings/?tab=os");
   await page.getByRole("button", { name: "Fedora", exact: true }).click();
   await expect
@@ -142,22 +142,24 @@ test("the dot-map's verified dot turns bg-info/70 once the selected OS actually 
     .toContain('"osId":"fedora"');
 
   await page.goto(FIREFOX);
-  const dotMapWithOs = page.locator("section").first().locator("span.grid.grid-rows-2");
-  // The OS pick applies client-side after load: poll, like the dot's class below.
+  const stackWithOs = page.locator("section").first().locator(".flex.-space-x-2");
+  // The OS pick applies client-side after load: poll.
   await expect
-    .poll(() => tipText(page, dotMapWithOs))
-    .toContain("Flatpak ✓ verified, recommended for your OS");
-  await expect(dotMapWithOs.locator("span").first()).toHaveClass(/bg-info\/70/);
+    .poll(() => tipText(page, stackWithOs))
+    .toContain("Flatpak (✓ verified, used on your OS)");
+  // Platforms Fedora doesn't use come after the ones it does.
+  const lines = (await tipText(page, stackWithOs)).split("\n");
+  const firstUnused = lines.findIndex((line) => !line.includes("used on your OS"));
+  if (firstUnused >= 0)
+    expect(lines.slice(firstUnused).every((line) => !line.includes("used on your OS"))).toBe(true);
 });
 
-test("a present-but-unverified group's dot is a plain neutral gray, distinct from both a verified dot and an absent one", async ({
-  page,
-}) => {
+test("an unverified platform's logo isn't ringed", async ({ page }) => {
   // LM Studio: on Flathub but not in its "verified" collection.
   await page.goto("/app/ai.lmstudio.lm-studio/");
-  const dotMap = page.locator("section").first().locator("span.grid.grid-rows-2");
-  expect(await tipText(page, dotMap)).toBe("Flatpak\nArch Linux");
-  await expect(dotMap.locator("span").first()).toHaveClass(/bg-base-content\/25/);
+  const stack = page.locator("section").first().locator(".flex.-space-x-2");
+  expect(await tipText(page, stack)).toBe("Flatpak\nArch Linux");
+  await expect(stack.locator(":scope > span").first()).toHaveClass(/border-base-300/);
 });
 
 test("Claim this listing links to the claim explainer, personalized with the app's name, and back again", async ({

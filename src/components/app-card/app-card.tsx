@@ -1,7 +1,7 @@
 import { component$ } from "@qwik.dev/core";
 import { LuPackage } from "@qwikest/icons/lucide";
 import { BuildIndicator } from "~/components/build-indicator/build-indicator";
-import { SourceMap } from "~/components/source-map/source-map";
+import { SourceStack } from "~/components/source-stack/source-stack";
 import { UnifiedRating } from "~/components/unified-rating/unified-rating";
 import type { AppSummary, PackageSourceId, ReleaseLines, SourceRating } from "~/catalog-types";
 
@@ -25,7 +25,7 @@ export interface AppCardProps {
  *
  * Layout: logo + name/category on top, description below, and a bottom row
  * — pinned to the card's bottom edge via `mt-auto` so it lines up across
- * cards regardless of description length — `SourceMap`,
+ * cards regardless of description length — `SourceStack`,
  * `BuildIndicator`, then (when this app has one) `UnifiedRating` in
  * its "short" (stars-only) mode, left-aligned in that fixed order rather
  * than spread with `justify-between`: with that, a card carrying no rating
@@ -73,8 +73,8 @@ export const AppCard = component$<AppCardProps>(
             </div>
           </div>
           <p class="text-sm text-base-content/70 line-clamp-2">{description}</p>
-          <div class="flex flex-wrap items-center gap-4 mt-auto pt-1">
-            <SourceMap sources={sources} verifiedSources={verifiedSources} />
+          <div class="flex flex-wrap items-center gap-3 mt-auto pt-1">
+            <SourceStack sources={sources} verifiedSources={verifiedSources} />
             <BuildIndicator lines={releaseLines} />
             {rating && (
               <UnifiedRating
