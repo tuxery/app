@@ -62,7 +62,7 @@ import {
   versionsByEdition,
   type BuildSelection,
 } from "~/product-builds";
-import { SourceMap } from "~/components/source-map/source-map";
+import { SourceStack } from "~/components/source-stack/source-stack";
 import { AppCardLink } from "~/components/app-card/app-card";
 import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-scroller";
 import { ScreenshotGallery } from "~/components/screenshot-gallery/screenshot-gallery";
@@ -628,7 +628,7 @@ function groupCompanions(companions: Companion[]): [CompanionKind, Companion[]][
     .filter(([, list]) => list.length > 0);
 }
 
-/** `SourceMap`/`BuildIndicator`'s combined props, derived from a full package list — used for the hero/sticky-header install summary, sitting to the left of the Install button (replaces the old "Install options (N)" count that used to live on the button itself). */
+/** `SourceStack`/`BuildIndicator`'s combined props, derived from a full package list — used for the hero/sticky-header install summary, sitting to the left of the Install button (replaces the old "Install options (N)" count that used to live on the button itself). */
 function summarizeSources(packages: SourcedPackage[]) {
   return {
     sources: unique(packages.map((pkg) => pkg.source)),
@@ -812,7 +812,7 @@ export default component$(() => {
                 button out of the sticky bar. The page header still has it. */}
             {visiblePackages.length > 0 && (
               <div class="hidden sm:flex items-center gap-2 mr-3">
-                <SourceMap
+                <SourceStack
                   sources={sourceSummary.sources}
                   verifiedSources={sourceSummary.verifiedSources}
                   placement="bottom"
@@ -986,7 +986,7 @@ export default component$(() => {
             {visiblePackages.length ? (
               <>
                 <div class="flex items-center gap-2 mr-3">
-                  <SourceMap
+                  <SourceStack
                     sources={sourceSummary.sources}
                     verifiedSources={sourceSummary.verifiedSources}
                     placement="bottom"
