@@ -2,9 +2,16 @@ import { $, component$, useSignal, useVisibleTask$ } from "@qwik.dev/core";
 import { routeLoader$, useLocation } from "@qwik.dev/router";
 import type { DocumentHead } from "@qwik.dev/router";
 import { unique } from "helpers4/array";
-import { LuBadgeCheck, LuExternalLink, LuFlag, LuPackage } from "@qwikest/icons/lucide";
-import { compactCount, releaseAge } from "~/app-facts";
-import { classifyLicense } from "~/license";
+import {
+  LuBadgeCheck,
+  LuDownload,
+  LuExternalLink,
+  LuFlag,
+  LuHistory,
+  LuPackage,
+} from "@qwikest/icons/lucide";
+import { compactCount, formatReleaseDate, releaseAge } from "~/app-facts";
+import { classifyLicense, licenseInfoHref } from "~/license";
 import { isCatalogUnavailable } from "~/catalog-status";
 import { useCatalogUnavailable } from "~/routes/layout";
 import { reportDataProblemUrl } from "~/contribute-links";
@@ -670,6 +677,18 @@ export default component$(() => {
         installsLast7Days: undefined,
       };
   const licenseKind = classifyLicense(a.license);
+  const licenseHref = licenseInfoHref(a.license);
+  // The badge names the license when it's one short id ("MPL-2.0"), not a
+  // long expression — the tooltip and the info row carry the full string.
+  const licenseShortName =
+    a.license && a.license.length <= 24 && !/\s/.test(a.license) ? a.license : undefined;
+  const installsTip =
+    facts.installsTotal === undefined
+      ? ""
+      : `${facts.installsTotal.toLocaleString("en")} installs on Flathub` +
+        (facts.installsLast7Days === undefined
+          ? ""
+          : ` · ${facts.installsLast7Days.toLocaleString("en")} in the last 7 days`);
   const latestRelease = releaseAge(facts.lastUpdated, new Date());
   const ratingPackages = isDefaultBuild ? a.packages : selectedPackages;
   const editions = editionsOf(a.packages);
@@ -817,33 +836,35 @@ export default component$(() => {
             </p>
           )}
 
+          {/* Two lines: what the app is (type, category, license, suite,
+              age rating...), then how it's doing (rating, installs,
+              activity) — each figure detailed in its tooltip. */}
           <div class="flex flex-wrap items-center gap-2 mt-3">
             {a.contentType === "game" && <span class="badge badge-accent">Game</span>}
-            {facts.rating && (
-              <UnifiedRating
-                average={facts.rating.average}
-                count={facts.rating.count}
-                bySource={summarizeRatingsBySource(ratingPackages)}
-              />
-            )}
             {a.category && <span class="badge badge-outline">{a.category}</span>}
-            {licenseKind !== "unknown" && (
-              <a
-                href={`/docs/glossary/#${licenseKind === "free" ? "free-software" : "proprietary"}`}
-                class={["tooltip badge badge-outline", licenseKind === "free" && "badge-success"]}
-                data-tip={`License: ${a.license}`}
-              >
-                {licenseKind === "free" ? "Free software" : "Proprietary"}
-              </a>
-            )}
-            {facts.installsTotal !== undefined && (
-              <span
-                class="text-sm text-base-content/70"
-                title={`${facts.installsTotal.toLocaleString("en")} installs on Flathub`}
-              >
-                {compactCount(facts.installsTotal)} installs on Flathub
-              </span>
-            )}
+            {licenseKind !== "unknown" &&
+              (licenseHref ? (
+                <a
+                  href={licenseHref}
+                  target={licenseHref.startsWith("/") ? undefined : "_blank"}
+                  rel={licenseHref.startsWith("/") ? undefined : "noopener"}
+                  class={[
+                    "tooltip badge badge-outline gap-1",
+                    licenseKind === "free" && "badge-success",
+                  ]}
+                  data-tip={`License: ${a.license} — what it lets you do`}
+                >
+                  {licenseKind === "free" ? "Free software" : "Proprietary"}
+                  {licenseKind === "free" && licenseShortName && <span>· {licenseShortName}</span>}
+                </a>
+              ) : (
+                <span
+                  class={["badge badge-outline gap-1", licenseKind === "free" && "badge-success"]}
+                  title={`License: ${a.license}`}
+                >
+                  {licenseKind === "free" ? "Free software" : "Proprietary"}
+                </span>
+              ))}
             {a.suite?.role === "component" && a.suite.mainApp && (
               <a
                 href={`/app/${encodeURIComponent(a.suite.mainApp.id)}/`}
@@ -860,6 +881,38 @@ export default component$(() => {
             {a.aiFeatures && <span class="badge badge-secondary">AI features</span>}
             {a.inAppPurchases && <span class="badge badge-warning">In-app purchases</span>}
           </div>
+
+          {(facts.rating || facts.installsTotal !== undefined || latestRelease) && (
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-base-content/70">
+              {facts.rating && (
+                <UnifiedRating
+                  average={facts.rating.average}
+                  count={facts.rating.count}
+                  bySource={summarizeRatingsBySource(ratingPackages)}
+                />
+              )}
+              {facts.installsTotal !== undefined && (
+                <span
+                  class="tooltip inline-flex items-center gap-1"
+                  data-tip={installsTip}
+                  title={installsTip}
+                >
+                  <LuDownload class="text-sm" />
+                  {compactCount(facts.installsTotal)} installs
+                </span>
+              )}
+              {facts.lastUpdated && latestRelease && (
+                <span
+                  class="tooltip inline-flex items-center gap-1"
+                  data-tip={`Latest release: ${formatReleaseDate(facts.lastUpdated)}`}
+                  title={`Latest release: ${formatReleaseDate(facts.lastUpdated)}`}
+                >
+                  <LuHistory class="text-sm" />
+                  Updated {latestRelease}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         <div class="flex flex-col items-start md:items-end gap-2">
@@ -908,10 +961,24 @@ export default component$(() => {
             /claim/). Only here, under the hero's Install button — not
             duplicated on the fixed sticky-header variant that appears on
             scroll. */}
-          <a href={`/claim/?app=${encodeURIComponent(a.id)}`} class="btn btn-ghost btn-sm gap-1.5">
-            <LuBadgeCheck class="text-base" />
-            Claim this listing
-          </a>
+          <div class="flex flex-col items-start md:items-end">
+            <a
+              href={`/claim/?app=${encodeURIComponent(a.id)}`}
+              class="btn btn-ghost btn-sm gap-1.5"
+            >
+              <LuBadgeCheck class="text-base" />
+              Claim this listing
+            </a>
+            <a
+              href={reportDataProblemUrl({ name: a.name, pageUrl: location.url.href })}
+              class="btn btn-ghost btn-sm gap-1.5"
+              target="_blank"
+              rel="noopener"
+            >
+              <LuFlag class="text-base" />
+              Report this app
+            </a>
+          </div>
         </div>
       </section>
 
@@ -1138,10 +1205,7 @@ export default component$(() => {
             <>
               <dt class="text-base-content/70">Latest release</dt>
               <dd>
-                {new Date(facts.lastUpdated).toLocaleDateString("en", {
-                  dateStyle: "long",
-                  timeZone: "UTC",
-                })}{" "}
+                {formatReleaseDate(facts.lastUpdated)}{" "}
                 <span class="text-base-content/70">({latestRelease})</span>
               </dd>
             </>
