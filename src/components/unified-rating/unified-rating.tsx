@@ -37,12 +37,10 @@ export interface UnifiedRatingProps {
  * fiche's old private `RatingStars` plus a separate always-visible
  * "Ratings by source" table row: the per-source breakdown now lives in
  * this component's own tooltip instead, so it's available in both places
- * without duplicating the same numbers twice on the fiche. Hovering
- * reveals it: the native `title` on the outer wrapper is the reliable
- * mechanism (survives a clipping ancestor), the `.tooltip`/`data-tip` on
- * the same element is the fast, no-hover-delay one for contexts with room
- * for it — same two-tier discipline as `SourceMap`/`BuildIndicator`, no
- * separate info icon needed for either.
+ * without duplicating the same numbers twice on the fiche. Hovering (or,
+ * on the fiche, focusing) reveals it in a `HoverTip`, which no card or
+ * row clips — the same tooltip as `SourceStack`/`BuildIndicator`, no
+ * separate info icon needed.
  */
 export const UnifiedRating = component$<UnifiedRatingProps>(
   ({ average, count, bySource = [], mode = "normal", placement = "top", focusable = false }) => {

@@ -1,4 +1,5 @@
 import { component$ } from "@qwik.dev/core";
+import { LuBoxes, LuFlaskConical, LuSplit } from "@qwikest/icons/lucide";
 import type { ReleaseLines } from "~/catalog-types";
 import { HoverTip, type TipPlacement } from "~/components/hover-tip/hover-tip";
 
@@ -9,14 +10,21 @@ export interface BuildIndicatorProps {
   focusable?: boolean;
 }
 
-/** "3 editions · 4 versions", "2 versions", "5 builds" — `undefined` when the app has a single build. */
-export function releaseLinesLabel(lines: ReleaseLines): string | undefined {
-  const parts = [
-    lines.editions.length > 1 && `${lines.editions.length} editions`,
-    lines.versions.length > 1 && `${lines.versions.length} versions`,
-  ].filter(Boolean);
-  if (parts.length > 0) return parts.join(" · ");
-  return lines.otherBuilds.length > 0 ? `${lines.otherBuilds.length + 1} builds` : undefined;
+type Axis = "editions" | "versions" | "builds";
+
+/**
+ * Which counts to show, at most two: editions and versions when the app
+ * has more than one of either, otherwise its other builds (counting the
+ * default one). Empty for an app with a single build.
+ */
+export function releaseLineCounts(lines: ReleaseLines): { axis: Axis; count: number }[] {
+  const counts: { axis: Axis; count: number }[] = [];
+  if (lines.editions.length > 1) counts.push({ axis: "editions", count: lines.editions.length });
+  if (lines.versions.length > 1) counts.push({ axis: "versions", count: lines.versions.length });
+  if (counts.length === 0 && lines.otherBuilds.length > 0) {
+    counts.push({ axis: "builds", count: lines.otherBuilds.length + 1 });
+  }
+  return counts;
 }
 
 function releaseLinesTip(lines: ReleaseLines): string {
@@ -30,20 +38,40 @@ function releaseLinesTip(lines: ReleaseLines): string {
 }
 
 /**
- * The editions and versions an app comes in (and its other builds), in
- * words — the product page's Edition/Version vocabulary, see the glossary.
- * Replaces a stack-of-layers icon with a count badge, which predated
- * editions and versions and said "1" on most apps: an app with a single
- * build now shows nothing. Details in a tooltip that no card or row
- * clips (`HoverTip`).
+ * The editions and versions an app comes in, as one or two small icons
+ * with a count each — compact enough to share an app card's bottom row
+ * with the source stack and the rating:
+ *   - parallel lines splitting: editions (Firefox ESR, Developer Edition)
+ *   - a lab flask: versions (Beta, Nightly — pre-releases)
+ *   - boxes, only when neither applies: other builds (`bin`, AppImage...)
+ * Nothing for an app with a single build (about 75% of the catalog).
+ * Names in a tooltip no card or row clips (`HoverTip`).
  */
 export const BuildIndicator = component$<BuildIndicatorProps>(
   ({ lines, placement = "top", focusable = false }) => {
-    const label = releaseLinesLabel(lines);
-    if (!label) return null;
+    const counts = releaseLineCounts(lines);
+    if (counts.length === 0) return null;
     return (
       <HoverTip text={releaseLinesTip(lines)} placement={placement} focusable={focusable}>
-        <span class="text-xs text-base-content/70 whitespace-nowrap">{label}</span>
+        <span class="inline-flex items-center gap-2">
+          {counts.map(({ axis, count }) => (
+            <span key={axis} class="indicator">
+              <span class="sr-only">
+                {count} {axis}
+              </span>
+              <span
+                aria-hidden="true"
+                class="indicator-item indicator-top indicator-end badge badge-xs text-[10px]"
+                style="padding: 0 1px"
+              >
+                {count}
+              </span>
+              {axis === "editions" && <LuSplit class="text-sm text-base-content/70" />}
+              {axis === "versions" && <LuFlaskConical class="text-sm text-base-content/70" />}
+              {axis === "builds" && <LuBoxes class="text-sm text-base-content/70" />}
+            </span>
+          ))}
+        </span>
       </HoverTip>
     );
   },
