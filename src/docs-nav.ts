@@ -36,6 +36,11 @@ export const DOCS_SECTIONS: DocsSection[] = [
       { href: "/docs/formats/", title: "Which format to choose", markdown: mdx("formats") },
       { href: "/docs/rankings/", title: "How rankings work", markdown: mdx("rankings") },
       { href: "/docs/glossary/", title: "Glossary", markdown: mdx("glossary") },
+      {
+        href: "/docs/open-source-licenses/",
+        title: "Open-source licenses",
+        markdown: mdx("open-source-licenses"),
+      },
     ],
   },
   {
