@@ -201,6 +201,7 @@ function toCatalogApp(row: Row): CatalogApp {
     lastUpdated: str(row.last_updated),
     installsTotal: num(row.installs_total),
     installsLast7Days: num(row.installs_last_7_days),
+    dataConfidence: json(row.data_confidence_json),
     iconUrl: str(row.icon_url),
     approxSizeBytes: num(row.approx_size_bytes),
     changelog: str(row.changelog),

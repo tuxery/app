@@ -28,3 +28,71 @@ export function compactCount(count: number): string {
 export function formatReleaseDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en", { dateStyle: "long", timeZone: "UTC" });
 }
+
+export interface DataConfidence {
+  score: number;
+  signals: { signal: string; delta: number; detail: string }[];
+}
+
+export interface ConfidenceNote {
+  tone: "good" | "warning";
+  text: string;
+  /** The full detail when `text` shortens it (a long list of names). */
+  title?: string;
+}
+
+/**
+ * The catalog's data-confidence signals as sentences for the product page
+ * ("6 independent sources agree", "Sources disagree on the name: jan /
+ * janlive"), strongest first. Empty when there's nothing to say — a single
+ * source, or nothing flagged — never a made-up verdict.
+ */
+export function confidenceNotes(confidence: DataConfidence | undefined): ConfidenceNote[] {
+  if (!confidence) return [];
+  const notes: ConfidenceNote[] = [];
+  for (const { signal, detail } of confidence.signals) {
+    if (signal === "force-match-verified") {
+      notes.push({ tone: "good", text: "Sources matched and checked by hand" });
+    } else if (signal === "multi-source-corroboration") {
+      const sources = /(\d+) independent sources/.exec(detail)?.[1];
+      notes.push({
+        tone: "good",
+        text: sources ? `${sources} independent sources agree` : "Several sources agree",
+      });
+    } else if (signal === "name-disagreement") {
+      const names = /disagree on name: (.+?)\.?$/.exec(detail)?.[1];
+      const count = names?.split(" / ").length ?? 0;
+      // A long list (every build's own package name) reads as noise: the
+      // count, with the names in the tooltip.
+      notes.push(
+        names && count > 3
+          ? { tone: "warning", text: `Sources use ${count} different names`, title: names }
+          : {
+              tone: "warning",
+              text: names
+                ? `Sources disagree on the name: ${names}`
+                : "Sources disagree on the name",
+            },
+      );
+    } else if (signal === "license-family-conflict") {
+      notes.push({ tone: "warning", text: "Sources disagree on the license" });
+    }
+  }
+  return notes.toSorted((a, b) => (a.tone === b.tone ? 0 : a.tone === "good" ? -1 : 1));
+}
+
+// Upstream store selections worth showing as badges ("verified" has its
+// own badge next to the developer).
+const STORE_PICK_LABELS: Record<string, string> = {
+  "recently-added": "New on Flathub",
+  "recently-updated": "Recently updated on Flathub",
+  featured: "Featured on the Snap Store",
+};
+
+/** Store selections an app appears in, as badge labels, in a fixed order. */
+export function storePicks(storeCollections: string[] | undefined): string[] {
+  const picks = new Set(storeCollections);
+  return Object.entries(STORE_PICK_LABELS)
+    .filter(([collection]) => picks.has(collection))
+    .map(([, label]) => label);
+}
