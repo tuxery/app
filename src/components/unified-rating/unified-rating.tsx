@@ -58,9 +58,13 @@ export const UnifiedRating = component$<UnifiedRatingProps>(
             <div
               key={position}
               class={[
-                "mask mask-star-2",
+                // Full opacity: daisyUI's `rating` dims every child to 20%
+                // unless it's a checked radio input, which these aren't.
+                "mask mask-star-2 opacity-100!",
                 i % 2 === 0 ? "mask-half-1" : "mask-half-2",
-                position <= rounded ? "bg-warning" : "bg-base-300",
+                // A fixed amber, not the theme's warning color: nord's is a
+                // pale yellow that barely shows against its light background.
+                position <= rounded ? "bg-amber-500" : "bg-base-content/20",
               ]}
             />
           ))}

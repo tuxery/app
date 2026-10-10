@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compactCount, releaseAge } from "~/app-facts";
+import { compactCount, formatReleaseDate, releaseAge } from "~/app-facts";
 
 const NOW = new Date("2026-10-10T12:00:00Z");
 
@@ -24,5 +24,11 @@ describe("compactCount", () => {
     expect(compactCount(12_351_023)).toBe("12.4M");
     expect(compactCount(50_853)).toBe("50.9K");
     expect(compactCount(830)).toBe("830");
+  });
+});
+
+describe("formatReleaseDate", () => {
+  it("writes the date in UTC, whatever the server's timezone", () => {
+    expect(formatReleaseDate("2026-10-05T00:00:00.000Z")).toBe("October 5, 2026");
   });
 });

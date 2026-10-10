@@ -23,3 +23,8 @@ export function compactCount(count: number): string {
     count,
   );
 }
+
+/** "October 5, 2026" — a release date as written on the page, in UTC like the dates the catalog stores. */
+export function formatReleaseDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en", { dateStyle: "long", timeZone: "UTC" });
+}
