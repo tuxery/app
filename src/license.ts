@@ -57,3 +57,49 @@ export function classifyLicense(license: string | undefined): LicenseKind {
   }
   return kinds.every((kind) => kind === "free") ? "free" : "unknown";
 }
+
+/** The docs page explaining the common free licenses, one section per family. */
+export const LICENSE_GUIDE_PATH = "/docs/open-source-licenses/";
+
+// Section of the guide for a single license term, by family. Checked in
+// order, so "LGPL" and "AGPL" are tried before "GPL".
+const GUIDE_SECTIONS: [RegExp, string][] = [
+  [/^AGPL/, "agpl-3.0"],
+  [/^LGPL/, "lgpl"],
+  [/^GPL[-V]?2|^GPL-2/, "gpl-2.0"],
+  [/^GPL/, "gpl-3.0"],
+  [/^MPL/, "mpl-2.0"],
+  [/^APACHE/, "apache-2.0"],
+  [/^BSD|^0BSD/, "bsd"],
+  [/^(MIT|X11|ISC)/, "mit"],
+  [/^(UNLICENSE|CC0|PUBLIC ?DOMAIN|WTFPL)/, "public-domain"],
+];
+
+// A bare SPDX identifier (no spaces, no Arch "custom:"), for the SPDX
+// license list when the guide has no section for it.
+const SPDX_ID = /^[A-Za-z0-9.+-]+$/;
+
+/**
+ * Where to learn what an app's license lets you do: the guide's section
+ * for a common free license ("MIT", "GPL-3.0-or-later", "GPL3"...), the
+ * guide's top for an expression combining several licenses, SPDX's page
+ * for any other single SPDX id, the glossary for a proprietary license.
+ * `undefined` when there's nothing useful to link (no verdict, no id).
+ */
+export function licenseInfoHref(license: string | undefined): string | undefined {
+  const kind = classifyLicense(license);
+  if (kind === "proprietary") return "/docs/glossary/#proprietary";
+  if (kind !== "free" || !license) return undefined;
+  const term = license.trim();
+  if (/\s(AND|OR)\s|[,;]/i.test(term)) return `${LICENSE_GUIDE_PATH}#several-licenses`;
+  const name =
+    term
+      .split(/\s+WITH\s+/i)[0]
+      ?.trim()
+      .toUpperCase() ?? "";
+  const section = GUIDE_SECTIONS.find(([pattern]) => pattern.test(name))?.[1];
+  if (section) return `${LICENSE_GUIDE_PATH}#${section}`;
+  return SPDX_ID.test(term)
+    ? `https://spdx.org/licenses/${encodeURIComponent(term)}.html`
+    : undefined;
+}
