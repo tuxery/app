@@ -1,6 +1,6 @@
 import { component$ } from "@qwik.dev/core";
 import { ALL_SOURCE_GROUPS, SOURCE_GROUP_MEMBERS, type PackageSourceId } from "~/catalog-types";
-import { tooltipClass, type TooltipPosition } from "~/components/tooltip-position";
+import { HoverTip, type TipPlacement } from "~/components/hover-tip/hover-tip";
 import { findOsEntry, recommendedGroupIds } from "~/os-catalog";
 import { useSettings } from "~/settings";
 
@@ -20,18 +20,18 @@ export interface SourceMapProps {
   sources: PackageSourceId[];
   /** Which of `sources` carries a verified package — see `VERIFIABLE_SOURCES`. */
   verifiedSources?: PackageSourceId[];
-  tooltipPosition?: TooltipPosition;
+  placement?: TipPlacement;
+  /** On the product page, where it isn't inside a link: takes keyboard focus for its tooltip. */
+  focusable?: boolean;
 }
 
 /**
  * A source dot-map — one small square per platform/distro group, colored
  * when this app has a package there — used on both listing cards
  * (`AppCard`) and the app-detail page's hero/sticky header. Hovering
- * reveals which ones: the native `title` is the reliable mechanism (works
- * from inside a horizontal-scroll row's `overflow-x-auto`, or a sticky
- * header's `overflow: hidden` — both clip a CSS tooltip's popup entirely);
- * the `.tooltip`/`data-tip` on the same element is the fast, no-hover-
- * delay one for contexts with room for it.
+ * reveals which ones, one per line, in a `HoverTip` — drawn in the top
+ * layer, so neither a card's `overflow: hidden` nor a horizontal row's
+ * scrolling clips it, which cut off the CSS tooltip used before.
  *
  * Was half of `SourceSummary` (paired with `BuildIndicator`, its other
  * half) — the combined dot-map + package-count badge + one shared info
@@ -58,7 +58,7 @@ export interface SourceMapProps {
  * explicit "Verified developer" badge — see that page's hero).
  */
 export const SourceMap = component$<SourceMapProps>(
-  ({ sources, verifiedSources = [], tooltipPosition = "top" }) => {
+  ({ sources, verifiedSources = [], placement = "top", focusable = false }) => {
     const settings = useSettings();
     const osEntry = findOsEntry(settings.osId.value);
     const recommended = osEntry ? recommendedGroupIds(osEntry) : undefined;
@@ -87,19 +87,17 @@ export const SourceMap = component$<SourceMapProps>(
               ? `${group} ✓ verified, recommended for your OS`
               : `${group} ✓ verified`;
           })
-          .join(", ")
+          .join("\n")
       : "No sources";
 
     return (
-      <div
-        class={tooltipClass(tooltipPosition, "grid grid-rows-2 grid-flow-col gap-0.5")}
-        title={tip}
-        data-tip={tip}
-      >
-        {ALL_SOURCE_GROUPS.map((group) => (
-          <span key={group} class={`w-1.5 h-1.5 rounded-[1px] ${dotClass(group)}`} />
-        ))}
-      </div>
+      <HoverTip text={tip} placement={placement} focusable={focusable}>
+        <span class="grid grid-rows-2 grid-flow-col gap-0.5">
+          {ALL_SOURCE_GROUPS.map((group) => (
+            <span key={group} class={`w-1.5 h-1.5 rounded-[1px] ${dotClass(group)}`} />
+          ))}
+        </span>
+      </HoverTip>
     );
   },
 );
