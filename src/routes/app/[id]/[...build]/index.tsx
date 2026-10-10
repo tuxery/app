@@ -4,13 +4,21 @@ import type { DocumentHead } from "@qwik.dev/router";
 import { unique } from "helpers4/array";
 import {
   LuBadgeCheck,
+  LuCheck,
   LuDownload,
   LuExternalLink,
   LuFlag,
   LuHistory,
   LuPackage,
+  LuAlertTriangle,
 } from "@qwikest/icons/lucide";
-import { compactCount, formatReleaseDate, releaseAge } from "~/app-facts";
+import {
+  compactCount,
+  confidenceNotes,
+  formatReleaseDate,
+  releaseAge,
+  storePicks,
+} from "~/app-facts";
 import { classifyLicense, licenseInfoHref } from "~/license";
 import { isCatalogUnavailable } from "~/catalog-status";
 import { useCatalogUnavailable } from "~/routes/layout";
@@ -113,6 +121,12 @@ export const useDetailStats = routeLoader$(async (requestEvent) =>
 // point at the same leaf — the "do you have a desktop-integration tool"
 // question doesn't depend on which of the two AppImage feeds a package
 // came from.
+// The "Additional information" cards.
+const INFO_CARD = "rounded-box border border-base-300 bg-base-100/70 p-4";
+const INFO_CARD_TITLE = "text-xs font-semibold uppercase tracking-wide text-base-content/70 mb-3";
+const INFO_LIST = "flex flex-col gap-3 text-sm";
+const INFO_LABEL = "text-xs text-base-content/70";
+
 const PACKAGE_SOURCE_TO_LEAF_ID: Partial<Record<PackageSourceId, string>> = {
   "flatpak-flathub": "flathub",
   "flatpak-appcenter": "elementary-appcenter",
@@ -676,6 +690,18 @@ export default component$(() => {
         installsTotal: undefined,
         installsLast7Days: undefined,
       };
+  const confidence = confidenceNotes(a.dataConfidence);
+  const picks = storePicks(a.storeCollections);
+  // "Available via", one entry per platform ("AUR (14)" for 14 builds),
+  // the full list of packagings one click away.
+  const installSourcePackages = a.packages.filter((pkg) => isInstallSource(pkg.source));
+  const availableViaAll = availableViaLabels(installSourcePackages);
+  const availableVia = groupPackagesBySourceGroup(installSourcePackages).map(
+    ([group, packages]) => {
+      const builds = availableViaLabels(packages).length;
+      return { label: builds > 1 ? `${group} (${builds})` : group };
+    },
+  );
   const licenseKind = classifyLicense(a.license);
   const licenseHref = licenseInfoHref(a.license);
   // The badge names the license when it's one short id ("MPL-2.0"), not a
@@ -751,8 +777,10 @@ export default component$(() => {
               size="sm"
             />
             <div class="flex-1" />
+            {/* Hidden on phones: with the pickers it pushed the Install
+                button out of the sticky bar. The page header still has it. */}
             {visiblePackages.length > 0 && (
-              <div class="flex items-center gap-2 mr-3">
+              <div class="hidden sm:flex items-center gap-2 mr-3">
                 <SourceMap
                   sources={sourceSummary.sources}
                   verifiedSources={sourceSummary.verifiedSources}
@@ -865,6 +893,11 @@ export default component$(() => {
                   {licenseKind === "free" ? "Free software" : "Proprietary"}
                 </span>
               ))}
+            {picks.map((pick) => (
+              <span key={pick} class="badge badge-ghost">
+                {pick}
+              </span>
+            ))}
             {a.suite?.role === "component" && a.suite.mainApp && (
               <a
                 href={`/app/${encodeURIComponent(a.suite.mainApp.id)}/`}
@@ -1150,139 +1183,184 @@ export default component$(() => {
         </section>
       ) : null}
 
+      {/* Three cards by theme — the project, getting it, and the data
+          itself — instead of one long two-column table. Each row only
+          shows when its data exists. */}
       <section>
-        <h2 class="text-lg font-semibold mb-2">Additional information</h2>
-        <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-sm">
-          {a.developer && (
-            <>
-              <dt class="text-base-content/70">Developer</dt>
-              <dd>
-                {a.homepage ? (
-                  <a href={a.homepage} class="link link-hover" target="_blank" rel="noopener">
-                    {a.developer}
-                  </a>
-                ) : (
-                  a.developer
-                )}
-              </dd>
-            </>
-          )}
-          {a.publisher && (
-            <>
-              <dt class="text-base-content/70">Publisher</dt>
-              <dd>
-                {a.homepage ? (
-                  <a href={a.homepage} class="link link-hover" target="_blank" rel="noopener">
-                    {a.publisher}
-                  </a>
-                ) : (
-                  a.publisher
-                )}
-              </dd>
-            </>
-          )}
-          {a.license && (
-            <>
-              <dt class="text-base-content/70">License</dt>
-              <dd>
-                {a.license}
-                {licenseKind !== "unknown" && (
-                  <span class="text-base-content/70">
-                    {" "}
-                    ({licenseKind === "free" ? "free software" : "proprietary"})
-                  </span>
-                )}
-              </dd>
-            </>
-          )}
-          {a.category && (
-            <>
-              <dt class="text-base-content/70">Category</dt>
-              <dd>{a.category}</dd>
-            </>
-          )}
-          {facts.lastUpdated && latestRelease && (
-            <>
-              <dt class="text-base-content/70">Latest release</dt>
-              <dd>
-                {formatReleaseDate(facts.lastUpdated)}{" "}
-                <span class="text-base-content/70">({latestRelease})</span>
-              </dd>
-            </>
-          )}
-          {facts.installsTotal !== undefined && (
-            <>
-              <dt class="text-base-content/70">Installs</dt>
-              <dd>
-                {facts.installsTotal.toLocaleString("en")} on Flathub
-                {facts.installsLast7Days !== undefined && (
-                  <span class="text-base-content/70">
-                    {" "}
-                    ({facts.installsLast7Days.toLocaleString("en")} in the last 7 days)
-                  </span>
-                )}
-              </dd>
-            </>
-          )}
-          {a.languages?.length && (
-            <>
-              <dt class="text-base-content/70">Languages</dt>
-              <dd>{a.languages.join(", ")}</dd>
-            </>
-          )}
-          {facts.approxSizeBytes && (
-            <>
-              <dt class="text-base-content/70">Size</dt>
-              <dd>{formatBytes(facts.approxSizeBytes)}</dd>
-            </>
-          )}
-          {a.permissions?.length && (
-            <>
-              <dt class="text-base-content/70">Permissions</dt>
-              <dd>{a.permissions.join(", ")}</dd>
-            </>
-          )}
-          {a.gdprCompliant !== undefined && (
-            <>
-              <dt class="text-base-content/70">GDPR</dt>
-              <dd>{a.gdprCompliant ? "Compliant" : "Not stated"}</dd>
-            </>
-          )}
-          {a.homepage && (
-            <>
-              <dt class="text-base-content/70">Homepage</dt>
-              <dd>
-                <a href={a.homepage} class="link link-primary" target="_blank" rel="noopener">
-                  {a.homepage}
-                </a>
-              </dd>
-            </>
-          )}
-          <dt class="text-base-content/70">Available via</dt>
-          <dd>{availableViaLabels(a.packages).join(", ")}</dd>
-          {stats.value.generatedAt && (
-            <>
-              <dt class="text-base-content/70">Catalog data as of</dt>
-              <dd>
-                {new Date(stats.value.generatedAt).toLocaleDateString()}{" "}
-                <span class="text-base-content/70">
-                  (dataset snapshot date — per-app update dates aren't tracked yet)
-                </span>
-              </dd>
-            </>
-          )}
-        </dl>
+        <h2 class="text-lg font-semibold mb-3">Additional information</h2>
+        <div class="grid gap-4 md:grid-cols-3 items-start">
+          <div class={INFO_CARD}>
+            <h3 class={INFO_CARD_TITLE}>Project</h3>
+            <dl class={INFO_LIST}>
+              {a.developer && (
+                <div>
+                  <dt class={INFO_LABEL}>Developer</dt>
+                  <dd>{a.developer}</dd>
+                </div>
+              )}
+              {a.publisher && a.publisher !== a.developer && (
+                <div>
+                  <dt class={INFO_LABEL}>Publisher</dt>
+                  <dd>{a.publisher}</dd>
+                </div>
+              )}
+              {a.license && (
+                <div>
+                  <dt class={INFO_LABEL}>License</dt>
+                  <dd class="break-words">
+                    {a.license}
+                    {licenseKind !== "unknown" && (
+                      <span class="text-base-content/70">
+                        {" "}
+                        ({licenseKind === "free" ? "free software" : "proprietary"})
+                      </span>
+                    )}
+                    {licenseHref && (
+                      <a
+                        href={licenseHref}
+                        target={licenseHref.startsWith("/") ? undefined : "_blank"}
+                        rel={licenseHref.startsWith("/") ? undefined : "noopener"}
+                        class="link link-primary block text-xs mt-0.5"
+                      >
+                        What this license lets you do
+                      </a>
+                    )}
+                  </dd>
+                </div>
+              )}
+              {a.homepage && (
+                <div>
+                  <dt class={INFO_LABEL}>Homepage</dt>
+                  <dd class="break-all">
+                    <a href={a.homepage} class="link link-primary" target="_blank" rel="noopener">
+                      {a.homepage.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                    </a>
+                  </dd>
+                </div>
+              )}
+              {facts.lastUpdated && latestRelease && (
+                <div>
+                  <dt class={INFO_LABEL}>Latest release</dt>
+                  <dd>
+                    {formatReleaseDate(facts.lastUpdated)}{" "}
+                    <span class="text-base-content/70">({latestRelease})</span>
+                  </dd>
+                </div>
+              )}
+              {a.languages?.length && (
+                <div>
+                  <dt class={INFO_LABEL}>Languages</dt>
+                  <dd>
+                    {a.languages.length > 8
+                      ? `${a.languages.length} languages`
+                      : a.languages.join(", ")}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </div>
 
-        <a
-          // A data problem: catalog's form, with this page's link filled in.
-          href={reportDataProblemUrl({ name: a.name, pageUrl: location.url.href })}
-          class="btn btn-ghost btn-sm gap-1.5 mt-4"
-          target="_blank"
-          rel="noopener"
-        >
-          <LuFlag class="text-base" />
-          Report this app
-        </a>
+          <div class={INFO_CARD}>
+            <h3 class={INFO_CARD_TITLE}>Install</h3>
+            <dl class={INFO_LIST}>
+              {facts.approxSizeBytes && (
+                <div>
+                  <dt class={INFO_LABEL}>Size</dt>
+                  <dd>{formatBytes(facts.approxSizeBytes)}</dd>
+                </div>
+              )}
+              {facts.installsTotal !== undefined && (
+                <div>
+                  <dt class={INFO_LABEL}>Installs</dt>
+                  <dd>
+                    {facts.installsTotal.toLocaleString("en")} on Flathub
+                    {facts.installsLast7Days !== undefined && (
+                      <span class="block text-base-content/70">
+                        {facts.installsLast7Days.toLocaleString("en")} in the last 7 days
+                      </span>
+                    )}
+                  </dd>
+                </div>
+              )}
+              {availableVia.length > 0 && (
+                <div>
+                  <dt class={INFO_LABEL}>Available via</dt>
+                  <dd>
+                    {availableVia.map((entry) => entry.label).join(" · ")}
+                    {availableViaAll.length > availableVia.length && (
+                      <details class="mt-1">
+                        <summary class="link link-primary text-xs cursor-pointer w-fit">
+                          All {availableViaAll.length} packagings
+                        </summary>
+                        <p class="text-xs text-base-content/70 mt-1">
+                          {availableViaAll.join(", ")}
+                        </p>
+                      </details>
+                    )}
+                  </dd>
+                </div>
+              )}
+              {a.permissions?.length && (
+                <div>
+                  <dt class={INFO_LABEL}>Permissions</dt>
+                  <dd>{a.permissions.join(", ")}</dd>
+                </div>
+              )}
+            </dl>
+          </div>
+
+          <div class={INFO_CARD}>
+            <h3 class={INFO_CARD_TITLE}>About this data</h3>
+            <dl class={INFO_LIST}>
+              {confidence.length > 0 && (
+                <div>
+                  <dt class={INFO_LABEL}>Sources</dt>
+                  <dd class="flex flex-col gap-0.5">
+                    {confidence.map((note) => (
+                      <span
+                        key={note.text}
+                        title={note.title}
+                        class="inline-flex items-start gap-1.5"
+                      >
+                        {note.tone === "good" ? (
+                          <LuCheck class="text-success shrink-0 mt-0.5" />
+                        ) : (
+                          <LuAlertTriangle class="text-warning shrink-0 mt-0.5" />
+                        )}
+                        {note.text}
+                      </span>
+                    ))}
+                  </dd>
+                </div>
+              )}
+              {stats.value.generatedAt && (
+                <div>
+                  <dt class={INFO_LABEL}>Catalog data as of</dt>
+                  <dd>{formatReleaseDate(stats.value.generatedAt)}</dd>
+                </div>
+              )}
+            </dl>
+            <div class="flex flex-col items-start mt-3 -ml-3">
+              <a
+                // A data problem: catalog's form, with this page's link filled in.
+                href={reportDataProblemUrl({ name: a.name, pageUrl: location.url.href })}
+                class="btn btn-ghost btn-sm gap-1.5"
+                target="_blank"
+                rel="noopener"
+              >
+                <LuFlag class="text-base" />
+                Report this app
+              </a>
+              <a
+                href={`/claim/?app=${encodeURIComponent(a.id)}`}
+                class="btn btn-ghost btn-sm gap-1.5"
+              >
+                <LuBadgeCheck class="text-base" />
+                Claim this listing
+              </a>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Forks, successors, unofficial clients, ... — catalog's product-families relations. */}

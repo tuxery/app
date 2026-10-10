@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { compactCount, formatReleaseDate, releaseAge } from "~/app-facts";
+import {
+  compactCount,
+  confidenceNotes,
+  formatReleaseDate,
+  releaseAge,
+  storePicks,
+} from "~/app-facts";
 
 const NOW = new Date("2026-10-10T12:00:00Z");
 
@@ -30,5 +36,69 @@ describe("compactCount", () => {
 describe("formatReleaseDate", () => {
   it("writes the date in UTC, whatever the server's timezone", () => {
     expect(formatReleaseDate("2026-10-05T00:00:00.000Z")).toBe("October 5, 2026");
+  });
+});
+
+describe("confidenceNotes", () => {
+  it("turns the catalog's signals into sentences, agreement first", () => {
+    expect(
+      confidenceNotes({
+        score: -5,
+        signals: [
+          {
+            signal: "name-disagreement",
+            delta: -15,
+            detail: "Member packages disagree on name: jan / janlive.",
+          },
+          {
+            signal: "multi-source-corroboration",
+            delta: 10,
+            detail: "6 independent sources agree, no disagreement signal found.",
+          },
+          { signal: "license-family-conflict", delta: -20, detail: "…" },
+        ],
+      }),
+    ).toEqual([
+      { tone: "good", text: "6 independent sources agree" },
+      { tone: "warning", text: "Sources disagree on the name: jan / janlive" },
+      { tone: "warning", text: "Sources disagree on the license" },
+    ]);
+  });
+
+  it("counts a long list of names instead of printing it", () => {
+    expect(
+      confidenceNotes({
+        score: -15,
+        signals: [
+          {
+            signal: "name-disagreement",
+            delta: -15,
+            detail:
+              "Member packages disagree on name: firefox / firefoxbeta / firefoxesr / firefoxnightly.",
+          },
+        ],
+      }),
+    ).toEqual([
+      {
+        tone: "warning",
+        text: "Sources use 4 different names",
+        title: "firefox / firefoxbeta / firefoxesr / firefoxnightly",
+      },
+    ]);
+  });
+
+  it("says nothing without signals", () => {
+    expect(confidenceNotes({ score: 0, signals: [] })).toEqual([]);
+    expect(confidenceNotes(undefined)).toEqual([]);
+  });
+});
+
+describe("storePicks", () => {
+  it("labels store selections, leaving verified to its own badge", () => {
+    expect(storePicks(["verified", "featured", "recently-added"])).toEqual([
+      "New on Flathub",
+      "Featured on the Snap Store",
+    ]);
+    expect(storePicks(undefined)).toEqual([]);
   });
 });

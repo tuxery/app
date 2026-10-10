@@ -200,6 +200,8 @@ export interface CatalogApp {
   /** Flathub's own install counts — all time and the last 7 days — for the app's Flathub package only, never all Linux users. */
   installsTotal?: number;
   installsLast7Days?: number;
+  /** Deterministic signals on how far the sources agree (corroboration, name or license disagreement, a hand-checked match) — see `tuxery/catalog`'s `CatalogApp.dataConfidence`. Absent on a dataset published before it existed. */
+  dataConfidence?: import("~/app-facts").DataConfidence;
   languages?: string[];
   approxSizeBytes?: number;
   screenshots?: string[];
