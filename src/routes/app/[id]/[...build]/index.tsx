@@ -23,7 +23,7 @@ import { classifyLicense, licenseInfoHref } from "~/license";
 import { isCatalogUnavailable } from "~/catalog-status";
 import { useCatalogUnavailable } from "~/routes/layout";
 import { reportDataProblemUrl } from "~/contribute-links";
-import { getAppById, getStats } from "~/catalog";
+import { getAppById, getAppsByCategory, getAppsByIds, getStats } from "~/catalog";
 import { resolveServerEnv } from "~/server-env";
 import {
   ALL_SOURCE_GROUPS,
@@ -39,6 +39,7 @@ import {
   summarizeBuilds,
   summarizeRatingsBySource,
   verifiedSourcesOf,
+  type AppSummary,
   type CatalogApp,
   type Companion,
   type CompanionKind,
@@ -62,6 +63,8 @@ import {
   type BuildSelection,
 } from "~/product-builds";
 import { SourceMap } from "~/components/source-map/source-map";
+import { AppCardLink } from "~/components/app-card/app-card";
+import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-scroller";
 import { ScreenshotGallery } from "~/components/screenshot-gallery/screenshot-gallery";
 import { UnifiedRating } from "~/components/unified-rating/unified-rating";
 import {
@@ -87,6 +90,29 @@ export const useApp = routeLoader$(async (requestEvent): Promise<CatalogApp | nu
   // "couldn't load", not "doesn't exist".
   if (!app && !isCatalogUnavailable(requestEvent.sharedMap)) requestEvent.status(404);
   return app;
+});
+
+/**
+ * Cards for the product's related apps (its catalog relations, by id) and
+ * a "similar apps" row: the most popular apps of the same category, from
+ * the list catalog precomputes per category — no live query. None for
+ * "To Classify", which isn't a real category.
+ */
+export const useRelatedApps = routeLoader$(async (requestEvent) => {
+  const app = await requestEvent.resolveValue(useApp);
+  if (!app) return { related: [] as AppSummary[], similar: [] as AppSummary[] };
+  const env = resolveServerEnv(requestEvent.platform);
+  const relatedIds = unique((app.relations ?? []).map((relation) => relation.app.id));
+  const [related, inCategory] = await Promise.all([
+    relatedIds.length > 0 ? getAppsByIds(env, relatedIds) : Promise.resolve([]),
+    app.category && app.category !== "To Classify"
+      ? getAppsByCategory(env, app.category, 24)
+      : Promise.resolve([]),
+  ]);
+  const similar = inCategory
+    .filter((other) => other.id !== app.id && !relatedIds.includes(other.id))
+    .slice(0, 12);
+  return { related, similar };
 });
 
 /**
@@ -613,6 +639,7 @@ function summarizeSources(packages: SourcedPackage[]) {
 
 export default component$(() => {
   const location = useLocation();
+  const relatedApps = useRelatedApps();
   const catalogUnavailable = useCatalogUnavailable().value;
   const app = useApp();
   const buildSelection = useBuildSelection();
@@ -692,6 +719,8 @@ export default component$(() => {
         installsTotal: undefined,
         installsLast7Days: undefined,
       };
+  const relationGroups = groupRelations(a.relations ?? []);
+  const relatedById = new Map(relatedApps.value.related.map((card) => [card.id, card]));
   const confidence = confidenceNotes(a.dataConfidence);
   const picks = storePicks(a.storeCollections);
   // "Available via", one entry per platform ("AUR (14)" for 14 builds),
@@ -1407,27 +1436,72 @@ export default component$(() => {
         </section>
       )}
 
-      {/* Forks, successors, unofficial clients, ... — catalog's product-families relations. */}
-      {a.relations && a.relations.length > 0 && (
-        <section>
-          <h2 class="text-lg font-semibold mb-3">Related</h2>
-          <dl class="flex flex-col gap-2">
-            {groupRelations(a.relations).map(([label, apps]) => (
-              <div key={label} class="flex flex-wrap items-center gap-2">
-                <dt class="text-sm text-base-content/70">{label}</dt>
-                {apps.map((related) => (
-                  <dd key={related.id}>
-                    <a
-                      href={`/app/${encodeURIComponent(related.id)}/`}
-                      class="btn btn-outline btn-sm"
-                    >
-                      {related.name}
-                    </a>
-                  </dd>
-                ))}
+      {/* Forks, successors, unofficial clients, ... — catalog's
+          product-families relations — then apps of the same category, each
+          as a row of cards like the homepage's. A related app missing from
+          the published dataset still gets a plain link. */}
+      {(relationGroups.length > 0 || relatedApps.value.similar.length > 0) && (
+        <section class="flex flex-col gap-6">
+          <h2 class="text-lg font-semibold">Related</h2>
+          {relationGroups.map(([label, apps]) => {
+            const cards = apps
+              .map((related) => relatedById.get(related.id))
+              .filter((card): card is AppSummary => card !== undefined);
+            const missing = apps.filter((related) => !relatedById.has(related.id));
+            return (
+              <div key={label}>
+                <h3 class="text-sm font-semibold text-base-content/70 mb-2">{label}</h3>
+                {cards.length > 0 && (
+                  <HorizontalScroller ariaLabel={`${label} ${a.name}`}>
+                    {cards.map((card) => (
+                      <AppCardLink
+                        key={card.id}
+                        app={card}
+                        linkClass="block w-64 shrink-0 snap-start"
+                      />
+                    ))}
+                  </HorizontalScroller>
+                )}
+                {missing.length > 0 && (
+                  <div class="flex flex-wrap gap-2">
+                    {missing.map((related) => (
+                      <a
+                        key={related.id}
+                        href={`/app/${encodeURIComponent(related.id)}/`}
+                        class="btn btn-outline btn-sm"
+                      >
+                        {related.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
-            ))}
-          </dl>
+            );
+          })}
+          {relatedApps.value.similar.length > 0 && (
+            <div>
+              <div class="flex items-baseline justify-between mb-2">
+                <h3 class="text-sm font-semibold text-base-content/70">
+                  Similar {a.contentType === "game" ? "games" : "apps"}: {a.category}
+                </h3>
+                <a
+                  href={`/browse/?category=${encodeURIComponent(a.category)}`}
+                  class="link link-primary text-sm"
+                >
+                  Browse all →
+                </a>
+              </div>
+              <HorizontalScroller ariaLabel={`More in ${a.category}`}>
+                {relatedApps.value.similar.map((card) => (
+                  <AppCardLink
+                    key={card.id}
+                    app={card}
+                    linkClass="block w-64 shrink-0 snap-start"
+                  />
+                ))}
+              </HorizontalScroller>
+            </div>
+          )}
         </section>
       )}
 
