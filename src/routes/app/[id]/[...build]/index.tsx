@@ -557,6 +557,7 @@ function groupRelations(relations: Relation[]): [string, Relation["app"][]][] {
 }
 
 const COMPANION_KIND_LABELS: Record<CompanionKind, string> = {
+  component: "Components",
   extension: "Extensions",
   plugin: "Plugins",
   theme: "Themes",

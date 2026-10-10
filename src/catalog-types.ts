@@ -156,7 +156,9 @@ export type CompanionKind =
   | "localization"
   | "data"
   | "native-host"
-  | "config";
+  | "config"
+  /** A separately packaged part of the product itself (its -data, -server or -relay package). */
+  | "component";
 
 /** Something that adds to a product (extension, plugin, theme, language pack, ...) — listed on its page, never a card of its own. */
 export interface Companion {
