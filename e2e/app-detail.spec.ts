@@ -199,7 +199,10 @@ test("a product page lists its relations and add-ons, linking related products",
     "href",
     /^\/app\/[^/]+\/$/,
   );
-  await expect(page.getByText(/^Similar apps: /)).toBeVisible();
+  // Then the same category's apps, titled with the category alone.
+  await expect(
+    page.getByRole("heading", { name: "Internet & Communication", level: 3 }),
+  ).toBeVisible();
 
   // Hundreds of language packs, collapsed by kind with their full count.
   await expect(page.getByRole("heading", { name: "Add-ons", exact: true })).toBeVisible();
