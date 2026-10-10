@@ -337,6 +337,24 @@ export function verifiedSourcesOf(
   return unique(packages.filter(isVerifiedPackage).map((pkg) => pkg.source));
 }
 
+/** An app's release lines as the product page names them: its editions (catalog's tracks), versions (risks) and other builds (flavors) — see docs/product-families.md and the glossary. */
+export interface ReleaseLines {
+  editions: string[];
+  versions: string[];
+  otherBuilds: string[];
+}
+
+/** `ReleaseLines` from a set of packages, each list deduplicated, labels as the pickers show them ("Standard", "ESR"; "Stable", "Nightly"; "Bin", "AppImage"). */
+export function summarizeReleaseLines(packages: BuildFields[]): ReleaseLines {
+  return {
+    editions: unique(packages.map((pkg) => trackLabel(pkg.track))),
+    versions: unique(packages.map((pkg) => riskLabel(pkg.risk))),
+    otherBuilds: unique(
+      packages.flatMap((pkg) => (pkg.flavors ?? []).map((flavor) => flavorLabel(flavor))),
+    ),
+  };
+}
+
 /** Every distinct build across a set of packages (see `buildLabel`) — `BuildIndicator`'s tooltip, on both a `CatalogApp`'s full `packages` and an `AppSummary`'s already-summarized `builds`. Deduplicated: an app with a dozen native-distro packages, all the default build, has exactly one entry here. */
 export function summarizeBuilds(packages: BuildFields[]): string[] {
   return unique(packages.map(buildLabel));
@@ -410,6 +428,8 @@ export interface AppSummary {
   ratingsBySource: SourceRating[];
   sources: PackageSourceId[];
   builds: string[];
+  /** Editions, versions and other builds, for `BuildIndicator` — see `summarizeReleaseLines`. */
+  releaseLines: ReleaseLines;
   /** Which of `sources` has at least one verified package — see `verifiedSourcesOf`. Almost always `[]` or `["flatpak-flathub"]` today, no other source has an equivalent signal. */
   verifiedSources: PackageSourceId[];
 }

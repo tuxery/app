@@ -1,45 +1,50 @@
 import { component$ } from "@qwik.dev/core";
-import { LuLayers } from "@qwikest/icons/lucide";
-import { tooltipClass, type TooltipPosition } from "~/components/tooltip-position";
+import type { ReleaseLines } from "~/catalog-types";
+import { HoverTip, type TipPlacement } from "~/components/hover-tip/hover-tip";
 
 export interface BuildIndicatorProps {
-  builds: string[];
-  tooltipPosition?: TooltipPosition;
+  lines: ReleaseLines;
+  placement?: TipPlacement;
+  /** On the product page, where it isn't inside a link: takes keyboard focus for its tooltip. */
+  focusable?: boolean;
+}
+
+/** "3 editions · 4 versions", "2 versions", "5 builds" — `undefined` when the app has a single build. */
+export function releaseLinesLabel(lines: ReleaseLines): string | undefined {
+  const parts = [
+    lines.editions.length > 1 && `${lines.editions.length} editions`,
+    lines.versions.length > 1 && `${lines.versions.length} versions`,
+  ].filter(Boolean);
+  if (parts.length > 0) return parts.join(" · ");
+  return lines.otherBuilds.length > 0 ? `${lines.otherBuilds.length + 1} builds` : undefined;
+}
+
+function releaseLinesTip(lines: ReleaseLines): string {
+  return [
+    lines.editions.length > 1 && `Editions: ${lines.editions.join(", ")}`,
+    lines.versions.length > 1 && `Versions: ${lines.versions.join(", ")}`,
+    lines.otherBuilds.length > 0 && `Other builds: ${lines.otherBuilds.join(", ")}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 /**
- * How many distinct builds this app has (its tracks, risks and flavors:
- * Firefox's ESR, Nightly, AUR `-bin`/`-git` builds, ... — see catalog's
- * docs/product-families.md) — badge is `builds.length`, hovering
- * (native `title`, plus a fast CSS tooltip) names them. Deliberately not a
- * raw package count: an app can carry a dozen packages (one per distro)
- * that are all the same "Stable" build, which belongs on `SourceMap`'s
- * dot-map, not here — real bug, found live: an earlier version badged the
- * *package* count instead (e.g. 27) right next to a tooltip naming only 2
- * builds, which read as broken. Was `ChannelIndicator`, then
- * `BuildChannelIndicator`, before "channel" was split into track/risk/
- * flavors. A stack-of-layers icon reads as "multiple versions of the same
- * thing" without needing dev vocabulary — tried a git-branch glyph first,
- * but that reads as version-control jargon to non-developers; a tag icon
- * was also considered but sits too close visually to this app's own
- * category badges (Game, Simulation, ...) just above it on the page. Was
- * half of `SourceSummary` (paired with `SourceMap`, its other half) — see
- * that component's doc comment for why they split.
+ * The editions and versions an app comes in (and its other builds), in
+ * words — the product page's Edition/Version vocabulary, see the glossary.
+ * Replaces a stack-of-layers icon with a count badge, which predated
+ * editions and versions and said "1" on most apps: an app with a single
+ * build now shows nothing. Details in a tooltip that no card or row
+ * clips (`HoverTip`).
  */
 export const BuildIndicator = component$<BuildIndicatorProps>(
-  ({ builds, tooltipPosition = "top" }) => {
-    const tip = builds.join(", ");
-
+  ({ lines, placement = "top", focusable = false }) => {
+    const label = releaseLinesLabel(lines);
+    if (!label) return null;
     return (
-      <div class={tooltipClass(tooltipPosition, "indicator")} title={tip} data-tip={tip}>
-        <span
-          class="indicator-item indicator-top indicator-end badge badge-xs text-[10px]"
-          style="padding: 0 1px"
-        >
-          {builds.length}
-        </span>
-        <LuLayers class="text-sm text-base-content/70" />
-      </div>
+      <HoverTip text={releaseLinesTip(lines)} placement={placement} focusable={focusable}>
+        <span class="text-xs text-base-content/70 whitespace-nowrap">{label}</span>
+      </HoverTip>
     );
   },
 );

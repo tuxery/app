@@ -6,6 +6,7 @@ import {
   BROWSE_PAGE_SIZE,
   EMPTY_STATS,
   summarizeBuilds,
+  summarizeReleaseLines,
   summarizeRatingsBySource,
   verifiedSourcesOf,
   type AppSummary,
@@ -165,6 +166,7 @@ function toSummary(row: Row): AppSummary {
     // what builds is for instead.
     sources: unique(packages.map((pkg) => pkg.source)),
     builds: summarizeBuilds(packages),
+    releaseLines: summarizeReleaseLines(packages),
     verifiedSources: verifiedSourcesOf(packages),
   };
 }
