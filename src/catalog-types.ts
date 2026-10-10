@@ -136,6 +136,8 @@ export interface SourcedPackage {
   /** Datasets published before product families carried one overloaded word here instead of `track`/`risk`/`flavors` — still read so an older dataset keeps rendering. */
   channel?: string;
   homepage?: string;
+  /** The license as this source publishes it — the docs' per-source comparison shows it next to the merged one. */
+  license?: string;
   /** This listing's own download size and newest changelog, when its source has them (Flathub today) — see `buildFacts`. */
   approxSizeBytes?: number;
   changelog?: string;
