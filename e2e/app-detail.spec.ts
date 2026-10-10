@@ -222,3 +222,19 @@ test("Firefox's Edition and Version pickers switch to that release line's own pa
   await page.goto("/app/firefox/no-such-edition/");
   await expect(page).toHaveURL(/\/app\/firefox\/$/);
 });
+
+test("the license, Flathub installs and latest release show on the default build only", async ({
+  page,
+}) => {
+  await page.goto("/app/firefox/");
+  const badge = page.getByRole("link", { name: "Free software" });
+  await expect(badge).toHaveAttribute("href", "/docs/glossary/#free-software");
+  await expect(page.getByText(/installs on Flathub$/).first()).toBeVisible();
+  await expect(page.getByText("Latest release", { exact: true })).toBeVisible();
+
+  // An edition the Flathub figures don't describe: no installs, no date.
+  await page.goto("/app/firefox/esr/");
+  await expect(page.getByRole("link", { name: "Free software" })).toBeVisible();
+  await expect(page.getByText(/installs on Flathub$/)).toHaveCount(0);
+  await expect(page.getByText("Latest release", { exact: true })).toHaveCount(0);
+});
