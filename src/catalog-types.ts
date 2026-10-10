@@ -195,6 +195,11 @@ export interface CatalogApp {
   developer?: string;
   publisher?: string;
   license?: string;
+  /** Date of the newest release the app's AppStream metadata lists (Flathub and AppCenter only today) — see `tuxery/catalog`'s `CatalogApp.lastUpdated`. */
+  lastUpdated?: string;
+  /** Flathub's own install counts — all time and the last 7 days — for the app's Flathub package only, never all Linux users. */
+  installsTotal?: number;
+  installsLast7Days?: number;
   languages?: string[];
   approxSizeBytes?: number;
   screenshots?: string[];

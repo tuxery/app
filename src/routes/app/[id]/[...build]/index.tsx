@@ -3,6 +3,8 @@ import { routeLoader$, useLocation } from "@qwik.dev/router";
 import type { DocumentHead } from "@qwik.dev/router";
 import { unique } from "helpers4/array";
 import { LuBadgeCheck, LuExternalLink, LuFlag, LuPackage } from "@qwikest/icons/lucide";
+import { compactCount, releaseAge } from "~/app-facts";
+import { classifyLicense } from "~/license";
 import { isCatalogUnavailable } from "~/catalog-status";
 import { useCatalogUnavailable } from "~/routes/layout";
 import { reportDataProblemUrl } from "~/contribute-links";
@@ -648,9 +650,27 @@ export default component$(() => {
   const selection = buildSelection.value;
   const isDefaultBuild = !selection.track && !selection.risk;
   const selectedPackages = packagesOf(a.packages, selection);
+  // Release date and install counts belong to the default build (they
+  // come from its AppStream metadata and Flathub listing): shown for that
+  // combination only, never borrowed by an edition or version they don't
+  // describe.
   const facts = isDefaultBuild
-    ? { rating: a.rating, approxSizeBytes: a.approxSizeBytes, changelog: a.changelog }
-    : buildFacts(selectedPackages);
+    ? {
+        rating: a.rating,
+        approxSizeBytes: a.approxSizeBytes,
+        changelog: a.changelog,
+        lastUpdated: a.lastUpdated,
+        installsTotal: a.installsTotal,
+        installsLast7Days: a.installsLast7Days,
+      }
+    : {
+        ...buildFacts(selectedPackages),
+        lastUpdated: undefined,
+        installsTotal: undefined,
+        installsLast7Days: undefined,
+      };
+  const licenseKind = classifyLicense(a.license);
+  const latestRelease = releaseAge(facts.lastUpdated, new Date());
   const ratingPackages = isDefaultBuild ? a.packages : selectedPackages;
   const editions = editionsOf(a.packages);
   const versions = versionsByEdition(a.packages);
@@ -802,6 +822,23 @@ export default component$(() => {
               />
             )}
             {a.category && <span class="badge badge-outline">{a.category}</span>}
+            {licenseKind !== "unknown" && (
+              <a
+                href={`/docs/glossary/#${licenseKind === "free" ? "free-software" : "proprietary"}`}
+                class={["tooltip badge badge-outline", licenseKind === "free" && "badge-success"]}
+                data-tip={`License: ${a.license}`}
+              >
+                {licenseKind === "free" ? "Free software" : "Proprietary"}
+              </a>
+            )}
+            {facts.installsTotal !== undefined && (
+              <span
+                class="text-sm text-base-content/70"
+                title={`${facts.installsTotal.toLocaleString("en")} installs on Flathub`}
+              >
+                {compactCount(facts.installsTotal)} installs on Flathub
+              </span>
+            )}
             {a.suite?.role === "component" && a.suite.mainApp && (
               <a
                 href={`/app/${encodeURIComponent(a.suite.mainApp.id)}/`}
@@ -1075,13 +1112,47 @@ export default component$(() => {
           {a.license && (
             <>
               <dt class="text-base-content/70">License</dt>
-              <dd>{a.license}</dd>
+              <dd>
+                {a.license}
+                {licenseKind !== "unknown" && (
+                  <span class="text-base-content/70">
+                    {" "}
+                    ({licenseKind === "free" ? "free software" : "proprietary"})
+                  </span>
+                )}
+              </dd>
             </>
           )}
           {a.category && (
             <>
               <dt class="text-base-content/70">Category</dt>
               <dd>{a.category}</dd>
+            </>
+          )}
+          {facts.lastUpdated && latestRelease && (
+            <>
+              <dt class="text-base-content/70">Latest release</dt>
+              <dd>
+                {new Date(facts.lastUpdated).toLocaleDateString("en", {
+                  dateStyle: "long",
+                  timeZone: "UTC",
+                })}{" "}
+                <span class="text-base-content/70">({latestRelease})</span>
+              </dd>
+            </>
+          )}
+          {facts.installsTotal !== undefined && (
+            <>
+              <dt class="text-base-content/70">Installs</dt>
+              <dd>
+                {facts.installsTotal.toLocaleString("en")} on Flathub
+                {facts.installsLast7Days !== undefined && (
+                  <span class="text-base-content/70">
+                    {" "}
+                    ({facts.installsLast7Days.toLocaleString("en")} in the last 7 days)
+                  </span>
+                )}
+              </dd>
             </>
           )}
           {a.languages?.length && (
