@@ -757,17 +757,22 @@ export default component$(() => {
 
       <section
         ref={jumboRef}
-        class="relative flex flex-col md:flex-row gap-6 md:items-start overflow-hidden rounded-box"
+        class="relative flex flex-col md:flex-row gap-6 md:items-start rounded-box"
       >
+        {/* Clipped on its own wrapper, not on the section: an overflow on
+            the section cut off the Edition/Version menus where they hang
+            below its bottom edge. */}
         {a.videos?.[0] && (
-          <video
-            class="absolute inset-0 w-full h-full object-cover opacity-15 -z-10 pointer-events-none"
-            src={a.videos[0]}
-            autoplay
-            muted
-            loop
-            playsInline
-          />
+          <div class="absolute inset-0 -z-10 overflow-hidden rounded-box pointer-events-none">
+            <video
+              class="w-full h-full object-cover opacity-15"
+              src={a.videos[0]}
+              autoplay
+              muted
+              loop
+              playsInline
+            />
+          </div>
         )}
 
         <div class="w-20 h-20 rounded-box bg-base-200 flex items-center justify-center shrink-0 overflow-hidden">

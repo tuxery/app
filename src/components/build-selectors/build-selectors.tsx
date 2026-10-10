@@ -51,17 +51,22 @@ const Picker = component$<PickerProps>(({ caption, current, others, help, size }
     <ul
       tabIndex={0}
       role="menu"
-      class="dropdown-content menu menu-sm z-40 mt-1 w-max min-w-36 rounded-box bg-base-100 p-1 shadow-lg"
+      // Items match the trigger's size: the large header pickers get
+      // regular menu items (the small ones in the sticky bar stay small).
+      class={[
+        "dropdown-content menu z-40 mt-1 w-max min-w-40 rounded-box bg-base-100 p-1 shadow-lg",
+        size === "lg" ? "menu-md" : "menu-sm",
+      ]}
     >
       {others.map((other) => (
         <li key={other.href} role="none">
-          <Link role="menuitem" href={other.href}>
+          <Link role="menuitem" href={other.href} class={size === "lg" && "font-medium"}>
             {other.label}
           </Link>
         </li>
       ))}
-      <li role="none" class="border-t border-base-300 mt-1 pt-1">
-        <a role="menuitem" href={help.href} class="text-xs text-base-content/70">
+      <li role="none" class="mt-1 border-t border-base-300 pt-1">
+        <a role="menuitem" href={help.href} class="text-sm text-base-content/70">
           {help.label}
         </a>
       </li>
