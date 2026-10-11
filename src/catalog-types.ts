@@ -455,6 +455,8 @@ export interface BrowseResult {
   total: number;
   /** `total` is a lower bound: a free-text search stops counting past it, so there are more matches than that (shown as "1,000+"). */
   totalCapped?: boolean;
+  /** Whether the dataset supports the "free software only" filter (catalog's `license_kind`) — /browse only offers it then. */
+  freeFilter?: boolean;
 }
 
 export function formatBytes(bytes: number): string {

@@ -227,16 +227,18 @@ export default component$(() => {
           </select>
         </label>
 
-        <label class="label cursor-pointer gap-2 min-h-8">
-          <input
-            type="checkbox"
-            name="license"
-            value="free"
-            checked={license === "free"}
-            class="checkbox checkbox-sm"
-          />
-          <span class="label-text text-sm">Free software only</span>
-        </label>
+        {browse.value.freeFilter && (
+          <label class="label cursor-pointer gap-2 min-h-8">
+            <input
+              type="checkbox"
+              name="license"
+              value="free"
+              checked={license === "free"}
+              class="checkbox checkbox-sm"
+            />
+            <span class="label-text text-sm">Free software only</span>
+          </label>
+        )}
 
         {source && <input type="hidden" name="source" value={source} />}
 
