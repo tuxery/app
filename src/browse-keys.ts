@@ -1,4 +1,5 @@
 import type { Client, InStatement, ResultSet } from "@libsql/client";
+import { safeParseStrict } from "helpers4/json";
 
 // Reads of the browse keys `tuxery/catalog`'s `publish()` precomputes into
 // `meta` (counts per filter combination, and each source's ids in `name
@@ -27,16 +28,12 @@ export interface BrowseKeys {
 /** Parses the `browseKeys` row's JSON, `undefined` when it's absent or malformed (→ live fallback, never a throw). */
 export function parseBrowseKeys(value: unknown): BrowseKeys | undefined {
   if (typeof value !== "string") return undefined;
-  try {
-    const parsed = JSON.parse(value) as Partial<BrowseKeys>;
-    return typeof parsed.generation === "string" &&
-      Number.isInteger(parsed.sourceIdsChunkSize) &&
-      (parsed.sourceIdsChunkSize as number) > 0
-      ? (parsed as BrowseKeys)
-      : undefined;
-  } catch {
-    return undefined;
-  }
+  const parsed = safeParseStrict<Partial<BrowseKeys>>(value);
+  return typeof parsed?.generation === "string" &&
+    Number.isInteger(parsed.sourceIdsChunkSize) &&
+    (parsed.sourceIdsChunkSize as number) > 0
+    ? (parsed as BrowseKeys)
+    : undefined;
 }
 
 /** `*` stands for an unset source/category. The category goes last because it's the only part that may itself contain ":". */

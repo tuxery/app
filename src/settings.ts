@@ -7,7 +7,7 @@ import {
   type Signal,
 } from "@qwik.dev/core";
 import { toMapByKey } from "helpers4/map";
-import { safeJsonParse } from "helpers4/object";
+import { safeParseStrict } from "helpers4/json";
 
 export type Theme = "light" | "dark" | "system";
 
@@ -314,7 +314,7 @@ export const useProvideSettings = (): SettingsState => {
       hydrated.value = true;
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        const stored = raw ? safeJsonParse<Partial<PersistedSettings>>(raw) : null;
+        const stored = raw ? safeParseStrict<Partial<PersistedSettings>>(raw) : null;
         if (stored) {
           if (stored.theme && theme.value === "system") theme.value = stored.theme;
           const groupsUntouched =
@@ -328,7 +328,7 @@ export const useProvideSettings = (): SettingsState => {
         }
       } catch {
         // localStorage itself unavailable (private-browsing edge cases,
-        // site data blocked, ...) — safeJsonParse already handles bad
+        // site data blocked, ...) — safeParseStrict already handles bad
         // JSON without throwing, this only guards getItem itself.
       }
     }
