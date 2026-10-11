@@ -39,7 +39,7 @@ export interface UnifiedRatingProps {
  * this component's own tooltip instead, so it's available in both places
  * without duplicating the same numbers twice on the fiche. Hovering (or,
  * on the fiche, focusing) reveals it in a `HoverTip`, which no card or
- * row clips — the same tooltip as `SourceStack`/`BuildIndicator`, no
+ * row clips — the same tooltip as `PlatformStack`/`BuildCount`, no
  * separate info icon needed.
  */
 export const UnifiedRating = component$<UnifiedRatingProps>(
@@ -62,7 +62,7 @@ export const UnifiedRating = component$<UnifiedRatingProps>(
                   // Product page: a fixed amber, not the theme's warning color
                   // (nord's is a pale yellow that barely shows against its
                   // light background). Cards: the primary color, like the
-                  // source stack's logos — amber on every card drew the eye
+                  // platform stack's logos — amber on every card drew the eye
                   // away from the apps themselves.
                   position > rounded
                     ? "bg-base-content/20"

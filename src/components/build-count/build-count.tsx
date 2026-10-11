@@ -3,7 +3,7 @@ import { LuLayers } from "@qwikest/icons/lucide";
 import type { ReleaseLines } from "~/catalog-types";
 import { HoverTip, type TipPlacement } from "~/components/hover-tip/hover-tip";
 
-export interface BuildIndicatorProps {
+export interface BuildCountProps {
   lines: ReleaseLines;
   placement?: TipPlacement;
   /** On the product page, where it isn't inside a link: takes keyboard focus for its tooltip. */
@@ -19,10 +19,12 @@ export function buildCount(lines: ReleaseLines): number {
   return Math.max(1, editionBuilds) + lines.otherBuilds.length;
 }
 
-/** One line per edition, "ESR: Stable, Beta", then the other builds. */
+/** One line per edition and version, "ESR: Beta", then the other builds. */
 export function releaseLinesTip(lines: ReleaseLines): string {
   return [
-    ...lines.editions.map((edition) => `${edition.name}: ${edition.versions.join(", ")}`),
+    ...lines.editions.flatMap((edition) =>
+      edition.versions.map((version) => `${edition.name}: ${version}`),
+    ),
     lines.otherBuilds.length > 0 && `Other builds: ${lines.otherBuilds.join(", ")}`,
   ]
     .filter(Boolean)
@@ -32,12 +34,12 @@ export function releaseLinesTip(lines: ReleaseLines): string {
 /**
  * How many builds an app comes in, as one small layers icon with a count
  * badge — compact enough to share an app card's bottom row with the
- * source stack and the rating. The tooltip spells the combinations out,
- * one edition per line ("Standard: Stable, Beta, Nightly" / "ESR:
- * Stable"), then the other builds. Nothing for an app with a single build
+ * platform stack and the rating. The tooltip spells the combinations out,
+ * one per line ("Standard: Stable" / "Standard: Beta" / "ESR: Stable"),
+ * then the other builds. Nothing for an app with a single build
  * (about 75% of the catalog). `HoverTip`: no card or row clips it.
  */
-export const BuildIndicator = component$<BuildIndicatorProps>(
+export const BuildCount = component$<BuildCountProps>(
   ({ lines, placement = "top", focusable = false }) => {
     const count = buildCount(lines);
     if (count <= 1) return null;

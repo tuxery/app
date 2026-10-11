@@ -358,7 +358,7 @@ export function summarizeReleaseLines(packages: BuildFields[]): ReleaseLines {
   };
 }
 
-/** Every distinct build across a set of packages (see `buildLabel`) — `BuildIndicator`'s tooltip, on both a `CatalogApp`'s full `packages` and an `AppSummary`'s already-summarized `builds`. Deduplicated: an app with a dozen native-distro packages, all the default build, has exactly one entry here. */
+/** Every distinct build across a set of packages (see `buildLabel`) — `BuildCount`'s tooltip, on both a `CatalogApp`'s full `packages` and an `AppSummary`'s already-summarized `builds`. Deduplicated: an app with a dozen native-distro packages, all the default build, has exactly one entry here. */
 export function summarizeBuilds(packages: BuildFields[]): string[] {
   return unique(packages.map(buildLabel));
 }
@@ -413,7 +413,7 @@ export function summarizeRatingsBySource(packages: SourcedPackage[]): SourceRati
  * source id (a merged app can carry two packages from the same source,
  * e.g. AUR's official + `-git` build); `builds` describes the distinct
  * builds across that same underlying `packages` list — not derivable
- * from `sources` alone, so carried separately for `BuildIndicator`'s
+ * from `sources` alone, so carried separately for `BuildCount`'s
  * badge/tooltip. `ratingsBySource` is the same "per-package breakdown"
  * data `UnifiedRating`'s tooltip needs — free to derive from
  * `packages_json`, already selected for `sources`/`builds` above.
@@ -431,7 +431,7 @@ export interface AppSummary {
   ratingsBySource: SourceRating[];
   sources: PackageSourceId[];
   builds: string[];
-  /** Editions, versions and other builds, for `BuildIndicator` — see `summarizeReleaseLines`. */
+  /** Editions, versions and other builds, for `BuildCount` — see `summarizeReleaseLines`. */
   releaseLines: ReleaseLines;
   /** Which of `sources` has at least one verified package — see `verifiedSourcesOf`. Almost always `[]` or `["flatpak-flathub"]` today, no other source has an equivalent signal. */
   verifiedSources: PackageSourceId[];

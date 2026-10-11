@@ -9,7 +9,7 @@ import { useSettings } from "~/settings";
 /** How many platform logos show before the "+N" chip. */
 const SHOWN = 3;
 
-export interface SourceStackProps {
+export interface PlatformStackProps {
   sources: PackageSourceId[];
   /** Which of `sources` carries a verified package (Flathub today). */
   verifiedSources?: PackageSourceId[];
@@ -39,13 +39,13 @@ export function recommendedGroup(
  * (Flatpak, Snap, the distributions...) on listing cards and the product
  * page: the recommended way first (`recommendedGroup`), then what the
  * selected OS uses — its logos in the primary color — then the rest. Three
- * logos at most; beyond that a count badge, the same as `BuildIndicator`'s,
+ * logos at most; beyond that a count badge, the same as `BuildCount`'s,
  * gives the total. Every platform, one per line, in the tooltip.
  *
  * Replaces the source dot-map (one tiny square per platform group, 21 of
  * them), which nobody could read without hovering.
  */
-export const SourceStack = component$<SourceStackProps>(
+export const PlatformStack = component$<PlatformStackProps>(
   ({ sources, verifiedSources = [], placement = "top", focusable = false }) => {
     const settings = useSettings();
     const osEntry = findOsEntry(settings.osId.value);
@@ -94,10 +94,12 @@ export const SourceStack = component$<SourceStackProps>(
             </>
           )}
           <span class="flex -space-x-2">
-            {ordered.slice(0, SHOWN).map((group) => (
+            {ordered.slice(0, SHOWN).map((group, i) => (
               <span
                 key={group}
-                class="w-5.5 h-5.5 rounded-full bg-base-100 flex items-center justify-center border border-base-300"
+                // The first logo on top: it's the recommended one.
+                style={{ zIndex: SHOWN - i }}
+                class="relative w-5.5 h-5.5 rounded-full bg-base-100 flex items-center justify-center border border-base-300"
               >
                 <Logo
                   slug={INSTALL_GROUP_LOGOS[group]}
