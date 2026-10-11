@@ -574,9 +574,20 @@ export async function browseApps(
     typeFilter = "all",
     category,
     source,
-    license,
     sort = "relevance",
   } = options;
+
+  // The "free software only" filter needs a dataset with `license_kind`,
+  // which the same publish marks with `browseKeys.freeCounts`. On an older
+  // one the filter is ignored (and /browse hides it) rather than querying a
+  // column that isn't there.
+  let freeFilter = false;
+  try {
+    freeFilter = (await currentBrowseKeys(db))?.freeCounts === true;
+  } catch {
+    // No browse keys readable: no filter, the listing still works.
+  }
+  const license = freeFilter ? options.license : undefined;
 
   const trimmed = query.trim();
 
@@ -690,18 +701,21 @@ export async function browseApps(
   // catalog's turso-client.ts) was paying two uncached full-table scans
   // — one for COUNT(*), one for the page itself — on every single visit
   // to a source's browse/store page.
-  if (!trimmed) {
-    const key = `browseApps:${interfaceFilter}:${typeFilter}:${category ?? ""}:${source ?? ""}:${license ?? ""}:${sort}:${page}`;
-    return cachedListing(key, { apps: [], total: 0 }, () => runBrowseQuery(false));
-  }
-  return safely({ apps: [], total: 0 }, async () => {
-    try {
-      return await runBrowseQuery(true);
-    } catch (error) {
-      if (!isMissingFtsTable(error)) throw error;
-      return runBrowseQuery(false);
-    }
-  });
+  const result = trimmed
+    ? await safely({ apps: [], total: 0 }, async () => {
+        try {
+          return await runBrowseQuery(true);
+        } catch (error) {
+          if (!isMissingFtsTable(error)) throw error;
+          return runBrowseQuery(false);
+        }
+      })
+    : await cachedListing(
+        `browseApps:${interfaceFilter}:${typeFilter}:${category ?? ""}:${source ?? ""}:${license ?? ""}:${sort}:${page}`,
+        { apps: [], total: 0 },
+        () => runBrowseQuery(false),
+      );
+  return { ...result, freeFilter };
 }
 
 /** Looks up several apps by id at once, in whatever order the DB returns them — callers that need a specific order (e.g. an editorial block referencing ids in a chosen sequence) should re-sort client-side. Missing ids are silently dropped rather than erroring, since editorial content referencing a since-removed app shouldn't break the whole page. */

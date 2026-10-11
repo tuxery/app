@@ -45,10 +45,29 @@ test("Download trends is ranked by last-7-days installs, mixes apps and games, a
   const section = page.locator("section", { has: heading });
   await expect(section.getByText("No download-stats data available yet.")).toHaveCount(0);
 
-  // Re-verified against the live dataset (2026-09-18): the app with the
-  // most Flathub installs over the last 7 days today — real data, expected
-  // to need re-pinning as the dataset refreshes.
-  await expect(section.locator("article.card h3").first()).toHaveText("Wine");
+  // Expected from the same catalog DB the page reads, like "New games"
+  // above: a pinned name ("Wine") broke when catalog stopped counting
+  // Wine's nine Flathub branches nine times.
+  const db = createClient({
+    url: process.env.TURSO_DB_URL ?? "http://127.0.0.1:8080",
+    authToken: process.env.TURSO_DB_AUTH_TOKEN,
+  });
+  const meta = await db.execute(`SELECT value FROM meta WHERE key = 'downloadTrending:all'`);
+  const ids = (JSON.parse(meta.rows[0]?.value as string) as string[]).slice(0, 3);
+  const rows = await db.execute({
+    sql: `SELECT id, name, installs_last_7_days FROM apps WHERE id IN (${ids.map(() => "?").join(", ")})`,
+    args: ids,
+  });
+  db.close();
+  const byId = new Map(rows.rows.map((row) => [row.id as string, row]));
+  const expected = ids.map((id) => byId.get(id)!);
+  const installs = expected.map((row) => Number(row.installs_last_7_days));
+  expect(installs).toEqual([...installs].sort((a, b) => b - a));
+
+  const titles = section.locator("article.card h3");
+  for (const [i, row] of expected.entries()) {
+    await expect(titles.nth(i)).toHaveText(row.name as string);
+  }
 
   const browseLink = section.getByRole("link", { name: "Browse everything" });
   await expect(browseLink).toHaveAttribute("href", "/browse/?type=all");
