@@ -1,5 +1,5 @@
 import { component$ } from "@qwik.dev/core";
-import { LuLayers } from "@qwikest/icons/lucide";
+import { LuPackageOpen } from "@qwikest/icons/lucide";
 import type { ReleaseLines } from "~/catalog-types";
 import { HoverTip, type TipPlacement } from "~/components/hover-tip/hover-tip";
 
@@ -32,7 +32,7 @@ export function releaseLinesTip(lines: ReleaseLines): string {
 }
 
 /**
- * How many builds an app comes in, as one small layers icon with a count
+ * How many builds an app comes in, as one small open-package icon with a count
  * badge — compact enough to share an app card's bottom row with the
  * platform stack and the rating. The tooltip spells the combinations out,
  * one per line ("Standard: Stable" / "Standard: Beta" / "ESR: Stable"),
@@ -54,7 +54,7 @@ export const BuildCount = component$<BuildCountProps>(
           >
             {count}
           </span>
-          <LuLayers class="text-sm text-base-content/70" />
+          <LuPackageOpen class="text-sm text-base-content/70" />
         </span>
       </HoverTip>
     );
