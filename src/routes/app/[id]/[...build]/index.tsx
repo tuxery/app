@@ -18,6 +18,7 @@ import {
   compactCount,
   confidenceNotes,
   formatReleaseDate,
+  releaseActivity,
   releaseAge,
   storePicks,
 } from "~/app-facts";
@@ -710,6 +711,7 @@ export default component$(() => {
         approxSizeBytes: a.approxSizeBytes,
         changelog: a.changelog,
         lastUpdated: a.lastUpdated,
+        releases: a.releases,
         installsTotal: a.installsTotal,
         installsLast7Days: a.installsLast7Days,
       }
@@ -756,6 +758,7 @@ export default component$(() => {
           ? ""
           : ` · ${facts.installsLast7Days.toLocaleString("en")} in the last 7 days`);
   const latestRelease = releaseAge(facts.lastUpdated, new Date());
+  const activity = releaseActivity(facts.lastUpdated, facts.releases, new Date());
   const ratingPackages = isDefaultBuild ? a.packages : selectedPackages;
   const editions = editionsOf(a.packages);
   const versions = versionsByEdition(a.packages);
@@ -984,6 +987,18 @@ export default component$(() => {
                 >
                   <LuHistory class="text-sm" />
                   Updated {latestRelease}
+                </span>
+              )}
+              {activity && (
+                <span
+                  class={[
+                    "badge badge-sm badge-outline",
+                    activity.level === "active" && "badge-success",
+                    activity.level === "slowing" && "badge-warning",
+                  ]}
+                  title={activity.detail}
+                >
+                  {activity.label}
                 </span>
               )}
             </div>
@@ -1309,6 +1324,33 @@ export default component$(() => {
                   <dd>
                     {formatReleaseDate(facts.lastUpdated)}{" "}
                     <span class="text-base-content/70">({latestRelease})</span>
+                    {activity && (
+                      <span class="block text-base-content/70">
+                        {activity.label} · {activity.detail}
+                      </span>
+                    )}
+                  </dd>
+                </div>
+              )}
+              {facts.releases && facts.releases.length > 1 && (
+                <div>
+                  <dt class={INFO_LABEL}>Release history</dt>
+                  <dd>
+                    <details>
+                      <summary class="link link-primary cursor-pointer">
+                        Last {facts.releases.length} releases
+                      </summary>
+                      <ul class="mt-1 flex flex-col gap-0.5">
+                        {facts.releases.map((release) => (
+                          <li key={release.version} class="flex justify-between gap-3">
+                            <span class="font-mono text-xs break-all">{release.version}</span>
+                            <span class="text-base-content/70 whitespace-nowrap">
+                              {release.date ? formatReleaseDate(release.date) : "—"}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
                   </dd>
                 </div>
               )}

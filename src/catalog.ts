@@ -230,6 +230,7 @@ function toCatalogApp(row: Row): CatalogApp {
     languages: json(row.languages_json),
     screenshots: json(row.screenshots_json),
     links: json(row.links_json),
+    releases: json(row.releases_json),
     videos: json(row.videos_json),
     reviews: json(row.reviews_json),
     features: json(row.features_json),

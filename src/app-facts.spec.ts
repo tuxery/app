@@ -3,6 +3,7 @@ import {
   compactCount,
   confidenceNotes,
   formatReleaseDate,
+  releaseActivity,
   releaseAge,
   storePicks,
 } from "~/app-facts";
@@ -100,5 +101,35 @@ describe("storePicks", () => {
       "Featured on the Snap Store",
     ]);
     expect(storePicks(undefined)).toEqual([]);
+  });
+});
+
+describe("releaseActivity", () => {
+  const now = new Date("2026-10-11T00:00:00Z");
+
+  it("reads the project as active, slowing down or inactive from its newest release", () => {
+    expect(releaseActivity("2026-08-01T00:00:00Z", undefined, now)?.level).toBe("active");
+    expect(releaseActivity("2025-06-01T00:00:00Z", undefined, now)?.level).toBe("slowing");
+    expect(releaseActivity("2023-01-01T00:00:00Z", undefined, now)?.level).toBe("inactive");
+    expect(releaseActivity(undefined, undefined, now)).toBeUndefined();
+  });
+
+  it("counts the last year's releases when the history is known", () => {
+    const releases = [
+      { version: "3.0", date: "2026-09-01T00:00:00Z" },
+      { version: "2.9", date: "2026-03-01T00:00:00Z" },
+      { version: "2.8", date: "2025-01-01T00:00:00Z" },
+    ];
+    expect(releaseActivity("2026-09-01T00:00:00Z", releases, now)).toEqual({
+      level: "active",
+      label: "Actively maintained",
+      detail: "2 releases in the last year",
+    });
+    expect(releaseActivity("2026-09-01T00:00:00Z", releases.slice(0, 2), now)?.detail).toBe(
+      "2+ releases in the last year",
+    );
+    expect(releaseActivity("2026-09-01T00:00:00Z", undefined, now)?.detail).toBe(
+      "Latest release 1 month ago",
+    );
   });
 });
