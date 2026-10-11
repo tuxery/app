@@ -26,6 +26,24 @@ export function reportDataProblemUrl(app?: { name: string; pageUrl: string }): s
   });
 }
 
+/** catalog's "Suggest a fix" form — gentler than a report: something could be better, and anyone who knows can help. */
+export function suggestFixUrl(app: {
+  name: string;
+  pageUrl: string;
+  /** A value of the form's "What could be better?" dropdown. */
+  field?: string;
+  /** What the page shows today. */
+  current?: string;
+}): string {
+  return withParams(CATALOG_NEW_ISSUE, {
+    template: "suggest-fix.yml",
+    title: `[fix] ${app.name}${app.field ? `: ${app.field.toLowerCase()}` : ""}`,
+    link: app.pageUrl,
+    field: app.field,
+    current: app.current,
+  });
+}
+
 /** catalog's "Add a distro, source, or app/game" form. */
 export function requestAdditionUrl(name?: string): string {
   return withParams(CATALOG_NEW_ISSUE, {

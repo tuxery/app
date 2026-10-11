@@ -4,6 +4,7 @@ import {
   reportDataProblemUrl,
   reportWebsiteProblemUrl,
   requestAdditionUrl,
+  suggestFixUrl,
 } from "~/contribute-links";
 
 const params = (url: string) => Object.fromEntries(new URL(url).searchParams);
@@ -22,6 +23,28 @@ describe("contribute links", () => {
       title: "[data] Firefox",
       link: "https://tuxery.store/app/firefox/",
     });
+  });
+
+  it("opens catalog's suggest-a-fix form, prefilled with the field and current value", () => {
+    expect(
+      params(
+        suggestFixUrl({
+          name: "Firefox",
+          pageUrl: "https://tuxery.store/app/firefox/",
+          field: "License",
+          current: "MPL2",
+        }),
+      ),
+    ).toEqual({
+      template: "suggest-fix.yml",
+      title: "[fix] Firefox: license",
+      link: "https://tuxery.store/app/firefox/",
+      field: "License",
+      current: "MPL2",
+    });
+    expect(params(suggestFixUrl({ name: "Firefox", pageUrl: "https://x/" })).title).toBe(
+      "[fix] Firefox",
+    );
   });
 
   it("opens catalog's addition form, with the name when known", () => {
