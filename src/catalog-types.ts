@@ -337,18 +337,21 @@ export function verifiedSourcesOf(
   return unique(packages.filter(isVerifiedPackage).map((pkg) => pkg.source));
 }
 
-/** An app's release lines as the product page names them: its editions (catalog's tracks), versions (risks) and other builds (flavors) — see docs/product-families.md and the glossary. */
+/** An app's release lines as the product page names them: each edition (catalog's tracks) with its own versions (risks), and the other builds (flavors) — see docs/product-families.md and the glossary. */
 export interface ReleaseLines {
-  editions: string[];
-  versions: string[];
+  editions: { name: string; versions: string[] }[];
   otherBuilds: string[];
 }
 
 /** `ReleaseLines` from a set of packages, each list deduplicated, labels as the pickers show them ("Standard", "ESR"; "Stable", "Nightly"; "Bin", "AppImage"). */
 export function summarizeReleaseLines(packages: BuildFields[]): ReleaseLines {
   return {
-    editions: unique(packages.map((pkg) => trackLabel(pkg.track))),
-    versions: unique(packages.map((pkg) => riskLabel(pkg.risk))),
+    editions: unique(packages.map((pkg) => trackLabel(pkg.track))).map((name) => ({
+      name,
+      versions: unique(
+        packages.filter((pkg) => trackLabel(pkg.track) === name).map((pkg) => riskLabel(pkg.risk)),
+      ),
+    })),
     otherBuilds: unique(
       packages.flatMap((pkg) => (pkg.flavors ?? []).map((flavor) => flavorLabel(flavor))),
     ),
