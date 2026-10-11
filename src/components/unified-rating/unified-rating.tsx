@@ -59,9 +59,16 @@ export const UnifiedRating = component$<UnifiedRatingProps>(
                   // unless it's a checked radio input, which these aren't.
                   "mask mask-star-2 opacity-100!",
                   i % 2 === 0 ? "mask-half-1" : "mask-half-2",
-                  // A fixed amber, not the theme's warning color: nord's is a
-                  // pale yellow that barely shows against its light background.
-                  position <= rounded ? "bg-amber-500" : "bg-base-content/20",
+                  // Product page: a fixed amber, not the theme's warning color
+                  // (nord's is a pale yellow that barely shows against its
+                  // light background). Cards: the primary color, like the
+                  // source stack's logos — amber on every card drew the eye
+                  // away from the apps themselves.
+                  position > rounded
+                    ? "bg-base-content/20"
+                    : mode === "short"
+                      ? "bg-primary"
+                      : "bg-amber-500",
                 ]}
               />
             ))}
