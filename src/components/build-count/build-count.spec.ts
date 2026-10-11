@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCount, releaseLinesTip } from "./build-indicator";
+import { buildCount, releaseLinesTip } from "./build-count";
 
 describe("buildCount and releaseLinesTip", () => {
   const firefox = {
@@ -15,9 +15,9 @@ describe("buildCount and releaseLinesTip", () => {
       buildCount({ editions: [{ name: "Standard", versions: ["Stable"] }], otherBuilds: [] }),
     ).toBe(1);
   });
-  it("spells out one edition per line, then the other builds", () => {
+  it("spells out one edition and version per line, then the other builds", () => {
     expect(releaseLinesTip(firefox)).toBe(
-      "Standard: Stable, Beta, Nightly\nESR: Stable\nOther builds: Bin",
+      "Standard: Stable\nStandard: Beta\nStandard: Nightly\nESR: Stable\nOther builds: Bin",
     );
   });
 });

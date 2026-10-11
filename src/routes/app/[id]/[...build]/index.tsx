@@ -47,7 +47,7 @@ import {
   type Relation,
   type SourcedPackage,
 } from "~/catalog-types";
-import { BuildIndicator } from "~/components/build-indicator/build-indicator";
+import { BuildCount } from "~/components/build-count/build-count";
 import { BuildSelectors } from "~/components/build-selectors/build-selectors";
 import {
   buildPath,
@@ -62,7 +62,7 @@ import {
   versionsByEdition,
   type BuildSelection,
 } from "~/product-builds";
-import { SourceStack } from "~/components/source-stack/source-stack";
+import { PlatformStack } from "~/components/platform-stack/platform-stack";
 import { AppCardLink } from "~/components/app-card/app-card";
 import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-scroller";
 import { ScreenshotGallery } from "~/components/screenshot-gallery/screenshot-gallery";
@@ -628,7 +628,7 @@ function groupCompanions(companions: Companion[]): [CompanionKind, Companion[]][
     .filter(([, list]) => list.length > 0);
 }
 
-/** `SourceStack`/`BuildIndicator`'s combined props, derived from a full package list — used for the hero/sticky-header install summary, sitting to the left of the Install button (replaces the old "Install options (N)" count that used to live on the button itself). */
+/** `PlatformStack`/`BuildCount`'s combined props, derived from a full package list — used for the hero/sticky-header install summary, sitting to the left of the Install button (replaces the old "Install options (N)" count that used to live on the button itself). */
 function summarizeSources(packages: SourcedPackage[]) {
   return {
     sources: unique(packages.map((pkg) => pkg.source)),
@@ -812,13 +812,13 @@ export default component$(() => {
                 button out of the sticky bar. The page header still has it. */}
             {visiblePackages.length > 0 && (
               <div class="hidden sm:flex items-center gap-2 mr-3">
-                <SourceStack
+                <PlatformStack
                   sources={sourceSummary.sources}
                   verifiedSources={sourceSummary.verifiedSources}
                   placement="bottom"
                   focusable
                 />
-                <BuildIndicator lines={sourceSummary.lines} placement="bottom" focusable />
+                <BuildCount lines={sourceSummary.lines} placement="bottom" focusable />
               </div>
             )}
             <div class="aura aura-sm w-fit">
@@ -986,13 +986,13 @@ export default component$(() => {
             {visiblePackages.length ? (
               <>
                 <div class="flex items-center gap-2 mr-3">
-                  <SourceStack
+                  <PlatformStack
                     sources={sourceSummary.sources}
                     verifiedSources={sourceSummary.verifiedSources}
                     placement="bottom"
                     focusable
                   />
-                  <BuildIndicator lines={sourceSummary.lines} placement="bottom" focusable />
+                  <BuildCount lines={sourceSummary.lines} placement="bottom" focusable />
                 </div>
                 <div class="aura aura-sm w-fit">
                   <button

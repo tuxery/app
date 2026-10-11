@@ -74,12 +74,12 @@ test("a multi-source rated app's tooltip lists every source, each prefixed by it
   );
 });
 
-test("the build indicator's count matches the builds its tooltip names", async ({ page }) => {
+test("the build count matches the builds its tooltip names", async ({ page }) => {
   // Real bug, found live: an earlier badge counted *packages* (dozens, one
   // per distro, mostly the same build) next to a tooltip naming a handful
   // of builds. The count ("N builds", its accessible name) is checked
-  // against its own tooltip — one "Edition: Version, Version" line per
-  // edition, then "Other builds: ..." — by shape, since the exact builds
+  // against its own tooltip — one "Edition: Version" line per
+  // combination, then "Other builds: ..." — by shape, since the exact builds
   // depend on the dataset.
   await page.goto(LUANTI);
   const header = page.locator("section").first();
@@ -118,7 +118,7 @@ test("a Flathub-verified app shows a Verified badge next to its developer, and o
   await expect(page.locator('[data-tip="Developer-identity-verified on Flathub"]')).toBeVisible();
 });
 
-test("the source stack leads with the recommended way to install, and colors the selected OS's platforms", async ({
+test("the platform stack leads with the recommended way to install, and colors the selected OS's platforms", async ({
   page,
 }) => {
   await page.goto(FIREFOX);

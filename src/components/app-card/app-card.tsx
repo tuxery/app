@@ -1,7 +1,7 @@
 import { component$ } from "@qwik.dev/core";
 import { LuPackage } from "@qwikest/icons/lucide";
-import { BuildIndicator } from "~/components/build-indicator/build-indicator";
-import { SourceStack } from "~/components/source-stack/source-stack";
+import { BuildCount } from "~/components/build-count/build-count";
+import { PlatformStack } from "~/components/platform-stack/platform-stack";
 import { UnifiedRating } from "~/components/unified-rating/unified-rating";
 import type { AppSummary, PackageSourceId, ReleaseLines, SourceRating } from "~/catalog-types";
 
@@ -25,11 +25,11 @@ export interface AppCardProps {
  *
  * Layout: logo + name/category on top, description below, and a bottom row
  * — pinned to the card's bottom edge via `mt-auto` so it lines up across
- * cards regardless of description length — `SourceStack`,
- * `BuildIndicator`, then (when this app has one) `UnifiedRating` in
+ * cards regardless of description length — `PlatformStack`,
+ * `BuildCount`, then (when this app has one) `UnifiedRating` in
  * its "short" (stars-only) mode, left-aligned in that fixed order rather
  * than spread with `justify-between`: with that, a card carrying no rating
- * had nothing to hold `BuildIndicator` at its own centered spot, so
+ * had nothing to hold `BuildCount` at its own centered spot, so
  * it drifted to the row's right edge instead. Three narrow pieces instead
  * of one wide combined summary + rating: that used to wrap to two lines on
  * some cards and not others depending on content.
@@ -74,8 +74,8 @@ export const AppCard = component$<AppCardProps>(
           </div>
           <p class="text-sm text-base-content/70 line-clamp-2">{description}</p>
           <div class="flex flex-wrap items-center gap-3 mt-auto pt-1">
-            <SourceStack sources={sources} verifiedSources={verifiedSources} />
-            <BuildIndicator lines={releaseLines} />
+            <PlatformStack sources={sources} verifiedSources={verifiedSources} />
+            <BuildCount lines={releaseLines} />
             {rating && (
               <UnifiedRating
                 average={rating.average}
