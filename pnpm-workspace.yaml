@@ -6,7 +6,6 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - helpers4
-  - '@helpers4/*'
 
 # Security floors for transitive deps whose parents' declared ranges still
 # allow a vulnerable version — drop one once its parent's range moves past
