@@ -59,6 +59,13 @@ describe("classifyLicense", () => {
 });
 
 describe("licenseInfoHref", () => {
+  it("links the catalog's exact SPDX id, and trusts its verdict", () => {
+    expect(licenseInfoHref("Zlib")).toBe("https://spdx.org/licenses/Zlib.html");
+    expect(licenseInfoHref("GPL-3.0", "GPL-3.0-only")).toBe("/docs/open-source-licenses/#gpl-30");
+    expect(licenseInfoHref("zlib", "Zlib", "free")).toBe("https://spdx.org/licenses/Zlib.html");
+    expect(licenseInfoHref("custom", undefined, "unknown")).toBeUndefined();
+  });
+
   it("points common free licenses to their section of the guide", () => {
     const guide = "/docs/open-source-licenses/#";
     expect(licenseInfoHref("MPL-2.0")).toBe(`${guide}mpl-20`);

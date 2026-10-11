@@ -90,8 +90,14 @@ const SPDX_ID = /^[A-Za-z0-9.+-]+$/;
  * for any other single SPDX id, the glossary for a proprietary license.
  * `undefined` when there's nothing useful to link (no verdict, no id).
  */
-export function licenseInfoHref(license: string | undefined): string | undefined {
-  const kind = classifyLicense(license);
+export function licenseInfoHref(
+  license: string | undefined,
+  /** The catalog's SPDX form of `license`, when it has one — links the exact SPDX page ("GPL-3.0" → "GPL-3.0-only"). */
+  spdx?: string,
+  /** The catalog's verdict on `license`, when it has one — see `CatalogApp.licenseKind`. */
+  knownKind?: LicenseKind,
+): string | undefined {
+  const kind = knownKind ?? classifyLicense(license);
   if (kind === "proprietary") return "/docs/glossary/#proprietary";
   if (kind !== "free" || !license) return undefined;
   const term = license.trim();
@@ -103,7 +109,6 @@ export function licenseInfoHref(license: string | undefined): string | undefined
       .toUpperCase() ?? "";
   const section = GUIDE_SECTIONS.find(([pattern]) => pattern.test(name))?.[1];
   if (section) return `${LICENSE_GUIDE_PATH}#${section}`;
-  return SPDX_ID.test(term)
-    ? `https://spdx.org/licenses/${encodeURIComponent(term)}.html`
-    : undefined;
+  const id = spdx ?? term;
+  return SPDX_ID.test(id) ? `https://spdx.org/licenses/${encodeURIComponent(id)}.html` : undefined;
 }

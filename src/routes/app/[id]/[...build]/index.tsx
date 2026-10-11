@@ -733,12 +733,17 @@ export default component$(() => {
       return { label: builds > 1 ? `${group} (${builds})` : group };
     },
   );
-  const licenseKind = classifyLicense(a.license);
-  const licenseHref = licenseInfoHref(a.license);
+  // The catalog's verdict when the dataset has one, else the same classifier.
+  const licenseKind = a.licenseKind ?? classifyLicense(a.license);
+  const licenseHref = licenseInfoHref(a.license, a.licenseSpdx, licenseKind);
   // The badge names the license when it's one short id ("MPL-2.0"), not a
   // long expression — the tooltip and the info row carry the full string.
+  // The SPDX form first: "GPL-3.0-only" says what "GPL-3.0" leaves open.
+  const shortLicense = a.licenseSpdx ?? a.license;
   const licenseShortName =
-    a.license && a.license.length <= 24 && !/\s/.test(a.license) ? a.license : undefined;
+    shortLicense && shortLicense.length <= 24 && !/\s/.test(shortLicense)
+      ? shortLicense
+      : undefined;
   const installsTip =
     facts.installsTotal === undefined
       ? ""
