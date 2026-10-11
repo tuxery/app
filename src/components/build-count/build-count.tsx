@@ -1,3 +1,4 @@
+import { sumBy } from "helpers4/array";
 import { component$ } from "@qwik.dev/core";
 import { LuPackageOpen } from "@qwikest/icons/lucide";
 import type { ReleaseLines } from "~/catalog-types";
@@ -15,7 +16,7 @@ export interface BuildCountProps {
  * other builds (`bin`, AppImage...). 1 for an app with a single build.
  */
 export function buildCount(lines: ReleaseLines): number {
-  const editionBuilds = lines.editions.reduce((sum, edition) => sum + edition.versions.length, 0);
+  const editionBuilds = sumBy(lines.editions, (edition) => edition.versions.length);
   return Math.max(1, editionBuilds) + lines.otherBuilds.length;
 }
 
