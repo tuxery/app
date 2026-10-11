@@ -4,6 +4,7 @@
 // selected through its path: `/app/firefox/` (Standard · Stable),
 // `/app/firefox/esr/`, `/app/firefox/nightly/`, `/app/firefox/esr/beta/`.
 
+import { sumBy } from "helpers4/array";
 import { riskLabel, trackLabel, type Risk, type SourcedPackage } from "~/catalog-types";
 
 /** One edition/version combination; `undefined` is the default line and stable. */
@@ -124,13 +125,10 @@ export interface BuildFacts {
  */
 export function buildFacts(packages: readonly SourcedPackage[]): BuildFacts {
   const rated = packages.filter((pkg) => pkg.rating);
-  const count = rated.reduce((total, pkg) => total + (pkg.rating?.count ?? 0), 0);
+  const count = sumBy(rated, (pkg) => pkg.rating?.count ?? 0);
   const average =
     count > 0
-      ? rated.reduce(
-          (total, pkg) => total + (pkg.rating?.average ?? 0) * (pkg.rating?.count ?? 0),
-          0,
-        ) / count
+      ? sumBy(rated, (pkg) => (pkg.rating?.average ?? 0) * (pkg.rating?.count ?? 0)) / count
       : undefined;
   return {
     rating: average === undefined ? undefined : { average, count },

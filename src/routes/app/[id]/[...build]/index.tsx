@@ -1,3 +1,4 @@
+import { groupBy } from "helpers4/object";
 import { $, component$, useSignal, useVisibleTask$ } from "@qwik.dev/core";
 import { routeLoader$, useLocation } from "@qwik.dev/router";
 import type { DocumentHead } from "@qwik.dev/router";
@@ -209,28 +210,24 @@ function isSourceVisible(
 
 /** Packages bucketed by platform/distro group (same grouping as the app-card dot-map), in `ALL_SOURCE_GROUPS`' fixed canonical order rather than array-arrival order. */
 function groupPackagesBySourceGroup(packages: SourcedPackage[]): [string, SourcedPackage[]][] {
-  const byGroup = new Map<string, SourcedPackage[]>();
-  for (const pkg of packages) {
-    const group = ALL_SOURCE_GROUPS.find((g) => SOURCE_GROUP_MEMBERS[g]?.includes(pkg.source));
-    const key = group ?? "Other";
-    const list = byGroup.get(key) ?? [];
-    list.push(pkg);
-    byGroup.set(key, list);
-  }
-  return [...ALL_SOURCE_GROUPS, "Other"]
-    .filter((key) => byGroup.has(key))
-    .map((key) => [key, byGroup.get(key) as SourcedPackage[]]);
+  const byGroup: Partial<Record<string, SourcedPackage[]>> = groupBy(
+    packages,
+    (pkg) =>
+      ALL_SOURCE_GROUPS.find((g) => SOURCE_GROUP_MEMBERS[g]?.includes(pkg.source)) ?? "Other",
+  );
+  return [...ALL_SOURCE_GROUPS, "Other"].flatMap((key) => {
+    const members = byGroup[key];
+    return members ? [[key, members] as [string, SourcedPackage[]]] : [];
+  });
 }
 
 /** One platform group's packages, bucketed by their exact packaging source (e.g. AUR vs Official within "Arch Linux") — packages sharing a source are different builds of the same product (see `SourceInstallUnit`), in first-seen order. */
 function groupBySource(packages: SourcedPackage[]): [PackageSourceId, SourcedPackage[]][] {
-  const bySource = new Map<PackageSourceId, SourcedPackage[]>();
-  for (const pkg of packages) {
-    const list = bySource.get(pkg.source) ?? [];
-    list.push(pkg);
-    bySource.set(pkg.source, list);
-  }
-  return [...bySource.entries()];
+  // Object.groupBy keeps first-seen key order for non-numeric keys.
+  return Object.entries(groupBy(packages, (pkg) => pkg.source)) as [
+    PackageSourceId,
+    SourcedPackage[],
+  ][];
 }
 
 /**
