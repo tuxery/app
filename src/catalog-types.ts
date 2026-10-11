@@ -197,6 +197,10 @@ export interface CatalogApp {
   developer?: string;
   publisher?: string;
   license?: string;
+  /** `license` as an SPDX expression, when the catalog could map it without guessing — see `tuxery/catalog`'s `toSpdxExpression`. */
+  licenseSpdx?: string;
+  /** The catalog's verdict on `license`: `unknown` when it can't tell, `undefined` on a dataset published before it existed (fall back to `classifyLicense`). */
+  licenseKind?: "free" | "proprietary" | "unknown";
   /** Date of the newest release the app's AppStream metadata lists (Flathub and AppCenter only today) — see `tuxery/catalog`'s `CatalogApp.lastUpdated`. */
   lastUpdated?: string;
   /** Flathub's own install counts — all time and the last 7 days — for the app's Flathub package only, never all Linux users. */

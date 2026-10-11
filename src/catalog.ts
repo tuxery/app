@@ -20,6 +20,7 @@ import {
   BROWSE_KEYS_META_KEY,
   chunkIndexesFor,
   countKey,
+  freeCountKey,
   metaValue,
   pageRange,
   parseBrowseKeys,
@@ -187,6 +188,14 @@ function json<T>(value: unknown): T | undefined {
   return isNullish(value) ? undefined : (JSON.parse(value as string) as T);
 }
 
+/** The catalog's free/proprietary verdict: `unknown` for a NULL column, `undefined` when the column doesn't exist yet (older dataset). */
+function parseLicenseKind(row: Row): CatalogApp["licenseKind"] {
+  if (!("license_kind" in row)) return undefined;
+  return row.license_kind === "free" || row.license_kind === "proprietary"
+    ? row.license_kind
+    : "unknown";
+}
+
 function toCatalogApp(row: Row): CatalogApp {
   return {
     id: row.id as string,
@@ -200,6 +209,8 @@ function toCatalogApp(row: Row): CatalogApp {
     developer: str(row.developer),
     publisher: str(row.publisher),
     license: str(row.license),
+    licenseSpdx: str(row.license_spdx),
+    licenseKind: parseLicenseKind(row),
     lastUpdated: str(row.last_updated),
     installsTotal: num(row.installs_total),
     installsLast7Days: num(row.installs_last_7_days),
@@ -408,11 +419,14 @@ async function readPrecomputedBrowse(
     typeFilter: TypeFilter;
     category?: string;
     source?: PackageSourceId;
+    license?: "free";
     sort: SortOption;
     offset: number;
   },
 ): Promise<PrecomputedBrowse | undefined> {
   let keys = await currentBrowseKeys(db);
+  // An older generation has no free-only counts: count live instead.
+  if (filters.license === "free" && !keys?.freeCounts) return undefined;
   for (let attempt = 0; attempt < 2 && keys; attempt++) {
     // Sequential on purpose: a retry only happens after the previous
     // attempt found the generation stale, and its keys depend on that.
@@ -421,7 +435,7 @@ async function readPrecomputedBrowse(
       {
         sql: `SELECT value FROM meta WHERE key = ?`,
         args: [
-          countKey(
+          (filters.license === "free" ? freeCountKey : countKey)(
             keys.generation,
             filters.interfaceFilter,
             filters.typeFilter,
@@ -443,6 +457,7 @@ async function readPrecomputedBrowse(
     const sourceOnly =
       filters.source !== undefined &&
       !filters.category &&
+      !filters.license &&
       filters.interfaceFilter === "all" &&
       filters.typeFilter === "all";
     if (!sourceOnly) return { total };
@@ -539,6 +554,8 @@ export interface BrowseOptions {
   category?: string;
   /** Restricts to apps with at least one package from this source — matched against the packages_json blob, the only place per-package sources live. */
   source?: PackageSourceId;
+  /** `free`: free software only (catalog's `license_kind`). */
+  license?: "free";
   sort?: SortOption;
 }
 
@@ -557,6 +574,7 @@ export async function browseApps(
     typeFilter = "all",
     category,
     source,
+    license,
     sort = "relevance",
   } = options;
 
@@ -591,6 +609,7 @@ export async function browseApps(
       conditions.push("category = ?");
       conditionArgs.push(category);
     }
+    if (license === "free") conditions.push("license_kind = 'free'");
     if (source) {
       conditions.push("packages_json LIKE ?");
       conditionArgs.push(`%"source":"${source}"%`);
@@ -609,6 +628,7 @@ export async function browseApps(
           typeFilter,
           category,
           source,
+          license,
           sort,
           offset,
         });
@@ -671,7 +691,7 @@ export async function browseApps(
   // — one for COUNT(*), one for the page itself — on every single visit
   // to a source's browse/store page.
   if (!trimmed) {
-    const key = `browseApps:${interfaceFilter}:${typeFilter}:${category ?? ""}:${source ?? ""}:${sort}:${page}`;
+    const key = `browseApps:${interfaceFilter}:${typeFilter}:${category ?? ""}:${source ?? ""}:${license ?? ""}:${sort}:${page}`;
     return cachedListing(key, { apps: [], total: 0 }, () => runBrowseQuery(false));
   }
   return safely({ apps: [], total: 0 }, async () => {

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   chunkIndexesFor,
   countKey,
+  freeCountKey,
   metaValue,
   pageRange,
   parseBrowseKeys,
@@ -33,6 +34,12 @@ describe("key formats (pinned to the literals catalog's publish() writes)", () =
     );
   });
 
+  it("builds a free-software-only count key under its own prefix", () => {
+    expect(freeCountKey(GEN, "all", "app", undefined, "Utilities")).toBe(
+      `countFree:${GEN}:all:app:*:Utilities`,
+    );
+  });
+
   it("builds a source id-list chunk key", () => {
     expect(sourceIdsChunkKey(GEN, "pacman-aur", 12)).toBe(`sourceIds:${GEN}:pacman-aur:12`);
   });
@@ -44,6 +51,11 @@ describe("parseBrowseKeys", () => {
       generation: GEN,
       sourceIdsChunkSize: 500,
     });
+    expect(
+      parseBrowseKeys(
+        JSON.stringify({ generation: GEN, sourceIdsChunkSize: 500, freeCounts: true }),
+      )?.freeCounts,
+    ).toBe(true);
   });
 
   it.each([

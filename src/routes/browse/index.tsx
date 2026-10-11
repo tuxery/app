@@ -49,6 +49,10 @@ function parseSource(value: string | null): PackageSourceId | undefined {
   return value && value in SOURCE_LABELS ? (value as PackageSourceId) : undefined;
 }
 
+function parseLicense(value: string | null): "free" | undefined {
+  return value === "free" ? value : undefined;
+}
+
 function parseSort(value: string | null): SortOption {
   return value === "name-asc" || value === "name-desc" ? value : "relevance";
 }
@@ -66,10 +70,11 @@ export const useBrowse = routeLoader$(
       typeFilter: parseTypeFilter(url.searchParams.get("type")),
       category: url.searchParams.get("category") ?? undefined,
       source: parseSource(url.searchParams.get("source")),
+      license: parseLicense(url.searchParams.get("license")),
       sort: parseSort(url.searchParams.get("sort")),
     });
   },
-  { search: ["q", "page", "interface", "type", "category", "source", "sort"] },
+  { search: ["q", "page", "interface", "type", "category", "source", "license", "sort"] },
 );
 
 // Scoped to the current Type filter — apps and games each draw from their
@@ -97,8 +102,9 @@ export default component$(() => {
   const typeFilter = parseTypeFilter(location.url.searchParams.get("type"));
   const category = location.url.searchParams.get("category") ?? undefined;
   const source = parseSource(location.url.searchParams.get("source"));
+  const license = parseLicense(location.url.searchParams.get("license"));
   const sort = parseSort(location.url.searchParams.get("sort"));
-  const options: BrowseOptions = { interfaceFilter, typeFilter, category, source, sort };
+  const options: BrowseOptions = { interfaceFilter, typeFilter, category, source, license, sort };
 
   // One entry per loaded page, kept separate (rather than one flat array)
   // purely so a divider can be rendered between batches — the actual grid
@@ -219,6 +225,17 @@ export default component$(() => {
               Name (Z–A)
             </option>
           </select>
+        </label>
+
+        <label class="label cursor-pointer gap-2 min-h-8">
+          <input
+            type="checkbox"
+            name="license"
+            value="free"
+            checked={license === "free"}
+            class="checkbox checkbox-sm"
+          />
+          <span class="label-text text-sm">Free software only</span>
         </label>
 
         {source && <input type="hidden" name="source" value={source} />}

@@ -20,6 +20,8 @@ export interface BrowseKeys {
   generation: string;
   /** Ids per `sourceIds:` chunk row — stored by catalog, so no constant to mirror. */
   sourceIdsChunkSize: number;
+  /** Whether this generation also has free-software-only counts (`freeCountKey`). Absent on older datasets: the "free software only" filter then counts live. */
+  freeCounts?: boolean;
 }
 
 /** Parses the `browseKeys` row's JSON, `undefined` when it's absent or malformed (→ live fallback, never a throw). */
@@ -46,6 +48,17 @@ export function countKey(
   category: string | undefined,
 ): string {
   return `count:${generation}:${interfaceFilter}:${typeFilter}:${source ?? "*"}:${category ?? "*"}`;
+}
+
+/** `countKey`'s combination, counting free-software apps only — present when `BrowseKeys.freeCounts` is. Mirrored from catalog's `freeCountKey`. */
+export function freeCountKey(
+  generation: string,
+  interfaceFilter: InterfaceFilterValue,
+  typeFilter: TypeFilterValue,
+  source: string | undefined,
+  category: string | undefined,
+): string {
+  return `countFree:${generation}:${interfaceFilter}:${typeFilter}:${source ?? "*"}:${category ?? "*"}`;
 }
 
 export function sourceIdsChunkKey(generation: string, source: string, index: number): string {
