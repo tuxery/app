@@ -11,6 +11,7 @@ import {
   LuHistory,
   LuPackage,
   LuAlertTriangle,
+  LuPencilLine,
 } from "@qwikest/icons/lucide";
 import {
   compactCount,
@@ -22,7 +23,8 @@ import {
 import { classifyLicense, licenseInfoHref } from "~/license";
 import { isCatalogUnavailable } from "~/catalog-status";
 import { useCatalogUnavailable } from "~/routes/layout";
-import { reportDataProblemUrl } from "~/contribute-links";
+import { labelledIssuesUrl, reportDataProblemUrl, suggestFixUrl } from "~/contribute-links";
+import { dataIssues } from "~/data-issues";
 import { getAppById, getAppsByCategory, getAppsByIds, getStats } from "~/catalog";
 import { resolveServerEnv } from "~/server-env";
 import {
@@ -722,6 +724,9 @@ export default component$(() => {
   const relationGroups = groupRelations(a.relations ?? []);
   const relatedById = new Map(relatedApps.value.related.map((card) => [card.id, card]));
   const confidence = confidenceNotes(a.dataConfidence);
+  const issues = dataIssues(a);
+  const fixUrl = (field?: string, current?: string) =>
+    suggestFixUrl({ name: a.name, pageUrl: location.url.href, field, current });
   const picks = storePicks(a.storeCollections);
   // "Available via", one entry per platform ("AUR (14)" for 14 builds),
   // the full list of packagings one click away.
@@ -1040,6 +1045,10 @@ export default component$(() => {
             >
               <LuBadgeCheck class="text-base" />
               Claim this listing
+            </a>
+            <a href={fixUrl()} class="btn btn-ghost btn-sm gap-1.5" target="_blank" rel="noopener">
+              <LuPencilLine class="text-base" />
+              Suggest a fix
             </a>
             <a
               href={reportDataProblemUrl({ name: a.name, pageUrl: location.url.href })}
@@ -1381,6 +1390,15 @@ export default component$(() => {
             </dl>
             <div class="flex flex-col items-start mt-3 -ml-3">
               <a
+                href={fixUrl()}
+                class="btn btn-ghost btn-sm gap-1.5"
+                target="_blank"
+                rel="noopener"
+              >
+                <LuPencilLine class="text-base" />
+                Suggest a fix
+              </a>
+              <a
                 // A data problem: catalog's form, with this page's link filled in.
                 href={reportDataProblemUrl({ name: a.name, pageUrl: location.url.href })}
                 class="btn btn-ghost btn-sm gap-1.5"
@@ -1439,6 +1457,55 @@ export default component$(() => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </details>
+        </section>
+      )}
+
+      {/* What we know is missing or imprecise, each with a prefilled
+          "Suggest a fix" — an invitation to help rather than a report. */}
+      {issues.length > 0 && (
+        <section>
+          {/* Open when short, so it's seen; a long list stays one click away. */}
+          <details
+            open={issues.length <= 3}
+            class="collapse collapse-arrow bg-base-100/70 border border-base-300"
+          >
+            <summary class="collapse-title font-medium">
+              Known data issues ({issues.length})
+            </summary>
+            <div class="collapse-content flex flex-col gap-3">
+              <p class="text-sm text-base-content/70">
+                Things this page is missing or isn't precise about. Know the answer? A fix takes one
+                click and a sentence, and the community picks it up from there.
+              </p>
+              <ul class="flex flex-col gap-2">
+                {issues.map((issue) => (
+                  <li key={issue.id} class="flex items-start gap-2 text-sm">
+                    <LuAlertTriangle class="text-warning shrink-0 mt-0.5" />
+                    <div class="flex-1">
+                      <span class="font-medium">{issue.title}</span>
+                      <span class="text-base-content/70"> — {issue.detail}</span>
+                    </div>
+                    <a
+                      href={fixUrl(issue.field, issue.current)}
+                      class="link link-primary whitespace-nowrap"
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      Help fix
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              <a
+                href={labelledIssuesUrl("help wanted")}
+                class="link text-sm text-base-content/70"
+                target="_blank"
+                rel="noopener"
+              >
+                Other things the catalog needs help with
+              </a>
             </div>
           </details>
         </section>
