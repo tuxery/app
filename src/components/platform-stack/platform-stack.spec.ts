@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recommendedGroup } from "./source-stack";
+import { recommendedGroup } from "./platform-stack";
 
 describe("recommendedGroup", () => {
   const ubuntu = new Set(["Ubuntu", "Flatpak", "Snap"]);
