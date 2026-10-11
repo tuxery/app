@@ -76,7 +76,12 @@ test("Flatpak's install button is the appstream:// deep link, with a terminal co
   await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "Flatpak" }).click();
 
-  await expect(page.getByText("Flathub", { exact: false }).first()).toBeVisible();
+  // Scoped to the drawer's Flatpak section: the rating and platform
+  // tooltips (hidden popovers) name Flathub too, earlier in the page.
+  const flatpakSection = page.locator("details", {
+    has: page.locator("summary", { hasText: "Flatpak" }),
+  });
+  await expect(flatpakSection.getByText("Flathub", { exact: false }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Click to install" })).toHaveAttribute(
     "href",
     "appstream://org.mozilla.firefox",
