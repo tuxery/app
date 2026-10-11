@@ -77,21 +77,21 @@ test("a multi-source rated app's tooltip lists every source, each prefixed by it
 test("the build indicator's count matches the builds its tooltip names", async ({ page }) => {
   // Real bug, found live: an earlier badge counted *packages* (dozens, one
   // per distro, mostly the same build) next to a tooltip naming a handful
-  // of builds. The indicator now says it in words ("3 builds", "2
-  // versions") — checked against its own tooltip, by shape, since the
-  // exact builds depend on the dataset.
+  // of builds. The count ("N builds", its accessible name) is checked
+  // against its own tooltip — one "Edition: Version, Version" line per
+  // edition, then "Other builds: ..." — by shape, since the exact builds
+  // depend on the dataset.
   await page.goto(LUANTI);
   const header = page.locator("section").first();
-  const trigger = header.getByRole("button", { name: /^\d+ (builds|versions|editions)/ }).first();
+  const trigger = header.getByRole("button", { name: /^\d+ builds/ }).first();
   await expect(trigger).toBeVisible();
-  const [, count, kind] = /^(\d+) (builds|versions|editions)/.exec(await trigger.innerText()) ?? [];
-  const tip = await tipText(page, trigger);
-  const line = { builds: "Other builds", versions: "Versions", editions: "Editions" }[
-    kind ?? "builds"
-  ];
-  const names = new RegExp(`^${line}: (.+)$`, "m").exec(tip)?.[1]?.split(", ") ?? [];
-  // "N builds" counts the default build too; versions and editions list them all.
-  expect(Number(count)).toBe(kind === "builds" ? names.length + 1 : names.length);
+  const label = (await trigger.locator(".sr-only").first().textContent()) ?? "";
+  const count = Number(/(\d+) builds/.exec(label)?.[1]);
+  const named = (await tipText(page, trigger))
+    .split("\n")
+    .map((line) => line.split(": ")[1]?.split(", ").length ?? 0)
+    .reduce((sum, n) => sum + n, 0);
+  expect(count).toBe(named);
 });
 
 test("the Additional information table shows a real Size row, from Flathub's own download_size", async ({
@@ -118,22 +118,14 @@ test("a Flathub-verified app shows a Verified badge next to its developer, and o
   await expect(page.locator('[data-tip="Developer-identity-verified on Flathub"]')).toBeVisible();
 });
 
-test("the source dot-map's Flatpak dot names its verified status in the tooltip", async ({
+test("the source stack leads with the recommended way to install, and colors the selected OS's platforms", async ({
   page,
 }) => {
   await page.goto(FIREFOX);
   const stack = page.locator("section").first().locator(".flex.-space-x-2");
-  expect(await tipText(page, stack)).toContain("Flatpak (✓ verified)");
-});
-
-test("the source stack rings a verified logo and puts the selected OS's platforms first", async ({
-  page,
-}) => {
-  await page.goto(FIREFOX);
-  const stack = page.locator("section").first().locator(".flex.-space-x-2");
-  // Flatpak leads (catalog order) and is ringed: Flathub's verified developer.
-  await expect(stack.locator(":scope > span").first()).toHaveClass(/border-primary/);
-  expect(await tipText(page, stack)).toMatch(/^Flatpak \(✓ verified\)/);
+  // No OS picked: Flatpak, which works everywhere, verified on Flathub.
+  expect(await tipText(page, stack)).toMatch(/^Flatpak \(recommended, ✓ verified\)/);
+  await expect(stack.locator("svg.text-primary")).toHaveCount(0);
 
   await page.goto("/settings/?tab=os");
   await page.getByRole("button", { name: "Fedora", exact: true }).click();
@@ -143,23 +135,23 @@ test("the source stack rings a verified logo and puts the selected OS's platform
 
   await page.goto(FIREFOX);
   const stackWithOs = page.locator("section").first().locator(".flex.-space-x-2");
-  // The OS pick applies client-side after load: poll.
+  // The OS pick applies client-side after load: poll. Fedora's own
+  // packages lead, then the other platforms Fedora uses, then the rest.
   await expect
     .poll(() => tipText(page, stackWithOs))
-    .toContain("Flatpak (✓ verified, used on your OS)");
-  // Platforms Fedora doesn't use come after the ones it does.
+    .toMatch(/^Fedora \(recommended, used on your OS\)/);
   const lines = (await tipText(page, stackWithOs)).split("\n");
   const firstUnused = lines.findIndex((line) => !line.includes("used on your OS"));
   if (firstUnused >= 0)
     expect(lines.slice(firstUnused).every((line) => !line.includes("used on your OS"))).toBe(true);
+  await expect(stackWithOs.locator("svg").first()).toHaveClass(/text-primary/);
 });
 
-test("an unverified platform's logo isn't ringed", async ({ page }) => {
+test("an unverified platform says nothing about verification", async ({ page }) => {
   // LM Studio: on Flathub but not in its "verified" collection.
   await page.goto("/app/ai.lmstudio.lm-studio/");
   const stack = page.locator("section").first().locator(".flex.-space-x-2");
-  expect(await tipText(page, stack)).toBe("Flatpak\nArch Linux");
-  await expect(stack.locator(":scope > span").first()).toHaveClass(/border-base-300/);
+  expect(await tipText(page, stack)).toBe("Flatpak (recommended)\nArch Linux");
 });
 
 test("Claim this listing links to the claim explainer, personalized with the app's name, and back again", async ({

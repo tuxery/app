@@ -74,7 +74,7 @@ describe("availableViaLabels", () => {
 });
 
 describe("summarizeReleaseLines", () => {
-  it("lists editions, versions and other builds once each, as the pickers name them", () => {
+  it("lists each edition with its own versions, and other builds, once each, as the pickers name them", () => {
     expect(
       summarizeReleaseLines([
         {},
@@ -84,8 +84,10 @@ describe("summarizeReleaseLines", () => {
         { flavors: ["bin", "locale:zh"] },
       ]),
     ).toEqual({
-      editions: ["Standard", "ESR"],
-      versions: ["Stable", "Nightly"],
+      editions: [
+        { name: "Standard", versions: ["Stable", "Nightly"] },
+        { name: "ESR", versions: ["Stable"] },
+      ],
       otherBuilds: ["Bin", "zh"],
     });
   });
