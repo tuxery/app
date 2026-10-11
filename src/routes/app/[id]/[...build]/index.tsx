@@ -26,6 +26,7 @@ import { isCatalogUnavailable } from "~/catalog-status";
 import { useCatalogUnavailable } from "~/routes/layout";
 import { labelledIssuesUrl, reportDataProblemUrl, suggestFixUrl } from "~/contribute-links";
 import { dataIssues } from "~/data-issues";
+import { projectLinks } from "~/project-links";
 import { getAppById, getAppsByCategory, getAppsByIds, getStats } from "~/catalog";
 import { resolveServerEnv } from "~/server-env";
 import {
@@ -722,6 +723,7 @@ export default component$(() => {
   const relatedById = new Map(relatedApps.value.related.map((card) => [card.id, card]));
   const confidence = confidenceNotes(a.dataConfidence);
   const issues = dataIssues(a);
+  const officialLinks = projectLinks(a.links);
   const fixUrl = (field?: string, current?: string) =>
     suggestFixUrl({ name: a.name, pageUrl: location.url.href, field, current });
   const picks = storePicks(a.storeCollections);
@@ -1280,6 +1282,24 @@ export default component$(() => {
                     <a href={a.homepage} class="link link-primary" target="_blank" rel="noopener">
                       {a.homepage.replace(/^https?:\/\//, "").replace(/\/$/, "")}
                     </a>
+                  </dd>
+                </div>
+              )}
+              {officialLinks.length > 0 && (
+                <div>
+                  <dt class={INFO_LABEL}>From the project</dt>
+                  <dd class="flex flex-wrap gap-x-3 gap-y-1">
+                    {officialLinks.map((link) => (
+                      <a
+                        key={link.type}
+                        href={link.href}
+                        class="link link-primary"
+                        target="_blank"
+                        rel="noopener"
+                      >
+                        {link.label}
+                      </a>
+                    ))}
                   </dd>
                 </div>
               )}
