@@ -17,6 +17,57 @@ export function releaseAge(iso: string | undefined, now: Date): string | undefin
   return ago(Math.floor(days / 365.25), "year");
 }
 
+export interface ReleaseEntry {
+  version: string;
+  date?: string;
+}
+
+export type ActivityLevel = "active" | "slowing" | "inactive";
+
+export interface Activity {
+  level: ActivityLevel;
+  label: string;
+  /** What it's based on, for a tooltip: "8 releases in the last year". */
+  detail: string;
+}
+
+// A project that released within 6 months is active; within 2 years it's
+// slowing down; beyond that, inactive. Months, not release counts: some
+// mature projects ship once or twice a year and are perfectly alive.
+const ACTIVE_DAYS = 183;
+const SLOWING_DAYS = 730;
+
+/**
+ * How alive the project looks, from its newest release date (the
+ * project's own releases, never a distro rebuild) — `undefined` without
+ * one. The detail counts the releases of the last 12 months when the
+ * history is known.
+ */
+export function releaseActivity(
+  latest: string | undefined,
+  releases: readonly ReleaseEntry[] | undefined,
+  now: Date,
+): Activity | undefined {
+  const time = latest ? Date.parse(latest) : Number.NaN;
+  if (Number.isNaN(time)) return undefined;
+  const days = (now.getTime() - time) / DAY_MS;
+  const level: ActivityLevel =
+    days <= ACTIVE_DAYS ? "active" : days <= SLOWING_DAYS ? "slowing" : "inactive";
+  const label =
+    level === "active" ? "Actively maintained" : level === "slowing" ? "Slowing down" : "Inactive";
+  const lastYear = releases?.filter(
+    (release) => release.date && now.getTime() - Date.parse(release.date) <= 365 * DAY_MS,
+  ).length;
+  // Stores list a few recent releases only (Flathub: 4): when all of them
+  // fall within the year, there may well be more.
+  const atLeast = lastYear !== undefined && lastYear > 1 && lastYear === releases?.length;
+  const detail =
+    lastYear === undefined
+      ? `Latest release ${releaseAge(latest, now) ?? ""}`.trim()
+      : `${lastYear}${atLeast ? "+" : ""} release${lastYear === 1 ? "" : "s"} in the last year`;
+  return { level, label, detail };
+}
+
 /** "12M", "4.2K", "830" — an install count short enough for the page header. */
 export function compactCount(count: number): string {
   return new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(

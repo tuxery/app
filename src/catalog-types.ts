@@ -187,6 +187,8 @@ export interface CatalogApp {
   homepage?: string;
   /** The project's own links beyond `homepage` (bug tracker, source code, donations...) — see `tuxery/catalog`'s `CatalogApp.links`. */
   links?: import("~/project-links").ProjectLinks;
+  /** The project's releases, newest first (version and date) — see `tuxery/catalog`'s `CatalogApp.releases`. */
+  releases?: import("~/app-facts").ReleaseEntry[];
   packages: SourcedPackage[];
   /** "gui" when the catalog has positive evidence of a launchable GUI app — never "cli" by default, see `tuxery/catalog`'s `CatalogApp.kind` doc comment. */
   kind?: "gui";
