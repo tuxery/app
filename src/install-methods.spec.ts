@@ -18,3 +18,17 @@ describe("vendor-repos install method", () => {
     expect(installWebsiteLink({ ...brave, homepage: undefined })).toBeUndefined();
   });
 });
+
+// Firefox's attributes in nixpkgs all share pname "firefox".
+const nix = (appId: string) =>
+  ({ source: "nix-nixpkgs", name: "firefox", appId }) as SourcedPackage;
+
+describe("nixpkgs install method", () => {
+  it("installs the attribute, not the pname the attributes share", () => {
+    expect(installCommand(nix("firefox"))).toBe("nix profile install nixpkgs#firefox");
+    expect(installCommand(nix("firefox-esr"))).toBe("nix profile install nixpkgs#firefox-esr");
+    expect(installCommand(nix("firefox-mobile"))).toBe(
+      "nix profile install nixpkgs#firefox-mobile",
+    );
+  });
+});
