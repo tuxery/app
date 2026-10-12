@@ -28,6 +28,7 @@ import { useCatalogUnavailable } from "~/routes/layout";
 import { labelledIssuesUrl, reportDataProblemUrl, suggestFixUrl } from "~/contribute-links";
 import { dataIssues } from "~/data-issues";
 import { projectLinks } from "~/project-links";
+import { sandboxSummary } from "~/sandbox";
 import { getAppById, getAppsByCategory, getAppsByIds, getStats } from "~/catalog";
 import { resolveServerEnv } from "~/server-env";
 import {
@@ -725,6 +726,7 @@ export default component$(() => {
   const relatedById = new Map(relatedApps.value.related.map((card) => [card.id, card]));
   const confidence = confidenceNotes(a.dataConfidence);
   const issues = dataIssues(a);
+  const sandbox = sandboxSummary(a.permissions);
   const officialLinks = projectLinks(a.links);
   const fixUrl = (field?: string, current?: string) =>
     suggestFixUrl({ name: a.name, pageUrl: location.url.href, field, current });
@@ -1407,10 +1409,29 @@ export default component$(() => {
                   </dd>
                 </div>
               )}
-              {a.permissions?.length && (
+              {sandbox && (
                 <div>
-                  <dt class={INFO_LABEL}>Permissions</dt>
-                  <dd>{a.permissions.join(", ")}</dd>
+                  <dt class={INFO_LABEL}>
+                    <a href="/docs/glossary/#sandbox" class="link">
+                      Flatpak sandbox
+                    </a>
+                  </dt>
+                  <dd>
+                    <span class="font-medium">{sandbox.label}</span>
+                    <p class="text-xs text-base-content/70 mt-0.5">{sandbox.explanation}</p>
+                    {sandbox.notes.length > 0 && (
+                      <details class="mt-1">
+                        <summary class="link link-primary text-xs cursor-pointer w-fit">
+                          What it can access
+                        </summary>
+                        <ul class="text-xs text-base-content/80 mt-1 flex flex-col gap-0.5 list-disc pl-4">
+                          {sandbox.notes.map((note) => (
+                            <li key={note.text}>{note.text}</li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
+                  </dd>
                 </div>
               )}
             </dl>

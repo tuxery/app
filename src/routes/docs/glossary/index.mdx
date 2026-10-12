@@ -217,6 +217,21 @@ the files and devices it was granted. Flatpak and Snap apps run sandboxed,
 with permissions their packager declares; distro packages and AppImages
 normally don't.
 
+A Flatpak's page shows what its sandbox is open to, in three levels:
+
+- **Limited access**: nothing beyond the basics (display, internet, audio).
+- **Some access**: it can reach part of your data or devices, such as your
+  Downloads folder, a camera or a game controller.
+- **Wide access**: a large part of the sandbox is open, such as your whole
+  home folder or the ability to run programs outside the sandbox. File
+  managers, backup tools and developer tools need this to do their job.
+
+These levels describe how much an app _can_ reach, not what it does: a web
+browser rightly holds access to your devices, and none of this means an app
+is unsafe. Plumbing every app has (graphics acceleration, its own settings
+folders) isn't listed. When a package doesn't declare its permissions, the
+page shows nothing rather than a guess.
+
 ### Runtime
 
 A shared set of libraries Flatpak apps are built against (GNOME, KDE or
