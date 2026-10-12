@@ -37,7 +37,9 @@ import {
   buildLabel,
   formatBytes,
   formatSourceLabel,
+  ageRatingTip,
   availableViaLabels,
+  formatMinAge,
   isInstallSource,
   isVerifiedPackage,
   provenanceInfo,
@@ -961,9 +963,13 @@ export default component$(() => {
               </a>
             )}
             {a.ageRating && (
-              <span class="badge badge-outline">
-                {a.ageRating.system} {a.ageRating.value}
-              </span>
+              <a
+                href="/docs/glossary/#age-rating"
+                class="tooltip badge badge-outline"
+                title={ageRatingTip(a.ageRating.value, a.packages)}
+              >
+                {formatMinAge(a.ageRating.value)}
+              </a>
             )}
             {a.aiFeatures && <span class="badge badge-secondary">AI features</span>}
             {a.inAppPurchases && <span class="badge badge-warning">In-app purchases</span>}
