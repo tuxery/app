@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  ageRatingTip,
   availableViaLabels,
   buildLabel,
+  formatMinAge,
   formatSourceLabel,
   isInstallSource,
   provenanceInfo,
+  summarizeAgeRatings,
   summarizeBuilds,
   summarizeReleaseLines,
   type PackageSourceId,
@@ -90,5 +93,36 @@ describe("summarizeReleaseLines", () => {
       ],
       otherBuilds: ["Bin", "zh"],
     });
+  });
+});
+
+describe("age ratings", () => {
+  it("writes the unified age as a badge", () => {
+    expect(formatMinAge("0")).toBe("All ages");
+    expect(formatMinAge("12")).toBe("12+");
+  });
+
+  it("lists what each source said, once, in its own system", () => {
+    expect(
+      summarizeAgeRatings([
+        { source: "flatpak-flathub", ageRating: { system: "OARS", value: "moderate", minAge: 10 } },
+        { source: "deb-debian-appstream", ageRating: { system: "OARS", value: "mild", minAge: 3 } },
+        { source: "gog", ageRating: { system: "PEGI", value: "16", minAge: 16 } },
+        { source: "gog", ageRating: { system: "PEGI", value: "16", minAge: 16 } },
+        { source: "pacman-aur" },
+      ]),
+    ).toEqual([
+      { label: "Flathub (Flatpak)", detail: "OARS moderate, 10+" },
+      { label: "Debian AppStream", detail: "OARS mild, 3+" },
+      { label: "GOG", detail: "PEGI 16" },
+    ]);
+  });
+
+  it("puts the unified age first in the tooltip, then each source", () => {
+    expect(
+      ageRatingTip("16", [
+        { source: "gog", ageRating: { system: "PEGI", value: "16", minAge: 16 } },
+      ]),
+    ).toBe("Minimum age: 16+ (the strictest of the sources)\nGOG: PEGI 16");
   });
 });

@@ -143,6 +143,8 @@ export interface SourcedPackage {
   changelog?: string;
   /** A crowd rating from this specific source, when it has one — see `tuxery/catalog`'s `SourcedPackage.rating` doc comment for which sources populate this. */
   rating?: { average: number; count: number };
+  /** This source's own content rating and the minimum age it implies — see `tuxery/catalog`'s `SourcedPackage.ageRating`. */
+  ageRating?: { system: string; value: string; minAge: number };
   /** Upstream store collections this specific package appears in — see `tuxery/catalog`'s `SourcedPackage.storeCollections` doc comment. Today only Flathub populates `"verified"` (developer-identity-verified) here; no other source has an equivalent signal. */
   storeCollections?: string[];
 }
@@ -397,6 +399,59 @@ export function availableViaLabels(
 export function formatSourceLabel(pkg: { source: PackageSourceId } & BuildFields): string {
   const label = SOURCE_LABELS[pkg.source];
   return isDefaultBuild(pkg) ? label : `${label} (${buildLabel(pkg)} build)`;
+}
+
+/** An age on the unified scale, as a badge: "All ages" for 0, otherwise "12+". `value` is `CatalogApp.ageRating.value`, the minimum age in years. */
+export function formatMinAge(value: string): string {
+  return Number(value) === 0 ? "All ages" : `${Number(value)}+`;
+}
+
+export interface SourceAgeRating {
+  label: string;
+  detail: string;
+}
+
+/** Where a rating came from: a store or distro's name, "Debian AppStream" for the AppStream feeds that have no install label of their own. */
+function ageSourceLabel(source: string): string {
+  const base = source.replace(/-appstream$/, "");
+  const name = Object.hasOwn(SOURCE_LABELS, base) ? SOURCE_LABELS[base as PackageSourceId] : base;
+  return base === source ? name : `${name} AppStream`;
+}
+
+/**
+ * One row per source that rated the app, for the age badge's tooltip:
+ * what the source said in its own system ("OARS moderate, 10+", "PEGI 16")
+ * next to the unified minimum age. A source appearing with the same
+ * rating several times (one per build) is listed once.
+ */
+export function summarizeAgeRatings(
+  packages: { source: string; ageRating?: { system: string; value: string; minAge: number } }[],
+): SourceAgeRating[] {
+  const rows = packages.flatMap(({ source, ageRating }) =>
+    ageRating
+      ? [
+          {
+            label: ageSourceLabel(source),
+            detail:
+              ageRating.system === "OARS"
+                ? `OARS ${ageRating.value}, ${formatMinAge(String(ageRating.minAge))}`
+                : `${ageRating.system} ${ageRating.value}`,
+          },
+        ]
+      : [],
+  );
+  return rows.filter(
+    (row, i) => rows.findIndex((r) => r.label === row.label && r.detail === row.detail) === i,
+  );
+}
+
+/** The age badge's tooltip: the unified age, then what each source said (several lines, as the native tooltip shows them). */
+export function ageRatingTip(
+  value: string,
+  packages: Parameters<typeof summarizeAgeRatings>[0],
+): string {
+  const rows = summarizeAgeRatings(packages).map((row) => `${row.label}: ${row.detail}`);
+  return [`Minimum age: ${formatMinAge(value)} (the strictest of the sources)`, ...rows].join("\n");
 }
 
 export interface SourceRating {
