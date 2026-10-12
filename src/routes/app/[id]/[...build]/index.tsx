@@ -247,8 +247,12 @@ function groupBySource(packages: SourcedPackage[]): [PackageSourceId, SourcedPac
  */
 function tabLabel(pkg: SourcedPackage, packages: SourcedPackage[]): string {
   const label = buildLabel(pkg);
-  const collides = packages.some((p) => p !== pkg && buildLabel(p) === label);
-  return collides ? pkg.name : label;
+  const same = packages.filter((p) => buildLabel(p) === label);
+  if (same.length === 1) return label;
+  // Nixpkgs attributes of one pname (`firefox`, `firefox-mobile`) share a
+  // name too: the attribute path is what tells them apart.
+  const nameIsUnique = same.filter((p) => p.name === pkg.name).length === 1;
+  return nameIsUnique ? pkg.name : (pkg.appId ?? pkg.name);
 }
 
 /**

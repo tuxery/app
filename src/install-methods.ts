@@ -213,7 +213,12 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
   slackware: { kind: "command", command: (pkg) => `sudo slackpkg install ${pkg.name}` },
   "eopkg-solus": { kind: "command", command: (pkg) => `sudo eopkg install ${pkg.name}` },
   "ebuild-gentoo": { kind: "command", command: (pkg) => `sudo emerge ${pkg.name}` },
-  "nix-nixpkgs": { kind: "command", command: (pkg) => `nix profile install nixpkgs#${pkg.name}` },
+  // The attribute path (`firefox-esr`), not the pname (`firefox`) several
+  // attributes share: `nixpkgs#firefox` would install the wrong build.
+  "nix-nixpkgs": {
+    kind: "command",
+    command: (pkg) => `nix profile install nixpkgs#${pkg.appId ?? pkg.name}`,
+  },
   gog: { kind: "link" },
   lutris: { kind: "link" },
   "github-releases": { kind: "link" },
