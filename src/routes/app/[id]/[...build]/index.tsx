@@ -29,6 +29,7 @@ import { labelledIssuesUrl, reportDataProblemUrl, suggestFixUrl } from "~/contri
 import { dataIssues } from "~/data-issues";
 import { projectLinks } from "~/project-links";
 import { sandboxSummary } from "~/sandbox";
+import { sparkline } from "~/sparkline";
 import { getAppById, getAppsByCategory, getAppsByIds, getStats } from "~/catalog";
 import { resolveServerEnv } from "~/server-env";
 import {
@@ -156,6 +157,8 @@ export const useDetailStats = routeLoader$(async (requestEvent) =>
 // question doesn't depend on which of the two AppImage feeds a package
 // came from.
 // The "Additional information" cards.
+/** Size of the installs sparkline in the Project card. */
+const CHART = { width: 160, height: 32 };
 const INFO_CARD = "rounded-box border border-base-300 bg-base-100/70 p-4";
 const INFO_CARD_TITLE = "text-xs font-semibold uppercase tracking-wide text-base-content/70 mb-3";
 const INFO_LIST = "flex flex-col gap-3 text-sm";
@@ -715,12 +718,16 @@ export default component$(() => {
         releases: a.releases,
         installsTotal: a.installsTotal,
         installsLast7Days: a.installsLast7Days,
+        installsLastMonth: a.installsLastMonth,
+        installsDaily: a.installsDaily,
       }
     : {
         ...buildFacts(selectedPackages),
         lastUpdated: undefined,
         installsTotal: undefined,
         installsLast7Days: undefined,
+        installsLastMonth: undefined,
+        installsDaily: undefined,
       };
   const relationGroups = groupRelations(a.relations ?? []);
   const relatedById = new Map(relatedApps.value.related.map((card) => [card.id, card]));
@@ -759,6 +766,7 @@ export default component$(() => {
         (facts.installsLast7Days === undefined
           ? ""
           : ` · ${facts.installsLast7Days.toLocaleString("en")} in the last 7 days`);
+  const installsChart = sparkline(facts.installsDaily, CHART, "Flathub installs");
   const latestRelease = releaseAge(facts.lastUpdated, new Date());
   const activity = releaseActivity(facts.lastUpdated, facts.releases, new Date());
   const ratingPackages = isDefaultBuild ? a.packages : selectedPackages;
@@ -1383,10 +1391,35 @@ export default component$(() => {
                   <dt class={INFO_LABEL}>Installs</dt>
                   <dd>
                     {facts.installsTotal.toLocaleString("en")} on Flathub
+                    {facts.installsLastMonth !== undefined && (
+                      <span class="block text-base-content/70">
+                        {facts.installsLastMonth.toLocaleString("en")} in the last month
+                      </span>
+                    )}
                     {facts.installsLast7Days !== undefined && (
                       <span class="block text-base-content/70">
                         {facts.installsLast7Days.toLocaleString("en")} in the last 7 days
                       </span>
+                    )}
+                    {installsChart && (
+                      <svg
+                        viewBox={`0 0 ${CHART.width} ${CHART.height}`}
+                        width={CHART.width}
+                        height={CHART.height}
+                        aria-label={installsChart.description}
+                        class="mt-1.5 text-primary"
+                      >
+                        <title>{installsChart.description}</title>
+                        <path d={installsChart.area} fill="currentColor" fill-opacity="0.15" />
+                        <polyline
+                          points={installsChart.line}
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          stroke-linejoin="round"
+                          stroke-linecap="round"
+                        />
+                      </svg>
                     )}
                   </dd>
                 </div>
