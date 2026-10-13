@@ -229,6 +229,10 @@ export interface CatalogApp {
   changelog?: string;
   requirements?: string;
   permissions?: string[];
+  /** Brand colors per color scheme (`#rrggbb`), AppStream's `<branding>` — see `CatalogApp.brandColors`. Never used as is: `~/brand-colors` checks them first. */
+  brandColors?: { light?: string; dark?: string };
+  /** AppStream kudos as the developer states them — see `CatalogApp.kudos` and `~/accessibility-hints`. */
+  kudos?: string[];
   ageRating?: { system: string; value: string };
   aiFeatures?: boolean;
   inAppPurchases?: boolean;

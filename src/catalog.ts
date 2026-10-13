@@ -237,6 +237,8 @@ function toCatalogApp(row: Row): CatalogApp {
     reviews: json(row.reviews_json),
     features: json(row.features_json),
     permissions: json(row.permissions_json),
+    brandColors: json(row.brand_colors_json),
+    kudos: json(row.kudos_json),
     editorialTags: json(row.editorial_tags_json),
     storeCollections: json(row.store_collections_json),
     suite: json(row.suite_json),
