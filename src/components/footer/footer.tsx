@@ -1,7 +1,8 @@
 import { component$ } from "@qwik.dev/core";
 import { TuxeryLogo } from "~/components/tuxery-logo/tuxery-logo";
+import { commitUrl, formatDateRange, versionOf } from "~/build-info";
 import { DOCS_SECTIONS } from "~/docs-nav";
-import { useHeroBackground } from "~/routes/layout";
+import { useCatalogStats, useHeroBackground } from "~/routes/layout";
 
 const CATALOG_LINKS = [
   { href: "/apps/", title: "Apps" },
@@ -14,6 +15,7 @@ const CATALOG_LINKS = [
 // sidebar (`DOCS_SECTIONS`), so the two can't drift.
 export const Footer = component$(() => {
   const bg = useHeroBackground().value;
+  const { buildInfo } = useCatalogStats().value;
 
   return (
     <footer class="border-t border-base-300 bg-base-200/50 mt-16">
@@ -35,6 +37,38 @@ export const Footer = component$(() => {
               <a href="/docs/license/" class="link link-hover">
                 AGPL v3
               </a>
+            </p>
+            <p class="text-xs text-base-content/60 mt-3">
+              <span>
+                App{" "}
+                {APP_COMMIT_DATE ? (
+                  <a href={commitUrl("app", APP_COMMIT)} class="link link-hover" title={APP_COMMIT}>
+                    {versionOf(APP_COMMIT_DATE)}
+                  </a>
+                ) : (
+                  APP_COMMIT
+                )}
+              </span>
+              {buildInfo?.catalog && (
+                <span>
+                  {" · "}Catalog{" "}
+                  <a
+                    href={commitUrl("catalog", buildInfo.catalog.commit)}
+                    class="link link-hover"
+                    title={buildInfo.catalog.commit}
+                  >
+                    {versionOf(buildInfo.catalog.date)}
+                  </a>
+                </span>
+              )}
+              {buildInfo?.sources && (
+                <span>
+                  {" · "}Sources{" "}
+                  <a href="/docs/status/" class="link link-hover">
+                    {formatDateRange(buildInfo.sources.oldest, buildInfo.sources.newest)}
+                  </a>
+                </span>
+              )}
             </p>
 
             {bg && (

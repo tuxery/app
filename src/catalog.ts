@@ -1,6 +1,7 @@
 import { unique } from "helpers4/array";
 import { isNullish } from "helpers4/guard";
 import { createClient, type Client } from "@libsql/client";
+import { BUILD_INFO_META_KEY, parseBuildInfo } from "./build-info";
 import {
   ALL_PACKAGE_SOURCE_IDS,
   BROWSE_PAGE_SIZE,
@@ -1005,13 +1006,17 @@ export async function getStats(env: ServerEnv): Promise<CatalogStats> {
 
   return cachedListing("getStats", EMPTY_STATS, async () => {
     const result = await db.execute(
-      `SELECT key, value FROM meta WHERE key IN ('totalApps', 'generatedAt')`,
+      `SELECT key, value FROM meta WHERE key IN ('totalApps', 'generatedAt', '${BUILD_INFO_META_KEY}')`,
     );
     const meta = Object.fromEntries(result.rows.map((row) => [row.key, row.value])) as Record<
       string,
       string
     >;
-    return { total: Number(meta.totalApps ?? 0), generatedAt: meta.generatedAt ?? "" };
+    return {
+      total: Number(meta.totalApps ?? 0),
+      generatedAt: meta.generatedAt ?? "",
+      buildInfo: parseBuildInfo(meta[BUILD_INFO_META_KEY]),
+    };
   });
 }
 

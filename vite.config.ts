@@ -7,6 +7,7 @@ import { defineConfig, loadEnv, type UserConfig } from "vite";
 import { qwikVite } from "@qwik.dev/core/optimizer";
 import { qwikRouter } from "@qwik.dev/router/vite";
 import tailwindcss from "@tailwindcss/vite";
+import { execFileSync } from "node:child_process";
 
 // Tuxery has three environments, each reading its own Turso credentials
 // (or none) from `tuxery/.dev`'s shared `.env*` files:
@@ -42,6 +43,25 @@ const SHARED_ENV_DIR = "../.dev";
 // Worker environment, not to a local dev server).
 const LOCAL_TURSO_URL = "http://localhost:8080";
 
+// The app has no version number to bump (private, deployed continuously):
+// the footer shows the commit it was built from and that commit's date, not
+// the build date, so two builds of one commit are one version. "dev" and an
+// empty date outside a git checkout (a source tarball).
+function appCommit(): { commit: string; date: string } {
+  try {
+    const [commit, date] = execFileSync("git", ["log", "-1", "--format=%h%n%cI"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .trim()
+      .split("\n");
+    if (commit && date) return { commit, date: new Date(date).toISOString() };
+  } catch {
+    // keep the fallback
+  }
+  return { commit: "dev", date: "" };
+}
+
 /**
  * Note that Vite normally starts from `index.html` but the qwikRouter plugin makes start at `src/entry.ssr.tsx` instead.
  */
@@ -61,8 +81,14 @@ export default defineConfig(({ mode }): UserConfig => {
   const sharedEnv = loadEnv(mode, SHARED_ENV_DIR, "");
   process.env.UNSPLASH_ACCESS_KEY ??= sharedEnv.UNSPLASH_ACCESS_KEY;
 
+  const app = appCommit();
+
   return {
     envDir: SHARED_ENV_DIR,
+    define: {
+      APP_COMMIT: JSON.stringify(app.commit),
+      APP_COMMIT_DATE: JSON.stringify(app.date),
+    },
     plugins: [qwikRouter(), qwikVite(), tailwindcss()],
     // Resolves tsconfig.json's `~/*` alias (Vite's built-in support).
     resolve: { tsconfigPaths: true },
