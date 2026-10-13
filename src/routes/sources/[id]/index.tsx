@@ -3,7 +3,9 @@ import { routeLoader$ } from "@qwik.dev/router";
 import type { DocumentHead } from "@qwik.dev/router";
 import { LuExternalLink } from "@qwikest/icons/lucide";
 import { AppCardLink } from "~/components/app-card/app-card";
+import { Logo } from "~/components/logo/logo";
 import { getTrendingAppsBySource } from "~/catalog";
+import { SOURCE_LOGOS } from "~/data/logos";
 import { STORE_PAGES } from "~/data/store-pages";
 import { resolveServerEnv } from "~/server-env";
 
@@ -33,6 +35,7 @@ export default component$(() => {
       <div class="hero bg-base-200/60 rounded-box -mx-4 md:-mx-6 px-4 md:px-6">
         <div class="hero-content text-center py-12">
           <div class="max-w-xl flex flex-col items-center gap-4">
+            <Logo slug={SOURCE_LOGOS[store.id]} class="w-14 h-14 text-base-content/80" />
             <h1 class="text-3xl font-bold">{store.name}</h1>
             <p class="text-base-content/80">{store.tagline}</p>
             <a

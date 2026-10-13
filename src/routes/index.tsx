@@ -5,17 +5,14 @@ import { toMapByKey } from "helpers4/map";
 import {
   LuChevronLeft,
   LuChevronRight,
-  LuGamepad2,
   LuInfo,
-  LuJoystick,
   LuMegaphone,
-  LuPackage,
   LuSearch,
-  LuStore,
 } from "@qwikest/icons/lucide";
 import { AppCardLink } from "~/components/app-card/app-card";
 import { CategoryTileGrid } from "~/components/category-tile-grid/category-tile-grid";
 import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-scroller";
+import { Logo } from "~/components/logo/logo";
 import {
   getStats,
   getTrendingApps,
@@ -26,6 +23,7 @@ import {
   getAppsByIds,
 } from "~/catalog";
 import { getInfluencerPage } from "~/data/influencer-pages";
+import { SOURCE_LOGOS } from "~/data/logos";
 import { useCatalogUnavailable } from "~/routes/layout";
 import { resolveServerEnv } from "~/server-env";
 import type { AppSummary } from "~/catalog-types";
@@ -216,7 +214,7 @@ const AppScrollRow = component$<{
   </section>
 ));
 
-// Placeholder tiles: a color gradient + icon per destination, not a real
+// Placeholder tiles: a color gradient + the store's logo per destination, not a real
 // photo — no external image dependency (no Unsplash-quota cost, no
 // per-image attribution to display on a small tile). Swap `gradient` for
 // a real `imageUrl` later without changing the grid around it. Each links
@@ -227,25 +225,25 @@ const DESTINATION_TILES = [
   {
     title: "Flathub",
     href: "/sources/flatpak-flathub/",
-    icon: LuPackage,
+    source: "flatpak-flathub",
     gradient: "from-sky-500 to-blue-700",
   },
   {
     title: "Snap Store",
     href: "/sources/snap-snapcraft/",
-    icon: LuStore,
+    source: "snap-snapcraft",
     gradient: "from-orange-500 to-red-600",
   },
   {
     title: "GOG",
     href: "/sources/gog/",
-    icon: LuGamepad2,
+    source: "gog",
     gradient: "from-violet-600 to-indigo-700",
   },
   {
     title: "Lutris",
     href: "/sources/lutris/",
-    icon: LuJoystick,
+    source: "lutris",
     gradient: "from-amber-500 to-rose-600",
   },
 ] as const;
@@ -431,7 +429,7 @@ export default component$(() => {
                     class={`card bg-gradient-to-br ${tile.gradient} text-white justify-center hover:brightness-110 transition-[filter]`}
                   >
                     <div class="card-body items-center justify-center text-center p-3 gap-1">
-                      <tile.icon class="text-2xl opacity-90" />
+                      <Logo slug={SOURCE_LOGOS[tile.source]} class="w-9 h-9" />
                       <span class="font-semibold text-sm">{tile.title}</span>
                     </div>
                   </a>
