@@ -22,6 +22,8 @@ import {
   releaseAge,
   storePicks,
 } from "~/app-facts";
+import { accessibilityHints } from "~/accessibility-hints";
+import { brandTintAttributes, brandTints } from "~/brand-colors";
 import { classifyLicense, licenseInfoHref } from "~/license";
 import { isCatalogUnavailable } from "~/catalog-status";
 import { useCatalogUnavailable } from "~/routes/layout";
@@ -740,6 +742,8 @@ export default component$(() => {
   const confidence = confidenceNotes(a.dataConfidence);
   const issues = dataIssues(a);
   const sandbox = sandboxSummary(a.permissions);
+  const brandTint = brandTintAttributes(brandTints(a.brandColors));
+  const accessibility = accessibilityHints(a.kudos);
   const officialLinks = projectLinks(a.links);
   const fixUrl = (field?: string, current?: string) =>
     suggestFixUrl({ name: a.name, pageUrl: location.url.href, field, current });
@@ -864,7 +868,8 @@ export default component$(() => {
 
       <section
         ref={jumboRef}
-        class="relative flex flex-col md:flex-row gap-6 md:items-start rounded-box"
+        class={`relative flex flex-col md:flex-row gap-6 md:items-start rounded-box ${brandTint.classes}`}
+        style={brandTint.style}
       >
         {/* Clipped on its own wrapper, not on the section: an overflow on
             the section cut off the Edition/Version menus where they hang
@@ -1371,6 +1376,17 @@ export default component$(() => {
                         ))}
                       </ul>
                     </details>
+                  </dd>
+                </div>
+              )}
+              {accessibility.length > 0 && (
+                <div>
+                  <dt class={INFO_LABEL}>Accessibility</dt>
+                  <dd>
+                    {accessibility.join(" · ")}
+                    <span class="block text-xs text-base-content/70 mt-0.5">
+                      As the developer states it.
+                    </span>
                   </dd>
                 </div>
               )}

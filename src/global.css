@@ -61,6 +61,20 @@ body {
   --color-primary-content: oklch(17.226% 0.028 254.027);
 }
 
+/* An app's brand color (AppStream <branding>) as a tint behind its page
+   header: TINT_PERCENT of it over the theme's base. The classes are only set
+   for a scheme whose tint ~/brand-colors found readable (text and links at
+   4.5:1), so a color that would not pass never reaches these rules. The
+   percentage is the same number as TINT_PERCENT there. */
+[data-theme="nord"] .brand-tint-light {
+  background-color: color-mix(in srgb, var(--brand-light) 20%, var(--color-base-100));
+  border-inline-start: 4px solid var(--brand-light);
+}
+[data-theme="dim"] .brand-tint-dark {
+  background-color: color-mix(in srgb, var(--brand-dark) 20%, var(--color-base-100));
+  border-inline-start: 4px solid var(--brand-dark);
+}
+
 /* Glassmorphism experiment for AppCard, tried in place of neumorphism —
    neumorphism's soft same-hue shadows read poorly for contrast/a11y and
    assume a flat monochrome page background, which conflicts with the
