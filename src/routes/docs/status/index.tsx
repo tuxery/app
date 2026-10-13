@@ -2,6 +2,7 @@ import { component$ } from "@qwik.dev/core";
 import { routeLoader$ } from "@qwik.dev/router";
 import type { DocumentHead } from "@qwik.dev/router";
 import { getStats } from "~/catalog";
+import { commitUrl, formatDateRange } from "~/build-info";
 import { resolveServerEnv } from "~/server-env";
 
 export const useStats = routeLoader$(async (requestEvent) =>
@@ -41,6 +42,36 @@ export default component$(() => {
           </div>
           <div class="stat-desc">Per-app update dates aren't tracked yet</div>
         </div>
+        {stats.value.buildInfo?.sources && (
+          <div class="stat">
+            <div class="stat-title">Sources fetched</div>
+            <div class="stat-value text-lg">
+              {formatDateRange(
+                stats.value.buildInfo.sources.oldest,
+                stats.value.buildInfo.sources.newest,
+              )}
+            </div>
+            <div class="stat-desc">
+              Oldest to newest source; the snapshot is when they were merged
+            </div>
+          </div>
+        )}
+        {stats.value.buildInfo?.catalog && (
+          <div class="stat">
+            <div class="stat-title">Built by catalog</div>
+            <div class="stat-value text-lg">
+              <a
+                href={commitUrl("catalog", stats.value.buildInfo.catalog.commit)}
+                class="link link-hover"
+                target="_blank"
+                rel="noopener"
+              >
+                {stats.value.buildInfo.catalog.commit}
+              </a>
+            </div>
+            <div class="stat-desc">The commit of the code that produced this data</div>
+          </div>
+        )}
       </div>
 
       <p class="text-base-content/70">

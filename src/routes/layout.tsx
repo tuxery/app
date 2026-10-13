@@ -8,7 +8,8 @@ import {
   LuSettings,
   LuUser,
 } from "@qwikest/icons/lucide";
-import { isCatalogAvailable } from "~/catalog";
+import { getStats, isCatalogAvailable } from "~/catalog";
+import { EMPTY_STATS } from "~/catalog-types";
 import { CATALOG_UNAVAILABLE_KEY, isCatalogUnavailable, needsCatalog } from "~/catalog-status";
 import { Footer } from "~/components/footer/footer";
 import { Logo } from "~/components/logo/logo";
@@ -60,6 +61,14 @@ export const useCatalogUnavailable = routeLoader$(({ sharedMap }) =>
 export const useHeroBackground = routeLoader$(async (requestEvent) => {
   return getHeroBackgroundPhoto(resolveServerEnv(requestEvent.platform));
 });
+
+// The footer's "Catalog · Sources" versions (`~/build-info`). Skipped, not
+// queried, once the layout has already declared the catalog unavailable.
+export const useCatalogStats = routeLoader$((requestEvent) =>
+  isCatalogUnavailable(requestEvent.sharedMap)
+    ? EMPTY_STATS
+    : getStats(resolveServerEnv(requestEvent.platform)),
+);
 
 // Two doors into the same /docs/ section, by intent: help using Tuxery,
 // or everything about the project (status, data, legal). "Docs" alone

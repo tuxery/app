@@ -12,6 +12,7 @@
 import { unique } from "helpers4/array";
 import { formatSize } from "helpers4/number";
 import { capitalize } from "helpers4/string";
+import type { CatalogBuildInfo } from "./build-info";
 
 // One id per connector folder under catalog's packages/sources/src/ —
 // `<format>-<provider>` (e.g. "deb-debian"), except appimage/slackware/
@@ -506,6 +507,8 @@ export interface AppSummary {
 export interface CatalogStats {
   total: number;
   generatedAt: string;
+  /** Which catalog commit built the data and how old its sources are — `undefined` until a publish carrying `meta.buildInfo` has run. */
+  buildInfo?: CatalogBuildInfo;
 }
 
 export const EMPTY_STATS: CatalogStats = { total: 0, generatedAt: "" };
