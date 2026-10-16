@@ -3,29 +3,38 @@ import { useLocation } from "@qwik.dev/router";
 import { LuArrowLeft, LuArrowRight, LuChevronDown, LuMenu, LuPencil } from "@qwikest/icons/lucide";
 import { adjacentDocsPages, DOCS_SECTIONS, docsEditUrl, findDocsPage } from "~/docs-nav";
 
-/** Every docs page grouped by section, the current one highlighted — rendered twice (desktop sidebar, mobile collapsible), never both visible. */
-const DocsNav = component$<{ currentHref: string | undefined }>(({ currentHref }) => (
-  <ul class="menu menu-sm w-full p-0">
-    {DOCS_SECTIONS.map((section) => (
-      <li key={section.title}>
-        <h2 class="menu-title">{section.title}</h2>
-        <ul>
-          {section.pages.map((page) => (
-            <li key={page.href}>
-              <a
-                href={page.href}
-                class={page.href === currentHref ? "menu-active" : undefined}
-                aria-current={page.href === currentHref ? "page" : undefined}
-              >
-                {page.title}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </li>
-    ))}
-  </ul>
-));
+/**
+ * Every docs page grouped by section, the current one highlighted — rendered
+ * twice (desktop sidebar, mobile collapsible), never both visible. Reads the
+ * location itself rather than taking the current page as a prop: passed
+ * down, it stayed on the first page after a client-side navigation between
+ * two docs pages.
+ */
+const DocsNav = component$(() => {
+  const currentHref = findDocsPage(useLocation().url.pathname)?.href;
+  return (
+    <ul class="menu menu-sm w-full p-0">
+      {DOCS_SECTIONS.map((section) => (
+        <li key={section.title}>
+          <h2 class="menu-title">{section.title}</h2>
+          <ul>
+            {section.pages.map((page) => (
+              <li key={page.href}>
+                <a
+                  href={page.href}
+                  class={page.href === currentHref ? "menu-active" : undefined}
+                  aria-current={page.href === currentHref ? "page" : undefined}
+                >
+                  {page.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </li>
+      ))}
+    </ul>
+  );
+});
 
 /**
  * Shared shell of every `/docs/` page: a sidebar listing them all, the
@@ -48,7 +57,7 @@ export default component$(() => {
           <LuChevronDown class="ml-auto transition-transform group-open:rotate-180" />
         </summary>
         <nav class="px-2 pb-2" aria-label="Docs menu">
-          <DocsNav currentHref={page?.href} />
+          <DocsNav />
         </nav>
       </details>
 
@@ -57,7 +66,7 @@ export default component$(() => {
           class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto"
           aria-label="Docs sidebar"
         >
-          <DocsNav currentHref={page?.href} />
+          <DocsNav />
         </nav>
       </aside>
 
