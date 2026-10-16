@@ -2,7 +2,8 @@ import { component$ } from "@qwik.dev/core";
 import { TuxeryLogo } from "~/components/tuxery-logo/tuxery-logo";
 import { commitUrl, formatDateRange, versionOf } from "~/build-info";
 import { DOCS_SECTIONS } from "~/docs-nav";
-import { useCatalogStats, useHeroBackground } from "~/routes/layout";
+import { useCatalogStats } from "~/routes/layout";
+import type { HeroBackgroundPhoto } from "~/unsplash";
 
 const CATALOG_LINKS = [
   { href: "/apps/", title: "Apps" },
@@ -13,8 +14,8 @@ const CATALOG_LINKS = [
 
 // Every docs page, one column per docs section — the same list as the docs
 // sidebar (`DOCS_SECTIONS`), so the two can't drift.
-export const Footer = component$(() => {
-  const bg = useHeroBackground().value;
+/** `photo`: the layout's background photo, credited here — passed in rather than read from the loader again, so the credit always names the photo on screen. */
+export const Footer = component$<{ photo: HeroBackgroundPhoto | null }>(({ photo: bg }) => {
   const { buildInfo } = useCatalogStats().value;
 
   return (
