@@ -70,6 +70,14 @@ export interface SettingsState {
   installGroups: Signal<InstallFormatGroup[]>;
   /** Selected `~/os-catalog` entry id — `undefined` until the user picks one (or, once real detection exists, until it succeeds; see the "Best-effort OS/platform detection" board card, deliberately out of scope here). */
   osId: Signal<string | undefined>;
+  /**
+   * `false` until the stored settings have been read (first visible task,
+   * after resume). Until then `theme` and `osId` are defaults, not the
+   * visitor's choice: anything showing them waits, or it flashes the
+   * default first (the "Select your OS" button before "Fedora", the light
+   * theme before the dark one chosen in settings).
+   */
+  hydrated: Readonly<Signal<boolean>>;
 }
 
 interface PersistedSettings {
@@ -290,10 +298,10 @@ export const useProvideSettings = (): SettingsState => {
   const installGroups = useSignal<InstallFormatGroup[]>(defaultInstallGroups());
   const osId = useSignal<string | undefined>(undefined);
 
-  const state: SettingsState = { theme, installGroups, osId };
-  useContextProvider(SettingsContext, state);
-
   const hydrated = useSignal(false);
+
+  const state: SettingsState = { theme, installGroups, osId, hydrated };
+  useContextProvider(SettingsContext, state);
 
   // Load persisted state on mount, then persist on every subsequent change.
   //
@@ -346,8 +354,13 @@ export const useProvideSettings = (): SettingsState => {
   });
 
   // Keep <html data-theme> in sync with the chosen theme (and OS changes in "system" mode).
+  // Not before the stored theme is read: root.tsx's inline script already
+  // set the right one before paint, and applying `theme`'s "system" default
+  // here first switched a visitor who chose dark to light and back (~1 s on
+  // tuxery.store, 2026-10-16).
   useVisibleTask$(({ track, cleanup }) => {
     const current = track(() => theme.value);
+    if (!track(() => hydrated.value)) return;
     const media = window.matchMedia("(prefers-color-scheme: dark)");
 
     const apply = () => {

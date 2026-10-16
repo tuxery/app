@@ -1,5 +1,14 @@
-import { component$, Slot } from "@qwik.dev/core";
-import { routeLoader$, useLocation, type RequestHandler } from "@qwik.dev/router";
+import {
+  $,
+  component$,
+  isBrowser,
+  Slot,
+  sync$,
+  useOnDocument,
+  useSignal,
+  useTask$,
+} from "@qwik.dev/core";
+import { routeLoader$, useLocation, useNavigate, type RequestHandler } from "@qwik.dev/router";
 import {
   LuCloudOff,
   LuLayoutGrid,
@@ -96,9 +105,64 @@ const NAV_LINKS = [
 
 export default component$(() => {
   const settings = useProvideSettings();
-  const bg = useHeroBackground().value;
+  // The first photo, kept for the whole visit: the loader runs again on every
+  // client-side navigation, and each Worker isolate caches its own random
+  // photo, so the background could swap from one page to the next.
+  const bg = useSignal(useHeroBackground().value).value;
+  const navigate = useNavigate();
+
+  // Client-side navigation for every internal link, not just `<Link>`s: the
+  // site's links are plain `<a href>` (header, footer, cards, docs, MDX), and
+  // a plain link reloads the whole page — everything known only in the
+  // browser (theme, OS, the background) is then rebuilt from its default,
+  // which is what flashed on every page (2026-10-16, tuxery.store). The
+  // first handler is synchronous because only a synchronous one can still
+  // cancel the browser's own navigation (`<Link>` does the same); it leaves
+  // the target on the event for the second one, which navigates. Skipped:
+  // modified or non-primary clicks, another target, downloads, other
+  // origins, files (a path with an extension), a hash on the same page, a
+  // `data-reload` link, and anything already handled (a `<Link>`).
+  useOnDocument(
+    "click",
+    sync$((event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const anchor = (event.target as Element | null)?.closest?.(
+        "a[href]",
+      ) as HTMLAnchorElement | null;
+      if (!anchor) return;
+      if ((anchor.target && anchor.target !== "_self") || anchor.hasAttribute("download")) return;
+      if (anchor.hasAttribute("data-reload")) return;
+      const url = new URL(anchor.href, window.location.href);
+      if (url.origin !== window.location.origin) return;
+      if (/\.[a-z0-9]+$/i.test(url.pathname)) return;
+      if (
+        url.hash &&
+        url.pathname === window.location.pathname &&
+        url.search === window.location.search
+      )
+        return;
+      event.preventDefault();
+      (event as MouseEvent & { tuxeryNavigateTo?: string }).tuxeryNavigateTo = url.href;
+    }),
+  );
+  useOnDocument(
+    "click",
+    $((event: MouseEvent) => {
+      const href = (event as MouseEvent & { tuxeryNavigateTo?: string }).tuxeryNavigateTo;
+      if (href) return navigate(href);
+    }),
+  );
   const location = useLocation();
   const docsDoor = docsDoorOf(location.url.pathname);
+
+  // A client-side navigation keeps focus where the click left it, and
+  // daisyUI's dropdowns (the mobile menu) stay open as long as they hold
+  // it: let it go on every new page, as a full page load did.
+  useTask$(({ track }) => {
+    track(() => location.url.pathname + location.url.search);
+    if (isBrowser) (document.activeElement as HTMLElement | null)?.blur?.();
+  });
   const catalogUnavailable = useCatalogUnavailable().value;
   const osEntry = findOsEntry(settings.osId.value);
 
@@ -162,7 +226,14 @@ export default component$(() => {
         </div>
 
         <div class="navbar-end gap-1">
-          {osEntry ? (
+          {!settings.hydrated.value ? (
+            // Until the stored OS is read: the button's place, nothing in it,
+            // so neither "Select your OS" nor its aura flashes first.
+            <span
+              aria-hidden="true"
+              class="btn btn-soft invisible hidden sm:inline-flex min-w-28"
+            />
+          ) : osEntry ? (
             <a href="/settings/?tab=os" class="btn btn-soft hidden sm:inline-flex gap-2">
               <Logo slug={OS_LOGOS[osEntry.id]} class="w-4 h-4" />
               {osEntry.label}
@@ -233,7 +304,7 @@ export default component$(() => {
         <Slot />
       </main>
 
-      <Footer />
+      <Footer photo={bg} />
     </>
   );
 });
