@@ -32,28 +32,43 @@ export const useStats = routeLoader$(async (requestEvent) => {
   return getStats(resolveServerEnv(requestEvent.platform));
 });
 
+// How many cards a homepage row renders. A row shows five or six at a time
+// and links to the full list ("Browse everything"), while the listings
+// behind it hold 60 for /apps and /games: rendering and serializing all of
+// them made the homepage cost ~170 ms of Worker CPU per render, 17 times the
+// free plan's 10 ms limit (measured 2026-10-17).
+const HOMEPAGE_ROW_SIZE = 16;
+
 // One row per content type, not one mixed "Trending" row — each links to
 // its own /browse/?type=... scope (same convention /games/'s own
 // "Trending games" row already uses).
 export const useTrendingApps = routeLoader$(async (requestEvent) =>
-  getTrendingApps(resolveServerEnv(requestEvent.platform), "app"),
+  getTrendingApps(resolveServerEnv(requestEvent.platform), "app").then((apps) =>
+    apps.slice(0, HOMEPAGE_ROW_SIZE),
+  ),
 );
 export const useTrendingGames = routeLoader$(async (requestEvent) =>
-  getTrendingApps(resolveServerEnv(requestEvent.platform), "game"),
+  getTrendingApps(resolveServerEnv(requestEvent.platform), "game").then((apps) =>
+    apps.slice(0, HOMEPAGE_ROW_SIZE),
+  ),
 );
 
 // Games only for now — see the "Release/added-date signal" board card
 // ("New apps" is explicitly a later follow-up, once the signal's real
 // coverage across the whole catalog is better understood).
 export const useNewGames = routeLoader$(async (requestEvent) =>
-  getNewApps(resolveServerEnv(requestEvent.platform), "game"),
+  getNewApps(resolveServerEnv(requestEvent.platform), "game").then((apps) =>
+    apps.slice(0, HOMEPAGE_ROW_SIZE),
+  ),
 );
 
 // Both apps and games, unlike the type-scoped rows above — download
 // counts are a single signal that doesn't naturally split by content
 // type the way trending/new do.
 export const useDownloadTrends = routeLoader$(async (requestEvent) =>
-  getDownloadTrendingApps(resolveServerEnv(requestEvent.platform), "all"),
+  getDownloadTrendingApps(resolveServerEnv(requestEvent.platform), "all").then((apps) =>
+    apps.slice(0, HOMEPAGE_ROW_SIZE),
+  ),
 );
 
 // "Browse by category" is split Apps/Games — each draws from its own
