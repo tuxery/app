@@ -4,6 +4,7 @@ import {
   isCacheableRequest,
   isSharedCacheable,
   NOT_FOUND_CACHE_CONTROL,
+  withCacheStatus,
   withNotFoundCacheControl,
 } from "./edge-cache";
 
@@ -72,5 +73,15 @@ describe("withNotFoundCacheControl", () => {
     expect(withNotFoundCacheControl(own)).toBe(own);
     const ok = reply(200);
     expect(withNotFoundCacheControl(ok)).toBe(ok);
+  });
+});
+
+describe("withCacheStatus", () => {
+  it("adds the header and keeps the rest", async () => {
+    const response = withCacheStatus(reply(404, "public, max-age=60"), "hit");
+    expect(response.headers.get("X-Tuxery-Cache")).toBe("hit");
+    expect(response.headers.get("Cache-Control")).toBe("public, max-age=60");
+    expect(response.status).toBe(404);
+    expect(await response.text()).toBe("x");
   });
 });

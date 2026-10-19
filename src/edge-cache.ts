@@ -62,3 +62,10 @@ export function withNotFoundCacheControl(response: Response): Response {
   headers.set("Cache-Control", NOT_FOUND_CACHE_CONTROL);
   return new Response(response.body, { status: response.status, headers });
 }
+
+/** The response with `X-Tuxery-Cache: hit` or `miss` added, so a `curl -I` says which one a page was (a cache hit's headers are immutable, hence the copy). */
+export function withCacheStatus(response: Response, status: "hit" | "miss"): Response {
+  const headers = new Headers(response.headers);
+  headers.set("X-Tuxery-Cache", status);
+  return new Response(response.body, { status: response.status, headers });
+}
