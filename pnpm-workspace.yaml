@@ -31,7 +31,7 @@ overrides:
   # to the exact rc: a `^2` range doesn't match prereleases. Bump together
   # with @qwik.dev/core in package.json; drop once the icons are replaced
   # or the lib ships a v2 build.
-  "@builder.io/qwik": "npm:@qwik.dev/core@2.0.0-rc.2"
+  "@builder.io/qwik": "npm:@qwik.dev/core@2.0.0-rc.3"
   sharp: ">=0.35.5"
   brace-expansion@1: "^1.1.20"
   probe-image-size: ">=7.3.1"
