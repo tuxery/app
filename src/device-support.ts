@@ -40,7 +40,7 @@ const PHONE_SCREEN_PX = 360;
 export function deviceBadges(requirements: string | undefined): DeviceBadge[] {
   if (!requirements) return [];
   const { Requires, Recommends, Supports } = sections(requirements);
-  const all = [...Requires, ...Recommends, ...Supports];
+  const all = new Set([...Requires, ...Recommends, ...Supports]);
   const badges: DeviceBadge[] = [];
 
   const minScreen = Requires.map((item) => MIN_SCREEN.exec(item)?.[1]).find(Boolean);
@@ -60,10 +60,10 @@ export function deviceBadges(requirements: string | undefined): DeviceBadge[] {
           },
     );
   }
-  if (all.includes("touch screen")) {
+  if (all.has("touch screen")) {
     badges.push({ id: "touch", label: "Touch", tip: "Can be used with a touch screen." });
   }
-  if (all.includes("gamepad")) {
+  if (all.has("gamepad")) {
     badges.push({ id: "gamepad", label: "Gamepad", tip: "Can be played with a gamepad." });
   }
   if (Requires.includes("an internet connection")) {
@@ -78,7 +78,7 @@ export function deviceBadges(requirements: string | undefined): DeviceBadge[] {
       label: "Internet on first run",
       tip: "Needs a connection the first time it runs, not after.",
     });
-  } else if (all.includes("offline use only")) {
+  } else if (all.has("offline use only")) {
     badges.push({ id: "offline", label: "Works offline", tip: "Never needs a connection." });
   }
   return badges;
