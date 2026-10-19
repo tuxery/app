@@ -35,18 +35,28 @@
   "routes": [
     { "pattern": "tuxery.store", "custom_domain": true },
     { "pattern": "www.tuxery.store", "custom_domain": true },
+    // Preview-only domain: every Preview is served at <name>.preview.tuxery.store.
+    {
+      "pattern": "preview.tuxery.store",
+      "custom_domain": true,
+      "previews_enabled": true,
+      "enabled": false,
+    },
   ],
   /**
    * Worker Previews — every pull request gets its own Preview of this same
-   * Worker at <name>.preview.tuxery.store (`wrangler preview` in
-   * .github/workflows/deploy.yml; `wrangler deploy` on `main` is
-   * production). Previews don't inherit observability, vars or bindings
-   * from the settings above, so the ones they need are repeated here. Their secrets (preview-tuxery Turso DB,
-   * not prod's) live in the dashboard's Previews Base config — see
+   * Worker at <name>.preview.tuxery.store, and on workers.dev
+   * (`preview_urls`) as long as the domain above isn't set up — `wrangler
+   * preview` in .github/workflows/deploy.yml; `wrangler deploy` on `main`
+   * is production. Previews don't inherit observability, vars or bindings
+   * from the settings above, so the ones they need are repeated here. Their
+   * secrets (preview-tuxery Turso DB, not prod's) live in the dashboard's
+   * Previews Base config — see
    * scripts/push-cloudflare-secrets.sh. This replaced the separate
    * `tuxery-web-preview` Worker on 2026-10-19.
    * https://developers.cloudflare.com/workers/previews/configuration/
    */
+  "preview_urls": true,
   "previews": {
     "observability": {
       "logs": {
