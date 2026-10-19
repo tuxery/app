@@ -1,0 +1,14 @@
+# Tuxery: every page is rendered on demand, so crawl only what is worth
+# indexing. Not useful to crawl (and expensive to render, 2026-10-19):
+# - /claim/?app=<id>: one per app (~100k), a form that isn't live yet;
+# - /browse with filters or a search: endless combinations of listings
+#   reachable from /apps/, /games/ and /categories/;
+# - /app/<id>/<build>/: an edition or version of /app/<id>/;
+# - /settings: per-visitor preferences.
+User-agent: *
+Disallow: /claim/
+Disallow: /browse?
+Disallow: /browse/?
+Disallow: /app/*/*/
+Disallow: /settings
+Allow: /

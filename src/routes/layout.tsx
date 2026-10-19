@@ -18,8 +18,18 @@ import { docsDoorOf, GUIDES_HREF } from "~/docs-nav";
 import { TuxeryLogo } from "~/components/tuxery-logo/tuxery-logo";
 import { findOsEntry } from "~/os-catalog";
 import { resolveServerEnv } from "~/server-env";
+import { CANONICAL_ORIGIN } from "~/seo";
 import { useProvideSettings } from "~/settings";
 import { getHeroBackgroundPhoto } from "~/unsplash";
+
+// `www.tuxery.store` served every page a second time, which crawlers fetched
+// twice and the edge cached twice (Workers Logs, 2026-10-19): send it to the
+// bare host, before anything else runs (no catalog check, no render).
+export const onRequest: RequestHandler = ({ url, redirect }) => {
+  if (url.hostname.startsWith("www.")) {
+    throw redirect(301, `${CANONICAL_ORIGIN}${url.pathname}${url.search}`);
+  }
+};
 
 // Every page is the same for every visitor (nothing reads cookies or
 // per-user headers server-side; settings live client-side), so it can be

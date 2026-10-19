@@ -1080,6 +1080,7 @@ export default component$(() => {
           <div class="flex flex-col items-start md:items-end">
             <a
               href={`/claim/?app=${encodeURIComponent(a.id)}`}
+              rel="nofollow"
               class="btn btn-ghost btn-sm gap-1.5"
             >
               <LuBadgeCheck class="text-base" />
@@ -1549,6 +1550,7 @@ export default component$(() => {
               </a>
               <a
                 href={`/claim/?app=${encodeURIComponent(a.id)}`}
+                rel="nofollow"
                 class="btn btn-ghost btn-sm gap-1.5"
               >
                 <LuBadgeCheck class="text-base" />
