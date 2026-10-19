@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+    # `closed` only runs the cleanup-preview job below.
+    types: [opened, synchronize, reopened, closed]
   workflow_dispatch:
 
 jobs:
@@ -18,6 +20,7 @@ jobs:
   # a job in the same workflow run is the only way to gate on the exact
   # commit being deployed.
   ci:
+    if: github.event.action != 'closed'
     # Kept in lockstep with ci.yml's pin to the same reusable workflow — see
     # that file's comment: this was pinned to a feature-branch tip commit
     # that became unreachable once that branch's PR merged, breaking every
@@ -59,56 +62,60 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           packageManager: pnpm
-          command: deploy --env production
+          command: deploy
 
-      # `versions upload` (not `deploy`) gives each branch its own stable,
-      # non-clobbering Preview URL — https://developers.cloudflare.com/
-      # workers/versions-and-deployments/preview-urls/#aliased-preview-urls
-      # — rather than every branch overwriting the same 100%-traffic
-      # deployment of tuxery-web-preview. `deploy` was used here originally
-      # only because `versions upload` needs the Worker to already exist
-      # (see 68af08c) — it does now. `github.head_ref` is the actual branch
-      # name on a `pull_request` event (`github.ref` there is the synthetic
-      # `refs/pull/<n>/merge`); `github.ref_name` covers `workflow_dispatch`
-      # on a branch directly.
-      - name: Compute preview alias from branch name
+      # One Worker Preview per pull request, on tuxery-web itself, at
+      # pr-<n>.preview.tuxery.store — it replaced the separate
+      # tuxery-web-preview Worker (2026-10-19). Settings come from
+      # wrangler.jsonc's `previews` block, secrets from the dashboard's
+      # Previews Base config (preview-tuxery Turso DB, not prod's).
+      # https://developers.cloudflare.com/workers/previews/examples/
+      # `workflow_dispatch` on a branch names the Preview after the branch.
+      - name: Compute preview name
         if: github.ref != 'refs/heads/main'
-        id: alias
+        id: preview-name
         run: |
-          branch="${{ github.head_ref || github.ref_name }}"
-          alias=$(echo "$branch" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9-]+/-/g; s/^-+//; s/-+$//')
-          if [[ ! "$alias" =~ ^[a-z] ]]; then alias="b-$alias"; fi
-          # Cloudflare caps alias + script name ("tuxery-web-preview") at 62
-          # chars (error 10021); long Dependabot branch names blow past it.
-          # Truncate and append a short hash so distinct branches stay distinct.
-          if [ "${#alias}" -gt 40 ]; then
-            hash=$(echo -n "$branch" | sha1sum | cut -c1-6)
-            alias="$(echo "${alias:0:33}" | sed -E 's/-+$//')-$hash"
+          if [ -n "${{ github.event.pull_request.number }}" ]; then
+            name="pr-${{ github.event.pull_request.number }}"
+          else
+            name=$(echo "${{ github.ref_name }}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9-]+/-/g; s/^-+//; s/-+$//' | cut -c1-40 | sed -E 's/-+$//')
           fi
-          echo "alias=$alias" >> "$GITHUB_OUTPUT"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
 
       - name: Deploy preview
         if: github.ref != 'refs/heads/main'
-        id: deploy-preview
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          packageManager: pnpm
-          command: versions upload --env preview --preview-alias ${{ steps.alias.outputs.alias }}
-
-      # wrangler-action's own `deployment-url` output isn't reliable here —
-      # `versions upload` prints two URLs (the version-hash one, then the
-      # stable alias one) and wrangler-action's own extraction has
-      # previously been observed picking "the first" without it being the
-      # alias — so this parses the exact line straight out of wrangler's
-      # own stdout instead of trusting that.
-      - name: Extract preview alias URL
-        if: github.ref != 'refs/heads/main'
         id: preview-url
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          url=$(echo "${{ steps.deploy-preview.outputs.command-output }}" | grep -oP '(?<=Version Preview Alias URL: ).*')
+          set -o pipefail
+          output="$(pnpm exec wrangler preview --name "${{ steps.preview-name.outputs.name }}" --json)"
+          printf '%s\n' "$output"
+          url="$(printf '%s' "$output" | jq -er '.preview.urls[0]')"
           echo "url=$url" >> "$GITHUB_OUTPUT"
+
+  # A closed (merged or abandoned) pull request's Preview is deleted, so they
+  # don't pile up against the 100-Previews-per-Worker limit (free plan).
+  cleanup-preview:
+    name: Delete preview
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: helpers4/action/setup-pnpm@6fddd178620e7325d446a246c38a44f979569fc4 # main @ 2026-07-29
+        with:
+          node-version: "26"
+          working-directory: .
+
+      - name: Delete preview
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        # A pull request closed before its first successful deploy has no
+        # Preview to delete; that's not a failure.
+        run: pnpm exec wrangler preview delete --name "pr-${{ github.event.pull_request.number }}" --skip-confirmation || echo "No preview to delete."
 
   # Cloudflare's own dashboard-driven Pages integration used to comment the
   # preview URL on every PR automatically — that stopped the moment

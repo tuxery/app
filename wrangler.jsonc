@@ -28,13 +28,8 @@
     },
   },
   /**
-   * Custom domains — tuxery.store and www.tuxery.store both serve this
-   * same Worker (identical site, no canonical redirect between them).
-   * Copied into env.production below rather than left to inherit — Wrangler
-   * warns that relying on inheritance here looks like it "reassigns" the
-   * domains (even though env.production is the same Worker, so it's a
-   * no-op); cleared for env.preview, which only needs its own
-   * *.workers.dev preview URL.
+   * Custom domains — tuxery.store and www.tuxery.store both reach this
+   * Worker; `www.` answers with a 301 to the bare host (src/routes/layout.tsx).
    * https://developers.cloudflare.com/workers/configuration/routing/custom-domains/
    */
   "routes": [
@@ -42,45 +37,38 @@
     { "pattern": "www.tuxery.store", "custom_domain": true },
   ],
   /**
-   * Explicit named environments, both deployed by GitHub Actions
-   * (.github/workflows/deploy.yml) — `wrangler deploy --env production` on
-   * `main`, `wrangler versions upload --env preview` on other branches.
-   * `assets` is non-inheritable in Wrangler and must be redeclared in each;
-   * env.production's `name` matches the top-level one on purpose (same
-   * Worker, same existing custom domains/secrets) — it's only here so every
-   * deploy command in CI can pass an explicit `--env` and never rely on the
-   * ambiguous top-level default.
+   * Worker Previews — every pull request gets its own Preview of this same
+   * Worker at <name>.preview.tuxery.store (`wrangler preview` in
+   * .github/workflows/deploy.yml; `wrangler deploy` on `main` is
+   * production). Previews don't inherit observability, vars or bindings
+   * from the settings above, so the ones they need are repeated here. Their secrets (preview-tuxery Turso DB,
+   * not prod's) live in the dashboard's Previews Base config — see
+   * scripts/push-cloudflare-secrets.sh. This replaced the separate
+   * `tuxery-web-preview` Worker on 2026-10-19.
+   * https://developers.cloudflare.com/workers/previews/configuration/
    */
-  "env": {
-    "production": {
-      "name": "tuxery-web",
-      "assets": {
-        "binding": "ASSET",
-        "directory": "./dist",
+  "previews": {
+    "observability": {
+      "logs": {
+        "enabled": true,
+        "head_sampling_rate": 1,
+        "invocation_logs": true,
+        "persist": true,
       },
-      "routes": [
-        { "pattern": "tuxery.store", "custom_domain": true },
-        { "pattern": "www.tuxery.store", "custom_domain": true },
-      ],
-    },
-    "preview": {
-      "name": "tuxery-web-preview",
-      "assets": {
-        "binding": "ASSET",
-        "directory": "./dist",
+      "traces": {
+        "enabled": true,
+        "head_sampling_rate": 1,
+        "persist": true,
       },
-      "routes": [],
     },
   },
   /**
    * Environment Variables
-   * TURSO_DB_URL, TURSO_DB_AUTH_TOKEN, UNSPLASH_ACCESS_KEY: set as secrets
-   * per environment — `wrangler secret put <NAME> --env production`, but
-   * `wrangler versions secret put <NAME> --env preview` for preview
-   * specifically (the plain command needs a 100%-traffic deployed
-   * version to attach to, which preview never has by design — see the
-   * "preview" env entry below and README's Deployment section). Never
-   * committed here — see README.
+   * TURSO_DB_URL, TURSO_DB_AUTH_TOKEN, UNSPLASH_ACCESS_KEY: set as secrets,
+   * once for production (`wrangler secret put <NAME>`) and once for
+   * Previews (`wrangler preview base-config secret put <NAME>`) —
+   * scripts/push-cloudflare-secrets.sh does both. Never committed here —
+   * see README.
    * https://developers.cloudflare.com/workers/configuration/secrets/
    */
 }
