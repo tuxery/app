@@ -92,7 +92,9 @@ jobs:
           set -o pipefail
           output="$(pnpm exec wrangler preview --name "${{ steps.preview-name.outputs.name }}" --json)"
           printf '%s\n' "$output"
-          url="$(printf '%s' "$output" | jq -er '.preview.urls[0]')"
+          # The JSON comes after pnpm's and wrangler's own progress lines on
+          # stdout: take it from its opening brace (alone on its line) on.
+          url="$(printf '%s\n' "$output" | sed -n '/^{$/,$p' | jq -er '.preview.urls[0]')"
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
   # A closed (merged or abandoned) pull request's Preview is deleted, so they
