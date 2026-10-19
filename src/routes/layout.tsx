@@ -44,13 +44,14 @@ export const onRequest: RequestHandler = ({ url, redirect, headers }) => {
 
 // Every page is the same for every visitor (nothing reads cookies or
 // per-user headers server-side; settings live client-side), so it can be
-// shared from Cloudflare's edge. The cloudflare-pages adapter already
-// `cache.put`s any OK GET response carrying a Cache-Control header into the
-// datacenter's Cache API — this is what turns that on. Without it, the only
-// cache in front of Turso was `~/catalog`'s per-isolate `cachedListing`,
-// which a cold isolate (most requests in production) never hits. Same
-// 10-minute horizon as that cache: data only changes when catalog
-// republishes. Covers SSR HTML and the per-loader `q-loader-*.json`
+// shared from Cloudflare's edge: `entry.cloudflare-pages.tsx` `cache.put`s
+// any 200 or 404 GET response carrying a Cache-Control like this one, into
+// a cache named after the build (`~/edge-cache`). Without it, the only cache
+// in front of Turso was `~/catalog`'s per-isolate `cachedListing`, which a
+// cold isolate (most requests in production) never hits. An hour at the
+// edge, since data only changes when catalog republishes (a deploy starts
+// from an empty cache); a minute in the browser, so a visitor sees a
+// republish soon. Covers SSR HTML and the per-loader `q-loader-*.json`
 // requests of client-side navigation (both GET — a Cache-Control set here
 // takes precedence over Qwik Router v2's per-loader `private, no-cache`
 // default); `server$` calls are POST and never cached.
@@ -68,7 +69,7 @@ export const onGet: RequestHandler = async ({ cacheControl, platform, sharedMap,
     if (needsCatalog(url.pathname)) status(503);
     return;
   }
-  cacheControl({ public: true, maxAge: 60, sMaxAge: 600, staleWhileRevalidate: 3600 });
+  cacheControl({ public: true, maxAge: 60, sMaxAge: 3600, staleWhileRevalidate: 86400 });
 };
 
 export const useCatalogUnavailable = routeLoader$(({ sharedMap }) =>
