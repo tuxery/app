@@ -21,6 +21,7 @@ import { getStats, isCatalogAvailable } from "~/catalog";
 import { EMPTY_STATS } from "~/catalog-types";
 import { CATALOG_UNAVAILABLE_KEY, isCatalogUnavailable, needsCatalog } from "~/catalog-status";
 import { Footer } from "~/components/footer/footer";
+import { HoverTipHost } from "~/components/hover-tip/hover-tip";
 import { Logo } from "~/components/logo/logo";
 import { OS_LOGOS } from "~/data/logos";
 import { docsDoorOf, GUIDES_HREF } from "~/docs-nav";
@@ -308,6 +309,7 @@ export default component$(() => {
       </main>
 
       <Footer photo={bg} />
+      <HoverTipHost />
     </>
   );
 });

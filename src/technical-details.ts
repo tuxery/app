@@ -20,10 +20,10 @@ export function installedSizes(groups: [string, SourcedPackage[]][]): InstalledS
       const bytes = Math.max(0, ...packages.map((pkg) => pkg.installedSizeBytes ?? 0));
       return bytes > 0 ? [{ group, bytes }] : [];
     })
-    .sort((a, b) => a.bytes - b.bytes);
+    .toSorted((a, b) => a.bytes - b.bytes);
 }
 
 /** The CPU architectures the sources list for these packages (`x86_64`, `aarch64`), sorted, without duplicates. Empty when no source says: many fetch a single architecture, so this is "listed as", never "only runs on". */
 export function architectures(packages: SourcedPackage[]): string[] {
-  return [...new Set(packages.flatMap((pkg) => (pkg.arch ? [pkg.arch] : [])))].sort();
+  return [...new Set(packages.flatMap((pkg) => (pkg.arch ? [pkg.arch] : [])))].toSorted();
 }

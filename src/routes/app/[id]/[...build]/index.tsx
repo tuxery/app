@@ -1434,7 +1434,7 @@ export default component$(() => {
                 <div>
                   <dt class={INFO_LABEL}>Download size</dt>
                   <dd>
-                    {formatBytes(facts.approxSizeBytes)}
+                    <span>{formatBytes(facts.approxSizeBytes)}</span>
                     <span class="block text-xs text-base-content/70">
                       The app alone, without the runtime it shares with other Flatpaks.
                     </span>

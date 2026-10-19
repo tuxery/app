@@ -1,12 +1,11 @@
 import { test, expect } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
 
-/** The tooltip text a `HoverTip` trigger is described by (focusable triggers, on the product page). */
-async function tipText(page: Page, trigger: Locator): Promise<string> {
-  const id = await trigger
-    .locator("xpath=ancestor-or-self::button[1]")
-    .getAttribute("aria-describedby");
-  return (await page.locator(`[id="${id}"]`).textContent()) ?? "";
+/** The tooltip text a `HoverTip` trigger carries (focusable triggers, on the product page). */
+async function tipText(_page: Page, trigger: Locator): Promise<string> {
+  return (
+    (await trigger.locator("xpath=ancestor-or-self::button[1]").getAttribute("data-hovertip")) ?? ""
+  );
 }
 
 // Ids that carry a Flatpak or Snap package use that package's own
@@ -94,14 +93,14 @@ test("the build count matches the builds its tooltip names", async ({ page }) =>
   expect(count).toBe(named);
 });
 
-test("the Additional information table shows a real Size row, from Flathub's own download_size", async ({
+test("the Additional information table shows a real Download size row, from Flathub's own download_size", async ({
   page,
 }) => {
   // Flathub's /api/v2/summary/org.mozilla.firefox download_size,
   // formatted — matched by shape, since the exact figure changes with
   // every Firefox release.
   await page.goto(FIREFOX);
-  const sizeRow = page.getByText("Size", { exact: true }).locator("..");
+  const sizeRow = page.getByText("Download size", { exact: true }).locator("..");
   await expect(sizeRow.getByText(/^\d+(\.\d)? MB$/)).toBeVisible();
 });
 
