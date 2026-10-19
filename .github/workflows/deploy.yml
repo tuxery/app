@@ -94,7 +94,9 @@ jobs:
           printf '%s\n' "$output"
           # The JSON comes after pnpm's and wrangler's own progress lines on
           # stdout: take it from its opening brace (alone on its line) on.
-          url="$(printf '%s\n' "$output" | sed -n '/^{$/,$p' | jq -er '.preview.urls[0]')"
+          # No URL is not a failed deploy (the comment says so); it means no
+          # Preview host is enabled yet (wrangler.jsonc's `preview_urls`).
+          url="$(printf '%s\n' "$output" | sed -n '/^{$/,$p' | jq -r '.preview.urls[0] // .deployment.urls[0] // empty')"
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
   # A closed (merged or abandoned) pull request's Preview is deleted, so they
