@@ -1,7 +1,6 @@
-import { component$, useSignal } from "@qwik.dev/core";
+import { component$, useSignal, useVisibleTask$ } from "@qwik.dev/core";
 import { routeLoader$ } from "@qwik.dev/router";
 import type { DocumentHead } from "@qwik.dev/router";
-import { toMapByKey } from "helpers4/map";
 import {
   LuChevronLeft,
   LuChevronRight,
@@ -13,48 +12,17 @@ import { AppCardLink } from "~/components/app-card/app-card";
 import { CategoryTileGrid } from "~/components/category-tile-grid/category-tile-grid";
 import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-scroller";
 import { Logo } from "~/components/logo/logo";
-import {
-  getStats,
-  getTrendingApps,
-  getNewApps,
-  getDownloadTrendingApps,
-  getCategories,
-  getAppsByCategory,
-  getAppsByIds,
-} from "~/catalog";
+import { getCategories, getStats } from "~/catalog";
 import { getInfluencerPage } from "~/data/influencer-pages";
 import { SOURCE_LOGOS } from "~/data/logos";
 import { useCatalogUnavailable } from "~/routes/layout";
 import { resolveServerEnv } from "~/server-env";
 import type { AppSummary } from "~/catalog-types";
+import { parseHomeRows, type HomeRows } from "~/home-rows";
 
 export const useStats = routeLoader$(async (requestEvent) => {
   return getStats(resolveServerEnv(requestEvent.platform));
 });
-
-// One row per content type, not one mixed "Trending" row — each links to
-// its own /browse/?type=... scope (same convention /games/'s own
-// "Trending games" row already uses).
-export const useTrendingApps = routeLoader$(async (requestEvent) =>
-  getTrendingApps(resolveServerEnv(requestEvent.platform), "app"),
-);
-export const useTrendingGames = routeLoader$(async (requestEvent) =>
-  getTrendingApps(resolveServerEnv(requestEvent.platform), "game"),
-);
-
-// Games only for now — see the "Release/added-date signal" board card
-// ("New apps" is explicitly a later follow-up, once the signal's real
-// coverage across the whole catalog is better understood).
-export const useNewGames = routeLoader$(async (requestEvent) =>
-  getNewApps(resolveServerEnv(requestEvent.platform), "game"),
-);
-
-// Both apps and games, unlike the type-scoped rows above — download
-// counts are a single signal that doesn't naturally split by content
-// type the way trending/new do.
-export const useDownloadTrends = routeLoader$(async (requestEvent) =>
-  getDownloadTrendingApps(resolveServerEnv(requestEvent.platform), "all"),
-);
 
 // "Browse by category" is split Apps/Games — each draws from its own
 // taxonomy now (see `tuxery/catalog`'s `CatalogApp.category` doc comment).
@@ -70,73 +38,20 @@ export const useGameCategories = routeLoader$(async (requestEvent) =>
 // rather than duplicating them as separate hardcoded homepage copy.
 export const useFeaturedCreator = routeLoader$(async () => getInfluencerPage("baxyz"));
 
-// One loader per curated row on the "Homepage: full section layout" board
-// card — Qwik Router loaders have to be individually exported consts, not
-// built from a loop. Category strings match catalog's own
-// config/categories-apps.json/categories-games.json labels exactly (kept
-// in sync by hand, same convention as catalog-types.ts's own mirrors). No
-// "Internet & Communication" row (former "Social network apps") — see
-// MUST_HAVE_APP_IDS' neighbor comment on why that one's gone.
-export const useProductivityApps = routeLoader$(async (requestEvent) =>
-  getAppsByCategory(resolveServerEnv(requestEvent.platform), "Productivity"),
+/**
+ * A row's place while its cards load (see `~/home-rows`): the height of a
+ * row of cards, so the page doesn't jump when they arrive.
+ */
+const RowPlaceholder = () => (
+  <div
+    class="h-56 rounded-box bg-base-200/60 animate-pulse"
+    aria-busy="true"
+    aria-label="Loading"
+  />
 );
-export const useCreativityApps = routeLoader$(async (requestEvent) =>
-  getAppsByCategory(resolveServerEnv(requestEvent.platform), "Graphics & Design"),
-);
-export const useLearningApps = routeLoader$(async (requestEvent) =>
-  getAppsByCategory(resolveServerEnv(requestEvent.platform), "Education"),
-);
-export const useMusicApps = routeLoader$(async (requestEvent) =>
-  getAppsByCategory(resolveServerEnv(requestEvent.platform), "Music & Audio"),
-);
-export const useVideoApps = routeLoader$(async (requestEvent) =>
-  getAppsByCategory(resolveServerEnv(requestEvent.platform), "Photo & Video"),
-);
-export const useCasualGames = routeLoader$(async (requestEvent) =>
-  getAppsByCategory(resolveServerEnv(requestEvent.platform), "Casual"),
-);
-export const usePuzzleGames = routeLoader$(async (requestEvent) =>
-  getAppsByCategory(resolveServerEnv(requestEvent.platform), "Puzzle"),
-);
-
-// Hand-picked, not category-derived — there's no "must-have" signal in the
-// data model, so this is genuinely editorial, same spirit as
-// influencer-pages.json. Real catalog ids, each verified live against the
-// seeded DB before being added here — capped at 15 per the "max 15 items"
-// ask. Order is the display order (getAppsByIds doesn't preserve input
-// order, so the loader below re-sorts by it).
-//
-// Bare ids (no "source:" prefix), not the old flatpak-flathub:<appId>
-// form — a Snap or Flatpak package's own name/appId is already globally
-// unique on its own, so catalog's match/group.ts picks it directly as
-// the app's canonical id (Snap preferred when an app has both). Each one
-// re-verified live against the reseeded DB when the id scheme changed.
-const MUST_HAVE_APP_IDS = [
-  "firefox",
-  "zen-browser-snap",
-  "vlc",
-  "libreoffice",
-  "thunderbird",
-  "discord",
-  "signal-desktop",
-  "gimp",
-  "inkscape",
-  "krita",
-  "blender",
-  "kdenlive",
-  "audacity",
-  "obs-studio",
-  "keepassxc",
-] as const;
-
-export const useMustHaveApps = routeLoader$(async (requestEvent) => {
-  const apps = await getAppsByIds(resolveServerEnv(requestEvent.platform), [...MUST_HAVE_APP_IDS]);
-  const byId = toMapByKey(apps, (app) => app.id);
-  return MUST_HAVE_APP_IDS.map((id) => byId.get(id)).filter((app): app is AppSummary => !!app);
-});
 
 /** A curated-by-category row (Productivity, Creativity, ...) — real data, not a placeholder, but honest about showing nothing when a category happens to be empty rather than hiding the whole section. */
-const CategoryRow = component$<{ title: string; category: string; apps: AppSummary[] }>(
+const CategoryRow = component$<{ title: string; category: string; apps?: AppSummary[] }>(
   ({ title, category, apps }) => (
     <section>
       <div class="flex items-baseline justify-between mb-3">
@@ -148,7 +63,9 @@ const CategoryRow = component$<{ title: string; category: string; apps: AppSumma
           Browse all →
         </a>
       </div>
-      {apps.length === 0 ? (
+      {apps === undefined ? (
+        <RowPlaceholder />
+      ) : apps.length === 0 ? (
         <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/70">
           No {title.toLowerCase()} catalogued yet.
         </div>
@@ -184,7 +101,7 @@ const DOWNLOAD_TRENDS_TIP =
 const AppScrollRow = component$<{
   title: string;
   typeFilter: "all" | "app" | "game";
-  apps: AppSummary[];
+  apps?: AppSummary[];
   tip: string;
   emptyMessage: string;
 }>(({ title, typeFilter, apps, tip, emptyMessage }) => (
@@ -200,7 +117,9 @@ const AppScrollRow = component$<{
         Browse everything →
       </a>
     </div>
-    {apps.length === 0 ? (
+    {apps === undefined ? (
+      <RowPlaceholder />
+    ) : apps.length === 0 ? (
       <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/70">
         {emptyMessage}
       </div>
@@ -337,21 +256,21 @@ const ComingSoonSection = component$<{ title: string; note: string }>(({ title, 
 
 export default component$(() => {
   const stats = useStats();
-  const trendingApps = useTrendingApps();
-  const trendingGames = useTrendingGames();
-  const newGames = useNewGames();
-  const downloadTrends = useDownloadTrends();
   const appCategories = useAppCategories();
   const gameCategories = useGameCategories();
   const featuredCreator = useFeaturedCreator();
-  const productivityApps = useProductivityApps();
-  const creativityApps = useCreativityApps();
-  const learningApps = useLearningApps();
-  const musicApps = useMusicApps();
-  const videoApps = useVideoApps();
-  const casualGames = useCasualGames();
-  const puzzleGames = usePuzzleGames();
-  const mustHaveApps = useMustHaveApps();
+  // The rows of cards come from `/api/home/` in the browser (see
+  // `~/home-rows`): `undefined` while they load, then each row's cards.
+  const rows = useSignal<HomeRows>();
+  const generation = stats.value.generatedAt.replaceAll(/\D/g, "");
+  useVisibleTask$(async () => {
+    try {
+      const response = await fetch(`/api/home/?g=${generation}`);
+      rows.value = parseHomeRows(response.ok ? await response.json() : {});
+    } catch {
+      rows.value = parseHomeRows({});
+    }
+  });
   const catalogUnavailable = useCatalogUnavailable().value;
 
   return (
@@ -441,14 +360,14 @@ export default component$(() => {
           <AppScrollRow
             title="Trending apps"
             typeFilter="app"
-            apps={trendingApps.value}
+            apps={rows.value?.trendingApps}
             tip={TRENDING_TIP}
             emptyMessage="No trending data available yet."
           />
           <AppScrollRow
             title="Trending games"
             typeFilter="game"
-            apps={trendingGames.value}
+            apps={rows.value?.trendingGames}
             tip={TRENDING_TIP}
             emptyMessage="No trending data available yet."
           />
@@ -456,20 +375,22 @@ export default component$(() => {
           <AppScrollRow
             title="Download trends"
             typeFilter="all"
-            apps={downloadTrends.value}
+            apps={rows.value?.downloadTrends}
             tip={DOWNLOAD_TRENDS_TIP}
             emptyMessage="No download-stats data available yet."
           />
 
           <section>
             <h2 class="text-lg font-semibold mb-3">Must-have apps</h2>
-            {mustHaveApps.value.length === 0 ? (
+            {rows.value === undefined ? (
+              <RowPlaceholder />
+            ) : rows.value.mustHave.length === 0 ? (
               <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/70">
                 No must-have apps catalogued yet.
               </div>
             ) : (
               <HorizontalScroller ariaLabel="Must-have apps">
-                {mustHaveApps.value.map((app) => (
+                {rows.value.mustHave.map((app) => (
                   <AppCardLink key={app.id} app={app} linkClass="block w-64 shrink-0 snap-start" />
                 ))}
               </HorizontalScroller>
@@ -479,7 +400,7 @@ export default component$(() => {
           <CategoryRow
             title="Productivity apps"
             category="Productivity"
-            apps={productivityApps.value}
+            apps={rows.value?.productivity}
           />
 
           {/* See the "Split Internet & Communication" board card. */}
@@ -491,17 +412,17 @@ export default component$(() => {
           <AppScrollRow
             title="New games"
             typeFilter="game"
-            apps={newGames.value}
+            apps={rows.value?.newGames}
             tip={NEW_GAMES_TIP}
             emptyMessage="No release-date data available yet."
           />
 
-          <CategoryRow title="Music apps" category="Music & Audio" apps={musicApps.value} />
+          <CategoryRow title="Music apps" category="Music & Audio" apps={rows.value?.music} />
 
           <CategoryRow
             title="Graphics & design apps"
             category="Graphics & Design"
-            apps={creativityApps.value}
+            apps={rows.value?.creativity}
           />
 
           {/* See the "Add a Kids/Children category" board card. */}
@@ -510,15 +431,15 @@ export default component$(() => {
             note="Not part of the current category taxonomy — no data to show yet."
           />
 
-          <CategoryRow title="Learning apps" category="Education" apps={learningApps.value} />
+          <CategoryRow title="Learning apps" category="Education" apps={rows.value?.learning} />
 
           <CategoryRow
             title="Movies & streaming apps"
             category="Photo & Video"
-            apps={videoApps.value}
+            apps={rows.value?.video}
           />
 
-          <CategoryRow title="Casual games" category="Casual" apps={casualGames.value} />
+          <CategoryRow title="Casual games" category="Casual" apps={rows.value?.casualGames} />
 
           {/* See the "Split Internet & Communication" board card — same
               dependency as Messaging above. Was previously a real
@@ -531,7 +452,7 @@ export default component$(() => {
             note="Not its own category yet — social apps are folded into the broader Internet & Communication bucket alongside browsers, email, and VoIP, with no way to isolate just social networks."
           />
 
-          <CategoryRow title="Puzzle games" category="Puzzle" apps={puzzleGames.value} />
+          <CategoryRow title="Puzzle games" category="Puzzle" apps={rows.value?.puzzleGames} />
 
           {(appCategories.value.length > 0 || gameCategories.value.length > 0) && (
             <section>

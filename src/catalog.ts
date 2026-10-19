@@ -1,21 +1,17 @@
-import { unique } from "helpers4/array";
 import { isNullish } from "helpers4/guard";
 import { createClient, type Client } from "@libsql/client";
+import { parseRating, toSummary, type Row } from "./app-summary";
 import { BUILD_INFO_META_KEY, parseBuildInfo } from "./build-info";
+import { HOME_LISTINGS, MUST_HAVE_APP_IDS } from "./home-rows";
 import {
   ALL_PACKAGE_SOURCE_IDS,
   BROWSE_PAGE_SIZE,
   EMPTY_STATS,
-  summarizeBuilds,
-  summarizeReleaseLines,
-  summarizeRatingsBySource,
-  verifiedSourcesOf,
   type AppSummary,
   type BrowseResult,
   type CatalogApp,
   type CatalogStats,
   type PackageSourceId,
-  type SourcedPackage,
 } from "~/catalog-types";
 import {
   BROWSE_KEYS_META_KEY,
@@ -140,37 +136,6 @@ async function cachedListing<T>(key: string, fallback: T, fn: () => Promise<T>):
     markUnavailable();
     return fallback;
   }
-}
-
-type Row = Record<string, unknown>;
-
-function parseRating(row: Row): { average: number; count: number } | undefined {
-  return isNullish(row.rating_average)
-    ? undefined
-    : { average: row.rating_average as number, count: (row.rating_count as number | null) ?? 0 };
-}
-
-function toSummary(row: Row): AppSummary {
-  const packages = JSON.parse(row.packages_json as string) as SourcedPackage[];
-  return {
-    id: row.id as string,
-    name: row.name as string,
-    shortDescription: row.short_description as string,
-    iconUrl: (row.icon_url as string | null) ?? undefined,
-    kind: row.kind === "gui" ? "gui" : undefined,
-    contentType: row.content_type === "game" ? "game" : undefined,
-    category: row.category as string,
-    rating: parseRating(row),
-    ratingsBySource: summarizeRatingsBySource(packages),
-    // Deduplicated — a merged app can carry two packages from the same
-    // source now (e.g. AUR's official + -git build), and a summary card
-    // only needs to say "AUR" once, not distinguish the build — that's
-    // what builds is for instead.
-    sources: unique(packages.map((pkg) => pkg.source)),
-    builds: summarizeBuilds(packages),
-    releaseLines: summarizeReleaseLines(packages),
-    verifiedSources: verifiedSourcesOf(packages),
-  };
 }
 
 function str(value: unknown): string | undefined {
@@ -726,6 +691,39 @@ export async function browseApps(
 }
 
 /** Looks up several apps by id at once, in whatever order the DB returns them — callers that need a specific order (e.g. an editorial block referencing ids in a chosen sequence) should re-sort client-side. Missing ids are silently dropped rather than erroring, since editorial content referencing a since-removed app shouldn't break the whole page. */
+/**
+ * Every homepage row in one JSON object (`/api/home/`, see `~/home-rows`):
+ * the precomputed `listingRows:*` meta rows as stored, keyed by listing,
+ * plus the must-have apps' summary rows. Built by string concatenation, no
+ * parse or serialization of the listings: this is what keeps the Worker
+ * well under its CPU limit. `undefined` when the catalog can't be read.
+ */
+export async function getHomeRowsJson(env: ServerEnv): Promise<string | undefined> {
+  const db = getClient(env);
+  if (!db) return undefined;
+
+  return cachedListing<string | undefined>("homeRowsJson", undefined, async () => {
+    const keys = Object.values(HOME_LISTINGS).map((key) => `listingRows:${key}`);
+    const listings = await db.execute({
+      sql: `SELECT key, value FROM meta WHERE key IN (${keys.map(() => "?").join(", ")})`,
+      args: keys,
+    });
+    const mustHave = await db.execute({
+      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE id IN (${MUST_HAVE_APP_IDS.map(() => "?").join(", ")})`,
+      args: [...MUST_HAVE_APP_IDS],
+    });
+    const parts = listings.rows.map(
+      (row) =>
+        `${JSON.stringify(String(row.key).slice("listingRows:".length))}:${String(row.value)}`,
+    );
+    const mustHaveRows = mustHave.rows.map((row) =>
+      Object.fromEntries(mustHave.columns.map((column) => [column, row[column]])),
+    );
+    parts.push(`"mustHave":${JSON.stringify(mustHaveRows)}`);
+    return `{${parts.join(",")}}`;
+  });
+}
+
 export async function getAppsByIds(env: ServerEnv, ids: string[]): Promise<AppSummary[]> {
   const db = getClient(env);
   if (!db || ids.length === 0) return [];
