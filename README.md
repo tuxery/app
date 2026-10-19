@@ -47,36 +47,33 @@ pnpm build
 
 ## Deployment
 
-Two Workers, both named environments in the same `wrangler.jsonc`, deployed by
+One Worker, `tuxery-web`, deployed by
 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) (not
 Cloudflare's own Git integration — its dashboard doesn't expose a
 per-branch deploy command on this account, so GitHub Actions owns it
 instead, via `cloudflare/wrangler-action` and a `CLOUDFLARE_API_TOKEN` repo
 secret):
 
-- **`tuxery-web`** (`env.production`) — on `tuxery.store` and
-  `www.tuxery.store` (identical), deployed with `wrangler deploy --env
-production` on every push to `main`.
-- **`tuxery-web-preview`** (`env.preview`) — no custom domain, but each
-  branch gets its own stable, non-clobbering [Aliased Preview
-  URL](https://developers.cloudflare.com/workers/versions-and-deployments/preview-urls/#aliased-preview-urls)
-  (`<branch>-tuxery-web-preview.<subdomain>.workers.dev`) via `wrangler
-versions upload --env preview --preview-alias <branch>` on every pull
-  request targeting `main` — `versions upload`, not `deploy`, is the point:
-  it never touches the environment's 100%-traffic version, so two PRs open
-  at once no longer overwrite each other's preview.
+- **Production** — on `tuxery.store` (`www.tuxery.store` redirects there),
+  deployed with `wrangler deploy` on every push to `main`.
+- **[Worker Previews](https://developers.cloudflare.com/workers/previews/)**
+  — every pull request targeting `main` gets its own Preview at
+  `pr-<n>.preview.tuxery.store` (`wrangler preview --name pr-<n>`), deleted
+  when the pull request closes. Previews never touch production's traffic,
+  and two PRs open at once don't overwrite each other's. They're served
+  with `X-Robots-Tag: noindex` (`~/seo`'s `isPreviewHost`). This replaced
+  the separate `tuxery-web-preview` Worker on 2026-10-19.
 
 Both read `TURSO_DB_URL`/`TURSO_DB_AUTH_TOKEN`/`UNSPLASH_ACCESS_KEY` as Worker
-secrets, set per environment — `wrangler secret put <NAME> --env production`
-for `tuxery-web`, `wrangler versions secret put <NAME> --env preview` for
-`tuxery-web-preview` (a plain `secret put` fails there: preview never has a
-100%-traffic deployed version to attach to, by design — see above; every
-later `versions upload` picks up a `versions secret put` change without
-needing one). `scripts/push-cloudflare-secrets.sh` does both, from
-`../.dev/.env.prod` and `../.dev/.env.preview` respectively — never
-committed, never plain `vars` (those get wiped by Wrangler on every deploy
-unless declared in this file, so secrets are the only thing that reliably
-survives dashboard-side). `tuxery-web-preview`'s secrets point at its own
+secrets, set separately — `wrangler secret put <NAME>` for production,
+`wrangler preview base-config secret put <NAME>` for Previews (the Previews
+Base config every new Preview starts from; Previews never inherit
+production's secrets, vars or bindings — the other settings they need are in
+`wrangler.jsonc`'s `previews` block). `scripts/push-cloudflare-secrets.sh`
+does both, from `../.dev/.env.prod` and `../.dev/.env.preview` respectively —
+never committed, never plain `vars` (those get wiped by Wrangler on every
+deploy unless declared in this file, so secrets are the only thing that
+reliably survives dashboard-side). The Previews' secrets point at the
 `preview-tuxery` Turso DB, not prod's — there is no shared "dev" Turso DB
 (retired 2026-09-03); local dev emulates a local sqlite instead (see
 `vite.config.ts`, and "Development" above).

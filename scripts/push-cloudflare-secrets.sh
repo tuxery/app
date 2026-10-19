@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# Pushes Worker secrets to Cloudflare for both environments
-# (TURSO_DB_URL, TURSO_DB_AUTH_TOKEN, UNSPLASH_ACCESS_KEY — see README.md's
-# "Environment Variables" section and wrangler.jsonc):
+# Pushes tuxery-web's secrets to Cloudflare, for production and for its
+# pull-request Previews (TURSO_DB_URL, TURSO_DB_AUTH_TOKEN,
+# UNSPLASH_ACCESS_KEY — see README.md's "Deployment" section and
+# wrangler.jsonc):
 #   production <- ../.dev/.env.prod    (prod-tuxery DB)
-#   preview    <- ../.dev/.env.preview (preview-tuxery DB — there is no
+#   previews   <- ../.dev/.env.preview (preview-tuxery DB — there is no
 #                 shared "dev" Turso DB anymore, retired 2026-09-03; local
 #                 dev emulates a local sqlite instead, see vite.config.ts)
 # Auth always comes from .env.prod's CLOUDFLARE_API_TOKEN/CLOUDFLARE_ACCOUNT_ID
-# (same Cloudflare account for both envs), so no `wrangler login` is needed.
+# (same Cloudflare account for both), so no `wrangler login` is needed.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -26,7 +27,7 @@ fi
 export CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID
 
 push_env() {
-  local wrangler_env="$1" env_file="$2"
+  local target="$1" env_file="$2"
 
   if [[ ! -f "$env_file" ]]; then
     echo "Missing $env_file" >&2
@@ -48,27 +49,21 @@ push_env() {
     done
 
     cd "$APP_DIR"
-    # preview never has a plain 100%-traffic deployed version to attach a
-    # classic `secret put` to — deploy.yml uses `versions upload
-    # --preview-alias` there on purpose (see README.md's Deployment
-    # section), so every version only ever exists behind its own alias
-    # URL. `versions secret put` updates the environment's stored secret
-    # without needing one; every later `versions upload` picks it up.
-    # production still gets a real `wrangler deploy` (100% traffic) each
-    # time, so the classic command keeps working there.
+    # Previews don't share production's secrets: theirs live in the Previews
+    # Base config, which every later `wrangler preview` starts from.
     local put_command="secret put"
-    if [[ "$wrangler_env" == "preview" ]]; then
-      put_command="versions secret put"
+    if [[ "$target" == "previews" ]]; then
+      put_command="preview base-config secret put"
     fi
     for secret in TURSO_DB_URL TURSO_DB_AUTH_TOKEN UNSPLASH_ACCESS_KEY; do
-      echo "==> Setting $secret --env $wrangler_env"
+      echo "==> Setting $secret ($target)"
       # shellcheck disable=SC2086
-      printf '%s' "${!secret}" | pnpm exec wrangler $put_command "$secret" --env "$wrangler_env"
+      printf '%s' "${!secret}" | pnpm exec wrangler $put_command "$secret"
     done
   )
 }
 
 push_env production "$DEV_DIR/.env.prod"
-push_env preview "$DEV_DIR/.env.preview"
+push_env previews "$DEV_DIR/.env.preview"
 
 echo "Done."
