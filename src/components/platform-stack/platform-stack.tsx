@@ -102,6 +102,7 @@ export const PlatformStack = component$<PlatformStackProps>(
                 class="relative w-5.5 h-5.5 rounded-full bg-base-100 flex items-center justify-center border border-base-300"
               >
                 <Logo
+                  sprite
                   slug={INSTALL_GROUP_LOGOS[group]}
                   class={[
                     "w-3.5 h-3.5",
