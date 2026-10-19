@@ -141,6 +141,10 @@ export interface SourcedPackage {
   license?: string;
   /** This listing's own download size and newest changelog, when its source has them (Flathub today) — see `buildFacts`. */
   approxSizeBytes?: number;
+  /** Installed size in bytes as this source's package manager reports it (distro packages; not comparable to `approxSizeBytes`, a Flatpak's download without its runtime) — see `tuxery/catalog`'s `SourcedPackage.installedSizeBytes`. */
+  installedSizeBytes?: number;
+  /** CPU architecture, when this source lists one per package (`x86_64`, `aarch64`) — see `tuxery/catalog`'s `SourcedPackage.arch`. */
+  arch?: string;
   changelog?: string;
   /** A crowd rating from this specific source, when it has one — see `tuxery/catalog`'s `SourcedPackage.rating` doc comment for which sources populate this. */
   rating?: { average: number; count: number };

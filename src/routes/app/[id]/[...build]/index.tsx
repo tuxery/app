@@ -23,6 +23,8 @@ import {
   storePicks,
 } from "~/app-facts";
 import { accessibilityHints } from "~/accessibility-hints";
+import { deviceBadges } from "~/device-support";
+import { architectures, installedSizes } from "~/technical-details";
 import { brandTintAttributes, brandTints } from "~/brand-colors";
 import { classifyLicense, licenseInfoHref } from "~/license";
 import { isCatalogUnavailable } from "~/catalog-status";
@@ -744,6 +746,7 @@ export default component$(() => {
   const sandbox = sandboxSummary(a.permissions);
   const brandTint = brandTintAttributes(brandTints(a.brandColors));
   const accessibility = accessibilityHints(a.kudos);
+  const devices = deviceBadges(a.requirements);
   const officialLinks = projectLinks(a.links);
   const fixUrl = (field?: string, current?: string) =>
     suggestFixUrl({ name: a.name, pageUrl: location.url.href, field, current });
@@ -752,12 +755,13 @@ export default component$(() => {
   // the full list of packagings one click away.
   const installSourcePackages = a.packages.filter((pkg) => isInstallSource(pkg.source));
   const availableViaAll = availableViaLabels(installSourcePackages);
-  const availableVia = groupPackagesBySourceGroup(installSourcePackages).map(
-    ([group, packages]) => {
-      const builds = availableViaLabels(packages).length;
-      return { label: builds > 1 ? `${group} (${builds})` : group };
-    },
-  );
+  const installGroups = groupPackagesBySourceGroup(installSourcePackages);
+  const availableVia = installGroups.map(([group, packages]) => {
+    const builds = availableViaLabels(packages).length;
+    return { label: builds > 1 ? `${group} (${builds})` : group };
+  });
+  const installed = installedSizes(installGroups);
+  const archs = architectures(installSourcePackages);
   // The catalog's verdict when the dataset has one, else the same classifier.
   const licenseKind = a.licenseKind ?? classifyLicense(a.license);
   const licenseHref = licenseInfoHref(a.license, a.licenseSpdx, licenseKind);
@@ -1391,6 +1395,25 @@ export default component$(() => {
                   </dd>
                 </div>
               )}
+              {devices.length > 0 && (
+                <div>
+                  <dt class={INFO_LABEL}>Devices</dt>
+                  <dd>
+                    <ul class="flex flex-wrap gap-1.5">
+                      {devices.map((badge) => (
+                        <li key={badge.id}>
+                          <span class="badge badge-outline badge-sm" title={badge.tip}>
+                            {badge.label}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <span class="block text-xs text-base-content/70 mt-0.5">
+                      As the developer states it.
+                    </span>
+                  </dd>
+                </div>
+              )}
               {a.languages?.length && (
                 <div>
                   <dt class={INFO_LABEL}>Languages</dt>
@@ -1409,8 +1432,54 @@ export default component$(() => {
             <dl class={INFO_LIST}>
               {facts.approxSizeBytes && (
                 <div>
-                  <dt class={INFO_LABEL}>Size</dt>
-                  <dd>{formatBytes(facts.approxSizeBytes)}</dd>
+                  <dt class={INFO_LABEL}>Download size</dt>
+                  <dd>
+                    {formatBytes(facts.approxSizeBytes)}
+                    <span class="block text-xs text-base-content/70">
+                      The app alone, without the runtime it shares with other Flatpaks.
+                    </span>
+                  </dd>
+                </div>
+              )}
+              {installed.length > 0 && (
+                <div>
+                  <dt class={INFO_LABEL}>Installed size</dt>
+                  <dd>
+                    {installed.length === 1 || installed[0].bytes === installed.at(-1)?.bytes
+                      ? formatBytes(installed[0].bytes)
+                      : `${formatBytes(installed[0].bytes)} to ${formatBytes(installed.at(-1)?.bytes ?? 0)}`}
+                    <span class="block text-xs text-base-content/70">
+                      As each distro measures it, without dependencies.
+                    </span>
+                    {installed.length > 1 && (
+                      <details class="mt-1">
+                        <summary class="link link-primary text-xs cursor-pointer w-fit">
+                          By source
+                        </summary>
+                        <ul class="mt-1 flex flex-col gap-0.5 text-xs">
+                          {installed.map((entry) => (
+                            <li key={entry.group} class="flex justify-between gap-3">
+                              <span>{entry.group}</span>
+                              <span class="text-base-content/70 whitespace-nowrap">
+                                {formatBytes(entry.bytes)}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
+                  </dd>
+                </div>
+              )}
+              {archs.length > 0 && (
+                <div>
+                  <dt class={INFO_LABEL}>Architectures</dt>
+                  <dd>
+                    {archs.join(", ")}
+                    <span class="block text-xs text-base-content/70">
+                      As the sources list them.
+                    </span>
+                  </dd>
                 </div>
               )}
               {facts.installsTotal !== undefined && (
