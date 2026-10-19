@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canonicalPath, canonicalUrl, robotsDirective } from "./seo";
+import { canonicalPath, canonicalUrl, isPreviewHost, robotsDirective } from "./seo";
 
 describe("canonicalPath", () => {
   it("points a build-variant page at its app page", () => {
@@ -29,5 +29,15 @@ describe("robotsDirective", () => {
     expect(robotsDirective("/settings/")).toBe("noindex, nofollow");
     expect(robotsDirective("/app/firefox/")).toBeUndefined();
     expect(robotsDirective("/")).toBeUndefined();
+  });
+});
+
+describe("isPreviewHost", () => {
+  it("recognizes pull-request Previews, not the site itself", () => {
+    expect(isPreviewHost("pr-104.preview.tuxery.store")).toBe(true);
+    expect(isPreviewHost("pr-104-tuxery-web.baxyz.workers.dev")).toBe(true);
+    expect(isPreviewHost("tuxery.store")).toBe(false);
+    expect(isPreviewHost("www.tuxery.store")).toBe(false);
+    expect(isPreviewHost("localhost")).toBe(false);
   });
 });

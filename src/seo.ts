@@ -28,3 +28,13 @@ export function robotsDirective(pathname: string): string | undefined {
     return "noindex, nofollow";
   return undefined;
 }
+
+/**
+ * Pull-request Previews (`pr-<n>.preview.tuxery.store`, or `*.workers.dev`)
+ * serve copies of the site that must never be indexed. Cloudflare only adds
+ * `X-Robots-Tag: noindex` on its own `workers.dev` hosts, not on a custom
+ * domain, so layout.tsx's `onRequest` sends it for both.
+ */
+export function isPreviewHost(hostname: string): boolean {
+  return hostname.endsWith(".preview.tuxery.store") || hostname.endsWith(".workers.dev");
+}
