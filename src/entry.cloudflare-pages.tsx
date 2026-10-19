@@ -16,6 +16,7 @@ import {
   cacheName,
   isCacheableRequest,
   isSharedCacheable,
+  withCacheStatus,
   withNotFoundCacheControl,
 } from "./edge-cache";
 import render from "./entry.ssr";
@@ -48,11 +49,12 @@ const fetch = async (request: Request, env: RouterEnv, ctx: RouterContext) => {
   const cache = await caches.open(cacheName(APP_COMMIT));
   const key = new Request(request.url, request);
   const hit = await cache.match(key);
-  if (hit) return hit;
+  if (hit) return withCacheStatus(hit, "hit");
 
   const response = withNotFoundCacheControl(await router(withoutRouterCache(request), env, ctx));
-  if (isSharedCacheable(response)) ctx.waitUntil(cache.put(key, response.clone()));
-  return response;
+  if (!isSharedCacheable(response)) return response;
+  ctx.waitUntil(cache.put(key, response.clone()));
+  return withCacheStatus(response, "miss");
 };
 
 export { fetch };
