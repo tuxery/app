@@ -20,6 +20,7 @@
     "serve": "wrangler dev",
     "start": "vite --open --mode ssr",
     "sync:licenses": "node scripts/sync-licenses.ts",
+    "sync:logos": "node scripts/sync-logos.ts",
     "sync:source-todos": "node scripts/sync-source-todos.ts",
     "test": "vitest run",
     "test.e2e": "playwright test",
