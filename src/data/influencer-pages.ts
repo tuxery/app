@@ -34,3 +34,19 @@ const INFLUENCER_PAGES = rawPages as InfluencerPage[];
 export async function getInfluencerPage(slug: string): Promise<InfluencerPage | undefined> {
   return INFLUENCER_PAGES.find((page) => page.slug === slug);
 }
+
+export interface CreatorPicks {
+  /** Apps picked across the page's blocks, each counted once. */
+  count: number;
+  /** How many blocks (categories) they come from. */
+  groups: number;
+  /** The first picks' ids, for a preview strip of their icons. */
+  previewIds: string[];
+}
+
+/** What a page picks, in a line: how many apps, in how many groups, and which ones to show a preview of. */
+export function creatorPicks(page: InfluencerPage, previewSize = 6): CreatorPicks {
+  const groups = page.blocks.flatMap((block) => (block.type === "apps" ? [block.appIds] : []));
+  const ids = [...new Set(groups.flat())];
+  return { count: ids.length, groups: groups.length, previewIds: ids.slice(0, previewSize) };
+}

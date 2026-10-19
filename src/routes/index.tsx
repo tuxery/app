@@ -12,8 +12,8 @@ import { AppCardLink } from "~/components/app-card/app-card";
 import { CategoryTileGrid } from "~/components/category-tile-grid/category-tile-grid";
 import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-scroller";
 import { Logo } from "~/components/logo/logo";
-import { getCategories, getStats } from "~/catalog";
-import { getInfluencerPage } from "~/data/influencer-pages";
+import { getAppsByIds, getCategories, getStats } from "~/catalog";
+import { creatorPicks, getInfluencerPage } from "~/data/influencer-pages";
 import { SOURCE_LOGOS } from "~/data/logos";
 import { useCatalogUnavailable } from "~/routes/layout";
 import { resolveServerEnv } from "~/server-env";
@@ -35,8 +35,28 @@ export const useGameCategories = routeLoader$(async (requestEvent) =>
 
 // Reuses the same influencer-page data /creators/baxyz/ itself renders
 // from, so the homepage slide's name/avatar stay in sync with that page
-// rather than duplicating them as separate hardcoded homepage copy.
-export const useFeaturedCreator = routeLoader$(async () => getInfluencerPage("baxyz"));
+// rather than duplicating them as separate hardcoded homepage copy. Adds a
+// preview of the picks (their count and the first few icons, four primary
+// key lookups): the slide used to be a name on a gradient, which said
+// nothing about what is behind it.
+export const useFeaturedCreator = routeLoader$(async (requestEvent) => {
+  const page = await getInfluencerPage("baxyz");
+  if (!page) return undefined;
+  const picks = creatorPicks(page);
+  const apps = await getAppsByIds(resolveServerEnv(requestEvent.platform), picks.previewIds);
+  return {
+    name: page.name,
+    slug: page.slug,
+    avatarUrl: page.avatarUrl,
+    tagline: page.tagline,
+    count: picks.count,
+    groups: picks.groups,
+    icons: picks.previewIds.flatMap((id) => {
+      const app = apps.find((candidate) => candidate.id === id);
+      return app?.iconUrl ? [{ id, name: app.name, iconUrl: app.iconUrl }] : [];
+    }),
+  };
+});
 
 /**
  * A row's place while its cards load (see `~/home-rows`): the height of a
@@ -179,7 +199,17 @@ const DESTINATION_TILES = [
  * item (see /creators/).
  */
 const InfluencerSlider = component$<{
-  creator: { name: string; slug: string; avatarUrl?: string } | undefined;
+  creator:
+    | {
+        name: string;
+        slug: string;
+        avatarUrl?: string;
+        tagline: string;
+        count: number;
+        groups: number;
+        icons: { id: string; name: string; iconUrl: string }[];
+      }
+    | undefined;
 }>(({ creator }) => {
   const trackRef = useSignal<HTMLElement>();
 
@@ -198,14 +228,38 @@ const InfluencerSlider = component$<{
           <div class="avatar avatar-placeholder">
             <div class="w-16 rounded-full bg-base-100 text-base-content">
               {creator?.avatarUrl ? (
-                <img src={creator.avatarUrl} alt="" />
+                <img src={creator.avatarUrl} alt="" width={64} height={64} />
               ) : (
                 <span class="text-xl">{creator?.name.charAt(0).toUpperCase() ?? "?"}</span>
               )}
             </div>
           </div>
-          <p class="text-sm opacity-80">La sélection de</p>
+          <p class="text-sm opacity-80">Picked by</p>
           <p class="text-2xl font-bold">{creator?.name ?? "our creators"}</p>
+          {creator && (
+            <>
+              <p class="text-sm opacity-90 max-w-md line-clamp-2">{creator.tagline}</p>
+              {creator.icons.length > 0 && (
+                <ul class="flex -space-x-2" aria-hidden="true">
+                  {creator.icons.map((icon) => (
+                    <li key={icon.id}>
+                      <img
+                        src={icon.iconUrl}
+                        alt=""
+                        width={36}
+                        height={36}
+                        loading="lazy"
+                        class="size-9 rounded-field bg-base-100 p-1 object-contain ring-2 ring-primary"
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <span class="text-sm underline underline-offset-2">
+                {creator.count} apps in {creator.groups} categories →
+              </span>
+            </>
+          )}
         </a>
         <a
           href="/creators/"
@@ -327,17 +381,7 @@ export default component$(() => {
           <section>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 h-auto lg:h-96">
               <div class="lg:col-span-2 h-64 lg:h-full">
-                <InfluencerSlider
-                  creator={
-                    featuredCreator.value
-                      ? {
-                          name: featuredCreator.value.name,
-                          slug: featuredCreator.value.slug,
-                          avatarUrl: featuredCreator.value.avatarUrl,
-                        }
-                      : undefined
-                  }
-                />
+                <InfluencerSlider creator={featuredCreator.value} />
               </div>
               <div class="grid grid-cols-2 grid-rows-2 gap-3 h-64 lg:h-full">
                 {DESTINATION_TILES.map((tile) => (
