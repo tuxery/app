@@ -5,9 +5,10 @@ description: How to get Tuxery's data — per-source downloads today, the merged
 
 # Open data
 
-Everything Tuxery shows comes from public sources, and everything it
-gathers is public too. Here is what you can get today, and what is
-planned.
+Everything Tuxery shows comes from public sources, and almost everything
+it gathers can be downloaded too: only a source that asked us not to
+redistribute its data is left out (see [Not redistributed](#not-redistributed)).
+Here is what you can get today, and what is planned.
 
 ## Download, now
 
@@ -32,11 +33,26 @@ of them (about 200 MB).
 - **Update frequency**: every source is refetched weekly (Saturday,
   04:00 UTC); the changes land through a pull request, so a file's
   `fetchedAt` is the date to trust.
+- **Licenses**: each file keeps its source's own terms. The AGPL that
+  covers Tuxery's code doesn't cover this data; check the source's terms
+  before reusing it.
 
 ```sh
 # One source, straight from GitHub
 curl -LO https://raw.githubusercontent.com/tuxery/catalog/main/src/sources/cache/flatpak-flathub.ndjson
 ```
+
+### Not redistributed
+
+Some sources let Tuxery use their data on the site but not hand it out.
+Their files are kept privately, rebuilt from the source, and left out of
+every download here, the merged catalog included:
+
+- **AppImageHub** (opendesktop.org): its apps' names, descriptions and
+  versions are written by its uploaders, and opendesktop.org allowed
+  Tuxery to use them on condition that they aren't redistributed. Every
+  app that comes from it links to its AppImageHub page, where to download
+  it.
 
 ### Classifications
 

@@ -85,6 +85,12 @@ export interface InstallMethod {
   setup?:
     | { kind: "command"; command: string; note: string }
     | { kind: "link"; url: string; note: string };
+  /**
+   * A credit the source requires next to its download link, shown as is
+   * ("Source: AppImageHub": opendesktop.org's condition for using its data,
+   * see tuxery/catalog's docs/sources.md).
+   */
+  attribution?: string;
 }
 
 const FLATHUB_SETUP = {
@@ -145,6 +151,9 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
   },
   appimage: { kind: "link", setup: APPIMAGE_SETUP },
   "appimage-manual": { kind: "link", setup: APPIMAGE_SETUP },
+  // The package's homepage is its AppImageHub page: where opendesktop.org
+  // asks every app using their data to send people to download it.
+  appimagehub: { kind: "link", setup: APPIMAGE_SETUP, attribution: "Source: AppImageHub" },
   "pacman-aur": {
     kind: "command",
     command: (pkg) => `yay -S ${pkg.name}`,

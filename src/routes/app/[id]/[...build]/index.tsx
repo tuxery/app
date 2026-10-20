@@ -176,6 +176,7 @@ const PACKAGE_SOURCE_TO_LEAF_ID: Partial<Record<PackageSourceId, string>> = {
   "snap-snapcraft": "snap-store",
   appimage: "appimage-integration",
   "appimage-manual": "appimage-integration",
+  appimagehub: "appimage-integration",
   "pacman-aur": "arch-aur",
   "rpm-rpmfusion": "rpmfusion",
 };
@@ -195,6 +196,7 @@ const SHORT_SOURCE_LABELS: Partial<Record<PackageSourceId, string>> = {
   "flatpak-appcenter": "elementary AppCenter",
   appimage: "Community feed",
   "appimage-manual": "Direct download",
+  appimagehub: "AppImageHub",
   "pacman-arch": "Official",
   "rpm-fedora": "Official",
 };
@@ -325,9 +327,12 @@ const SourceInstallUnit = component$<{
   const websiteLink = installWebsiteLink(pkg);
   // Only worth its own row when it's not already what the button above points to.
   const showWebsiteFallback = websiteLink && websiteLink.url !== primaryLink;
-  const primaryLabel = SOURCE_GROUP_MEMBERS.AppImage?.includes(pkg.source)
-    ? "Download"
-    : "Click to install";
+  const primaryLabel =
+    pkg.source === "appimagehub"
+      ? "Download on AppImageHub"
+      : SOURCE_GROUP_MEMBERS.AppImage?.includes(pkg.source)
+        ? "Download"
+        : "Click to install";
   const installOptionCount = [primaryLink, command, showWebsiteFallback].filter(Boolean).length;
   // A lone option under a "Prerequisites" heading still needs its own
   // label to read as a separate step — only skip it when there's nothing
@@ -523,6 +528,7 @@ const SourceInstallUnit = component$<{
             {!primaryLink && method.kind === "link" && (
               <p class="text-sm text-base-content/70">No direct link available yet.</p>
             )}
+            {method.attribution && <p class="text-xs text-base-content/70">{method.attribution}</p>}
 
             {/* (2) The terminal command, and its copy button, on one line — a shorter button label than before leaves more room for the command itself. */}
             {command && (

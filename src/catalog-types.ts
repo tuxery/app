@@ -27,6 +27,7 @@ export type PackageSourceId =
   | "snap-snapcraft"
   | "appimage"
   | "appimage-manual"
+  | "appimagehub"
   | "pacman-aur"
   | "deb-debian"
   | "deb-ubuntu"
@@ -55,6 +56,7 @@ export const SOURCE_LABELS: Record<PackageSourceId, string> = {
   "snap-snapcraft": "Snap Store",
   appimage: "AppImage",
   "appimage-manual": "AppImage (direct download)",
+  appimagehub: "AppImageHub",
   "pacman-aur": "AUR",
   "deb-debian": "Debian",
   "deb-ubuntu": "Ubuntu",
@@ -95,7 +97,7 @@ export const ALL_PACKAGE_SOURCE_IDS = Object.keys(SOURCE_LABELS) as PackageSourc
 export const SOURCE_GROUP_MEMBERS: Record<string, PackageSourceId[]> = {
   Flatpak: ["flatpak-flathub", "flatpak-appcenter"],
   Snap: ["snap-snapcraft"],
-  AppImage: ["appimage", "appimage-manual"],
+  AppImage: ["appimage", "appimage-manual", "appimagehub"],
   "Arch Linux": ["pacman-aur", "pacman-arch"],
   Debian: ["deb-debian"],
   Ubuntu: ["deb-ubuntu"],
