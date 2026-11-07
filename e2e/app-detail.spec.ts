@@ -243,12 +243,14 @@ test("the license, Flathub installs and latest release show on the default build
   // Links to what the license lets you do, in the licenses guide.
   const badge = page.getByRole("link", { name: /Free software/ });
   await expect(badge).toHaveAttribute("href", "/docs/open-source-licenses/#mpl-20");
-  await expect(page.getByText("Installs", { exact: true })).toBeVisible();
-  await expect(page.getByText("Latest release", { exact: true })).toBeVisible();
+  // The header shows "<n> installs" and "Updated <when>"; the full figures
+  // live in their `title` (also the tooltip).
+  await expect(page.getByTitle(/ installs on Flathub/)).toBeVisible();
+  await expect(page.getByTitle(/^Latest release: /)).toBeVisible();
 
   // An edition the Flathub figures don't describe: no installs, no date.
   await page.goto("/app/firefox/esr/");
   await expect(page.getByRole("link", { name: /Free software/ })).toBeVisible();
-  await expect(page.getByText("Installs", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("Latest release", { exact: true })).toHaveCount(0);
+  await expect(page.getByTitle(/ installs on Flathub/)).toHaveCount(0);
+  await expect(page.getByTitle(/^Latest release: /)).toHaveCount(0);
 });
