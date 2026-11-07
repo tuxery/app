@@ -24,6 +24,12 @@ minimumReleaseAgeExclude:
 #   (via @qwik.dev/router > svgo > csso) still allows ^1.0.1.
 # - shell-quote >=1.11.0 (quote() command injection): launch-editor (a
 #   @qwik.dev/core dependency) still allows ^1.8.4.
+# - zod >=4.6.6 (memory exhaustion on oversized constrained collections,
+#   GHSA-mrhx-c7xc-m3w5): @qwik.dev/router (rc.4) still asks for zod
+#   ^3.25.48 and the fix only exists on 4.x — a major jump. The router only
+#   touches zod inside zod$() (ZodType, object, safeParseAsync,
+#   error.flatten(), issues — all still in zod 4), and this app never calls
+#   zod$ or imports zod. Drop once the router moves to zod 4.
 overrides:
   # @qwikest/icons has no Qwik 2 release and declares a peer on
   # @builder.io/qwik (Qwik 1) — redirect that to the v2 package so a single
@@ -31,9 +37,10 @@ overrides:
   # to the exact rc: a `^2` range doesn't match prereleases. Bump together
   # with @qwik.dev/core in package.json; drop once the icons are replaced
   # or the lib ships a v2 build.
-  "@builder.io/qwik": "npm:@qwik.dev/core@2.0.0-rc.3"
+  "@builder.io/qwik": "npm:@qwik.dev/core@2.0.0-rc.4"
   sharp: ">=0.35.5"
   brace-expansion@1: "^1.1.20"
   probe-image-size: ">=7.3.1"
   source-map-js: ">=1.2.2"
   shell-quote: ">=1.11.0"
+  zod: "^4.6.6"

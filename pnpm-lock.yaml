@@ -5,12 +5,13 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@builder.io/qwik': npm:@qwik.dev/core@2.0.0-rc.3
+  '@builder.io/qwik': npm:@qwik.dev/core@2.0.0-rc.4
   sharp: '>=0.35.5'
   brace-expansion@1: ^1.1.20
   probe-image-size: '>=7.3.1'
   source-map-js: '>=1.2.2'
   shell-quote: '>=1.11.0'
+  zod: ^4.6.6
 
 importers:
 
@@ -21,7 +22,7 @@ importers:
         version: 0.18.0
       '@qwikest/icons':
         specifier: ^0.0.13
-        version: 0.0.13(@qwik.dev/core@2.0.0-rc.3(@oxc-project/types@0.156.0)(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))(vitest@5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))))
+        version: 0.0.13(@qwik.dev/core@2.0.0-rc.4(@oxc-project/types@0.156.0)(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))(vitest@5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))))
       daisyui:
         specifier: ^5.7.50
         version: 5.7.50
@@ -36,11 +37,11 @@ importers:
         specifier: ^1.64.1
         version: 1.64.1
       '@qwik.dev/core':
-        specifier: 2.0.0-rc.3
-        version: 2.0.0-rc.3(@oxc-project/types@0.156.0)(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))(vitest@5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1)))
+        specifier: 2.0.0-rc.4
+        version: 2.0.0-rc.4(@oxc-project/types@0.156.0)(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))(vitest@5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1)))
       '@qwik.dev/router':
-        specifier: 2.0.0-rc.3
-        version: 2.0.0-rc.3(@qwik.dev/core@2.0.0-rc.3(@oxc-project/types@0.156.0)(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))(vitest@5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))))(@types/node@26.6.6)(rollup@4.63.5)(supports-color@10.2.2)(typescript@7.0.2)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))
+        specifier: 2.0.0-rc.4
+        version: 2.0.0-rc.4(@qwik.dev/core@2.0.0-rc.4(@oxc-project/types@0.156.0)(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))(vitest@5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))))(@types/node@26.6.6)(rollup@4.63.5)(supports-color@10.2.2)(typescript@7.0.2)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))
@@ -1283,8 +1284,8 @@ packages:
   '@poppinss/exception@1.2.3':
     resolution: {integrity: sha512-dCED+QRChTVatE9ibtoaxc+WkdzOSjYTKi/+uacHWIsfodVfpsueo3+DKpgU5Px8qXjgmXkSvhXvSCz3fnP9lw==}
 
-  '@qwik.dev/core@2.0.0-rc.3':
-    resolution: {integrity: sha512-s87/I5hyQAPXzLg1ihKwoGzA5931uIYdqBzwR6tKUCixrH2fijLrLQSZgAQk1Z0wA5Cw4KsfHMNX8tzx/tNSkg==}
+  '@qwik.dev/core@2.0.0-rc.4':
+    resolution: {integrity: sha512-z6M5WHPHD0IlCOFWCfuwk8ngUyQYQkkVdIlWBFWr5S9uTIVkYm8rugdF6JE06ICCh+08OHJsxjsuG0QA5wSVmw==}
     engines: {node: ^20.3.0 || >=21.0.0}
     hasBin: true
     peerDependencies:
@@ -1297,15 +1298,15 @@ packages:
       vitest:
         optional: true
 
-  '@qwik.dev/optimizer@2.1.0-beta.9':
-    resolution: {integrity: sha512-PKZedb4+/Goi5KS7HCiJXZO9g3prbmI7lTi+yhy0GBPHUFlmRWVCXhllGrgRBHbvuPxfLTOAfZ5d/sG2QufTXQ==}
+  '@qwik.dev/optimizer@2.1.0-rc.10':
+    resolution: {integrity: sha512-0yI+yY15xSEbBG0LSK5SYQSGU7EVXysHhea/BWb4yy0sGwThZsT6k4D7CgUrwVcuhfHPfBqSXALLvO8O5tc92Q==}
     engines: {node: ^20.3.0 || >=21.0.0}
 
-  '@qwik.dev/router@2.0.0-rc.3':
-    resolution: {integrity: sha512-mVwtspzYrm0+FhO6JMiyICuvz7hGgRayZz31j5jy+tBIf9N+61NffGaez2MwV1SNr3TKXukLLob211zGhk6qAQ==}
+  '@qwik.dev/router@2.0.0-rc.4':
+    resolution: {integrity: sha512-DTHUtTwCd0cIOjjxMZFzI0AJcDr43yKYh4/7tTJ3dZua79lIEP9KXoQsItIXkJhTiJn7+20ujsSHTsY2bB/gVg==}
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     peerDependencies:
-      '@qwik.dev/core': 2.0.0-rc.3
+      '@qwik.dev/core': 2.0.0-rc.4
       vite: '>=8 <9'
 
   '@qwikest/icons@0.0.13':
@@ -2204,8 +2205,8 @@ packages:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
 
-  launch-editor@2.14.1:
-    resolution: {integrity: sha512-QWBrQsMpH7gPr965dsKD/3cKWiNoTjpATQf++Xq63N6sKRGMwlVXz41O1IZTMfZQgBctD/K5Zt06+/I6pP6+HA==}
+  launch-editor@2.14.2:
+    resolution: {integrity: sha512-NHJEb30MGBCkmZXLZwz25t37QR4aY03ZzPYUJXOJaOa92uWwExI9SBQUuIznBYc1xkD7cJNGX7oc3Nl3sq2kQQ==}
 
   less@4.9.0:
     resolution: {integrity: sha512-umRhrCH7fCi8Uj2RcwKjJdvUORTjeWqkdKx0LbcZvjIwsAVsnIAGcxHaqowPeBFBjQuWOeC/bve0AlpFzF/+SQ==}
@@ -2379,9 +2380,6 @@ packages:
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
-
-  magic-string@1.4.1:
-    resolution: {integrity: sha512-8lyCu36ErXR0J9uaGKlKQoiLZKmtI63YGLE8G2o9jyRPdr4X47LusSOwgOJOzcVtp81fTAAjxR7BwKz682Jhow==}
 
   magic-string@1.4.3:
     resolution: {integrity: sha512-z12OxmaPGE0F4xlpGdjuAUckipLpQlTAuAmyGhNoD7ODpYUzvDfvtxUbjM/jwznyP178oju/KDdyi220wNJ0RQ==}
@@ -3147,8 +3145,8 @@ packages:
   youch@4.1.0-beta.10:
     resolution: {integrity: sha512-rLfVLB4FgQneDr0dv1oddCVZmKjcJ6yX6mS4pU82Mq/Dt9a3cLZQ62pDBL4AUO+uVrCvtWz3ZFUL2HFAFJ/BXQ==}
 
-  zod@3.25.48:
-    resolution: {integrity: sha512-0X1mz8FtgEIvaxGjdIImYpZEaZMrund9pGXm3M6vM7Reba0e2eI71KPjSCGXBfwKDPwPoywf6waUKc3/tFvX2Q==}
+  zod@4.6.7:
+    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -3888,13 +3886,13 @@ snapshots:
 
   '@poppinss/exception@1.2.3': {}
 
-  '@qwik.dev/core@2.0.0-rc.3(@oxc-project/types@0.156.0)(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))(vitest@5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1)))':
+  '@qwik.dev/core@2.0.0-rc.4(@oxc-project/types@0.156.0)(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))(vitest@5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1)))':
     dependencies:
       '@emnapi/core': 1.11.3
       '@emnapi/runtime': 1.11.3
-      '@qwik.dev/optimizer': 2.1.0-beta.9
+      '@qwik.dev/optimizer': 2.1.0-rc.10
       csstype: 3.2.3
-      launch-editor: 2.14.1
+      launch-editor: 2.14.2
       magic-regexp: 0.11.2(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))
       magic-string: 0.30.21
       oxc-parser: 0.144.0
@@ -3917,14 +3915,14 @@ snapshots:
       - unloader
       - webpack
 
-  '@qwik.dev/optimizer@2.1.0-beta.9': {}
+  '@qwik.dev/optimizer@2.1.0-rc.10': {}
 
-  '@qwik.dev/router@2.0.0-rc.3(@qwik.dev/core@2.0.0-rc.3(@oxc-project/types@0.156.0)(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))(vitest@5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))))(@types/node@26.6.6)(rollup@4.63.5)(supports-color@10.2.2)(typescript@7.0.2)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))':
+  '@qwik.dev/router@2.0.0-rc.4(@qwik.dev/core@2.0.0-rc.4(@oxc-project/types@0.156.0)(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))(vitest@5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))))(@types/node@26.6.6)(rollup@4.63.5)(supports-color@10.2.2)(typescript@7.0.2)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))':
     dependencies:
       '@azure/functions': 3.5.1
       '@mdx-js/mdx': 3.1.1(supports-color@10.2.2)
       '@netlify/edge-functions': 3.0.8
-      '@qwik.dev/core': 2.0.0-rc.3(@oxc-project/types@0.156.0)(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))(vitest@5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1)))
+      '@qwik.dev/core': 2.0.0-rc.4(@oxc-project/types@0.156.0)(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))(vitest@5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1)))
       '@types/mdx': 2.0.14
       estree-util-value-to-estree: 3.5.0
       github-slugger: 2.0.0
@@ -3948,16 +3946,16 @@ snapshots:
       vite: 8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1)
       vite-imagetools: 10.0.0(@types/node@26.6.6)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))
       yaml: 2.9.1
-      zod: 3.25.48
+      zod: 4.6.7
     transitivePeerDependencies:
       - '@types/node'
       - rollup
       - supports-color
       - typescript
 
-  '@qwikest/icons@0.0.13(@qwik.dev/core@2.0.0-rc.3(@oxc-project/types@0.156.0)(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))(vitest@5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))))':
+  '@qwikest/icons@0.0.13(@qwik.dev/core@2.0.0-rc.4(@oxc-project/types@0.156.0)(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))(vitest@5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))))':
     dependencies:
-      '@builder.io/qwik': '@qwik.dev/core@2.0.0-rc.3(@oxc-project/types@0.156.0)(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))(vitest@5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1)))'
+      '@builder.io/qwik': '@qwik.dev/core@2.0.0-rc.4(@oxc-project/types@0.156.0)(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))(vitest@5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1)))'
 
   '@rolldown/binding-android-arm-eabi@1.2.16':
     optional: true
@@ -4725,7 +4723,7 @@ snapshots:
 
   kleur@4.1.5: {}
 
-  launch-editor@2.14.1:
+  launch-editor@2.14.2:
     dependencies:
       picocolors: 1.1.1
       shell-quote: 1.12.0
@@ -4868,7 +4866,7 @@ snapshots:
 
   magic-regexp@0.11.2(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1)):
     dependencies:
-      magic-string: 1.4.1
+      magic-string: 1.4.3
       regexp-tree: 0.1.27
       type-level-regexp: 0.1.17
       unplugin: 3.4.0(esbuild@0.28.2)(rolldown@1.2.16)(rollup@4.63.5)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.0(supports-color@10.2.2))(sass@1.102.0)(stylus@0.62.0(supports-color@10.2.2))(yaml@2.9.1))
@@ -4885,10 +4883,6 @@ snapshots:
       - webpack
 
   magic-string@0.30.21:
-    dependencies:
-      '@jridgewell/sourcemap-codec': 1.6.0
-
-  magic-string@1.4.1:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.6.0
 
@@ -6073,6 +6067,6 @@ snapshots:
       cookie: 1.1.1
       youch-core: 0.3.3
 
-  zod@3.25.48: {}
+  zod@4.6.7: {}
 
   zwitch@2.0.4: {}
