@@ -85,6 +85,7 @@ import {
   installCommand,
   installDeepLink,
   installWebsiteLink,
+  pageAttribution,
 } from "~/install-methods";
 import { findOsEntry, recommendedGroupIds } from "~/os-catalog";
 import {
@@ -754,6 +755,7 @@ export default component$(() => {
   const accessibility = accessibilityHints(a.kudos);
   const devices = deviceBadges(a.requirements);
   const officialLinks = projectLinks(a.links);
+  const attribution = pageAttribution(a.packages);
   const fixUrl = (field?: string, current?: string) =>
     suggestFixUrl({ name: a.name, pageUrl: location.url.href, field, current });
   const picks = storePicks(a.storeCollections);
@@ -917,6 +919,13 @@ export default component$(() => {
             />
           </div>
           <p class="text-base-content/70 mt-1">{a.shortDescription}</p>
+          {attribution && (
+            <p class="text-xs text-base-content/70 mt-1">
+              <a href={attribution.url} class="link" target="_blank" rel="noopener">
+                {attribution.text}
+              </a>
+            </p>
+          )}
           {a.developer && (
             <p class="text-sm text-base-content/70 mt-1 flex items-center gap-1.5">
               by{" "}
@@ -1328,7 +1337,9 @@ export default component$(() => {
               )}
               {a.homepage && (
                 <div>
-                  <dt class={INFO_LABEL}>Homepage</dt>
+                  <dt class={INFO_LABEL}>
+                    {a.homepage === attribution?.url ? "Store page" : "Homepage"}
+                  </dt>
                   <dd class="break-all">
                     <a href={a.homepage} class="link link-primary" target="_blank" rel="noopener">
                       {a.homepage.replace(/^https?:\/\//, "").replace(/\/$/, "")}
