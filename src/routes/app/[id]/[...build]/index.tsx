@@ -25,7 +25,7 @@ import {
 import { accessibilityHints } from "~/accessibility-hints";
 import { deviceBadges } from "~/device-support";
 import { architectures, installedSizes } from "~/technical-details";
-import { brandTintAttributes, brandTints } from "~/brand-colors";
+import { brandBorderAttributes, brandBorders } from "~/brand-colors";
 import { classifyLicense, licenseInfoHref } from "~/license";
 import { isCatalogUnavailable } from "~/catalog-status";
 import { useCatalogUnavailable } from "~/routes/layout";
@@ -751,7 +751,7 @@ export default component$(() => {
   const confidence = confidenceNotes(a.dataConfidence);
   const issues = dataIssues(a);
   const sandbox = sandboxSummary(a.permissions);
-  const brandTint = brandTintAttributes(brandTints(a.brandColors));
+  const brandBorder = brandBorderAttributes(brandBorders(a.brandColors));
   const accessibility = accessibilityHints(a.kudos);
   const devices = deviceBadges(a.requirements);
   const officialLinks = projectLinks(a.links);
@@ -880,8 +880,8 @@ export default component$(() => {
 
       <section
         ref={jumboRef}
-        class={`relative flex flex-col md:flex-row gap-6 md:items-start rounded-box ${brandTint.classes}`}
-        style={brandTint.style}
+        class={`relative flex flex-col md:flex-row gap-6 md:items-start rounded-box ${brandBorder.classes}`}
+        style={brandBorder.style}
       >
         {/* Clipped on its own wrapper, not on the section: an overflow on
             the section cut off the Edition/Version menus where they hang

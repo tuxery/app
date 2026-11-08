@@ -61,18 +61,21 @@ body {
   --color-primary-content: oklch(17.226% 0.028 254.027);
 }
 
-/* An app's brand color (AppStream <branding>) as a tint behind its page
-   header: TINT_PERCENT of it over the theme's base. The classes are only set
-   for a scheme whose tint ~/brand-colors found readable (text and links at
-   4.5:1), so a color that would not pass never reaches these rules. The
-   percentage is the same number as TINT_PERCENT there. */
-[data-theme="nord"] .brand-tint-light {
-  background-color: color-mix(in srgb, var(--brand-light) 20%, var(--color-base-100));
+/* An app's brand color (AppStream <branding>) as a border on the side of its
+   page header. The classes are only set for a scheme that has a color, so a
+   header without one keeps its alignment. Square corners on that side: the
+   section's rounding would curl the border's ends. */
+[data-theme="nord"] .brand-border-light {
   border-inline-start: 4px solid var(--brand-light);
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  padding-inline-start: 1.25rem;
 }
-[data-theme="dim"] .brand-tint-dark {
-  background-color: color-mix(in srgb, var(--brand-dark) 20%, var(--color-base-100));
+[data-theme="dim"] .brand-border-dark {
   border-inline-start: 4px solid var(--brand-dark);
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  padding-inline-start: 1.25rem;
 }
 
 /* Glassmorphism experiment for AppCard, tried in place of neumorphism —
