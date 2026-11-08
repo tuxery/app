@@ -260,3 +260,18 @@ export function installWebsiteLink(
 ): { url: string; label: string } | undefined {
   return INSTALL_METHODS[pkg.source]?.websiteLink?.(pkg);
 }
+
+/**
+ * The credit an app's page owes on sight, for a source that requires one:
+ * its data can fill the page's name and description, so the credit can't wait
+ * behind the install panel. The link goes to the package's own page there.
+ */
+export function pageAttribution(
+  packages: readonly SourcedPackage[],
+): { text: string; url: string } | undefined {
+  for (const pkg of packages) {
+    const text = INSTALL_METHODS[pkg.source]?.attribution;
+    if (text && pkg.homepage) return { text, url: pkg.homepage };
+  }
+  return undefined;
+}
