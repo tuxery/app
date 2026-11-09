@@ -57,9 +57,13 @@ test("a single-source rated app's tooltip still prefixes the figure with its sou
   await expect(rating).toBeVisible();
   // Shape only, not the figures — the rating and its vote count move with
   // every dataset refresh, and the prefix is what this test is about.
-  expect(await tipText(page, rating)).toMatch(/^Flathub \(Flatpak\): ★ \d\.\d \([\d,]+\)$/);
+  expect(await tipText(page, rating)).toMatch(
+    /^Flathub \(Flatpak\), via ODRS: ★ \d\.\d \([\d,]+\)$/,
+  );
   await rating.hover();
-  await expect(page.locator("[popover]:popover-open")).toHaveText(/^Flathub \(Flatpak\): ★/);
+  await expect(page.locator("[popover]:popover-open")).toHaveText(
+    /^Flathub \(Flatpak\), via ODRS: ★/,
+  );
 });
 
 test("a multi-source rated app's tooltip lists every source, each prefixed by its own label", async ({
@@ -69,7 +73,7 @@ test("a multi-source rated app's tooltip lists every source, each prefixed by it
   const rating = page.getByText(/\d\.\d \(\d/).first();
   await expect(rating).toBeVisible();
   expect(await tipText(page, rating)).toMatch(
-    /^Flathub \(Flatpak\): ★ \d\.\d \([\d,]+\)\nelementary AppCenter \(Flatpak\): ★ \d\.\d \([\d,]+\)$/,
+    /^Flathub \(Flatpak\), via ODRS: ★ \d\.\d \([\d,]+\)\nelementary AppCenter \(Flatpak\), via ODRS: ★ \d\.\d \([\d,]+\)$/,
   );
 });
 
