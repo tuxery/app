@@ -68,6 +68,29 @@ const GROUPS: { title: string; sources: PackageSourceId[] }[] = [
   { title: "Straight from the publisher", sources: ["vendor-repos", "github-releases"] },
 ];
 
+// Sources that list no app of their own and only add details to apps
+// listed above, so their cards link out instead of to /browse.
+const DETAIL_SOURCES: { title: string; text: string; href: string; linkLabel: string }[] = [
+  {
+    title: "ODRS",
+    text: "GNOME's Open Desktop Ratings Service: the star ratings shown for Flathub and elementary AppCenter apps. One public file of per-app vote counts; no review text or reviewer data is kept.",
+    href: "https://odrs.gnome.org/",
+    linkLabel: "odrs.gnome.org",
+  },
+  {
+    title: "AppStream catalogs",
+    text: "The AppStream metadata Debian, Ubuntu, Fedora, openSUSE and Arch publish for their packages: icons, screenshots, categories and longer descriptions. Icons and screenshots load from their servers.",
+    href: "https://www.freedesktop.org/software/appstream/docs/",
+    linkLabel: "About AppStream",
+  },
+  {
+    title: "Popularity statistics",
+    text: "Flathub's install counts and Popular list, Debian's popcon and Arch's pkgstats: how widely an app is installed, used to order the trending lists.",
+    href: "/docs/rankings/",
+    linkLabel: "How rankings work",
+  },
+];
+
 export default component$(() => {
   return (
     <div class="flex flex-col gap-8">
@@ -110,20 +133,33 @@ export default component$(() => {
         </section>
       ))}
 
-      <div class="border border-base-300 rounded-box p-6 text-sm text-base-content/70 flex flex-col gap-2">
-        <p>
-          Some sources only add details to apps listed elsewhere: the AppStream metadata Debian,
-          Ubuntu, Fedora, openSUSE and Arch publish (icons, screenshots, categories), Flathub's
-          statistics, and the ratings shown for Flathub and AppCenter apps, which come from{" "}
-          <a href="https://odrs.gnome.org/" class="link link-primary">
-            GNOME's ODRS
-          </a>
-          . See{" "}
+      <section>
+        <h2 class="text-lg font-semibold mb-1">Details only</h2>
+        <p class="text-sm text-base-content/70 mb-3">
+          These list no apps of their own: they add details to apps listed above. See{" "}
           <a href="/docs/merging/" class="link link-primary">
             how sources are merged
           </a>
           .
         </p>
+        <div class="grid gap-3 sm:grid-cols-2">
+          {DETAIL_SOURCES.map((detail) => (
+            <div key={detail.title} class="card bg-base-100 border border-base-300">
+              <div class="card-body p-5 gap-1">
+                <h3 class="card-title text-base">{detail.title}</h3>
+                <p class="text-sm text-base-content/70">{detail.text}</p>
+                <div class="mt-1 text-sm">
+                  <a href={detail.href} class="link link-primary">
+                    {detail.linkLabel} →
+                  </a>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div class="border border-base-300 rounded-box p-6 text-sm text-base-content/70 flex flex-col gap-2">
         <p>
           Want a source's listing removed, spot something wrong with its coverage, or think Tuxery
           should cover a source it doesn't yet? See{" "}
