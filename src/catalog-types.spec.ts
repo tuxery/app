@@ -24,7 +24,7 @@ describe("summarizeRatingsBySource", () => {
       { source: "deb-debian" },
     ] as SourcedPackage[];
     expect(summarizeRatingsBySource(packages).map((row) => row.label)).toEqual([
-      "Flathub (Flatpak), via ODRS",
+      "ODRS (Flathub)",
       "GOG",
     ]);
   });
@@ -37,7 +37,7 @@ describe("summarizeRatingsBySource", () => {
     ] as SourcedPackage[];
     expect(summarizeRatingsBySource(packages)).toEqual([
       {
-        label: "Flathub (Flatpak) and elementary AppCenter (Flatpak), via ODRS",
+        label: "ODRS (Flathub and elementary AppCenter)",
         average: 3.1,
         count: 26,
       },
