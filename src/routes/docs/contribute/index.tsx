@@ -6,7 +6,6 @@ import {
   LuFlag,
   LuGithub,
   LuHeartHandshake,
-  LuListTodo,
   LuPackagePlus,
   LuSprout,
 } from "@qwikest/icons/lucide";
@@ -73,13 +72,6 @@ const GROUPS: { title: string; intro?: string; ways: Way[] }[] = [
         body: 'Issues labelled "good first issue" are scoped for a first contribution.',
         href: labelledIssuesUrl("good first issue"),
         cta: "See good first issues",
-      },
-      {
-        icon: LuListTodo,
-        title: "Improve one source",
-        body: "Each known gap in a source's data (a beta branch not fetched, a weak filter, a stable release not connected) is its own issue, labelled with its source.",
-        href: "/docs/coverage/",
-        cta: "See the per-source to-do",
       },
       {
         icon: LuCode,

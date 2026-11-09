@@ -93,10 +93,6 @@ export default component$(() => {
           <a href="/docs/changelog/" class="link link-primary">
             Changelog
           </a>
-          . Known gaps in each source's data are listed on the{" "}
-          <a href="/docs/coverage/" class="link link-primary">
-            per-source to-do
-          </a>
           .
         </p>
       </section>

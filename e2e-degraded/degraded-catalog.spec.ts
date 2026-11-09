@@ -11,7 +11,7 @@ import { test, expect } from "@playwright/test";
 // Pages whose content comes from the catalog: 503, with the message.
 const CATALOG_PAGES = ["/", "/browse/", "/apps/", "/games/", "/categories/", "/app/firefox/"];
 // Pages that don't need it: still 200, with the message.
-const OTHER_PAGES = ["/docs/", "/docs/status/", "/docs/coverage/", "/docs/glossary/", "/settings/"];
+const OTHER_PAGES = ["/docs/", "/docs/status/", "/docs/glossary/", "/settings/"];
 
 const MESSAGE = "The catalog is temporarily unavailable.";
 

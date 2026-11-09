@@ -64,16 +64,6 @@ test("a glossary entry can be linked to directly", async ({ page }) => {
   await expect(page.locator("h3#edition")).toBeInViewport();
 });
 
-test("the per-source to-do lists real app counts and its tracked issues", async ({ page }) => {
-  await page.goto("/docs/coverage/");
-  const flathub = page.getByRole("row").filter({ hasText: "flatpak-flathub" });
-  const count = await flathub.getByRole("cell").nth(1).innerText();
-  expect(Number(count.replace(/[^0-9]/g, ""))).toBeGreaterThan(0);
-  await expect(
-    flathub.locator("a[href^='https://github.com/tuxery/catalog/issues/']").first(),
-  ).toBeVisible();
-});
-
 test("every license section the app pages link to exists on the guide", async ({ page }) => {
   await page.goto(LICENSE_GUIDE_PATH);
   for (const id of LICENSE_GUIDE_SECTIONS) {
