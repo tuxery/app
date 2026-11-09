@@ -118,11 +118,7 @@ export default component$(() => {
           <a href="/docs/merging/" class="link link-primary">
             how sources are merged
           </a>
-          , and the{" "}
-          <a href="/docs/coverage/" class="link link-primary">
-            per-source to-do
-          </a>{" "}
-          for what each source still misses.
+          .
         </p>
         <p>
           Want a source's listing removed, spot something wrong with its coverage, or think Tuxery

@@ -49,7 +49,6 @@ export const DOCS_SECTIONS: DocsSection[] = [
       { href: "/docs/philosophy/", title: "Data philosophy", markdown: mdx("philosophy") },
       { href: "/docs/merging/", title: "How sources are merged", markdown: mdx("merging") },
       { href: "/docs/sources/", title: "Sources" },
-      { href: "/docs/coverage/", title: "Per-source to-do" },
       { href: "/docs/open-data/", title: "Open data", markdown: mdx("open-data") },
     ],
   },

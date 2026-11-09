@@ -11,7 +11,7 @@
       {
         "type": "apps",
         "heading": "Browsers",
-        "appIds": ["zen-browser-snap", "org.garudalinux.firedragon", "firefox"]
+        "appIds": ["app.zen_browser.zen", "org.garudalinux.firedragon", "firefox"]
       },
       {
         "type": "apps",
@@ -27,7 +27,14 @@
       {
         "type": "apps",
         "heading": "Productivity & notes",
-        "appIds": ["typora", "org.gnome.World.Iotas", "standard-notes", "todoist", "libreoffice"]
+        "appIds": [
+          "typora",
+          "org.gnome.World.Iotas",
+          "standard-notes",
+          "todoist",
+          "io.github.alainm23.planify",
+          "libreoffice"
+        ]
       },
       {
         "type": "apps",
@@ -57,7 +64,7 @@
       {
         "type": "apps",
         "heading": "Privacy & AI",
-        "appIds": ["proton-pass", "proton-lumo-ai"]
+        "appIds": ["proton-pass", "proton-lumo-ai", "claudeai-desktop"]
       }
     ]
   },
@@ -74,7 +81,7 @@
       {
         "type": "apps",
         "heading": "My daily drivers",
-        "appIds": ["firefox", "gimp", "gog:firewatch"]
+        "appIds": ["firefox", "gimp", "pacman-aur:gog-firewatch"]
       }
     ]
   }
