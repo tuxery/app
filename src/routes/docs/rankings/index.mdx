@@ -23,12 +23,16 @@ that publish one:
 - the **AUR's own popularity** figure (how often Arch users install the
   package through AUR helpers), ranked as a percentile across the AUR;
 - **Flathub's "Popular" list**, the same one flathub.org shows, scored by
-  position — only its top 250.
+  position — only its top 250;
+- **Debian's popcon**, the opt-in survey of what Debian machines have
+  installed;
+- **Arch's pkgstats**, the same kind of opt-in survey for Arch's official
+  repositories.
 
-When an app has both, the two are averaged. Each source's figure is
+When an app has several, they are averaged. Each source's figure is
 scaled within that source first, since the raw numbers can't be compared
 directly. Apps found only in sources that publish no popularity figure
-(Debian, Fedora, the Snap Store, GOG...) can't appear here, however
+(Fedora, the Snap Store, GOG...) can't appear here, however
 popular they are elsewhere — which answers most "why isn't X trending?"
 questions.
 
