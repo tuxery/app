@@ -10,13 +10,13 @@ async function tipText(_page: Page, trigger: Locator): Promise<string> {
 
 // Ids that carry a Flatpak or Snap package use that package's own
 // globally-unique name/appId directly (Snap preferred — see catalog's
-// match/group.ts's buildAppId), no "source:" prefix; The Witcher 2 and
-// LibreOffice Writer have neither, so they still fall back to
-// "source:appId".
+// match/group.ts's buildAppId), no "source:" prefix; Calligra Plan has
+// neither, so it still falls back to "source:appId".
 const FIREFOX = "/app/firefox/";
-// gog:firewatch left the dataset (2026-10-04) — The Witcher 2 is GOG-only
-// rated (no other source carries a rating) and GOG's most-rated title.
-const WITCHER_2 = "/app/gog%3Athe_witcher_2/";
+// Flatsweep: listed on Flathub alone, so Flathub is its only rating. Not a GOG
+// title: GOG's cache is private, so CI's dataset has none (catalog's
+// src/sources/_shared/cache-path.ts).
+const FLATSWEEP = "/app/io.github.giantpinkrobots.flatsweep/";
 // LibreOffice no longer carries suite_json in the live dataset (re-verified
 // 2026-09-18) — Calligra is the current real example of a suite main app
 // with a component.
@@ -52,14 +52,14 @@ test("an app page shows an install-options drawer listing every source, each gro
 test("a single-source rated app's tooltip still prefixes the figure with its source", async ({
   page,
 }) => {
-  await page.goto(WITCHER_2);
+  await page.goto(FLATSWEEP);
   const rating = page.getByText(/\d\.\d \(\d/).first();
   await expect(rating).toBeVisible();
   // Shape only, not the figures — the rating and its vote count move with
   // every dataset refresh, and the prefix is what this test is about.
-  expect(await tipText(page, rating)).toMatch(/^GOG: ★ \d\.\d \([\d,]+\)$/);
+  expect(await tipText(page, rating)).toMatch(/^Flathub \(Flatpak\): ★ \d\.\d \([\d,]+\)$/);
   await rating.hover();
-  await expect(page.locator("[popover]:popover-open")).toHaveText(/^GOG: ★/);
+  await expect(page.locator("[popover]:popover-open")).toHaveText(/^Flathub \(Flatpak\): ★/);
 });
 
 test("a multi-source rated app's tooltip lists every source, each prefixed by its own label", async ({
