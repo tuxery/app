@@ -27,7 +27,7 @@ export const STORE_PAGES: StorePageInfo[] = [
     id: "snap-snapcraft",
     name: "Snap Store",
     tagline: "Canonical's universal package store, pre-installed on Ubuntu.",
-    method: "Snapcraft's public search API, swept by category and letter.",
+    method: "Snapcraft's search API, read page by page.",
     externalUrl: "https://snapcraft.io/store",
   },
   {

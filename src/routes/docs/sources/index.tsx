@@ -9,7 +9,8 @@ import { hasStorePage } from "~/data/store-pages";
 const METHODS: Record<PackageSourceId, string> = {
   "flatpak-flathub": "Flathub's own appstream repodata feeds, stable and beta.",
   "flatpak-appcenter": "elementary's own Flatpak remote, same appstream format as Flathub.",
-  "snap-snapcraft": "Snapcraft's public search API, swept by category and letter.",
+  "snap-snapcraft":
+    "Snapcraft's search API, read page by page, each snap's channels asked for when it changes or at least every four weeks.",
   appimage: "appimage.github.io's community-curated feed, cross-checked against GitHub Releases.",
   "appimage-manual": "A small hand-curated list for apps with no GitHub repo and no other source.",
   appimagehub:
@@ -31,7 +32,7 @@ const METHODS: Record<PackageSourceId, string> = {
   slackware: "Slackware's own package trees, -current and the 15.0 release.",
   "eopkg-solus": "Solus's own eopkg repository.",
   "ebuild-gentoo": "The Gentoo Portage tree.",
-  gog: "GOG's own catalog API, scoped to Linux-compatible titles.",
+  gog: "GOG's own catalog API, scoped to Linux-compatible titles. Not redistributed, as our own precaution rather than at GOG's request (see Open data).",
   lutris: "Lutris's installer API, scoped to native Linux installers.",
   "github-releases": 'GitHub repositories tagged "linux-app" that publish a real tagged release.',
   "vendor-repos":

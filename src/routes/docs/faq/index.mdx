@@ -98,12 +98,12 @@ is spelled out in the [privacy policy](/docs/legal/#privacy).
 
 ## Can I reuse Tuxery's data?
 
-Yes — see [open data](/docs/open-data/). Everything Tuxery shows is built
-from public data: open feeds and package indexes, plus public listings
-we read the way a browser or an app store client would. Nothing comes
-from a private agreement or a paid feed, so nothing can be withdrawn
-from you: what Tuxery gathers stays available, and the code to gather it
-again is open source.
+Almost all of it — see [open data](/docs/open-data/). Everything Tuxery
+shows is built from public data: open feeds and package indexes, plus
+public listings we read the way a browser or an app store client would.
+Nothing comes from a paid feed, and the code to gather it again is open
+source. A few sources aren't handed out: that page names them and says
+why.
 
 ## Where does the data come from?
 
@@ -114,12 +114,14 @@ is simple and cheap for everyone.
 
 Some don't, and Tuxery has to work around it:
 
-- **The Snap Store** has no full listing — only a search that stops at
-  100 results. Tuxery sweeps it by category and by ever-longer search
-  prefixes, about 100,000 requests per refresh, and still can't be sure
-  it has everything.
+- **The Snap Store** has no documented full listing. Tuxery reads an older,
+  undocumented search page by page, then asks about a snap's channels only
+  when it changed, or at least every four weeks: about 4,000 requests per
+  refresh, and it can't be sure it has everything.
 - **GOG** has no documented catalog API; Tuxery reads an undocumented
-  one that launchers such as Heroic and Lutris also rely on.
+  one that launchers such as Heroic and Lutris also rely on. Its data is
+  [not redistributed](/docs/open-data/#not-redistributed), as our own
+  precaution.
 - **Lutris** ignores the filter for native Linux installers, so every
   page of installers is read and filtered afterwards, then each game is
   looked up for its genres and description.
