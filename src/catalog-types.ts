@@ -471,6 +471,9 @@ export interface SourceRating {
   count: number;
 }
 
+/** Sources whose `rating` is ODRS's (odrs.gnome.org) rather than the source's own. */
+const ODRS_RATED: ReadonlySet<PackageSourceId> = new Set(["flatpak-flathub", "flatpak-appcenter"]);
+
 /** One row per package that carries its own crowd rating, formatted for `UnifiedRating`'s per-source breakdown — on both a `CatalogApp`'s full `packages` and (via `AppSummary.ratingsBySource`) an already-summarized listing row. */
 export function summarizeRatingsBySource(packages: SourcedPackage[]): SourceRating[] {
   return packages
@@ -478,7 +481,11 @@ export function summarizeRatingsBySource(packages: SourcedPackage[]): SourceRati
       Boolean(pkg.rating),
     )
     .map((pkg) => ({
-      label: formatSourceLabel(pkg),
+      // Flathub and AppCenter ratings come from GNOME's ODRS, whose
+      // maintainer asked for that credit (2026-11-09).
+      label: ODRS_RATED.has(pkg.source)
+        ? `${formatSourceLabel(pkg)}, via ODRS`
+        : formatSourceLabel(pkg),
       average: pkg.rating.average,
       count: pkg.rating.count,
     }));

@@ -9,9 +9,26 @@ import {
   provenanceInfo,
   summarizeAgeRatings,
   summarizeBuilds,
+  summarizeRatingsBySource,
   summarizeReleaseLines,
   type PackageSourceId,
+  type SourcedPackage,
 } from "~/catalog-types";
+
+describe("summarizeRatingsBySource", () => {
+  it("credits ODRS for Flathub's ratings, and leaves a source's own ratings alone", () => {
+    const rating = { average: 4.5, count: 10 };
+    const packages = [
+      { source: "flatpak-flathub", rating },
+      { source: "gog", rating },
+      { source: "deb-debian" },
+    ] as SourcedPackage[];
+    expect(summarizeRatingsBySource(packages).map((row) => row.label)).toEqual([
+      "Flathub (Flatpak), via ODRS",
+      "GOG",
+    ]);
+  });
+});
 
 describe("builds", () => {
   it("names a build from its track, risk and flavors", () => {
