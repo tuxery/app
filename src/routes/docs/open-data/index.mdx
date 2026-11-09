@@ -6,8 +6,8 @@ description: How to get Tuxery's data — per-source downloads today, the merged
 # Open data
 
 Everything Tuxery shows comes from public sources, and almost everything
-it gathers can be downloaded too: only a source that asked us not to
-redistribute its data is left out (see [Not redistributed](#not-redistributed)).
+it gathers can be downloaded too: only a few sources are left out, each
+for its own reason (see [Not redistributed](#not-redistributed)).
 Here is what you can get today, and what is planned.
 
 ## Download, now
@@ -44,15 +44,20 @@ curl -LO https://raw.githubusercontent.com/tuxery/catalog/main/src/sources/cache
 
 ### Not redistributed
 
-Some sources let Tuxery use their data on the site but not hand it out.
+Tuxery shows these sources on the site but doesn't hand out their data.
 Their files are kept privately, rebuilt from the source, and left out of
-every download here, the merged catalog included:
+every download here, the merged catalog included. The reasons differ:
 
 - **AppImageHub** (opendesktop.org): its apps' names, descriptions and
   versions are written by its uploaders, and opendesktop.org allowed
   Tuxery to use them on condition that they aren't redistributed. Every
   app that comes from it links to its AppImageHub page, where to download
   it.
+- **GOG**: our own precaution, not GOG's request. GOG hasn't asked Tuxery
+  for anything, and no term we could read forbids sharing this. But we
+  couldn't read its User Agreement, and these files hold GOG's store
+  descriptions, so we keep them to ourselves until we know more. Copies
+  from before this choice remain in the catalog repository's git history.
 
 ### Classifications
 
@@ -70,7 +75,8 @@ add-ons and related apps, as the site shows them — is not downloadable
 yet. It is rebuilt from the files above by the catalog's pipeline, and
 where to publish it (GitHub Releases is the likely candidate) is still
 being decided. Until then, you can rebuild it yourself from the
-[catalog repository](https://github.com/tuxery/catalog#development).
+[catalog repository](https://github.com/tuxery/catalog#development), without
+the sources above.
 
 ## API, later
 
