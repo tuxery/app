@@ -66,14 +66,14 @@ test("a single-source rated app's tooltip still prefixes the figure with its sou
   );
 });
 
-test("a multi-source rated app's tooltip lists every source, each prefixed by its own label", async ({
+test("Flathub and AppCenter share one ODRS row in the tooltip, since they carry the same votes", async ({
   page,
 }) => {
   await page.goto(APP_EDITOR);
   const rating = page.getByText(/\d\.\d \(\d/).first();
   await expect(rating).toBeVisible();
   expect(await tipText(page, rating)).toMatch(
-    /^Flathub \(Flatpak\), via ODRS: ★ \d\.\d \([\d,]+\)\nelementary AppCenter \(Flatpak\), via ODRS: ★ \d\.\d \([\d,]+\)$/,
+    /^Flathub \(Flatpak\) and elementary AppCenter \(Flatpak\), via ODRS: ★ \d\.\d \([\d,]+\)$/,
   );
 });
 

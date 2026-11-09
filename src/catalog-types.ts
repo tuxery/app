@@ -474,21 +474,38 @@ export interface SourceRating {
 /** Sources whose `rating` is ODRS's (odrs.gnome.org) rather than the source's own. */
 const ODRS_RATED: ReadonlySet<PackageSourceId> = new Set(["flatpak-flathub", "flatpak-appcenter"]);
 
-/** One row per package that carries its own crowd rating, formatted for `UnifiedRating`'s per-source breakdown — on both a `CatalogApp`'s full `packages` and (via `AppSummary.ratingsBySource`) an already-summarized listing row. */
+/**
+ * One row per package that carries its own crowd rating, formatted for `UnifiedRating`'s per-source breakdown — on both a `CatalogApp`'s full `packages` and (via `AppSummary.ratingsBySource`) an already-summarized listing row.
+ *
+ * Flathub and AppCenter both carry GNOME's ODRS rating, the same votes, so
+ * they share one row, credited "via ODRS" as its maintainer asked
+ * (2026-11-09), with the figure that has the most votes.
+ */
 export function summarizeRatingsBySource(packages: SourcedPackage[]): SourceRating[] {
-  return packages
-    .filter((pkg): pkg is SourcedPackage & { rating: { average: number; count: number } } =>
+  const rated = packages.filter(
+    (pkg): pkg is SourcedPackage & { rating: { average: number; count: number } } =>
       Boolean(pkg.rating),
-    )
+  );
+  const odrs = rated.filter((pkg) => ODRS_RATED.has(pkg.source));
+  const rows: SourceRating[] = rated
+    .filter((pkg) => !ODRS_RATED.has(pkg.source))
     .map((pkg) => ({
-      // Flathub and AppCenter ratings come from GNOME's ODRS, whose
-      // maintainer asked for that credit (2026-11-09).
-      label: ODRS_RATED.has(pkg.source)
-        ? `${formatSourceLabel(pkg)}, via ODRS`
-        : formatSourceLabel(pkg),
+      label: formatSourceLabel(pkg),
       average: pkg.rating.average,
       count: pkg.rating.count,
     }));
+  if (odrs.length === 0) return rows;
+
+  const best = odrs.reduce((a, b) => (b.rating.count > a.rating.count ? b : a));
+  const labels = unique(odrs.map((pkg) => SOURCE_LABELS[pkg.source]));
+  return [
+    {
+      label: `${labels.join(" and ")}, via ODRS`,
+      average: best.rating.average,
+      count: best.rating.count,
+    },
+    ...rows,
+  ];
 }
 
 /**
