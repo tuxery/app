@@ -28,6 +28,21 @@ describe("summarizeRatingsBySource", () => {
       "GOG",
     ]);
   });
+
+  it("gives Flathub and AppCenter one shared ODRS row, since they carry the same votes", () => {
+    const packages = [
+      { source: "flatpak-flathub", rating: { average: 3.1, count: 26 } },
+      { source: "flatpak-flathub", risk: "beta", rating: { average: 3.1, count: 26 } },
+      { source: "flatpak-appcenter", rating: { average: 3.1, count: 11 } },
+    ] as SourcedPackage[];
+    expect(summarizeRatingsBySource(packages)).toEqual([
+      {
+        label: "Flathub (Flatpak) and elementary AppCenter (Flatpak), via ODRS",
+        average: 3.1,
+        count: 26,
+      },
+    ]);
+  });
 });
 
 describe("builds", () => {
