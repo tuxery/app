@@ -113,8 +113,12 @@ export default component$(() => {
       <div class="border border-base-300 rounded-box p-6 text-sm text-base-content/70 flex flex-col gap-2">
         <p>
           Some sources only add details to apps listed elsewhere: the AppStream metadata Debian,
-          Ubuntu, Fedora, openSUSE and Arch publish (icons, screenshots, categories), GNOME's ODRS
-          reviews and Flathub's statistics. See{" "}
+          Ubuntu, Fedora, openSUSE and Arch publish (icons, screenshots, categories), Flathub's
+          statistics, and the ratings shown for Flathub and AppCenter apps, which come from{" "}
+          <a href="https://odrs.gnome.org/" class="link link-primary">
+            GNOME's ODRS
+          </a>
+          . See{" "}
           <a href="/docs/merging/" class="link link-primary">
             how sources are merged
           </a>
