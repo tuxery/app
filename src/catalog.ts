@@ -914,6 +914,27 @@ export async function getTrendingAppsBySource(
   });
 }
 
+/**
+ * Apps with a package from `source`, newest first by that source's own
+ * date: the project's newest release, or else the package's build or
+ * upload date — powers a store page's "Recently updated" row. Reads a
+ * precomputed `recentlyUpdatedBySource:<source>` id list (see
+ * `tuxery/catalog`'s `sourceUpdatedAt`); empty for a source that dates
+ * nothing (GOG, Lutris).
+ */
+export async function getRecentlyUpdatedAppsBySource(
+  env: ServerEnv,
+  source: PackageSourceId,
+  limit = TRENDING_PAGE_SIZE,
+): Promise<AppSummary[]> {
+  const db = getClient(env);
+  if (!db) return [];
+
+  return cachedListing(`getRecentlyUpdatedAppsBySource:${source}:${limit}`, [], async () => {
+    return listingFromMeta(db, `recentlyUpdatedBySource:${source}`, limit);
+  });
+}
+
 const CATEGORY_PREVIEW_SIZE = 12;
 
 /**

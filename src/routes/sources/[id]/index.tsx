@@ -4,7 +4,7 @@ import type { DocumentHead } from "@qwik.dev/router";
 import { LuExternalLink } from "@qwikest/icons/lucide";
 import { AppCardLink } from "~/components/app-card/app-card";
 import { Logo } from "~/components/logo/logo";
-import { getTrendingAppsBySource } from "~/catalog";
+import { getRecentlyUpdatedAppsBySource, getTrendingAppsBySource } from "~/catalog";
 import { SOURCE_LOGOS } from "~/data/logos";
 import { STORE_PAGES } from "~/data/store-pages";
 import { resolveServerEnv } from "~/server-env";
@@ -20,15 +20,19 @@ export const useStorePage = routeLoader$(async (requestEvent) => {
     return null;
   }
 
-  const apps = await getTrendingAppsBySource(resolveServerEnv(requestEvent.platform), store.id);
-  return { store, apps };
+  const env = resolveServerEnv(requestEvent.platform);
+  const [apps, recent] = await Promise.all([
+    getTrendingAppsBySource(env, store.id),
+    getRecentlyUpdatedAppsBySource(env, store.id),
+  ]);
+  return { store, apps, recent };
 });
 
 export default component$(() => {
   const data = useStorePage();
   if (!data.value) return <p class="text-base-content/70">Store not found.</p>;
 
-  const { store, apps } = data.value;
+  const { store, apps, recent } = data.value;
 
   return (
     <div class="flex flex-col gap-10">
@@ -83,6 +87,18 @@ export default component$(() => {
           </div>
         )}
       </section>
+
+      {recent.length > 0 && (
+        <section>
+          <h2 class="text-lg font-semibold mb-1">Recently updated on {store.name}</h2>
+          {store.recentNote && <p class="text-sm text-base-content/70 mb-3">{store.recentNote}</p>}
+          <div class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
+            {recent.map((app) => (
+              <AppCardLink key={app.id} app={app} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 });

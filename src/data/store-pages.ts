@@ -6,6 +6,8 @@ export interface StorePageInfo {
   tagline: string;
   method: string;
   externalUrl: string;
+  /** What "Recently updated" is sorted by for this store, when it gives a date at all (GOG and Lutris don't, so their pages have no such row). */
+  recentNote?: string;
 }
 
 // Only the sources with a real, browsable storefront of their own get a
@@ -22,6 +24,7 @@ export const STORE_PAGES: StorePageInfo[] = [
     tagline: "The Flatpak store — sandboxed apps that run the same on every distro.",
     method: "Flathub's own appstream repodata feed.",
     externalUrl: "https://flathub.org",
+    recentNote: "Newest release first, by the release date in each app's AppStream metadata.",
   },
   {
     id: "snap-snapcraft",
@@ -29,6 +32,7 @@ export const STORE_PAGES: StorePageInfo[] = [
     tagline: "Canonical's universal package store, pre-installed on Ubuntu.",
     method: "Snapcraft's search API, read page by page.",
     externalUrl: "https://snapcraft.io/store",
+    recentNote: "Newest upload first, by the date each channel's revision reached the Snap Store.",
   },
   {
     id: "gog",
