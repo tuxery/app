@@ -1,5 +1,6 @@
 import { isNullish } from "helpers4/guard";
 import { createClient, type Client } from "@libsql/client";
+import { parseSourceTerms, SOURCE_TERMS_META_KEY, type SourceTerms } from "./source-terms";
 import { parseRating, toSummary, type Row } from "./app-summary";
 import { BUILD_INFO_META_KEY, parseBuildInfo } from "./build-info";
 import { HOME_LISTINGS, MUST_HAVE_APP_IDS } from "./home-rows";
@@ -1036,6 +1037,24 @@ export async function getStats(env: ServerEnv): Promise<CatalogStats> {
       generatedAt: meta.generatedAt ?? "",
       buildInfo: parseBuildInfo(meta[BUILD_INFO_META_KEY]),
     };
+  });
+}
+
+/**
+ * catalog's per-source terms record (the `sourceTerms` meta row), for
+ * /docs/sources/<id>/. One primary-key read, cached like the listings;
+ * `undefined` on a dataset published before catalog wrote it.
+ */
+export async function getSourceTerms(env: ServerEnv): Promise<SourceTerms | undefined> {
+  const db = getClient(env);
+  if (!db) return undefined;
+
+  return cachedListing<SourceTerms | undefined>("getSourceTerms", undefined, async () => {
+    const result = await db.execute({
+      sql: `SELECT value FROM meta WHERE key = ?`,
+      args: [SOURCE_TERMS_META_KEY],
+    });
+    return parseSourceTerms(result.rows[0]?.value);
   });
 }
 

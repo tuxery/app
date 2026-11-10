@@ -59,8 +59,8 @@ export default component$(() => {
         <h2 class="text-lg font-semibold mb-2">About {store.name}</h2>
         <p class="text-base-content/70">
           {store.method}{" "}
-          <a href="/docs/sources/" class="link link-primary">
-            All sources →
+          <a href={`/docs/sources/${store.id}/`} class="link link-primary">
+            How Tuxery uses {store.name} →
           </a>
         </p>
       </section>

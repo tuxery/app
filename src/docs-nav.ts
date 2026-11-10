@@ -99,6 +99,21 @@ export function findDocsPage(pathname: string): DocsPage | undefined {
   return DOCS_PAGES.find((page) => page.href === path);
 }
 
+/**
+ * The sidebar entry to highlight: the page itself, or for a page the
+ * sidebar doesn't list (`/docs/sources/flatpak-flathub/`), the listed page
+ * it sits under (`/docs/sources/`). `/docs/` itself never matches a sub-path.
+ */
+export function activeDocsPage(pathname: string): DocsPage | undefined {
+  const path = normalize(pathname);
+  return (
+    findDocsPage(path) ??
+    DOCS_PAGES.filter((page) => page.href !== "/docs/" && path.startsWith(page.href)).toSorted(
+      (a, b) => b.href.length - a.href.length,
+    )[0]
+  );
+}
+
 /** The pages before and after this one in reading order (sidebar order, across sections). */
 export function adjacentDocsPages(pathname: string): { prev?: DocsPage; next?: DocsPage } {
   const path = normalize(pathname);

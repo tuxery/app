@@ -1,6 +1,7 @@
 import { component$ } from "@qwik.dev/core";
 import type { DocumentHead } from "@qwik.dev/router";
 import { SOURCE_LABELS } from "~/catalog-types";
+import { PERMISSION_CLASS, StatusChip } from "~/components/status-chip/status-chip";
 import {
   AVAILABILITY,
   cellOf,
@@ -10,43 +11,9 @@ import {
   todoNotes,
   type Availability,
   type Field,
-  type Permission,
 } from "~/data/source-gaps";
 
-// One look per status, shared by the table cells, the legend and the notes:
-// a symbol (readable without color) on a tinted chip.
-const STATUS: Record<Availability, { symbol: string; class: string }> = {
-  yes: { symbol: "✓", class: "bg-success/15 text-success" },
-  none: { symbol: "—", class: "text-base-content/40" },
-  refused: { symbol: "✕", class: "bg-error/15 text-error" },
-  waiting: { symbol: "…", class: "bg-warning/20 text-warning-content" },
-  todo: { symbol: "+", class: "bg-info/15 text-info" },
-  "kept-private": { symbol: "🔒", class: "bg-base-300 text-base-content/80" },
-  "not-applicable": { symbol: "n/a", class: "text-base-content/40 text-[0.65rem]" },
-};
-
-const PERMISSION_CLASS: Record<Permission, string> = {
-  agreed: "badge-success",
-  limited: "badge-warning",
-  asked: "badge-info",
-  "not-asked": "badge-ghost",
-  "not-needed": "badge-ghost",
-};
-
 const FIELD_KEYS = Object.keys(FIELDS) as Field[];
-
-const StatusChip = component$<{ status: Availability }>(({ status }) => (
-  <span
-    class={[
-      "inline-flex items-center justify-center min-w-6 h-6 px-1 rounded-field text-xs font-semibold",
-      STATUS[status].class,
-    ]}
-    title={AVAILABILITY[status].label}
-  >
-    <span aria-hidden="true">{STATUS[status].symbol}</span>
-    <span class="sr-only">{AVAILABILITY[status].label}</span>
-  </span>
-));
 
 export default component$(() => {
   const todos = todoNotes();

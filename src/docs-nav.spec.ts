@@ -4,6 +4,7 @@ import {
   DOCS_PAGES,
   docsDoorOf,
   docsEditUrl,
+  activeDocsPage,
   findDocsPage,
   GUIDES_HREF,
   GUIDES_SECTION,
@@ -22,6 +23,12 @@ describe("docs nav", () => {
     expect(findDocsPage("/docs/faq")?.title).toBe("FAQ");
     expect(findDocsPage("/docs/faq/")?.title).toBe("FAQ");
     expect(findDocsPage("/docs/nope/")).toBeUndefined();
+  });
+
+  it("highlights the listed page a sub-page sits under, never /docs/ itself", () => {
+    expect(activeDocsPage("/docs/sources/flatpak-flathub/")?.href).toBe("/docs/sources/");
+    expect(activeDocsPage("/docs/faq/")?.href).toBe("/docs/faq/");
+    expect(activeDocsPage("/docs/nope/")).toBeUndefined();
   });
 
   it("links prev/next across section boundaries, none past either end", () => {
