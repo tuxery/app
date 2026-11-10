@@ -161,6 +161,13 @@ export default component$(() => {
 
       <div class="border border-base-300 rounded-box p-6 text-sm text-base-content/70 flex flex-col gap-2">
         <p>
+          What Tuxery can't get from each source, and why, is on{" "}
+          <a href="/docs/source-gaps/" class="link link-primary">
+            What each source is missing
+          </a>
+          .
+        </p>
+        <p>
           Want a source's listing removed, spot something wrong with its coverage, or think Tuxery
           should cover a source it doesn't yet? See{" "}
           <a href="/docs/contribute/" class="link link-primary">
