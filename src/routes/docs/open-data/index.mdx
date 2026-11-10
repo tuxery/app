@@ -39,7 +39,7 @@ of them (about 200 MB).
 
 ```sh
 # One source, straight from GitHub
-curl -LO https://raw.githubusercontent.com/tuxery/catalog/main/src/sources/cache/flatpak-flathub.ndjson
+curl -LO https://raw.githubusercontent.com/tuxery/catalog/main/src/sources/cache/deb-debian.ndjson
 ```
 
 ### Not redistributed
@@ -53,6 +53,12 @@ every download here, the merged catalog included. The reasons differ:
   Tuxery to use them on condition that they aren't redistributed. Every
   app that comes from it links to its AppImageHub page, where to download
   it.
+- **Flathub**: we read only the AppStream file Flathub publishes for
+  software centers, as Flathub asked, and stopped calling its API. Whether
+  a public copy of that file's data is fine was left unanswered, and
+  Flathub's site terms forbid copying any part of its service, so we keep
+  it to ourselves. Copies from before this choice remain in the catalog
+  repository's git history.
 - **GOG**: our own precaution, not GOG's request. GOG hasn't asked Tuxery
   for anything, and no term we could read forbids sharing this. But we
   couldn't read its User Agreement, and these files hold GOG's store

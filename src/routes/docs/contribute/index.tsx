@@ -7,6 +7,7 @@ import {
   LuGithub,
   LuHeartHandshake,
   LuPackagePlus,
+  LuPuzzle,
   LuSprout,
 } from "@qwikest/icons/lucide";
 import {
@@ -72,6 +73,13 @@ const GROUPS: { title: string; intro?: string; ways: Way[] }[] = [
         body: 'Issues labelled "good first issue" are scoped for a first contribution.',
         href: labelledIssuesUrl("good first issue"),
         cta: "See good first issues",
+      },
+      {
+        icon: LuPuzzle,
+        title: "Fill a gap in a source",
+        body: "Details a source publishes and allows, that Tuxery doesn't collect yet. Listed source by source, with why the others are missing.",
+        href: "/docs/source-gaps/#not-built-yet",
+        cta: "See what's not built yet",
       },
       {
         icon: LuCode,

@@ -101,8 +101,31 @@ jobs:
           node-version: "26"
           working-directory: catalog
 
+      # The private caches (catalog's src/sources/_shared/cache-path.ts:
+      # AppImageHub, Flathub, GOG). Without them those sources read as empty
+      # and the e2e dataset would miss most Flatpak apps. Seeded locally on
+      # the runner only: nothing from them is uploaded or published.
+      - name: Mint a token for the private source caches
+        id: pushinator
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 @ 2026-10-02
+        with:
+          client-id: ${{ vars.PUSHINATOR_ID || secrets.PUSHINATOR_ID }}
+          private-key: ${{ secrets.PUSHINATOR_KEY }}
+          owner: tuxery
+          repositories: source-cache
+          permission-contents: read
+
+      - name: Check out the private source caches
+        uses: actions/checkout@v7
+        with:
+          repository: tuxery/source-cache
+          token: ${{ steps.pushinator.outputs.token }}
+          path: source-cache-private
+
       - name: Seed and serve catalog's local Turso dev server
         working-directory: catalog
+        env:
+          TUXERY_PRIVATE_CACHE_DIR: ${{ github.workspace }}/source-cache-private/cache
         run: |
           curl -sSfL https://get.tur.so/install.sh | bash
           # The installer drops sqld/turso in ~/.turso but only wires it
@@ -231,8 +254,31 @@ jobs:
           node-version: "26"
           working-directory: catalog
 
+      # The private caches (catalog's src/sources/_shared/cache-path.ts:
+      # AppImageHub, Flathub, GOG). Without them those sources read as empty
+      # and the e2e dataset would miss most Flatpak apps. Seeded locally on
+      # the runner only: nothing from them is uploaded or published.
+      - name: Mint a token for the private source caches
+        id: pushinator
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 @ 2026-10-02
+        with:
+          client-id: ${{ vars.PUSHINATOR_ID || secrets.PUSHINATOR_ID }}
+          private-key: ${{ secrets.PUSHINATOR_KEY }}
+          owner: tuxery
+          repositories: source-cache
+          permission-contents: read
+
+      - name: Check out the private source caches
+        uses: actions/checkout@v7
+        with:
+          repository: tuxery/source-cache
+          token: ${{ steps.pushinator.outputs.token }}
+          path: source-cache-private
+
       - name: Seed and serve catalog's local Turso dev server
         working-directory: catalog
+        env:
+          TUXERY_PRIVATE_CACHE_DIR: ${{ github.workspace }}/source-cache-private/cache
         run: |
           curl -sSfL https://get.tur.so/install.sh | bash
           # The installer drops sqld/turso in ~/.turso but only wires it
@@ -343,8 +389,31 @@ jobs:
           node-version: "26"
           working-directory: catalog
 
+      # The private caches (catalog's src/sources/_shared/cache-path.ts:
+      # AppImageHub, Flathub, GOG). Without them those sources read as empty
+      # and the e2e dataset would miss most Flatpak apps. Seeded locally on
+      # the runner only: nothing from them is uploaded or published.
+      - name: Mint a token for the private source caches
+        id: pushinator
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 @ 2026-10-02
+        with:
+          client-id: ${{ vars.PUSHINATOR_ID || secrets.PUSHINATOR_ID }}
+          private-key: ${{ secrets.PUSHINATOR_KEY }}
+          owner: tuxery
+          repositories: source-cache
+          permission-contents: read
+
+      - name: Check out the private source caches
+        uses: actions/checkout@v7
+        with:
+          repository: tuxery/source-cache
+          token: ${{ steps.pushinator.outputs.token }}
+          path: source-cache-private
+
       - name: Seed and serve catalog's local Turso dev server
         working-directory: catalog
+        env:
+          TUXERY_PRIVATE_CACHE_DIR: ${{ github.workspace }}/source-cache-private/cache
         run: |
           curl -sSfL https://get.tur.so/install.sh | bash
           # The installer drops sqld/turso in ~/.turso but only wires it
