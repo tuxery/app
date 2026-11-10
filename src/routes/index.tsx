@@ -104,6 +104,8 @@ const TRENDING_TIP =
   "Ranked by a popularity score averaged across sources that expose one (the AUR's usage ranking, Debian's popcon, Arch's pkgstats).";
 const NEW_GAMES_TIP =
   "Sorted by each source's own newest-release date (Flathub/AppCenter's AppStream <releases> timestamp) — not every app has one, so this skews toward Flatpak-packaged games.";
+const RECENTLY_UPDATED_TIP =
+  "Sorted by the date of the app's newest release, as its AppStream metadata (Flathub, AppCenter, Fedora, openSUSE, Arch) or its GitHub releases state it. Apps no source dates can't appear here.";
 /**
  * One horizontal app row (Trending apps/games, New games, Download
  * trends, ...), optionally scoped to one content type — used to be a
@@ -447,6 +449,14 @@ export default component$(() => {
             typeFilter="game"
             apps={rows.value?.newGames}
             tip={NEW_GAMES_TIP}
+            emptyMessage="No release-date data available yet."
+          />
+
+          <AppScrollRow
+            title="Recently updated apps"
+            typeFilter="app"
+            apps={rows.value?.recentlyUpdatedApps}
+            tip={RECENTLY_UPDATED_TIP}
             emptyMessage="No release-date data available yet."
           />
 

@@ -13,6 +13,7 @@ export const HOME_LISTINGS = {
   trendingApps: "trending:app",
   trendingGames: "trending:game",
   newGames: "newApps:game",
+  recentlyUpdatedApps: "newApps:app",
   productivity: "categoryPreview:Productivity",
   music: "categoryPreview:Music & Audio",
   creativity: "categoryPreview:Graphics & Design",
