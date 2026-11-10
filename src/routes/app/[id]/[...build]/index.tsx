@@ -792,6 +792,14 @@ export default component$(() => {
   const latestRelease = releaseAge(facts.lastUpdated, new Date());
   const activity = releaseActivity(facts.lastUpdated, facts.releases, new Date());
   const ratingPackages = isDefaultBuild ? a.packages : selectedPackages;
+  // AppImageHub's description is a first-paragraph excerpt: opendesktop.org
+  // allows it only with a link to the item's page for the rest (2026-11-10).
+  const excerptSource = a.longDescription
+    ? a.packages.find(
+        (pkg) =>
+          pkg.source === "appimagehub" && pkg.homepage && pkg.longDescription === a.longDescription,
+      )
+    : undefined;
   const editions = editionsOf(a.packages);
   const versions = versionsByEdition(a.packages);
 
@@ -1246,6 +1254,11 @@ export default component$(() => {
         <section>
           <h2 class="text-lg font-semibold mb-2">About</h2>
           <p class="whitespace-pre-line text-base-content/80">{a.longDescription}</p>
+          {excerptSource && (
+            <a href={excerptSource.homepage} class="link link-primary text-sm mt-1 inline-block">
+              Continue reading on AppImageHub →
+            </a>
+          )}
         </section>
       ) : null}
 
