@@ -85,7 +85,7 @@ const DETAIL_SOURCES: { title: string; text: string; href: string; linkLabel: st
   },
   {
     title: "Popularity statistics",
-    text: "Flathub's install counts and Popular list, Debian's popcon and Arch's pkgstats: how widely an app is installed, used to order the trending lists.",
+    text: "Debian's popcon and Arch's pkgstats, opt-in surveys of what machines have installed, and the AUR's own usage ranking: used to order the trending lists.",
     href: "/docs/rankings/",
     linkLabel: "How rankings work",
   },

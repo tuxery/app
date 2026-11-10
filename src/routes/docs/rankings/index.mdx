@@ -1,6 +1,6 @@
 ---
 title: How rankings work — Tuxery
-description: What each list on Tuxery is ordered by — trending, new games, download trends, category rows, editorial picks, search — which sources the figures come from, and why nothing is paid placement.
+description: What each list on Tuxery is ordered by — trending, new games, category rows, editorial picks, search — which sources the figures come from, and why nothing is paid placement.
 ---
 
 # How rankings work
@@ -22,8 +22,6 @@ that publish one:
 
 - the **AUR's own popularity** figure (how often Arch users install the
   package through AUR helpers), ranked as a percentile across the AUR;
-- **Flathub's "Popular" list**, the same one flathub.org shows, scored by
-  position — only its top 250;
 - **Debian's popcon**, the opt-in survey of what Debian machines have
   installed;
 - **Arch's pkgstats**, the same kind of opt-in survey for Arch's official
@@ -46,14 +44,6 @@ metadata states it. Only Flathub and elementary AppCenter publish that
 date today, so this row only covers games found there. A "New apps" row
 will follow once more sources carry a release date.
 
-## Download trends
-
-Ordered by **installs over the last 7 days** — not all-time totals, which
-would always favor long-established apps over the ones people are picking
-up right now. The figure comes from Flathub's public statistics, so it
-counts Flathub installs only: it says what Flathub users install, not
-what all Linux users install. No other source publishes download counts.
-
 ## Category rows
 
 Rows such as "Productivity apps" or "Puzzle games" list apps of one
@@ -67,10 +57,14 @@ widely used apps (Firefox, VLC, LibreOffice, GIMP...), chosen by hand by
 the Tuxery team. **Creator pages** list the apps one person actually
 uses, chosen by them. Both are opinions, and say so.
 
-Stores also publish their own selections (Flathub's recently added and
-recently updated apps, the Snap Store's featured snaps). Tuxery records
-them but doesn't show them as rankings yet; Flathub's verified list is
-used for the **Verified** badge.
+Stores also publish their own selections, such as the Snap Store's featured
+snaps. Tuxery records them but doesn't show them as rankings yet.
+Flathub's verified status, which its AppStream metadata carries, is used
+for the **Verified** badge.
+
+Tuxery shows no download counts: no source publishes them for us to read.
+Flathub's install statistics are only available through its API, which
+Flathub asked us not to scrape.
 
 ## Search and browse
 

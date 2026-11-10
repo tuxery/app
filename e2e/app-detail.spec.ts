@@ -93,17 +93,6 @@ test("the build count matches the builds its tooltip names", async ({ page }) =>
   expect(count).toBe(named);
 });
 
-test("the Additional information table shows a real Download size row, from Flathub's own download_size", async ({
-  page,
-}) => {
-  // Flathub's /api/v2/summary/org.mozilla.firefox download_size,
-  // formatted — matched by shape, since the exact figure changes with
-  // every Firefox release.
-  await page.goto(FIREFOX);
-  const sizeRow = page.getByText("Download size", { exact: true }).locator("..");
-  await expect(sizeRow.getByText(/^\d+(\.\d)? MB$/)).toBeVisible();
-});
-
 test("a Flathub-verified app shows a Verified badge next to its developer, and on the Flatpak drawer row", async ({
   page,
 }) => {
@@ -236,21 +225,17 @@ test("Firefox's Edition and Version pickers switch to that release line's own pa
   await expect(page).toHaveURL(/\/app\/firefox\/$/);
 });
 
-test("the license, Flathub installs and latest release show on the default build only", async ({
-  page,
-}) => {
+test("the license and latest release show on the default build only", async ({ page }) => {
   await page.goto("/app/firefox/");
   // Links to what the license lets you do, in the licenses guide.
   const badge = page.getByRole("link", { name: /Free software/ });
   await expect(badge).toHaveAttribute("href", "/docs/open-source-licenses/#mpl-20");
-  // The header shows "<n> installs" and "Updated <when>"; the full figures
-  // live in their `title` (also the tooltip).
-  await expect(page.getByTitle(/ installs on Flathub/)).toBeVisible();
+  // The header shows "Updated <when>"; the full date lives in its `title`
+  // (also the tooltip).
   await expect(page.getByTitle(/^Latest release: /)).toBeVisible();
 
-  // An edition the Flathub figures don't describe: no installs, no date.
+  // An edition the Flathub release date doesn't describe: no date.
   await page.goto("/app/firefox/esr/");
   await expect(page.getByRole("link", { name: /Free software/ })).toBeVisible();
-  await expect(page.getByTitle(/ installs on Flathub/)).toHaveCount(0);
   await expect(page.getByTitle(/^Latest release: /)).toHaveCount(0);
 });

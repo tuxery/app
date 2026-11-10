@@ -238,7 +238,9 @@ the files and devices it was granted. Flatpak and Snap apps run sandboxed,
 with permissions their packager declares; distro packages and AppImages
 normally don't.
 
-A Flatpak's page shows what its sandbox is open to, in three levels:
+When Tuxery knows a Flatpak's permissions, its page shows what its sandbox is
+open to, in three levels. It doesn't for Flathub apps at the moment: their
+permissions came from Flathub's API, which Flathub asked us not to scrape.
 
 - **Limited access**: nothing beyond the basics (display, internet, audio).
 - **Some access**: it can reach part of your data or devices, such as your

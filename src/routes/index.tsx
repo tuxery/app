@@ -101,12 +101,9 @@ const CategoryRow = component$<{ title: string; category: string; apps?: AppSumm
 );
 
 const TRENDING_TIP =
-  "Ranked by a popularity score averaged across sources that expose one (AUR usage ranking, Flathub's own Popular collection).";
+  "Ranked by a popularity score averaged across sources that expose one (the AUR's usage ranking, Debian's popcon, Arch's pkgstats).";
 const NEW_GAMES_TIP =
   "Sorted by each source's own newest-release date (Flathub/AppCenter's AppStream <releases> timestamp) — not every app has one, so this skews toward Flatpak-packaged games.";
-const DOWNLOAD_TRENDS_TIP =
-  "Ranked by installs over the last 7 days (Flathub's own per-app stats API) — not lifetime total, so this reflects what's popular right now rather than old, long-established apps. Flathub only today, so this skews toward Flatpak-packaged apps.";
-
 /**
  * One horizontal app row (Trending apps/games, New games, Download
  * trends, ...), optionally scoped to one content type — used to be a
@@ -414,14 +411,6 @@ export default component$(() => {
             apps={rows.value?.trendingGames}
             tip={TRENDING_TIP}
             emptyMessage="No trending data available yet."
-          />
-
-          <AppScrollRow
-            title="Download trends"
-            typeFilter="all"
-            apps={rows.value?.downloadTrends}
-            tip={DOWNLOAD_TRENDS_TIP}
-            emptyMessage="No download-stats data available yet."
           />
 
           <section>

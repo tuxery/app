@@ -12,7 +12,6 @@ import type { AppSummary } from "./catalog-types";
 export const HOME_LISTINGS = {
   trendingApps: "trending:app",
   trendingGames: "trending:game",
-  downloadTrends: "downloadTrending:all",
   newGames: "newApps:game",
   productivity: "categoryPreview:Productivity",
   music: "categoryPreview:Music & Audio",
