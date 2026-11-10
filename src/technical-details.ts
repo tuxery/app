@@ -27,3 +27,29 @@ export function installedSizes(groups: [string, SourcedPackage[]][]): InstalledS
 export function architectures(packages: SourcedPackage[]): string[] {
   return [...new Set(packages.flatMap((pkg) => (pkg.arch ? [pkg.arch] : [])))].toSorted();
 }
+
+/** The desktop each Flatpak runtime family belongs to, by runtime id (an SDK used as a runtime counts as its platform). */
+const RUNTIME_FAMILIES: Record<string, string> = {
+  "org.freedesktop.Platform": "Freedesktop",
+  "org.freedesktop.Sdk": "Freedesktop",
+  "org.gnome.Platform": "GNOME",
+  "org.gnome.Sdk": "GNOME",
+  "org.kde.Platform": "KDE",
+  "org.kde.Sdk": "KDE",
+  "io.elementary.Platform": "elementary",
+  "io.elementary.Sdk": "elementary",
+};
+
+/** A runtime ref as people name it: `org.gnome.Platform//51` gives "GNOME 51"; an unknown id keeps its own name. */
+export function runtimeLabel(runtime: string): string {
+  const [id = runtime, branch] = runtime.split("//");
+  const name = RUNTIME_FAMILIES[id] ?? id;
+  return branch ? `${name} ${branch}` : name;
+}
+
+/** The Flatpak runtimes these packages run on, labelled, without duplicates (a beta build may run on a newer one). Empty for any other format. */
+export function flatpakRuntimes(packages: SourcedPackage[]): string[] {
+  return [
+    ...new Set(packages.flatMap((pkg) => (pkg.runtime ? [runtimeLabel(pkg.runtime)] : []))),
+  ].toSorted((a, b) => a.localeCompare(b, "en", { numeric: true }));
+}

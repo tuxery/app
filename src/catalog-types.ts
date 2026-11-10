@@ -145,6 +145,8 @@ export interface SourcedPackage {
   approxSizeBytes?: number;
   /** Installed size in bytes as this source's package manager reports it (distro packages; not comparable to `approxSizeBytes`, a Flatpak's download without its runtime) — see `tuxery/catalog`'s `SourcedPackage.installedSizeBytes`. */
   installedSizeBytes?: number;
+  /** The Flatpak runtime, `<id>//<branch>` (`org.gnome.Platform//51`) — Flathub and AppCenter only; see `tuxery/catalog`'s `SourcedPackage.runtime`. */
+  runtime?: string;
   /** CPU architecture, when this source lists one per package (`x86_64`, `aarch64`) — see `tuxery/catalog`'s `SourcedPackage.arch`. */
   arch?: string;
   changelog?: string;
