@@ -172,12 +172,10 @@ const DESTINATION_TILES = [
     source: "snap-snapcraft",
     gradient: "from-orange-500 to-red-600",
   },
-  {
-    title: "GOG",
-    href: "/sources/gog/",
-    source: "gog",
-    gradient: "from-violet-600 to-indigo-700",
-  },
+  // GOG's tile is hidden while its fetch is paused (its User Agreement forbids
+  // extraction tools; tuxery/catalog#139): no new GOG games come in until GOG
+  // answers. Its store page stays reachable from /docs/sources/. To restore:
+  // { title: "GOG", href: "/sources/gog/", source: "gog", gradient: "from-violet-600 to-indigo-700" },
   {
     title: "Lutris",
     href: "/sources/lutris/",
@@ -383,12 +381,18 @@ export default component$(() => {
                 <InfluencerSlider creator={featuredCreator.value} />
               </div>
               <div class="grid grid-cols-2 grid-rows-2 gap-3 h-64 lg:h-full">
-                {DESTINATION_TILES.map((tile) => (
+                {DESTINATION_TILES.map((tile, i) => (
                   <a
                     key={tile.title}
                     href={tile.href}
                     aria-label={tile.title}
-                    class={`card bg-gradient-to-br ${tile.gradient} text-white justify-center hover:brightness-110 transition-[filter]`}
+                    class={[
+                      `card bg-gradient-to-br ${tile.gradient} text-white justify-center hover:brightness-110 transition-[filter]`,
+                      // An odd last tile spans the row, so the 2x2 grid has no hole.
+                      DESTINATION_TILES.length % 2 === 1 &&
+                        i === DESTINATION_TILES.length - 1 &&
+                        "col-span-2",
+                    ]}
                   >
                     <div class="card-body items-center justify-center text-center p-3 gap-1">
                       <Logo slug={SOURCE_LOGOS[tile.source]} class="w-9 h-9" />
