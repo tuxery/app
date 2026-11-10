@@ -148,8 +148,6 @@ export interface SourcedPackage {
   /** CPU architecture, when this source lists one per package (`x86_64`, `aarch64`) — see `tuxery/catalog`'s `SourcedPackage.arch`. */
   arch?: string;
   changelog?: string;
-  /** This source's own long description — see `tuxery/catalog`'s `SourcedPackage.longDescription`. AppImageHub's is a first-paragraph excerpt that must link to its detail page for the rest. */
-  longDescription?: string;
   /** A crowd rating from this specific source, when it has one — see `tuxery/catalog`'s `SourcedPackage.rating` doc comment for which sources populate this. */
   rating?: { average: number; count: number };
   /** This source's own content rating and the minimum age it implies — see `tuxery/catalog`'s `SourcedPackage.ageRating`. */
