@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { SourcedPackage } from "~/catalog-types";
-import { architectures, installedSizes } from "./technical-details";
+import { architectures, flatpakRuntimes, installedSizes, runtimeLabel } from "./technical-details";
 
 const pkg = (extra: Partial<SourcedPackage>): SourcedPackage => ({
   source: "deb-debian",
@@ -46,5 +46,24 @@ describe("architectures", () => {
 
   it("is empty when no source says", () => {
     expect(architectures([pkg({})])).toEqual([]);
+  });
+});
+
+describe("flatpak runtimes", () => {
+  it("names a runtime as people do, and keeps an unknown id as is", () => {
+    expect(runtimeLabel("org.gnome.Platform//51")).toBe("GNOME 51");
+    expect(runtimeLabel("org.freedesktop.Sdk//25.08")).toBe("Freedesktop 25.08");
+    expect(runtimeLabel("org.example.Platform//3")).toBe("org.example.Platform 3");
+  });
+
+  it("lists each runtime once, and nothing for other formats", () => {
+    const packages = [
+      { source: "flatpak-flathub", runtime: "org.kde.Platform//6.9" },
+      { source: "flatpak-flathub", risk: "beta", runtime: "org.kde.Platform//6.10" },
+      { source: "flatpak-appcenter", runtime: "org.kde.Platform//6.9" },
+      { source: "deb-debian" },
+    ] as SourcedPackage[];
+    expect(flatpakRuntimes(packages)).toEqual(["KDE 6.9", "KDE 6.10"]);
+    expect(flatpakRuntimes([{ source: "deb-debian" }] as SourcedPackage[])).toEqual([]);
   });
 });

@@ -24,7 +24,7 @@ import {
 } from "~/app-facts";
 import { accessibilityHints } from "~/accessibility-hints";
 import { deviceBadges } from "~/device-support";
-import { architectures, installedSizes } from "~/technical-details";
+import { architectures, flatpakRuntimes, installedSizes } from "~/technical-details";
 import { brandBorderAttributes, brandBorders } from "~/brand-colors";
 import { classifyLicense, licenseInfoHref } from "~/license";
 import { isCatalogUnavailable } from "~/catalog-status";
@@ -770,6 +770,7 @@ export default component$(() => {
   });
   const installed = installedSizes(installGroups);
   const archs = architectures(installSourcePackages);
+  const runtimes = flatpakRuntimes(installSourcePackages);
   // The catalog's verdict when the dataset has one, else the same classifier.
   const licenseKind = a.licenseKind ?? classifyLicense(a.license);
   const licenseHref = licenseInfoHref(a.license, a.licenseSpdx, licenseKind);
@@ -1495,6 +1496,17 @@ export default component$(() => {
                     {archs.join(", ")}
                     <span class="block text-xs text-base-content/70">
                       As the sources list them.
+                    </span>
+                  </dd>
+                </div>
+              )}
+              {runtimes.length > 0 && (
+                <div>
+                  <dt class={INFO_LABEL}>Flatpak runtime</dt>
+                  <dd>
+                    {runtimes.join(", ")}
+                    <span class="block text-xs text-base-content/70">
+                      Shared libraries, installed once for every Flatpak that uses them.
                     </span>
                   </dd>
                 </div>
