@@ -25,6 +25,7 @@ import {
   readPinned,
   sliceFromChunks,
   sourceIdsChunkKey,
+  categoryIdsChunkKey,
   type BrowseKeys,
 } from "~/browse-keys";
 import { buildFtsClause } from "~/search-fts";
@@ -425,20 +426,30 @@ async function readPrecomputedBrowse(
     const total = Number(metaValue(count.results[0]) ?? 0);
 
     // Precomputed id lists exist for the single-dimension source filter
-    // (every link into a store/distro page is `/browse/?source=X`); any
-    // other combination lists live, with just the count precomputed.
-    const sourceOnly =
-      filters.source !== undefined &&
-      !filters.category &&
-      !filters.license &&
-      filters.interfaceFilter === "all" &&
-      filters.typeFilter === "all";
-    if (!sourceOnly) return { total };
+    // (every link into a store/distro page is `/browse/?source=X`) and,
+    // in its default order, the single-dimension category filter (every
+    // link into a category is `/browse/?category=X`); any other
+    // combination lists live, with just the count precomputed.
+    const singleFilter =
+      !filters.license && filters.interfaceFilter === "all" && filters.typeFilter === "all";
+    const sourceOnly = singleFilter && filters.source !== undefined && !filters.category;
+    // "Popular first", catalog's `byPopularFirst` order; A-Z and Z-A list live.
+    const categoryOnly =
+      singleFilter &&
+      filters.category !== undefined &&
+      filters.source === undefined &&
+      filters.sort === "relevance" &&
+      keys.categoryIds === true;
+    if (!sourceOnly && !categoryOnly) return { total };
 
-    const descending = filters.sort === "name-desc";
+    const descending = sourceOnly && filters.sort === "name-desc";
     const { start, end } = pageRange(filters.offset, BROWSE_PAGE_SIZE, total, descending);
     const indexes = chunkIndexesFor(start, end, keys.sourceIdsChunkSize);
     if (indexes.length === 0) return { total, ids: [] };
+    const chunkKey = (generation: string, index: number) =>
+      sourceOnly
+        ? sourceIdsChunkKey(generation, filters.source ?? "", index)
+        : categoryIdsChunkKey(generation, index, filters.category ?? "");
 
     // eslint-disable-next-line no-await-in-loop
     const chunkRows = await readPinned(
@@ -446,7 +457,7 @@ async function readPrecomputedBrowse(
       keys.generation,
       indexes.map((index) => ({
         sql: `SELECT value FROM meta WHERE key = ?`,
-        args: [sourceIdsChunkKey(keys?.generation ?? "", filters.source ?? "", index)],
+        args: [chunkKey(keys?.generation ?? "", index)],
       })),
     );
     if (chunkRows.kind === "stale") {

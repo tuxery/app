@@ -9,6 +9,7 @@ import {
   parseBrowseKeys,
   readPinned,
   sliceFromChunks,
+  categoryIdsChunkKey,
   sourceIdsChunkKey,
 } from "./browse-keys";
 
@@ -42,6 +43,10 @@ describe("key formats (pinned to the literals catalog's publish() writes)", () =
 
   it("builds a source id-list chunk key", () => {
     expect(sourceIdsChunkKey(GEN, "pacman-aur", 12)).toBe(`sourceIds:${GEN}:pacman-aur:12`);
+  });
+
+  it("builds a category id-list chunk key, the category last", () => {
+    expect(categoryIdsChunkKey(GEN, 3, "Role: Playing")).toBe(`categoryIds:${GEN}:3:Role: Playing`);
   });
 });
 

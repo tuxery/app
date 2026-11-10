@@ -216,7 +216,7 @@ export default component$(() => {
           <span class="label-text text-sm mb-1">Sort</span>
           <select name="sort" class="select select-sm w-full">
             <option value="relevance" selected={sort === "relevance"}>
-              Relevance
+              {!query && category ? "Popular first" : "Relevance"}
             </option>
             <option value="name-asc" selected={sort === "name-asc"}>
               Name (A–Z)

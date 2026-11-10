@@ -23,6 +23,8 @@ export interface BrowseKeys {
   sourceIdsChunkSize: number;
   /** Whether this generation also has free-software-only counts (`freeCountKey`). Absent on older datasets: the "free software only" filter then counts live. */
   freeCounts?: boolean;
+  /** Whether this generation has each category's ids in "popular first" order (`categoryIdsChunkKey`), chunked by `sourceIdsChunkSize`. Absent on older datasets: category pages then list A-Z live. */
+  categoryIds?: boolean;
 }
 
 /** Parses the `browseKeys` row's JSON, `undefined` when it's absent or malformed (→ live fallback, never a throw). */
@@ -60,6 +62,11 @@ export function freeCountKey(
 
 export function sourceIdsChunkKey(generation: string, source: string, index: number): string {
   return `sourceIds:${generation}:${source}:${index}`;
+}
+
+/** A chunk of one category's ids in catalog's "popular first" order (its `byPopularFirst`). The category goes last: it may itself contain ":". Mirrored from catalog's `categoryIdsChunkKey`. */
+export function categoryIdsChunkKey(generation: string, index: number, category: string): string {
+  return `categoryIds:${generation}:${index}:${category}`;
 }
 
 /**
