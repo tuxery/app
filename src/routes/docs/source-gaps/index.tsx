@@ -1,26 +1,66 @@
 import { component$ } from "@qwik.dev/core";
 import type { DocumentHead } from "@qwik.dev/router";
-import { GAP_REASONS, SOURCE_GAPS, todoGaps, type GapReason } from "~/data/source-gaps";
+import { SOURCE_LABELS } from "~/catalog-types";
+import {
+  AVAILABILITY,
+  cellOf,
+  FIELDS,
+  PERMISSIONS,
+  SOURCE_ROWS,
+  todoNotes,
+  type Availability,
+  type Field,
+  type Permission,
+} from "~/data/source-gaps";
 
-const REASON_BADGE: Record<GapReason, string> = {
-  refused: "badge-error",
-  "not-published": "badge-ghost",
-  waiting: "badge-warning",
-  todo: "badge-success",
-  "kept-private": "badge-neutral",
+// One look per status, shared by the table cells, the legend and the notes:
+// a symbol (readable without color) on a tinted chip.
+const STATUS: Record<Availability, { symbol: string; class: string }> = {
+  yes: { symbol: "✓", class: "bg-success/15 text-success" },
+  none: { symbol: "—", class: "text-base-content/40" },
+  refused: { symbol: "✕", class: "bg-error/15 text-error" },
+  waiting: { symbol: "…", class: "bg-warning/20 text-warning-content" },
+  todo: { symbol: "+", class: "bg-info/15 text-info" },
+  "kept-private": { symbol: "🔒", class: "bg-base-300 text-base-content/80" },
+  "not-applicable": { symbol: "n/a", class: "text-base-content/40 text-[0.65rem]" },
 };
 
+const PERMISSION_CLASS: Record<Permission, string> = {
+  agreed: "badge-success",
+  limited: "badge-warning",
+  asked: "badge-info",
+  "not-asked": "badge-ghost",
+  "not-needed": "badge-ghost",
+};
+
+const FIELD_KEYS = Object.keys(FIELDS) as Field[];
+
+const StatusChip = component$<{ status: Availability }>(({ status }) => (
+  <span
+    class={[
+      "inline-flex items-center justify-center min-w-6 h-6 px-1 rounded-field text-xs font-semibold",
+      STATUS[status].class,
+    ]}
+    title={AVAILABILITY[status].label}
+  >
+    <span aria-hidden="true">{STATUS[status].symbol}</span>
+    <span class="sr-only">{AVAILABILITY[status].label}</span>
+  </span>
+));
+
 export default component$(() => {
-  const todos = todoGaps();
+  const todos = todoNotes();
+  const withNotes = SOURCE_ROWS.filter((row) => row.notes?.length || row.permissionNote);
+
   return (
     <div class="flex flex-col gap-8">
       <div>
         <h1 class="text-3xl font-bold mb-2">What each source is missing</h1>
         <p class="text-base-content/70">
-          Some details never make it to Tuxery: a source doesn't publish them, asked us not to
-          collect them, or nobody has built them yet. Here is what's missing, source by source, and
-          why — and where each source's maintainers stand on our use of their data. How each source
-          is read is on{" "}
+          What Tuxery gets from each source, detail by detail, and why a detail is missing when it
+          is: the source doesn't publish it, asked us not to collect it, or nobody has built it yet.
+          The last column says where each source's maintainers stand on our use of their data. How
+          each source is read is on{" "}
           <a href="/docs/sources/" class="link link-primary">
             Sources
           </a>
@@ -28,77 +68,148 @@ export default component$(() => {
         </p>
       </div>
 
-      <section>
-        <h2 class="text-lg font-semibold mb-3">Why something is missing</h2>
-        <dl class="grid gap-2 sm:grid-cols-2 text-sm">
-          {(Object.keys(GAP_REASONS) as GapReason[]).map((reason) => (
-            <div key={reason} class="flex flex-col gap-1">
-              <dt>
-                <span class={["badge badge-sm", REASON_BADGE[reason]]}>
-                  {GAP_REASONS[reason].label}
-                </span>
-              </dt>
-              <dd class="text-base-content/70">{GAP_REASONS[reason].description}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      <section class="flex flex-col gap-3">
-        <h2 class="text-lg font-semibold">By source</h2>
-        {SOURCE_GAPS.map((entry) => (
-          <div
-            key={entry.id}
-            id={entry.id}
-            class="card bg-base-100 border border-base-300 scroll-mt-20"
-          >
-            <div class="card-body p-5 gap-2">
-              <h3 class="card-title text-base">{entry.label}</h3>
-              <p class="text-sm text-base-content/70">
-                <span class="font-medium text-base-content">Permission:</span> {entry.permission}
-              </p>
-              {entry.gaps.length === 0 ? (
-                <p class="text-sm text-base-content/70">Nothing known to be missing.</p>
-              ) : (
-                <ul class="flex flex-col gap-2 text-sm">
-                  {entry.gaps.map((gap) => (
-                    <li key={gap.what} class="flex flex-col gap-0.5">
-                      <span class="flex flex-wrap items-center gap-2">
-                        <span class="font-medium">{gap.what}</span>
-                        <span class={["badge badge-sm", REASON_BADGE[gap.reason]]}>
-                          {GAP_REASONS[gap.reason].label}
-                        </span>
-                      </span>
-                      <span class="text-base-content/70">{gap.note}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        ))}
-        <p class="text-sm text-base-content/70">
-          Sources not listed here have nothing known to be missing, and haven't been asked about our
-          use of their data yet.
-        </p>
-      </section>
-
-      <section id="not-built-yet" class="scroll-mt-20">
-        <h2 class="text-lg font-semibold mb-1">Not built yet</h2>
-        <p class="text-sm text-base-content/70 mb-3">
-          Allowed and available, only waiting for someone to build them. See{" "}
-          <a href="/docs/contribute/" class="link link-primary">
-            How to contribute
-          </a>{" "}
-          to pick one up.
-        </p>
-        <ul class="list-disc list-inside text-sm text-base-content/80">
-          {todos.map(({ source, gap }) => (
-            <li key={`${source}:${gap.what}`}>
-              <span class="font-medium">{source}:</span> {gap.what}. {gap.note}
+      <section aria-labelledby="legend">
+        <h2 id="legend" class="sr-only">
+          Legend
+        </h2>
+        <ul class="grid gap-x-6 gap-y-2 sm:grid-cols-2 text-sm">
+          {(Object.keys(AVAILABILITY) as Availability[]).map((status) => (
+            <li key={status} class="flex items-start gap-2">
+              <StatusChip status={status} />
+              <span>
+                <span class="font-medium">{AVAILABILITY[status].label}</span>
+                <span class="text-base-content/70"> — {AVAILABILITY[status].description}</span>
+              </span>
             </li>
           ))}
         </ul>
+      </section>
+
+      <section aria-labelledby="by-source">
+        <h2 id="by-source" class="text-lg font-semibold mb-3">
+          By source
+        </h2>
+        <div class="overflow-x-auto border border-base-300 rounded-box">
+          <table class="table table-xs sm:table-sm">
+            <thead>
+              <tr>
+                <th class="bg-base-200 sticky left-0 z-10">Source</th>
+                {FIELD_KEYS.map((field) => (
+                  <th
+                    key={field}
+                    class="bg-base-200 text-center whitespace-nowrap px-1"
+                    title={FIELDS[field].long}
+                  >
+                    {FIELDS[field].short}
+                  </th>
+                ))}
+                <th class="bg-base-200 whitespace-nowrap">Permission</th>
+              </tr>
+            </thead>
+            <tbody>
+              {SOURCE_ROWS.map((row) => (
+                <tr key={row.id} class="hover:bg-base-200/50">
+                  <th class="bg-base-100 font-medium whitespace-nowrap sticky left-0 z-10">
+                    {row.notes?.length || row.permissionNote ? (
+                      <a href={`#${row.id}`} class="link link-hover">
+                        {SOURCE_LABELS[row.id]}
+                      </a>
+                    ) : (
+                      SOURCE_LABELS[row.id]
+                    )}
+                  </th>
+                  {FIELD_KEYS.map((field) => (
+                    <td key={field} class="text-center px-1">
+                      <StatusChip status={cellOf(row, field)} />
+                    </td>
+                  ))}
+                  <td>
+                    <span
+                      class={["badge badge-sm whitespace-nowrap", PERMISSION_CLASS[row.permission]]}
+                    >
+                      {PERMISSIONS[row.permission]}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p class="text-xs text-base-content/60 mt-2">
+          Columns:{" "}
+          {FIELD_KEYS.map((field, i) => (
+            <span key={field}>
+              <span class="font-medium">{FIELDS[field].short}</span>,{" "}
+              {FIELDS[field].long.toLowerCase()}
+              {i < FIELD_KEYS.length - 1 ? "; " : ". "}
+            </span>
+          ))}
+          A distribution's row includes the AppStream metadata it publishes next to its package
+          index (icons, screenshots, descriptions). Ratings come from GNOME's ODRS for Flathub and
+          AppCenter apps, and from GOG for its games.
+        </p>
+      </section>
+
+      <section aria-labelledby="notes" class="flex flex-col gap-3">
+        <h2 id="notes" class="text-lg font-semibold">
+          Notes
+        </h2>
+        <div class="grid gap-3 md:grid-cols-2">
+          {withNotes.map((row) => (
+            <div
+              key={row.id}
+              id={row.id}
+              class="card bg-base-100 border border-base-300 scroll-mt-20"
+            >
+              <div class="card-body p-5 gap-3">
+                <h3 class="card-title text-base flex-wrap">
+                  {SOURCE_LABELS[row.id]}
+                  <span class={["badge badge-sm", PERMISSION_CLASS[row.permission]]}>
+                    {PERMISSIONS[row.permission]}
+                  </span>
+                </h3>
+                {row.permissionNote && (
+                  <p class="text-sm text-base-content/70">{row.permissionNote}</p>
+                )}
+                <ul class="flex flex-col gap-2 text-sm">
+                  {(row.notes ?? []).map((note) => (
+                    <li key={note.what} class="flex gap-2">
+                      <StatusChip status={note.availability} />
+                      <span>
+                        <span class="font-medium">{note.what}.</span>{" "}
+                        <span class="text-base-content/70">{note.note}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="not-built-yet" aria-labelledby="todo-heading" class="scroll-mt-20">
+        <h2 id="todo-heading" class="text-lg font-semibold mb-1">
+          Not built yet
+        </h2>
+        {todos.length === 0 ? (
+          <p class="text-sm text-base-content/70">
+            Nothing listed right now: every detail marked available above is collected. Know a
+            source that publishes more than Tuxery shows?{" "}
+            <a href="/docs/contribute/" class="link link-primary">
+              Tell us
+            </a>
+            .
+          </p>
+        ) : (
+          <ul class="list-disc list-inside text-sm text-base-content/80">
+            {todos.map(({ id, note }) => (
+              <li key={`${id}:${note.what}`}>
+                <span class="font-medium">{SOURCE_LABELS[id]}:</span> {note.what}. {note.note}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );
@@ -110,7 +221,7 @@ export const head: DocumentHead = {
     {
       name: "description",
       content:
-        "What Tuxery can't show from each source, and why: not published, refused by the source, waiting on it, or not built yet.",
+        "What Tuxery gets from each source, detail by detail, why a detail is missing, and where each source's maintainers stand on our use of their data.",
     },
   ],
 };
