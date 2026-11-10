@@ -70,3 +70,18 @@ test("every license section the app pages link to exists on the guide", async ({
     await expect(page.locator(`h2#${id}`), id).toHaveCount(1);
   }
 });
+
+test("a source's page shows how we read it and its terms, and an unknown source 404s", async ({
+  page,
+}) => {
+  const response = await page.goto("/docs/sources/deb-debian/");
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Debian", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "How we read it" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Its terms, as we apply them" })).toBeVisible();
+  // From catalog's published `sourceTerms` row, not a hand-kept copy.
+  await expect(page.getByText("Our reading").first()).toBeVisible();
+
+  const missing = await page.goto("/docs/sources/not-a-source/");
+  expect(missing?.status()).toBe(404);
+});

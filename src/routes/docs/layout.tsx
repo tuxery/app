@@ -1,7 +1,13 @@
 import { component$, Slot } from "@qwik.dev/core";
 import { useLocation } from "@qwik.dev/router";
 import { LuArrowLeft, LuArrowRight, LuChevronDown, LuMenu, LuPencil } from "@qwikest/icons/lucide";
-import { adjacentDocsPages, DOCS_SECTIONS, docsEditUrl, findDocsPage } from "~/docs-nav";
+import {
+  activeDocsPage,
+  adjacentDocsPages,
+  DOCS_SECTIONS,
+  docsEditUrl,
+  findDocsPage,
+} from "~/docs-nav";
 
 /**
  * Every docs page grouped by section, the current one highlighted — rendered
@@ -11,7 +17,7 @@ import { adjacentDocsPages, DOCS_SECTIONS, docsEditUrl, findDocsPage } from "~/d
  * two docs pages.
  */
 const DocsNav = component$(() => {
-  const currentHref = findDocsPage(useLocation().url.pathname)?.href;
+  const currentHref = activeDocsPage(useLocation().url.pathname)?.href;
   return (
     <ul class="menu menu-sm w-full p-0">
       {DOCS_SECTIONS.map((section) => (
