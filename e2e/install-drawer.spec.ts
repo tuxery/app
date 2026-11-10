@@ -118,8 +118,10 @@ test("AppImage shows a desktop-integration setup step and a Download button, not
   await page.getByRole("button", { name: "Install" }).click();
   await page.locator("summary", { hasText: "AppImage" }).click();
 
-  await expect(page.getByText("Gear Lever", { exact: false })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Download" })).toBeVisible();
+  // Discord has two AppImage packages (the AppImage feed and AppImageHub),
+  // each with its own setup step and download link: the first is enough.
+  await expect(page.getByText("Gear Lever", { exact: false }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Download", exact: true }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Click to install" })).toHaveCount(0);
 });
 
