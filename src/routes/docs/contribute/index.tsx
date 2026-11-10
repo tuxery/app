@@ -77,9 +77,9 @@ const GROUPS: { title: string; intro?: string; ways: Way[] }[] = [
       {
         icon: LuPuzzle,
         title: "Fill a gap in a source",
-        body: "Details a source publishes and allows, that Tuxery doesn't collect yet. Listed source by source, with why the others are missing.",
-        href: "/docs/source-gaps/#not-built-yet",
-        cta: "See what's not built yet",
+        body: "What Tuxery gets from each source, detail by detail, and why the rest is missing. Some gaps only wait for someone to build them.",
+        href: "/docs/source-gaps/",
+        cta: "See what each source is missing",
       },
       {
         icon: LuCode,

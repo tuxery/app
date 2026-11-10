@@ -1,195 +1,269 @@
 import type { PackageSourceId } from "~/catalog-types";
 
-// What Tuxery can't show from each source, and why — kept by hand, like
-// /docs/sources/'s METHODS, from tuxery/catalog's config/source-terms.json
-// (permissions and answers) and docs/sources.md (what each connector reads).
-// Rendered by /docs/source-gaps/; the "todo" gaps are what /docs/contribute/
-// points contributors to.
+// What Tuxery gets from each source, field by field, and why a field is
+// missing when it is — kept by hand, like /docs/sources/'s METHODS, from
+// tuxery/catalog: which fields each connector sets (`src/sources/*/
+// normalize.ts`, a distro's AppStream connector counted with the distro),
+// config/source-terms.json (permissions and answers) and docs/sources.md.
+// Rendered by /docs/source-gaps/; the "todo" cells are what
+// /docs/contribute/ points contributors to.
 
-/** Why a detail is missing. */
-export type GapReason = "refused" | "not-published" | "waiting" | "todo" | "kept-private";
+/** One cell of the table. Anything not listed for a source is `"none"`. */
+export type Availability =
+  | "yes"
+  | "none"
+  | "refused"
+  | "waiting"
+  | "todo"
+  | "kept-private"
+  | "not-applicable";
 
-export const GAP_REASONS: Record<GapReason, { label: string; description: string }> = {
+export const AVAILABILITY: Record<Availability, { label: string; description: string }> = {
+  yes: { label: "Available", description: "Tuxery gets it from this source." },
+  none: {
+    label: "Not available",
+    description: "The source doesn't publish it, or not in a form Tuxery reads.",
+  },
   refused: {
-    label: "Refused by the source",
+    label: "Refused",
     description: "The source publishes it, but asked us not to collect it.",
   },
-  "not-published": {
-    label: "Not published by the source",
-    description: "The source doesn't make it available, to us or anyone.",
-  },
   waiting: {
-    label: "Waiting on the source",
-    description: "The source said it's working on it, or we've asked and wait for an answer.",
+    label: "Waiting",
+    description: "The source is working on it, or we've asked and wait for an answer.",
   },
   todo: {
     label: "Not built yet",
-    description: "It's available and allowed: nobody has built it yet. Help welcome.",
+    description: "Available and allowed; nobody has built it yet. Help welcome.",
   },
   "kept-private": {
     label: "Kept private",
     description:
       "Shown on Tuxery, but left out of the open-data downloads, by the source's request or our own caution.",
   },
+  "not-applicable": {
+    label: "n/a",
+    description: "Doesn't apply to this source.",
+  },
 };
 
-export interface SourceGap {
-  /** What's missing, as a visitor would name it. */
+/** Each column: a short header, and what it means (the header's tooltip and the legend). */
+export const FIELDS = {
+  icon: { short: "Icon", long: "App icon" },
+  screenshots: { short: "Shots", long: "Screenshots" },
+  description: { short: "About", long: "Long description" },
+  rating: { short: "Ratings", long: "User ratings" },
+  popularity: { short: "Popular", long: "Popularity or install figures" },
+  releaseDate: { short: "Dates", long: "Release or upload dates" },
+  size: { short: "Size", long: "Download or installed size" },
+  openData: { short: "Open data", long: "In the open-data downloads" },
+} as const;
+
+export type Field = keyof typeof FIELDS;
+
+/** Where we stand with the source's maintainers about using their data. */
+export type Permission = "agreed" | "limited" | "asked" | "not-asked" | "not-needed";
+
+export const PERMISSIONS: Record<Permission, string> = {
+  agreed: "Agreed",
+  limited: "Agreed, with limits",
+  asked: "Asked, waiting",
+  "not-asked": "Not asked yet",
+  "not-needed": "Not needed",
+};
+
+export interface SourceNote {
+  /** The field or topic the note explains. */
   what: string;
-  reason: GapReason;
-  /** One or two sentences: the specifics, in plain words. */
+  availability: Availability;
+  /** One or two sentences, in plain words. */
   note: string;
 }
 
-export interface SourceGapEntry {
-  /** A source of /docs/sources/, or a details-only one ("odrs"). */
-  id: PackageSourceId | "odrs";
-  label: string;
-  /** Where we stand with the source's maintainers about using their data. */
-  permission: string;
-  gaps: SourceGap[];
+export interface SourceRow {
+  id: PackageSourceId;
+  permission: Permission;
+  /** The permission's specifics, when there are any: who answered, when, on what terms. */
+  permissionNote?: string;
+  /** Fields this source fills or explains; every other field is `"none"`. */
+  fields: Partial<Record<Field, Availability>>;
+  notes?: SourceNote[];
 }
 
-const ASKED_WAITING = "Asked on 2026-11-09; waiting for an answer.";
+/** AppStream metadata, as the distros publish it alongside their package index. */
+const APPSTREAM = { icon: "yes", screenshots: "yes", description: "yes" } as const;
 
-export const SOURCE_GAPS: SourceGapEntry[] = [
+const API_REFUSED =
+  "Only published through Flathub's API, which Flathub asked us not to scrape (2026-11-10).";
+
+export const SOURCE_ROWS: SourceRow[] = [
   {
     id: "flatpak-flathub",
-    label: "Flathub",
-    permission:
-      "Asked on 2026-11-09. Flathub answered that we may read the AppStream file it publishes for software centers, and that scraping its API is not welcome.",
-    gaps: [
+    permission: "limited",
+    permissionNote:
+      "Flathub answered our question (2026-11-10): read the AppStream file it publishes for software centers, not its API.",
+    fields: {
+      ...APPSTREAM,
+      rating: "yes",
+      popularity: "refused",
+      releaseDate: "yes",
+      size: "refused",
+      openData: "kept-private",
+    },
+    notes: [
       {
-        what: "Install counts (total and last 7 days)",
-        reason: "refused",
-        note: "Only published through Flathub's API. This is why Tuxery has no Download trends row and shows no install figures.",
+        what: "Install counts and Popular list",
+        availability: "refused",
+        note: `${API_REFUSED} This is why Tuxery has no download counts.`,
       },
       {
         what: "Download size and sandbox permissions",
-        reason: "refused",
-        note: "Only published through Flathub's API, so Flathub apps show neither for now.",
+        availability: "refused",
+        note: API_REFUSED,
       },
       {
-        what: "Flathub's Popular, Recently added and Recently updated lists",
-        reason: "refused",
-        note: "Only published through Flathub's API. Popularity on Tuxery comes from the AUR, Debian's popcon and Arch's pkgstats instead.",
+        what: "Ratings",
+        availability: "yes",
+        note: "From GNOME's ODRS, not from Flathub. Its maintainer agreed to our use.",
       },
       {
-        what: "Recently updated apps",
-        reason: "todo",
-        note: "Flathub's AppStream file carries every release's date, enough to rebuild this list ourselves.",
-      },
-      {
-        what: "Open-data download",
-        reason: "kept-private",
+        what: "Open data",
+        availability: "kept-private",
         note: "Flathub didn't say whether a public copy of its AppStream data is fine, and its site terms forbid copying any part of its service.",
       },
     ],
   },
   {
     id: "flatpak-appcenter",
-    label: "elementary AppCenter",
-    permission: "Not asked yet.",
-    gaps: [
-      {
-        what: "Install counts",
-        reason: "not-published",
-        note: "AppCenter publishes none.",
-      },
-    ],
+    permission: "not-asked",
+    fields: { ...APPSTREAM, rating: "yes", releaseDate: "yes" },
   },
   {
     id: "snap-snapcraft",
-    label: "Snap Store",
-    permission: "Not asked yet: planned for mid-November 2026.",
-    gaps: [
+    permission: "not-asked",
+    fields: { ...APPSTREAM, releaseDate: "yes" },
+    notes: [
       {
-        what: "Install counts and ratings",
-        reason: "not-published",
+        what: "Ratings and install counts",
+        availability: "none",
         note: "The Snap Store shows neither publicly, so Snap-only apps can't appear in trending lists.",
+      },
+      {
+        what: "Release date",
+        availability: "yes",
+        note: "The date each channel's revision was released to the store.",
       },
     ],
   },
   {
+    id: "appimage",
+    permission: "not-asked",
+    fields: { icon: "yes", screenshots: "yes" },
+  },
+  {
+    id: "appimage-manual",
+    permission: "not-needed",
+    permissionNote:
+      "Our own hand-kept list of apps with no other source, linking to each project's own download.",
+    fields: { icon: "yes", screenshots: "yes" },
+  },
+  {
     id: "appimagehub",
-    label: "AppImageHub",
-    permission:
-      "Allowed by opendesktop.org on 2026-10-20, extended on 2026-11-10 to descriptions and preview images, on conditions (see Open data).",
-    gaps: [
+    permission: "limited",
+    permissionNote:
+      "opendesktop.org allowed a weekly read on 2026-10-20, extended on 2026-11-10 to descriptions and preview images, on conditions (see Open data).",
+    fields: { icon: "waiting", screenshots: "yes", description: "yes", openData: "kept-private" },
+    notes: [
       {
-        what: "A real icon and license",
-        reason: "waiting",
+        what: "Icon and license",
+        availability: "waiting",
         note: "Their API doesn't expose them yet; opendesktop.org is working on it. Meanwhile the first preview image, usually the icon, stands in.",
       },
       {
-        what: "Open-data download",
-        reason: "kept-private",
+        what: "Open data",
+        availability: "kept-private",
         note: "opendesktop.org's condition: the texts are written by its uploaders and may not be redistributed.",
       },
     ],
   },
   {
+    id: "deb-debian",
+    permission: "not-asked",
+    fields: { ...APPSTREAM, popularity: "yes", size: "yes" },
+  },
+  { id: "deb-ubuntu", permission: "not-asked", fields: { ...APPSTREAM, size: "yes" } },
+  { id: "deb-mint", permission: "asked", fields: {} },
+  { id: "deb-popos", permission: "asked", fields: {} },
+  { id: "deb-deepin", permission: "asked", fields: {} },
+  { id: "deb-mxlinux", permission: "not-asked", fields: {} },
+  {
+    id: "rpm-fedora",
+    permission: "asked",
+    fields: { ...APPSTREAM, releaseDate: "yes", size: "yes" },
+  },
+  {
+    id: "rpm-opensuse",
+    permission: "asked",
+    fields: { ...APPSTREAM, releaseDate: "yes", size: "yes" },
+  },
+  { id: "rpm-rpmfusion", permission: "not-asked", fields: { size: "yes" } },
+  {
+    id: "pacman-arch",
+    permission: "not-asked",
+    fields: { ...APPSTREAM, popularity: "yes", releaseDate: "yes", size: "yes" },
+  },
+  { id: "pacman-aur", permission: "not-asked", fields: { popularity: "yes" } },
+  { id: "nix-nixpkgs", permission: "asked", fields: { description: "yes" } },
+  { id: "apk-alpine", permission: "not-asked", fields: { size: "yes" } },
+  { id: "xbps-void", permission: "not-asked", fields: { size: "yes" } },
+  { id: "slackware", permission: "not-asked", fields: {} },
+  { id: "eopkg-solus", permission: "not-asked", fields: { size: "yes" } },
+  {
+    id: "ebuild-gentoo",
+    permission: "agreed",
+    permissionNote: "Gentoo answered that our use is fine, under the GPL-2 (2026-11-10).",
+    fields: {},
+  },
+  {
     id: "gog",
-    label: "GOG",
-    permission: "Not asked yet.",
-    gaps: [
+    permission: "not-asked",
+    fields: {
+      icon: "yes",
+      screenshots: "yes",
+      description: "yes",
+      rating: "yes",
+      popularity: "yes",
+      openData: "kept-private",
+    },
+    notes: [
       {
-        what: "Open-data download",
-        reason: "kept-private",
+        what: "Open data",
+        availability: "kept-private",
         note: "Our own precaution: we couldn't read GOG's User Agreement, and the data holds its store descriptions.",
       },
     ],
   },
+  { id: "lutris", permission: "not-asked", fields: { icon: "yes", description: "yes" } },
   {
-    id: "rpm-fedora",
-    label: "Fedora",
-    permission: ASKED_WAITING,
-    gaps: [
-      {
-        what: "Popularity",
-        reason: "not-published",
-        note: "Fedora publishes no install statistics, so Fedora-only apps can't appear in trending lists.",
-      },
-    ],
+    id: "github-releases",
+    permission: "not-needed",
+    permissionNote:
+      "GitHub's terms cover reading its API and public repositories, so we haven't asked.",
+    fields: { popularity: "yes", releaseDate: "yes" },
   },
-  {
-    id: "rpm-opensuse",
-    label: "openSUSE",
-    permission: ASKED_WAITING,
-    gaps: [
-      {
-        what: "Popularity",
-        reason: "not-published",
-        note: "openSUSE publishes no install statistics.",
-      },
-    ],
-  },
-  { id: "nix-nixpkgs", label: "Nixpkgs", permission: ASKED_WAITING, gaps: [] },
-  { id: "deb-mint", label: "Linux Mint", permission: ASKED_WAITING, gaps: [] },
-  {
-    id: "deb-popos",
-    label: "Pop!_OS",
-    permission: "Asked on 2026-11-09 in a public GitHub issue; waiting for an answer.",
-    gaps: [],
-  },
-  { id: "deb-deepin", label: "Deepin", permission: ASKED_WAITING, gaps: [] },
-  {
-    id: "ebuild-gentoo",
-    label: "Gentoo",
-    permission: "Asked on 2026-11-09. Gentoo answered that our use is fine, under the GPL-2.",
-    gaps: [],
-  },
-  {
-    id: "odrs",
-    label: "ODRS (ratings)",
-    permission: "Asked on 2026-11-09. Its maintainer answered that our use is fine.",
-    gaps: [],
-  },
+  { id: "vendor-repos", permission: "not-asked", fields: {} },
 ];
 
-/** Every gap that is ours to build, with its source — for /docs/contribute/ and the page's own summary. */
-export function todoGaps(): { source: string; gap: SourceGap }[] {
-  return SOURCE_GAPS.flatMap((entry) =>
-    entry.gaps.filter((gap) => gap.reason === "todo").map((gap) => ({ source: entry.label, gap })),
+/** A cell's value: open data is available unless said otherwise, everything else isn't. */
+export function cellOf(row: SourceRow, field: Field): Availability {
+  return row.fields[field] ?? (field === "openData" ? "yes" : "none");
+}
+
+/** Every note marked "todo", with its source id — for /docs/contribute/ and the page's own summary. */
+export function todoNotes(): { id: PackageSourceId; note: SourceNote }[] {
+  return SOURCE_ROWS.flatMap((row) =>
+    (row.notes ?? [])
+      .filter((note) => note.availability === "todo")
+      .map((note) => ({ id: row.id, note })),
   );
 }
