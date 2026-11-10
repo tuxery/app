@@ -235,11 +235,18 @@ export const SOURCE_ROWS: SourceRow[] = [
       popularity: "yes",
       openData: "kept-private",
     },
+    permissionNote:
+      "GOG's User Agreement (§11.1(e)) forbids extraction tools that collect information about GOG services. We've paused reading GOG (2026-11-10) and will ask for permission.",
     notes: [
+      {
+        what: "Updates",
+        availability: "refused",
+        note: "Paused: GOG games stay listed as of 2026-11-07, with their link to GOG, but new games and changes don't come in until GOG answers.",
+      },
       {
         what: "Open data",
         availability: "kept-private",
-        note: "Our own precaution: we couldn't read GOG's User Agreement, and the data holds its store descriptions.",
+        note: "GOG's terms reserve its catalog data and texts.",
       },
     ],
   },
