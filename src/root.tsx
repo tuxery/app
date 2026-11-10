@@ -26,6 +26,11 @@ export default component$(() => {
     <>
       <head>
         <meta charset="utf-8" />
+        {/* The browsers' default, made explicit: image hosts see our origin
+            as Referer. opendesktop.org asked us to keep it on AppImageHub's
+            preview images so they can see the traffic as ours (2026-11-10);
+            don't tighten it to no-referrer. */}
+        <meta name="referrer" content="strict-origin-when-cross-origin" />
         <script dangerouslySetInnerHTML={ANTI_FOUC_SCRIPT} />
         {!isDev && <link rel="manifest" href={`${import.meta.env.BASE_URL}manifest.json`} />}
         <RouterHead />
