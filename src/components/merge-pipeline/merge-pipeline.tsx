@@ -4,7 +4,11 @@ const STAGES = [
   { name: "Fetch", detail: "~30 stores, distros and vendor repos", figure: "600k+ packages" },
   { name: "Filter", detail: "drop libraries, fonts, docs, test packages", figure: "" },
   { name: "Match", detail: "group packages of the same app", figure: "" },
-  { name: "Enrich", detail: "categories, icons, ratings, editions, add-ons", figure: "" },
+  {
+    name: "Enrich",
+    detail: "categories, icons, ratings, editions, add-ons; an AI classifies what no source does",
+    figure: "",
+  },
   { name: "Publish", detail: "one card per app", figure: "~100k apps" },
 ];
 
