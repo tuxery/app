@@ -265,7 +265,13 @@ export const SOURCE_ROWS: SourceRow[] = [
       },
     ],
   },
-  { id: "lutris", permission: "asked", fields: { icon: "yes", description: "yes" } },
+  {
+    id: "lutris",
+    permission: "agreed",
+    permissionNote:
+      "Lutris's founder answered (2026-11-10): reading its API is fine. Its genres come partly from IGDB, one of several import channels.",
+    fields: { icon: "yes", description: "yes" },
+  },
   {
     id: "github-releases",
     permission: "not-needed",
