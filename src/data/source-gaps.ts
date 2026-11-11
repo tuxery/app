@@ -169,7 +169,8 @@ export const SOURCE_ROWS: SourceRow[] = [
   },
   {
     id: "appimagehub",
-    permission: "limited",
+    // Its conditions (private copy, a link to its page) cost visitors nothing.
+    permission: "agreed",
     permissionNote:
       "opendesktop.org allowed a weekly read on 2026-10-20, extended on 2026-11-10 to descriptions and preview images, on conditions (see Open data).",
     fields: { icon: "waiting", screenshots: "yes", description: "yes", openData: "kept-private" },
