@@ -70,9 +70,20 @@ Each app gets its details from the best source that has them:
 descriptions, screenshots, icons, licenses and categories from AppStream
 metadata first, then stores, then package indexes. Ratings are combined
 across sources; popularity figures come from the sources that publish
-them. Apps no source categorizes are classified by keyword
-rules, then by language models under the constraints in the
-[data philosophy](/docs/philosophy/#where-language-models-help).
+them.
+
+**This is the step where an AI is called.** Apps that no source
+categorizes go first through keyword rules; those still left go to a
+language model, which says whether each is an app, a game, a library or
+something else, and suggests a category, from its name and description.
+It never writes the text you read and never overrides a category a source
+gives. Every verdict records its model and its confidence, and only a
+high-confidence "library" or "other" removes a package. The constraints are
+in the [data philosophy](/docs/philosophy/#where-language-models-help).
+
+Which packages are the same app (step 3) stays with rules and people: an
+AI may give a first opinion on a merge flagged as suspect, next to the
+reviewers' own, but never merges or splits anything on its own.
 
 ## 5. Publish
 
