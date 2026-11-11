@@ -135,7 +135,7 @@ export const SOURCE_ROWS: SourceRow[] = [
   },
   {
     id: "flatpak-appcenter",
-    permission: "not-asked",
+    permission: "asked",
     fields: { ...APPSTREAM, rating: "yes", releaseDate: "yes" },
   },
   {
@@ -157,7 +157,7 @@ export const SOURCE_ROWS: SourceRow[] = [
   },
   {
     id: "appimage",
-    permission: "not-asked",
+    permission: "asked",
     fields: { icon: "yes", screenshots: "yes" },
   },
   {
@@ -188,14 +188,16 @@ export const SOURCE_ROWS: SourceRow[] = [
   },
   {
     id: "deb-debian",
-    permission: "not-asked",
+    permission: "agreed",
+    permissionNote:
+      "A Debian Developer answered on debian-legal (2026-11-10): no one would mind, and it would likely be fair use anyway. His own view, not an official Debian position.",
     fields: { ...APPSTREAM, popularity: "yes", size: "yes" },
   },
   { id: "deb-ubuntu", permission: "not-asked", fields: { ...APPSTREAM, size: "yes" } },
   { id: "deb-mint", permission: "asked", fields: {} },
   { id: "deb-popos", permission: "asked", fields: {} },
   { id: "deb-deepin", permission: "asked", fields: {} },
-  { id: "deb-mxlinux", permission: "not-asked", fields: {} },
+  { id: "deb-mxlinux", permission: "asked", fields: {} },
   {
     id: "rpm-fedora",
     permission: "asked",
@@ -206,7 +208,7 @@ export const SOURCE_ROWS: SourceRow[] = [
     permission: "asked",
     fields: { ...APPSTREAM, releaseDate: "yes", size: "yes" },
   },
-  { id: "rpm-rpmfusion", permission: "not-asked", fields: { size: "yes" } },
+  { id: "rpm-rpmfusion", permission: "asked", fields: { size: "yes" } },
   {
     id: "pacman-arch",
     permission: "not-asked",
@@ -214,10 +216,23 @@ export const SOURCE_ROWS: SourceRow[] = [
   },
   { id: "pacman-aur", permission: "not-asked", fields: { popularity: "yes" } },
   { id: "nix-nixpkgs", permission: "asked", fields: { description: "yes" } },
-  { id: "apk-alpine", permission: "not-asked", fields: { size: "yes" } },
-  { id: "xbps-void", permission: "not-asked", fields: { size: "yes" } },
-  { id: "slackware", permission: "not-asked", fields: {} },
-  { id: "eopkg-solus", permission: "not-asked", fields: { size: "yes" } },
+  { id: "apk-alpine", permission: "asked", fields: { size: "yes" } },
+  { id: "xbps-void", permission: "asked", fields: { size: "yes" } },
+  { id: "slackware", permission: "asked", fields: {} },
+  {
+    id: "eopkg-solus",
+    permission: "agreed",
+    permissionNote:
+      "Solus's maintainers answered (2026-11-10): once a week is fine, and we now read its stable repository (Polaris), as they advised.",
+    fields: { size: "yes" },
+    notes: [
+      {
+        what: "License of the data",
+        availability: "waiting",
+        note: "The repository has no clear license yet; Solus is working on it.",
+      },
+    ],
+  },
   {
     id: "ebuild-gentoo",
     permission: "agreed",
@@ -226,7 +241,7 @@ export const SOURCE_ROWS: SourceRow[] = [
   },
   {
     id: "gog",
-    permission: "not-asked",
+    permission: "asked",
     fields: {
       icon: "yes",
       screenshots: "yes",
@@ -236,7 +251,7 @@ export const SOURCE_ROWS: SourceRow[] = [
       openData: "kept-private",
     },
     permissionNote:
-      "GOG's User Agreement (§11.1(e)) forbids extraction tools that collect information about GOG services. We've paused reading GOG (2026-11-10) and will ask for permission.",
+      "GOG's User Agreement (§11.1(e)) forbids extraction tools that collect information about GOG services. We've paused reading GOG and asked GOG for permission (2026-11-10).",
     notes: [
       {
         what: "Updates",
@@ -250,7 +265,7 @@ export const SOURCE_ROWS: SourceRow[] = [
       },
     ],
   },
-  { id: "lutris", permission: "not-asked", fields: { icon: "yes", description: "yes" } },
+  { id: "lutris", permission: "asked", fields: { icon: "yes", description: "yes" } },
   {
     id: "github-releases",
     permission: "not-needed",
