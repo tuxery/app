@@ -32,6 +32,7 @@ import { OS_LOGOS } from "~/data/logos";
 import { docsDoorOf, GUIDES_HREF } from "~/docs-nav";
 import { TuxeryLogo } from "~/components/tuxery-logo/tuxery-logo";
 import { findOsEntry } from "~/os-catalog";
+import { SEARCH_MIN_WORD_LENGTH } from "~/search-fts";
 import { resolveServerEnv } from "~/server-env";
 import { CANONICAL_ORIGIN, robotsHeader } from "~/seo";
 import { useProvideSettings } from "~/settings";
@@ -238,6 +239,7 @@ export default component$(() => {
               <input
                 type="search"
                 name="q"
+                minLength={SEARCH_MIN_WORD_LENGTH}
                 placeholder="Search…"
                 aria-label="Search for an app"
                 class="grow"

@@ -16,6 +16,7 @@ import { getAppsByIds, getCategories, getStats } from "~/catalog";
 import { creatorPicks, getInfluencerPage } from "~/data/influencer-pages";
 import { SOURCE_LOGOS } from "~/data/logos";
 import { useCatalogUnavailable } from "~/routes/layout";
+import { SEARCH_MIN_WORD_LENGTH } from "~/search-fts";
 import { resolveServerEnv } from "~/server-env";
 import type { AppSummary } from "~/catalog-types";
 import { parseHomeRows, type HomeRows } from "~/home-rows";
@@ -338,6 +339,7 @@ export default component$(() => {
                 <input
                   type="search"
                   name="q"
+                  minLength={SEARCH_MIN_WORD_LENGTH}
                   placeholder="Search for an app or game…"
                   aria-label="Search for an app"
                   class="grow"

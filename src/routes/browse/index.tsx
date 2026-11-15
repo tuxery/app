@@ -19,6 +19,7 @@ import {
   type PackageSourceId,
 } from "~/catalog-types";
 import { parsePageParam } from "~/browse-page";
+import { SEARCH_MIN_WORD_LENGTH } from "~/search-fts";
 import { resolveServerEnv } from "~/server-env";
 
 /**
@@ -164,6 +165,7 @@ export default component$(() => {
             type="search"
             name="q"
             value={query}
+            minLength={SEARCH_MIN_WORD_LENGTH}
             placeholder="Search by name, id, or description…"
             class="input input-sm w-full"
           />
@@ -285,7 +287,11 @@ export default component$(() => {
         </div>
       )}
 
-      {browse.value.apps.length === 0 ? (
+      {browse.value.queryTooShort ? (
+        <p class="text-center text-base-content/70 mt-4">
+          Type at least {SEARCH_MIN_WORD_LENGTH} characters to search.
+        </p>
+      ) : browse.value.apps.length === 0 ? (
         <p class="text-center text-base-content/70 mt-4">
           No apps found{query ? ` for "${query}"` : ""}.
         </p>

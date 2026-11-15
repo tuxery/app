@@ -566,6 +566,8 @@ export interface BrowseResult {
   totalCapped?: boolean;
   /** Whether the dataset supports the "free software only" filter (catalog's `license_kind`) — /browse only offers it then. */
   freeFilter?: boolean;
+  /** The free-text query had no word long enough to look up (`~/search-fts`'s `SEARCH_MIN_WORD_LENGTH`): nothing was searched, and /browse says so instead of "no apps found". */
+  queryTooShort?: boolean;
 }
 
 export function formatBytes(bytes: number): string {
