@@ -3,33 +3,25 @@
  * When building, the adapter config is used which loads this file and extends it.
  */
 /// <reference types="vitest/config" />
-import { defineConfig, loadEnv, type UserConfig } from "vite";
+import { defineConfig, type UserConfig } from "vite";
 import { qwikVite } from "@qwik.dev/core/optimizer";
 import { qwikRouter } from "@qwik.dev/router/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { execFileSync } from "node:child_process";
 
-// Tuxery has three environments, each reading its own Turso credentials
-// (or none) from `tuxery/.dev`'s shared `.env*` files:
+// Tuxery has three environments:
 //   - **dev**     — local only, this file, always the local `turso dev`
 //                   server below. Never a hosted DB — removed 2026-09-03,
 //                   see LOCAL_TURSO_URL's own comment for why.
-//   - **preview** — the Cloudflare preview Worker, one deploy per PR/
-//                   branch (`.dev/.env.preview`; wrangler.jsonc's
-//                   `env.preview`, deploy.yml).
-//   - **prod**    — the live site (`.dev/.env.prod`; wrangler.jsonc's
-//                   `env.production`).
+//   - **preview** — the Cloudflare Worker's pull-request Previews
+//                   (wrangler.jsonc's `previews`, deploy.yml).
+//   - **prod**    — the live site.
 // This file only ever configures dev. preview/prod get their credentials
-// from real Cloudflare Worker secrets instead (pushed by
+// from real Cloudflare Worker secrets instead (pushed from OpenBao by
 // scripts/push-cloudflare-secrets.sh) — `~/server-env`'s
 // resolveServerEnv() is what actually reads them at runtime, via
 // Cloudflare's `platform.env`; see that file's own header comment for
-// why `process.env` alone can't do this. `envDir` below is Vite's own
-// mechanism for pointing .env loading at that shared directory rather
-// than duplicating credential copies here that could drift — no custom
-// sync script needed for the one dev-relevant var this file still reads
-// from it (Unsplash, further down).
-const SHARED_ENV_DIR = "../.dev";
+// why `process.env` alone can't do this.
 
 // catalog's `pnpm serve` (a local `turso dev` server, run from the
 // catalog repo) is the only local dev target — must match its
@@ -65,7 +57,7 @@ function appCommit(): { commit: string; date: string } {
 /**
  * Note that Vite normally starts from `index.html` but the qwikRouter plugin makes start at `src/entry.ssr.tsx` instead.
  */
-export default defineConfig(({ mode }): UserConfig => {
+export default defineConfig((): UserConfig => {
   // dev only ever talks to the local turso dev server above — see
   // LOCAL_TURSO_URL's comment for why there is deliberately no way to
   // point it at a hosted DB instead. Assigning to process.env (not just
@@ -74,17 +66,14 @@ export default defineConfig(({ mode }): UserConfig => {
   // process.env fallback — loadEnv() alone only returns it.
   process.env.TURSO_DB_URL ??= LOCAL_TURSO_URL;
 
-  // Unrelated to the DB line above — Unsplash has no local/hosted split,
-  // it's the real API either way. Always loaded from the shared
-  // .dev/.env, server-only (never a VITE_-prefixed var, so it never
+  // Unsplash has no local/hosted split, it's the real API either way:
+  // UNSPLASH_ACCESS_KEY is already in process.env, loaded from OpenBao by
+  // openbao-env. Server-only (never a VITE_-prefixed var, so it never
   // reaches the client bundle).
-  const sharedEnv = loadEnv(mode, SHARED_ENV_DIR, "");
-  process.env.UNSPLASH_ACCESS_KEY ??= sharedEnv.UNSPLASH_ACCESS_KEY;
 
   const app = appCommit();
 
   return {
-    envDir: SHARED_ENV_DIR,
     define: {
       APP_COMMIT: JSON.stringify(app.commit),
       APP_COMMIT_DATE: JSON.stringify(app.date),
