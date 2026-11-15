@@ -21,13 +21,13 @@ export default component$(() => {
       <div>
         <h1 class="text-3xl font-bold mb-2">Categories</h1>
         <p class="text-base-content/70">
-          Apps and games each draw from their own taxonomy, sourced from each app's own AppStream
-          metadata whenever the source data actually carries one — coverage is uneven (only Flathub
-          and elementary AppCenter populate it today), so most of the catalog lands in{" "}
+          Apps and games each draw from their own taxonomy, built from each app's own AppStream
+          categories where a source carries them, and otherwise from a classifier that reads its
+          name and description. The few left without a confident guess wait in{" "}
           <a href="/browse/?category=To+Classify" class="link link-primary">
             To Classify
           </a>{" "}
-          rather than a guess.
+          rather than being filed in the wrong place.
         </p>
       </div>
 
