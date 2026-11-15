@@ -5,6 +5,7 @@ interface __BaseEnv_Env {
   TURSO_DB_URL: string;
   TURSO_DB_AUTH_TOKEN: string;
   UNSPLASH_ACCESS_KEY: string;
+  FEEDBACK_GITHUB_TOKEN: string;
 }
 declare namespace Cloudflare {
   interface ProductionEnv {
@@ -12,12 +13,16 @@ declare namespace Cloudflare {
     TURSO_DB_URL: string;
     TURSO_DB_AUTH_TOKEN: string;
     UNSPLASH_ACCESS_KEY: string;
+    FEEDBACK_GITHUB_TOKEN: string;
+    FEEDBACK_GITHUB_TOKEN: string;
   }
   interface PreviewEnv {
     ASSETS: Fetcher;
     TURSO_DB_URL: string;
     TURSO_DB_AUTH_TOKEN: string;
     UNSPLASH_ACCESS_KEY: string;
+    FEEDBACK_GITHUB_TOKEN: string;
+    FEEDBACK_GITHUB_TOKEN: string;
   }
   interface Env extends __BaseEnv_Env {}
 }
@@ -27,6 +32,9 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 };
 declare namespace NodeJS {
   interface ProcessEnv extends StringifyValues<
-    Pick<Cloudflare.Env, "TURSO_DB_URL" | "TURSO_DB_AUTH_TOKEN" | "UNSPLASH_ACCESS_KEY">
+    Pick<
+      Cloudflare.Env,
+      "TURSO_DB_URL" | "TURSO_DB_AUTH_TOKEN" | "UNSPLASH_ACCESS_KEY" | "FEEDBACK_GITHUB_TOKEN"
+    >
   > {}
 }

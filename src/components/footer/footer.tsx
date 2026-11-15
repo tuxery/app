@@ -10,6 +10,7 @@ const CATALOG_LINKS = [
   { href: "/games/", title: "Games" },
   { href: "/categories/", title: "Categories" },
   { href: "/docs/sources/", title: "Browse by source" },
+  { href: "/feedback/", title: "Send feedback" },
 ];
 
 // Every docs page, one column per docs section — the same list as the docs

@@ -207,6 +207,15 @@ export default component$(() => {
               </span>
             </span>
           </a>
+          {/* Hidden at lg only, where the nav links and the search box already
+              fill the bar; the footer links to /feedback/ too. */}
+          <a
+            href={`/feedback/?from=${encodeURIComponent(location.url.pathname)}`}
+            class="badge badge-sm badge-soft badge-primary hover:badge-outline lg:hidden xl:inline-flex"
+            title="Tuxery is in a private beta: tell us what you think"
+          >
+            Beta
+          </a>
 
           {NAV_LINKS.map((link) => (
             <a key={link.href} href={link.href} class="btn btn-ghost hidden lg:inline-flex">
