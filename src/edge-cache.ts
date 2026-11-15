@@ -17,10 +17,104 @@ export function cacheName(commit: string): string {
 }
 
 /**
+ * The query parameters each page reads, by path: the whole list of what can
+ * change a response. Any other parameter is dropped before the router sees
+ * the request (`normalizeRequestUrl`). A route that starts reading a new one
+ * must list it here, or the Worker will never show it the value; a test
+ * (edge-cache.spec.ts) reads the routes' sources and fails until it does.
+ * Qwik's own `qaction`, `qfunc` and `qdata` travel on POST requests, which
+ * are passed through as they are.
+ */
+export const PAGE_QUERY_PARAMS: Readonly<Record<string, readonly string[]>> = {
+  "/browse/": ["category", "interface", "license", "page", "q", "sort", "source", "type"],
+  "/claim/": ["app"],
+  "/feedback/": ["from"],
+  "/settings/": ["tab"],
+};
+
+/**
+ * The last path segment of the request Qwik Router's client makes for one
+ * route loader's data when navigating without a page load:
+ * `<route path>/q-loader-<loader id>.<manifest hash>.json`, with the page's
+ * query string. Mirrors the router's own `LOADER_REGEX`.
+ */
+const LOADER_FILE = /\/q-loader-[^/.]+\.[^/.]+\.json$/;
+
+/**
+ * Sent with a loader request when the loader belongs to a layout: the path
+ * of the page being navigated to, which the router then runs the loader for
+ * instead of the path in the URL. Part of what the response depends on.
+ */
+const LOADER_PAGE_HEADER = "X-Qwik-fullpath";
+
+/** The name under which `LOADER_PAGE_HEADER`'s value joins the cache key: not a listed parameter, so no request can carry it there itself. */
+const LOADER_PAGE_KEY = "x-qwik-fullpath";
+
+function withTrailingSlash(path: string): string {
+  return path.endsWith("/") ? path : `${path}/`;
+}
+
+/**
+ * A GET request's URL reduced to what the app reads, and the key its
+ * response is cached under.
+ *
+ * `url` keeps the path and, of the query string, only the parameters listed
+ * for that page in `PAGE_QUERY_PARAMS` — one value each (the first, the one
+ * `searchParams.get()` returns), sorted by name. So `?x=1`, `?x=2`, ... and
+ * `?utm_source=...` are all the same page as the bare URL, served from the
+ * cache instead of each costing a render and its database reads, and
+ * `?type=game&q=zen` and `?q=zen&type=game` are one entry.
+ *
+ * The router must be given `url`, not the original: some pages print their
+ * own URL (the app page's "report a problem" link carries it), so rendering
+ * the original and storing the result under the normalized key would let
+ * anyone plant a page containing their own query string under the clean
+ * URL. Rendered from `url`, a response can only depend on what its key is
+ * made of.
+ *
+ * A loader request (`LOADER_FILE`) is for the page that owns the loader:
+ * the path without that last segment, or the one `LOADER_PAGE_HEADER` names.
+ * It keeps the parameters of both, and since that header picks what the
+ * router answers, `cacheKey` carries its value too.
+ */
+export function normalizeRequestUrl(request: Request): { url: string; cacheKey: string } {
+  const url = new URL(request.url);
+  const isLoader = LOADER_FILE.test(url.pathname);
+  const loaderPage = isLoader ? request.headers.get(LOADER_PAGE_HEADER) : null;
+  const pagePaths = isLoader
+    ? [url.pathname.replace(LOADER_FILE, "/"), ...(loaderPage ? [loaderPage] : [])]
+    : [url.pathname];
+  const names = new Set(
+    pagePaths.flatMap((path) => PAGE_QUERY_PARAMS[withTrailingSlash(path)] ?? []),
+  );
+
+  const kept = new URLSearchParams();
+  for (const name of names) {
+    const value = url.searchParams.get(name);
+    if (value !== null) kept.set(name, value);
+  }
+  kept.sort();
+  url.search = kept.toString();
+  url.hash = "";
+  const normalized = url.href;
+
+  if (loaderPage !== null) kept.set(LOADER_PAGE_KEY, loaderPage);
+  url.search = kept.toString();
+  return { url: normalized, cacheKey: url.href };
+}
+
+/**
  * Whether a request may be answered from, and stored in, the shared cache:
- * the same rule as the router's own adapter. Anonymous GETs only (nothing
- * here reads cookies or credentials), and not on `wrangler dev`/local hosts,
- * where the cache API does nothing useful.
+ * a GET, not on `wrangler dev`/local hosts (where the cache API does nothing
+ * useful), without credentials.
+ *
+ * A `Cookie` header doesn't disqualify it. No route reads a cookie or sets
+ * one (settings live in the browser's own storage), and to make that hold
+ * whatever a route does later, the request the router renders from has its
+ * `Cookie` header removed (`entry.cloudflare-pages.tsx`), while a response
+ * that sets one is never stored (`isSharedCacheable`). The cookies a browser
+ * does send here are Cloudflare's own (bot checks) and other tools': with
+ * them counted, those visitors never got a cached page.
  */
 export function isCacheableRequest(request: Request): boolean {
   const url = new URL(request.url);
@@ -29,7 +123,6 @@ export function isCacheableRequest(request: Request): boolean {
     url.hostname !== "localhost" &&
     url.hostname !== "127.0.0.1" &&
     url.port === "" &&
-    !request.headers.has("Cookie") &&
     !request.headers.has("Authorization")
   );
 }
