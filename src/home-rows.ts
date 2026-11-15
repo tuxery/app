@@ -19,7 +19,6 @@ export const HOME_LISTINGS = {
   creativity: "categoryPreview:Graphics & Design",
   learning: "categoryPreview:Education",
   video: "categoryPreview:Photo & Video",
-  casualGames: "categoryPreview:Casual",
   puzzleGames: "categoryPreview:Puzzle",
 } as const;
 

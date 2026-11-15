@@ -26,11 +26,16 @@ export const useStats = routeLoader$(async (requestEvent) => {
 
 // "Browse by category" is split Apps/Games — each draws from its own
 // taxonomy now (see `tuxery/catalog`'s `CatalogApp.category` doc comment).
+// "To Classify" is a backlog, not somewhere to browse: the homepage leaves
+// it out, /categories lists it and says what it is.
+const browsable = <T extends { category: string }>(categories: T[]) =>
+  categories.filter(({ category }) => category !== "To Classify");
+
 export const useAppCategories = routeLoader$(async (requestEvent) =>
-  getCategories(resolveServerEnv(requestEvent.platform), "app"),
+  browsable(await getCategories(resolveServerEnv(requestEvent.platform), "app")),
 );
 export const useGameCategories = routeLoader$(async (requestEvent) =>
-  getCategories(resolveServerEnv(requestEvent.platform), "game"),
+  browsable(await getCategories(resolveServerEnv(requestEvent.platform), "game")),
 );
 
 // Reuses the same influencer-page data /creators/baxyz/ itself renders
@@ -296,15 +301,6 @@ const InfluencerSlider = component$<{
   );
 });
 
-const ComingSoonSection = component$<{ title: string; note: string }>(({ title, note }) => (
-  <section>
-    <h2 class="text-lg font-semibold mb-2">{title}</h2>
-    <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/70">
-      {note}
-    </div>
-  </section>
-));
-
 export default component$(() => {
   const stats = useStats();
   const appCategories = useAppCategories();
@@ -442,12 +438,6 @@ export default component$(() => {
             apps={rows.value?.productivity}
           />
 
-          {/* See the "Split Internet & Communication" board card. */}
-          <ComingSoonSection
-            title="Messaging"
-            note="Not its own category yet — chat/messaging apps are folded into the broader Internet & Communication bucket, with no way to isolate just messaging."
-          />
-
           <AppScrollRow
             title="New games"
             typeFilter="game"
@@ -472,31 +462,12 @@ export default component$(() => {
             apps={rows.value?.creativity}
           />
 
-          {/* See the "Add a Kids/Children category" board card. */}
-          <ComingSoonSection
-            title="For kids"
-            note="Not part of the current category taxonomy — no data to show yet."
-          />
-
           <CategoryRow title="Learning apps" category="Education" apps={rows.value?.learning} />
 
           <CategoryRow
-            title="Movies & streaming apps"
+            title="Photo & video apps"
             category="Photo & Video"
             apps={rows.value?.video}
-          />
-
-          <CategoryRow title="Casual games" category="Casual" apps={rows.value?.casualGames} />
-
-          {/* See the "Split Internet & Communication" board card — same
-              dependency as Messaging above. Was previously a real
-              CategoryRow scoped to "Internet & Communication", but that
-              category is browsers/email/VoIP/social all mixed together —
-              mislabeling that mix as "social network" specifically was
-              the actual bug, not the coming-soon treatment. */}
-          <ComingSoonSection
-            title="Social network apps"
-            note="Not its own category yet — social apps are folded into the broader Internet & Communication bucket alongside browsers, email, and VoIP, with no way to isolate just social networks."
           />
 
           <CategoryRow title="Puzzle games" category="Puzzle" apps={rows.value?.puzzleGames} />
