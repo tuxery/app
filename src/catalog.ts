@@ -28,6 +28,7 @@ import {
   categoryIdsChunkKey,
   type BrowseKeys,
 } from "~/browse-keys";
+import { toPageIndex } from "~/browse-page";
 import { buildFtsClause } from "~/search-fts";
 import type { ServerEnv } from "~/server-env";
 
@@ -546,13 +547,15 @@ export interface BrowseOptions {
 export async function browseApps(
   env: ServerEnv,
   query: string,
-  page: number,
+  requestedPage: number,
   options: BrowseOptions = {},
   /** `false` skips the free-text `COUNT(*)` — for the infinite scroll's later pages, which never read `total` (see /browse's `loadMore`). */
   countTotal = true,
 ): Promise<BrowseResult> {
   const db = getClient(env);
   if (!db) return { apps: [], total: 0 };
+  // /browse's `server$` call passes whatever the client sent.
+  const page = toPageIndex(requestedPage);
   const {
     interfaceFilter = "all",
     typeFilter = "all",
@@ -611,7 +614,7 @@ export async function browseApps(
     }
     const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     const fullConditionArgs = [...whereArgs, ...conditionArgs];
-    const offset = Math.max(0, page) * BROWSE_PAGE_SIZE;
+    const offset = page * BROWSE_PAGE_SIZE;
 
     // No free-text query and at least one filter: try the precomputed
     // count (and, for a source-only page, id list) before any live query.
