@@ -30,36 +30,39 @@ export default component$(() => {
         </p>
       </div>
 
-      <div class="stats stats-vertical sm:stats-horizontal shadow border border-base-300">
-        <div class="stat">
+      {/* A 2x2 grid of single stats, not one daisyUI `stats` row: four
+          figures, two of them long, never fit side by side in the docs
+          column, and `stats` scrolls sideways instead of wrapping. */}
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div class="stat rounded-box border border-base-300 bg-base-100 shadow">
           <div class="stat-title">Apps &amp; games catalogued</div>
           <div class="stat-value text-primary">{stats.value.total.toLocaleString()}</div>
         </div>
-        <div class="stat">
+        <div class="stat rounded-box border border-base-300 bg-base-100 shadow">
           <div class="stat-title">Catalog snapshot</div>
-          <div class="stat-value text-lg">
+          <div class="stat-value text-lg whitespace-normal break-words">
             {stats.value.generatedAt ? new Date(stats.value.generatedAt).toLocaleDateString() : "—"}
           </div>
-          <div class="stat-desc">Per-app update dates aren't tracked yet</div>
+          <div class="stat-desc whitespace-normal">Per-app update dates aren't tracked yet</div>
         </div>
         {stats.value.buildInfo?.sources && (
-          <div class="stat">
+          <div class="stat rounded-box border border-base-300 bg-base-100 shadow">
             <div class="stat-title">Sources fetched</div>
-            <div class="stat-value text-lg">
+            <div class="stat-value text-lg whitespace-normal break-words">
               {formatDateRange(
                 stats.value.buildInfo.sources.oldest,
                 stats.value.buildInfo.sources.newest,
               )}
             </div>
-            <div class="stat-desc">
+            <div class="stat-desc whitespace-normal">
               Oldest to newest source; the snapshot is when they were merged
             </div>
           </div>
         )}
         {stats.value.buildInfo?.catalog && (
-          <div class="stat">
+          <div class="stat rounded-box border border-base-300 bg-base-100 shadow">
             <div class="stat-title">Built by catalog</div>
-            <div class="stat-value text-lg">
+            <div class="stat-value text-lg whitespace-normal break-words">
               <a
                 href={commitUrl("catalog", stats.value.buildInfo.catalog.commit)}
                 class="link link-hover"
@@ -69,7 +72,9 @@ export default component$(() => {
                 {stats.value.buildInfo.catalog.commit}
               </a>
             </div>
-            <div class="stat-desc">The commit of the code that produced this data</div>
+            <div class="stat-desc whitespace-normal">
+              The commit of the code that produced this data
+            </div>
           </div>
         )}
       </div>
