@@ -70,7 +70,8 @@ secrets, set separately — `wrangler secret put <NAME>` for production,
 Base config every new Preview starts from; Previews never inherit
 production's secrets, vars or bindings — the other settings they need are in
 `wrangler.jsonc`'s `previews` block). `scripts/push-cloudflare-secrets.sh`
-does both, from `../.dev/.env.prod` and `../.dev/.env.preview` respectively —
+does both, from the `PROD_TURSO_*` and `PREVIEW_TURSO_*` values OpenBao puts in
+the devcontainer's environment (`kv/orgs/tuxery`, see `openbao-env status`) —
 never committed, never plain `vars` (those get wiped by Wrangler on every
 deploy unless declared in this file, so secrets are the only thing that
 reliably survives dashboard-side). The Previews' secrets point at the
@@ -95,8 +96,8 @@ Build locally with `pnpm build.server`, deploy with `pnpm deploy`, or
 preview with `pnpm serve` (reads `.dev.vars`, gitignored — point
 `TURSO_DB_URL` at catalog's local `turso dev` server, e.g.
 `http://localhost:8080` with `pnpm seed`/`pnpm serve` running there, same
-as plain `pnpm dev` defaults to; copy the other keys from
-`../.dev/.env.preview` if you specifically need real preview data, or run
+as plain `pnpm dev` defaults to; use the `PREVIEW_TURSO_*` values from
+OpenBao if you specifically need real preview data, or run
 `pnpm cf-typegen` after creating it to keep `worker-configuration.d.ts`'s
 `Env` type in sync).
 

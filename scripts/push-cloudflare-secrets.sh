@@ -1,75 +1,75 @@
 #!/usr/bin/env bash
 # Pushes tuxery-web's secrets to Cloudflare, for production and for its
-# pull-request Previews (TURSO_DB_URL, TURSO_DB_AUTH_TOKEN,
-# UNSPLASH_ACCESS_KEY, and FEEDBACK_GITHUB_TOKEN for production — see README.md's "Deployment" section and
-# wrangler.jsonc):
-#   production <- ../.dev/.env.prod    (prod-tuxery DB)
-#   previews   <- ../.dev/.env.preview (preview-tuxery DB — there is no
-#                 shared "dev" Turso DB anymore, retired 2026-09-03; local
-#                 dev emulates a local sqlite instead, see vite.config.ts)
-# Auth always comes from .env.prod's CLOUDFLARE_API_TOKEN/CLOUDFLARE_ACCOUNT_ID
-# (same Cloudflare account for both), so no `wrangler login` is needed.
+# pull-request Previews (see README.md's "Deployment" section and
+# wrangler.jsonc). Every value comes from the environment: in the
+# devcontainer, openbao-env loads them from OpenBao (kv/orgs/tuxery, see
+# `openbao-env status`), under the same names as the GitHub Actions secrets:
+#   production <- PROD_TURSO_DB_URL, PROD_TURSO_DB_AUTH_TOKEN (prod-tuxery DB),
+#                 UNSPLASH_ACCESS_KEY, FEEDBACK_GITHUB_TOKEN (optional)
+#   previews   <- PREVIEW_TURSO_DB_URL, PREVIEW_TURSO_DB_AUTH_TOKEN
+#                 (preview-tuxery DB), UNSPLASH_ACCESS_KEY
+# Cloudflare auth: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, the same
+# account for both, so no `wrangler login` is needed.
+#
+#   scripts/push-cloudflare-secrets.sh [production|previews]   (default: both)
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APP_DIR="$(dirname "$SCRIPT_DIR")"
-DEV_DIR="$(cd "$APP_DIR/../.dev" && pwd)"
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$APP_DIR"
 
-# shellcheck disable=SC1091
-CLOUDFLARE_API_TOKEN="$(source "$DEV_DIR/.env.prod" && echo "$CLOUDFLARE_API_TOKEN")"
-# shellcheck disable=SC1091
-CLOUDFLARE_ACCOUNT_ID="$(source "$DEV_DIR/.env.prod" && echo "$CLOUDFLARE_ACCOUNT_ID")"
-
-if [[ -z "$CLOUDFLARE_API_TOKEN" || -z "$CLOUDFLARE_ACCOUNT_ID" ]]; then
-  echo "Missing CLOUDFLARE_API_TOKEN/CLOUDFLARE_ACCOUNT_ID in $DEV_DIR/.env.prod" >&2
-  exit 1
-fi
-export CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID
-
-push_env() {
-  local target="$1" env_file="$2"
-
-  if [[ ! -f "$env_file" ]]; then
-    echo "Missing $env_file" >&2
+require() {
+  local missing=()
+  for var in "$@"; do [[ -n "${!var:-}" ]] || missing+=("$var"); done
+  if ((${#missing[@]})); then
+    echo "Missing in the environment: ${missing[*]} (OpenBao kv/orgs/tuxery, see openbao-env status)" >&2
     exit 1
   fi
-
-  # Isolated subshell so each env's vars never leak into the other's.
-  (
-    set -a
-    # shellcheck disable=SC1090
-    source "$env_file"
-    set +a
-
-    for var in TURSO_DB_URL TURSO_DB_AUTH_TOKEN UNSPLASH_ACCESS_KEY; do
-      if [[ -z "${!var:-}" ]]; then
-        echo "Missing $var in $env_file" >&2
-        exit 1
-      fi
-    done
-
-    cd "$APP_DIR"
-    # Previews don't share production's secrets: theirs live in the Previews
-    # Base config, which every later `wrangler preview` starts from.
-    local put_command="secret put"
-    if [[ "$target" == "previews" ]]; then
-      put_command="preview base-config secret put"
-    fi
-    for secret in TURSO_DB_URL TURSO_DB_AUTH_TOKEN UNSPLASH_ACCESS_KEY; do
-      echo "==> Setting $secret ($target)"
-      # shellcheck disable=SC2086
-      printf '%s' "${!secret}" | pnpm exec wrangler $put_command "$secret"
-    done
-    # Optional, production only: /feedback's token (see src/feedback.ts).
-    # Previews never get it, so their form can't file test issues.
-    if [[ "$target" == "production" && -n "${FEEDBACK_GITHUB_TOKEN:-}" ]]; then
-      echo "==> Setting FEEDBACK_GITHUB_TOKEN ($target)"
-      printf '%s' "$FEEDBACK_GITHUB_TOKEN" | pnpm exec wrangler secret put FEEDBACK_GITHUB_TOKEN
-    fi
-  )
 }
 
-push_env production "$DEV_DIR/.env.prod"
-push_env previews "$DEV_DIR/.env.preview"
+require CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID
+export CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID
+
+# put <target> <secret name> <variable holding its value>
+put() {
+  local target="$1" name="$2" var="$3"
+  # Previews don't share production's secrets: theirs live in the Previews
+  # Base config, which every later `wrangler preview` starts from.
+  local command=(secret put)
+  [[ "$target" == "previews" ]] && command=(preview base-config secret put)
+  echo "==> Setting $name ($target)"
+  printf '%s' "${!var}" | pnpm exec wrangler "${command[@]}" "$name"
+}
+
+push_production() {
+  require PROD_TURSO_DB_URL PROD_TURSO_DB_AUTH_TOKEN UNSPLASH_ACCESS_KEY
+  put production TURSO_DB_URL PROD_TURSO_DB_URL
+  put production TURSO_DB_AUTH_TOKEN PROD_TURSO_DB_AUTH_TOKEN
+  put production UNSPLASH_ACCESS_KEY UNSPLASH_ACCESS_KEY
+  # Optional, production only: /feedback's token (see src/feedback.ts).
+  # Previews never get it, so their form can't file test issues.
+  if [[ -n "${FEEDBACK_GITHUB_TOKEN:-}" ]]; then
+    put production FEEDBACK_GITHUB_TOKEN FEEDBACK_GITHUB_TOKEN
+  fi
+}
+
+push_previews() {
+  require PREVIEW_TURSO_DB_URL PREVIEW_TURSO_DB_AUTH_TOKEN UNSPLASH_ACCESS_KEY
+  put previews TURSO_DB_URL PREVIEW_TURSO_DB_URL
+  put previews TURSO_DB_AUTH_TOKEN PREVIEW_TURSO_DB_AUTH_TOKEN
+  put previews UNSPLASH_ACCESS_KEY UNSPLASH_ACCESS_KEY
+}
+
+case "${1:-both}" in
+  production) push_production ;;
+  previews) push_previews ;;
+  both)
+    push_production
+    push_previews
+    ;;
+  *)
+    echo "Usage: $0 [production|previews]" >&2
+    exit 2
+    ;;
+esac
 
 echo "Done."

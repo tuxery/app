@@ -1,6 +1,7 @@
 // Server-only, same split as `~/catalog` — must only ever be referenced
 // inside a routeLoader$/RequestHandler `$` callback. `UNSPLASH_ACCESS_KEY`
-// comes from the shared `.dev/.env` (see `vite.config.ts`), never a
+// comes from OpenBao in dev (see `vite.config.ts`), a Worker secret
+// in production, never a
 // VITE_-prefixed var, so it never reaches the client bundle.
 
 import { safeFetch } from "helpers4/promise";
