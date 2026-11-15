@@ -12,11 +12,13 @@ import {
   type PlatformCloudflarePages as PlatformCloudflareWorkers,
 } from "@qwik.dev/router/middleware/cloudflare-pages";
 import { isStaticPath } from "@qwik.dev/router/middleware/request-handler";
+import { queryFailedSince } from "./catalog-status";
 import {
   cacheName,
   isCacheableRequest,
   isSharedCacheable,
   withCacheStatus,
+  withNoStore,
   withNotFoundCacheControl,
 } from "./edge-cache";
 import render from "./entry.ssr";
@@ -43,15 +45,24 @@ const withoutRouterCache = (request: Request) => {
 
 const fetch = async (request: Request, env: RouterEnv, ctx: RouterContext) => {
   const url = new URL(request.url);
-  if (isStaticPath(request.method, url) || !isCacheableRequest(request)) {
-    return router(request, env, ctx);
+  if (isStaticPath(request.method, url)) return router(request, env, ctx);
+
+  // A catalog query that fails after the layout's health check leaves the
+  // page rendered from a fallback, with the layout's public Cache-Control
+  // already set: such an answer is never stored, here or in the browser.
+  const startedAt = Date.now();
+  if (!isCacheableRequest(request)) {
+    const response = await router(request, env, ctx);
+    return queryFailedSince(startedAt) ? withNoStore(response) : response;
   }
   const cache = await caches.open(cacheName(APP_COMMIT));
   const key = new Request(request.url, request);
   const hit = await cache.match(key);
   if (hit) return withCacheStatus(hit, "hit");
 
-  const response = withNotFoundCacheControl(await router(withoutRouterCache(request), env, ctx));
+  const routed = await router(withoutRouterCache(request), env, ctx);
+  if (queryFailedSince(startedAt)) return withNoStore(routed);
+  const response = withNotFoundCacheControl(routed);
   if (!isSharedCacheable(response)) return response;
   ctx.waitUntil(cache.put(key, response.clone()));
   return withCacheStatus(response, "miss");

@@ -69,3 +69,14 @@ export function withCacheStatus(response: Response, status: "hit" | "miss"): Res
   headers.set("X-Tuxery-Cache", status);
   return new Response(response.body, { status: response.status, headers });
 }
+
+/**
+ * The response marked `no-store`: for a page rendered while a catalog query
+ * failed, whose content is a fallback (an empty list, a "not found") that
+ * neither the shared cache nor the browser should keep.
+ */
+export function withNoStore(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.set("Cache-Control", "no-store");
+  return new Response(response.body, { status: response.status, headers });
+}

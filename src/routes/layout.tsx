@@ -19,7 +19,12 @@ import {
 } from "@qwikest/icons/lucide";
 import { getStats, isCatalogAvailable } from "~/catalog";
 import { EMPTY_STATS } from "~/catalog-types";
-import { CATALOG_UNAVAILABLE_KEY, isCatalogUnavailable, needsCatalog } from "~/catalog-status";
+import {
+  CATALOG_UNAVAILABLE_KEY,
+  isCatalogUnavailable,
+  markRequestStart,
+  needsCatalog,
+} from "~/catalog-status";
 import { Footer } from "~/components/footer/footer";
 import { HoverTipHost } from "~/components/hover-tip/hover-tip";
 import { Logo } from "~/components/logo/logo";
@@ -37,10 +42,11 @@ import { getHeroBackgroundPhoto } from "~/unsplash";
 // bare host, before anything else runs (no catalog check, no render).
 // Pull-request Previews, and the site itself during the private beta, are
 // kept out of search engines (see `robotsHeader`).
-export const onRequest: RequestHandler = ({ url, redirect, headers }) => {
+export const onRequest: RequestHandler = ({ url, redirect, headers, sharedMap }) => {
   if (url.hostname.startsWith("www.")) {
     throw redirect(301, `${CANONICAL_ORIGIN}${url.pathname}${url.search}`);
   }
+  markRequestStart(sharedMap);
   const robots = robotsHeader(url.hostname);
   if (robots) headers.set("X-Robots-Tag", robots);
 };

@@ -28,6 +28,7 @@ import {
   categoryIdsChunkKey,
   type BrowseKeys,
 } from "~/browse-keys";
+import { noteQueryFailure } from "~/catalog-status";
 import { toPageIndex } from "~/browse-page";
 import { buildFtsClause } from "~/search-fts";
 import type { ServerEnv } from "~/server-env";
@@ -55,15 +56,17 @@ function getClient(env: ServerEnv): Client | null {
 
 /**
  * Whether the database answers, as `isCatalogAvailable` last saw it — per
- * isolate, rechecked after `HEALTH_TTL_MS`. Any failed catalog query also
- * marks it unavailable right away (`markUnavailable`), so an outage is
- * noticed by the next request without waiting for the next check.
+ * isolate, rechecked after `HEALTH_TTL_MS`. A failed catalog query drops
+ * the verdict (`onQueryFailure`), so the next request checks again: an
+ * outage is noticed without waiting for the TTL, and a query that failed
+ * on its own (the database still answers `SELECT 1`) takes nothing down.
  */
 let health: { available: boolean; checkedAt: number } | undefined;
 const HEALTH_TTL_MS = 30 * 1000;
 
-function markUnavailable(): void {
-  health = { available: false, checkedAt: Date.now() };
+function onQueryFailure(): void {
+  health = undefined;
+  noteQueryFailure();
 }
 
 /**
@@ -89,13 +92,13 @@ export async function isCatalogAvailable(env: ServerEnv): Promise<boolean> {
   return available;
 }
 
-/** A reachable-but-not-actually-running local `turso dev` server (connection refused, etc.) degrades the same way as no TURSO_DB_URL at all, rather than 500ing the page — and marks the catalog unavailable (see `markUnavailable`). */
+/** A reachable-but-not-actually-running local `turso dev` server (connection refused, etc.) degrades the same way as no TURSO_DB_URL at all, rather than 500ing the page — and the failure is recorded (see `onQueryFailure`), so the fallback is never cached as the real answer. */
 async function safely<T>(fallback: T, fn: () => Promise<T>): Promise<T> {
   try {
     return await fn();
   } catch (error) {
     console.error("[catalog] query failed, degrading to empty:", error);
-    markUnavailable();
+    onQueryFailure();
     return fallback;
   }
 }
@@ -136,7 +139,7 @@ async function cachedListing<T>(key: string, fallback: T, fn: () => Promise<T>):
     return value;
   } catch (error) {
     console.error("[catalog] query failed, degrading to empty:", error);
-    markUnavailable();
+    onQueryFailure();
     return fallback;
   }
 }
