@@ -2,8 +2,17 @@
 
 # Private beta: static files stay out of search engines too (pages get the
 # same header from layout.tsx's `onRequest`, see SITE_IS_PUBLIC in src/seo.ts).
+#
+# The other headers of this block are the site's security headers, the same
+# ones the Worker puts on pages (src/security-headers.ts; its test fails if
+# the two lists differ).
 /*
   X-Robots-Tag: noindex
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Permissions-Policy: accelerometer=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=()
+  Content-Security-Policy: frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'
 
 /*service-worker.js
   Cache-Control: no-store
