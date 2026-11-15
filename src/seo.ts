@@ -22,6 +22,22 @@ export function canonicalUrl(pathname: string): string {
   return `${CANONICAL_ORIGIN}${canonicalPath(pathname)}`;
 }
 
+/**
+ * Private beta: the link is shared with a few testers, and sources we wrote
+ * to were asked to keep it to themselves, so no page may be indexed yet.
+ * Flip to `true` at the public launch (also drop the `X-Robots-Tag` block in
+ * public/_headers). robots.txt keeps allowing crawlers on purpose: a crawler
+ * kept out by robots.txt never reads the `noindex`, and could still list a
+ * URL it found linked elsewhere.
+ */
+export const SITE_IS_PUBLIC = false;
+
+/** The `X-Robots-Tag` every response of `hostname` carries, if any: Previews never get indexed, the site only once it is public. */
+export function robotsHeader(hostname: string): string | undefined {
+  if (isPreviewHost(hostname) || !SITE_IS_PUBLIC) return "noindex";
+  return undefined;
+}
+
 /** Pages not worth indexing: a form with nothing in it yet, per-visitor settings. `undefined` for every other page. */
 export function robotsDirective(pathname: string): string | undefined {
   if (pathname.startsWith("/claim/") || pathname.startsWith("/settings"))

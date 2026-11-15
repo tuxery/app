@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { canonicalPath, canonicalUrl, isPreviewHost, robotsDirective } from "./seo";
+import {
+  canonicalPath,
+  canonicalUrl,
+  isPreviewHost,
+  robotsDirective,
+  robotsHeader,
+  SITE_IS_PUBLIC,
+} from "./seo";
 
 describe("canonicalPath", () => {
   it("points a build-variant page at its app page", () => {
@@ -39,5 +46,15 @@ describe("isPreviewHost", () => {
     expect(isPreviewHost("tuxery.store")).toBe(false);
     expect(isPreviewHost("www.tuxery.store")).toBe(false);
     expect(isPreviewHost("localhost")).toBe(false);
+  });
+});
+
+describe("robotsHeader", () => {
+  it("never lets a Preview be indexed", () => {
+    expect(robotsHeader("pr-104.preview.tuxery.store")).toBe("noindex");
+  });
+
+  it("keeps the site itself out of the index until it is public", () => {
+    expect(robotsHeader("tuxery.store")).toBe(SITE_IS_PUBLIC ? undefined : "noindex");
   });
 });
