@@ -1,5 +1,10 @@
 # https://developers.cloudflare.com/pages/platform/headers/
 
+# Private beta: static files stay out of search engines too (pages get the
+# same header from layout.tsx's `onRequest`, see SITE_IS_PUBLIC in src/seo.ts).
+/*
+  X-Robots-Tag: noindex
+
 /*service-worker.js
   Cache-Control: no-store
   Content-Type: application/javascript
