@@ -17,6 +17,7 @@ import {
   cacheName,
   isCacheableRequest,
   isSharedCacheable,
+  normalizeRequestUrl,
   withCacheStatus,
   withNoStore,
   withNotFoundCacheControl,
@@ -37,28 +38,35 @@ type RouterContext = Parameters<typeof router>[2];
 // shares and which never keeps a 404 (see `~/edge-cache`). It is skipped
 // here — it steps aside for any request carrying credentials, so the request
 // it gets says it has some (nothing in the app reads them) — and this one,
-// named per build, takes its place.
-const withoutRouterCache = (request: Request) => {
+// named per build, takes its place. The same request loses its `Cookie`
+// header: what is rendered for everyone can't have read anyone's cookie.
+const forSharedRender = (request: Request) => {
   const headers = new Headers(request.headers);
+  headers.delete("Cookie");
   headers.set("Authorization", "skip-router-cache");
   return new Request(request, { headers });
 };
 
-const respond = async (request: Request, env: RouterEnv, ctx: RouterContext) => {
+const respond = async (original: Request, env: RouterEnv, ctx: RouterContext) => {
   // A catalog query that fails after the layout's health check leaves the
   // page rendered from a fallback, with the layout's public Cache-Control
   // already set: such an answer is never stored, here or in the browser.
   const startedAt = Date.now();
-  if (!isCacheableRequest(request)) {
+  // Every GET is rendered from its normalized URL (see `normalizeRequestUrl`
+  // for why the router never gets the original), cached or not, so a local
+  // `wrangler dev` behaves like production.
+  const normalized = original.method === "GET" ? normalizeRequestUrl(original) : undefined;
+  const request = normalized ? new Request(normalized.url, original) : original;
+  if (!normalized || !isCacheableRequest(request)) {
     const response = await router(request, env, ctx);
     return queryFailedSince(startedAt) ? withNoStore(response) : response;
   }
   const cache = await caches.open(cacheName(APP_COMMIT));
-  const key = new Request(request.url, request);
+  const key = new Request(normalized.cacheKey, request);
   const hit = await cache.match(key);
   if (hit) return withCacheStatus(hit, "hit");
 
-  const routed = await router(withoutRouterCache(request), env, ctx);
+  const routed = await router(forSharedRender(request), env, ctx);
   if (queryFailedSince(startedAt)) return withNoStore(routed);
   const response = withNotFoundCacheControl(routed);
   if (!isSharedCacheable(response)) return response;
