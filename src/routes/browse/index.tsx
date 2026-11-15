@@ -18,6 +18,7 @@ import {
   type AppSummary,
   type PackageSourceId,
 } from "~/catalog-types";
+import { parsePageParam } from "~/browse-page";
 import { resolveServerEnv } from "~/server-env";
 
 /**
@@ -64,7 +65,7 @@ export const useBrowse = routeLoader$(
   async (requestEvent) => {
     const { url } = requestEvent;
     const query = url.searchParams.get("q") ?? "";
-    const page = Math.max(0, Number(url.searchParams.get("page") ?? "1") - 1);
+    const page = parsePageParam(url.searchParams.get("page"));
     return browseApps(resolveServerEnv(requestEvent.platform), query, page, {
       interfaceFilter: parseInterfaceFilter(url.searchParams.get("interface")),
       typeFilter: parseTypeFilter(url.searchParams.get("type")),
@@ -97,7 +98,7 @@ export default component$(() => {
   const categories = useBrowseCategories();
 
   const query = location.url.searchParams.get("q") ?? "";
-  const startPage = Math.max(0, Number(location.url.searchParams.get("page") ?? "1") - 1);
+  const startPage = parsePageParam(location.url.searchParams.get("page"));
   const interfaceFilter = parseInterfaceFilter(location.url.searchParams.get("interface"));
   const typeFilter = parseTypeFilter(location.url.searchParams.get("type"));
   const category = location.url.searchParams.get("category") ?? undefined;
