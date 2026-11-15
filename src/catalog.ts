@@ -41,8 +41,6 @@ import type { ServerEnv } from "~/server-env";
 // safe to import from client-rendered components live in `~/catalog-types`
 // instead — see that file's header comment for why the split exists.
 
-const MAX_RESULTS = 60;
-
 // A single reused client for the process's lifetime — cheap for the HTTP
 // transport this always uses (a local `turso dev` server or the real
 // hosted DB, never a local file), no connection pool to manage.
@@ -278,36 +276,29 @@ export type TypeFilter = "all" | "game" | "app";
 export type SortOption = "relevance" | "name-asc" | "name-desc";
 
 /**
- * One clause covering both text-search inclusion and ranking, shared by
- * `searchApps` and `browseApps` so they can't drift. Splits the query into
- * words and ORs them across name/short_description/id — a query no longer
- * has to appear as one literal contiguous phrase (real bug, found live:
- * searching "zen browser" for the real "Zen" browser app returned
- * nothing, since neither field contains that exact phrase). Ranks an
- * exact name match highest, then a name that starts with the query, then
- * per-word name/description hits — length-normalized (matched words as a
- * fraction of the name's own length), so a short, close match like "Zen"
- * outranks a long compound name that happens to contain the same words
- * (e.g. "zen-browser-bitwarden", a real Zen browser *extension* package —
- * matches both "zen" and "browser" too, but shouldn't outrank the browser
- * itself). Plain flat per-word points were tried first and verified live
- * to get this backwards — every "zen-browser-*" extension outscored "Zen"
- * itself on "zen browser" since they literally contain both query words
- * and "Zen"'s own description doesn't contain the substring "browser" at
- * all (only "browse"), just one "zen" hit.
+ * How a free-text search's matches are ranked (which apps match is
+ * `~/search-fts`'s `buildFtsClause`). Scores an exact name match highest,
+ * then a name that starts with the query, then per-word name/description
+ * hits — length-normalized (matched words as a fraction of the name's own
+ * length), so a short, close match like "Zen" outranks a long compound name
+ * that happens to contain the same words (e.g. "zen-browser-bitwarden", a
+ * real Zen browser *extension* package — matches both "zen" and "browser"
+ * too, but shouldn't outrank the browser itself). Plain flat per-word
+ * points were tried first and verified live to get this backwards — every
+ * "zen-browser-*" extension outscored "Zen" itself on "zen browser" since
+ * they literally contain both query words and "Zen"'s own description
+ * doesn't contain the substring "browser" at all (only "browse"), just one
+ * "zen" hit.
+ *
+ * Every word of the query counts here, the ones too short to be looked up
+ * included ("obs qt" finds what matches "obs" and puts the names that also
+ * contain "qt" first). These `LIKE`s are evaluated on the rows that already
+ * matched, so they read no row of their own. No query: alphabetical.
  */
-function buildSearchClause(trimmed: string): {
-  where: string;
-  whereArgs: string[];
-  orderBy: string;
-  orderArgs: string[];
-} {
-  if (!trimmed) return { where: "", whereArgs: [], orderBy: "name ASC", orderArgs: [] };
+function buildSearchOrder(trimmed: string): { orderBy: string; orderArgs: string[] } {
+  if (!trimmed) return { orderBy: "name ASC", orderArgs: [] };
 
   const words = trimmed.split(/\s+/).filter(Boolean).slice(0, 8);
-  const where = `(${words.map(() => "(id LIKE ? OR name LIKE ? OR short_description LIKE ?)").join(" OR ")})`;
-  const whereArgs = words.flatMap((word) => [`%${word}%`, `%${word}%`, `%${word}%`]);
-
   const scoreParts = ["(CASE WHEN name = ? COLLATE NOCASE THEN 1000 ELSE 0 END)"];
   const orderArgs = [trimmed];
   scoreParts.push("(CASE WHEN name LIKE ? THEN 200 ELSE 0 END)");
@@ -320,12 +311,7 @@ function buildSearchClause(trimmed: string): {
     );
     orderArgs.push(`%${word}%`);
   }
-  return { where, whereArgs, orderBy: `(${scoreParts.join(" + ")}) DESC, name ASC`, orderArgs };
-}
-
-/** A dataset published before catalog built `apps_fts` has no such table — fall back to the LIKE scan rather than failing the search. */
-function isMissingFtsTable(error: unknown): boolean {
-  return error instanceof Error && error.message.includes("no such table: apps_fts");
+  return { orderBy: `(${scoreParts.join(" + ")}) DESC, name ASC`, orderArgs };
 }
 
 function sortClause(sort: SortOption, searchOrderBy: string): string {
@@ -335,35 +321,22 @@ function sortClause(sort: SortOption, searchOrderBy: string): string {
 }
 
 /**
- * Empty `query` returns a stable default listing (alphabetical) rather
- * than an arbitrary first-N — there's no "insertion order" worth
- * preserving once apps live in a table instead of a JSON array.
- */
-export async function searchApps(env: ServerEnv, query: string): Promise<AppSummary[]> {
-  const db = getClient(env);
-  if (!db) return [];
-
-  return safely([], async () => {
-    const trimmed = query.trim();
-    const { where, whereArgs, orderBy, orderArgs } = buildSearchClause(trimmed);
-    const result = await db.execute({
-      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps ${where ? `WHERE ${where}` : ""} ORDER BY ${orderBy} LIMIT ?`,
-      args: [...whereArgs, ...orderArgs, MAX_RESULTS],
-    });
-
-    return result.rows.map((row) => toSummary(row as unknown as Row));
-  });
-}
-
-/**
  * Paginated listing for the /browse page. With no free-text query, the
  * total comes from a precomputed count (every combination of the bounded
  * filters — interface, type, category, source — is written to `meta` at
  * publish time), and a source-only page also comes from a precomputed,
  * chunked id list instead of a `packages_json LIKE` scan; see
- * `readPrecomputedBrowse`. A dataset published before those keys existed,
- * a free-text query, or any failure reading them falls back to the live
- * queries below, which stay correct (just expensive).
+ * `readPrecomputedBrowse`. A dataset published before those keys existed, or
+ * any failure reading them, falls back to the live queries below, which
+ * stay correct (just expensive).
+ *
+ * A free-text query is only ever answered through the `apps_fts` index
+ * (`~/search-fts`), never by a `LIKE` scan of `apps`: a query with no word
+ * the index can look up gets an empty result flagged `queryTooShort`,
+ * without a search. A dataset without `apps_fts` (none has been published
+ * since 2026-10-04, and catalog swaps the index in together with `apps`)
+ * fails the search like any other query error — empty, logged, never
+ * cached — rather than falling back to that scan.
  */
 // The current generation of catalog's precomputed browse keys, cached per
 // isolate like `cachedListing`. Only a starting guess: `readPinned` verifies
@@ -509,14 +482,14 @@ const SEARCH_COUNT_CAP = 1000;
  * search can never cost more than the two full scans of `apps` it replaced:
  *
  * - Ranks inside `apps_fts` — it carries the `name` and `short_description`
- *   `buildSearchClause`'s score reads — then fetches only the page's apps.
+ *   `buildSearchOrder`'s score reads — then fetches only the page's apps.
  *   Ranking `apps` rows matched through `id IN (...)` instead read ~4 rows
  *   per match; this reads ~2 (preview, 2026-10-04: `lib`, 13,455 matches,
  *   53,820 → 26,910 rows read).
  * - Counts at most `SEARCH_COUNT_CAP` + 1 matches (`totalCapped` past that,
  *   shown as "1,000+"): an exact count read one row per match, ~93k for a
- *   broad trigram like `man`, which made such searches cost more than the
- *   LIKE scans did (464,795 vs 343,666 rows read on preview).
+ *   broad trigram like `man`, which made such searches cost more than two
+ *   full scans of `apps` (464,795 vs 343,666 rows read on preview).
  *
  * Any other filter (category, source, ...) lives on `apps`, so combined
  * searches keep the `id IN (...)` path in `browseApps`.
@@ -593,17 +566,18 @@ export async function browseApps(
   }
   const license = freeFilter ? options.license : undefined;
 
-  const trimmed = query.trim();
+  // /browse's `server$` call passes whatever the client sent here too.
+  const trimmed = typeof query === "string" ? query.trim() : "";
+  const fts = buildFtsClause(trimmed);
+  // Nothing the index can look up (see `buildFtsClause`): no search at all.
+  if (trimmed && !fts) return { apps: [], total: 0, queryTooShort: true, freeFilter };
 
-  const runBrowseQuery = async (useFts: boolean): Promise<BrowseResult> => {
-    const search = buildSearchClause(trimmed);
-    const fts = useFts ? buildFtsClause(trimmed) : undefined;
-    const { orderBy, orderArgs } = search;
-    const { where: searchWhere, whereArgs } = fts ?? search;
+  const runBrowseQuery = async (): Promise<BrowseResult> => {
+    const { orderBy, orderArgs } = buildSearchOrder(trimmed);
 
     const conditions: string[] = [];
     const conditionArgs: string[] = [];
-    if (searchWhere) conditions.push(searchWhere);
+    if (fts) conditions.push(fts.where);
     if (interfaceFilter === "gui") {
       conditions.push("kind = 'gui'");
     } else if (interfaceFilter === "cli") {
@@ -630,7 +604,7 @@ export async function browseApps(
       conditionArgs.push(`%"source":"${source}"%`);
     }
     const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-    const fullConditionArgs = [...whereArgs, ...conditionArgs];
+    const fullConditionArgs = [...(fts?.whereArgs ?? []), ...conditionArgs];
     const offset = page * BROWSE_PAGE_SIZE;
 
     // No free-text query and at least one filter: try the precomputed
@@ -706,18 +680,11 @@ export async function browseApps(
   // — one for COUNT(*), one for the page itself — on every single visit
   // to a source's browse/store page.
   const result = trimmed
-    ? await safely({ apps: [], total: 0 }, async () => {
-        try {
-          return await runBrowseQuery(true);
-        } catch (error) {
-          if (!isMissingFtsTable(error)) throw error;
-          return runBrowseQuery(false);
-        }
-      })
+    ? await safely({ apps: [], total: 0 }, runBrowseQuery)
     : await cachedListing(
         `browseApps:${interfaceFilter}:${typeFilter}:${category ?? ""}:${source ?? ""}:${license ?? ""}:${sort}:${page}`,
         { apps: [], total: 0 },
-        () => runBrowseQuery(false),
+        runBrowseQuery,
       );
   return { ...result, freeFilter };
 }
