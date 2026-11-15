@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Pushes tuxery-web's secrets to Cloudflare, for production and for its
 # pull-request Previews (TURSO_DB_URL, TURSO_DB_AUTH_TOKEN,
-# UNSPLASH_ACCESS_KEY — see README.md's "Deployment" section and
+# UNSPLASH_ACCESS_KEY, and FEEDBACK_GITHUB_TOKEN for production — see README.md's "Deployment" section and
 # wrangler.jsonc):
 #   production <- ../.dev/.env.prod    (prod-tuxery DB)
 #   previews   <- ../.dev/.env.preview (preview-tuxery DB — there is no
@@ -60,6 +60,12 @@ push_env() {
       # shellcheck disable=SC2086
       printf '%s' "${!secret}" | pnpm exec wrangler $put_command "$secret"
     done
+    # Optional, production only: /feedback's token (see src/feedback.ts).
+    # Previews never get it, so their form can't file test issues.
+    if [[ "$target" == "production" && -n "${FEEDBACK_GITHUB_TOKEN:-}" ]]; then
+      echo "==> Setting FEEDBACK_GITHUB_TOKEN ($target)"
+      printf '%s' "$FEEDBACK_GITHUB_TOKEN" | pnpm exec wrangler secret put FEEDBACK_GITHUB_TOKEN
+    fi
   )
 }
 

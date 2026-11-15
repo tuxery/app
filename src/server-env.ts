@@ -20,7 +20,10 @@
 // trusted to be complete), but the real Worker's `platform.env` and
 // `pnpm dev`/`pnpm start`'s `process.env` both make no such guarantee.
 export type ServerEnv = Partial<
-  Pick<Env, "TURSO_DB_URL" | "TURSO_DB_AUTH_TOKEN" | "UNSPLASH_ACCESS_KEY">
+  Pick<
+    Env,
+    "TURSO_DB_URL" | "TURSO_DB_AUTH_TOKEN" | "UNSPLASH_ACCESS_KEY" | "FEEDBACK_GITHUB_TOKEN"
+  >
 >;
 
 export function resolveServerEnv(platform: QwikRouterPlatform | undefined): ServerEnv {

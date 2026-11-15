@@ -79,6 +79,9 @@
    * Previews (`wrangler preview base-config secret put <NAME>`) —
    * scripts/push-cloudflare-secrets.sh does both. Never committed here —
    * see README.
+   * FEEDBACK_GITHUB_TOKEN: production only, optional (/feedback says it
+   * can't send without it). A fine-grained token limited to
+   * tuxery/beta-feedback, Issues: read and write; see src/feedback.ts.
    * https://developers.cloudflare.com/workers/configuration/secrets/
    */
 }

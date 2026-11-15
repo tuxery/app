@@ -14,7 +14,7 @@ export function isCatalogUnavailable(sharedMap: Map<string, unknown>): boolean {
 // still answer 200 (with the banner), every other page 503 — so crawlers
 // and monitors see an outage where content is actually missing, and not
 // on the docs or the settings.
-const PAGES_WITHOUT_CATALOG = ["/docs/", "/settings/", "/claim/"];
+const PAGES_WITHOUT_CATALOG = ["/docs/", "/settings/", "/claim/", "/feedback/"];
 
 export function needsCatalog(pathname: string): boolean {
   const path = pathname.endsWith("/") ? pathname : `${pathname}/`;
