@@ -27,9 +27,11 @@ that publish one:
 - **Arch's pkgstats**, the same kind of opt-in survey for Arch's official
   repositories.
 
-When an app has several, they are averaged. Each source's figure is
-scaled within that source first, since the raw numbers can't be compared
-directly. Apps found only in sources that publish no popularity figure
+Each source's figure is scaled within that source first, since the raw
+numbers can't be compared directly. An app's score is then the average of
+its three best sources, and a source with no figure counts as 0.5, the
+middle: being near the top of one source alone isn't enough to lead the
+list, an app has to be popular in several places. Apps found only in sources that publish no popularity figure
 (Fedora, the Snap Store, GOG...) can't appear here, however
 popular they are elsewhere — which answers most "why isn't X trending?"
 questions.
