@@ -16,6 +16,35 @@ export function isCatalogUnavailable(sharedMap: Map<string, unknown>): boolean {
 // on the docs or the settings.
 const PAGES_WITHOUT_CATALOG = ["/docs/", "/settings/", "/claim/", "/feedback/"];
 
+// A catalog query that failed while the health check said the database
+// answers: the page was rendered from a fallback (an empty list, a missing
+// app), so it must not be kept by any cache or be read as "doesn't exist".
+// Per isolate: a request running next to the failing one is treated the
+// same, which only costs it one uncached answer.
+let lastQueryFailureAt: number | undefined;
+
+export function noteQueryFailure(now: number = Date.now()): void {
+  lastQueryFailureAt = now;
+}
+
+/** Whether a catalog query failed at or after `since` (a `Date.now()` taken when the request came in). */
+export function queryFailedSince(since: number): boolean {
+  return lastQueryFailureAt !== undefined && lastQueryFailureAt >= since;
+}
+
+const REQUEST_STARTED_KEY = "tuxery.requestStartedAt";
+
+/** Stamps when the request came in, for `queryFailedDuringRequest`. */
+export function markRequestStart(sharedMap: Map<string, unknown>, now: number = Date.now()): void {
+  sharedMap.set(REQUEST_STARTED_KEY, now);
+}
+
+/** Whether a catalog query failed since `markRequestStart`: what a loader got back may be a fallback. */
+export function queryFailedDuringRequest(sharedMap: Map<string, unknown>): boolean {
+  const startedAt = sharedMap.get(REQUEST_STARTED_KEY);
+  return typeof startedAt === "number" && queryFailedSince(startedAt);
+}
+
 export function needsCatalog(pathname: string): boolean {
   const path = pathname.endsWith("/") ? pathname : `${pathname}/`;
   return !PAGES_WITHOUT_CATALOG.some((prefix) => path.startsWith(prefix));

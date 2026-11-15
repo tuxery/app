@@ -27,7 +27,7 @@ import { deviceBadges } from "~/device-support";
 import { architectures, flatpakRuntimes, installedSizes } from "~/technical-details";
 import { brandBorderAttributes, brandBorders } from "~/brand-colors";
 import { classifyLicense, licenseInfoHref } from "~/license";
-import { isCatalogUnavailable } from "~/catalog-status";
+import { isCatalogUnavailable, queryFailedDuringRequest } from "~/catalog-status";
 import { useCatalogUnavailable } from "~/routes/layout";
 import { labelledIssuesUrl, reportDataProblemUrl, suggestFixUrl } from "~/contribute-links";
 import { dataIssues } from "~/data-issues";
@@ -97,13 +97,30 @@ import {
   type SpecialRepoOption,
 } from "~/settings";
 
+/** The id as written in the path; one that isn't valid percent-encoding is looked up as is (and not found) rather than thrown on. */
+function decodeAppId(raw: string): string {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
 export const useApp = routeLoader$(async (requestEvent): Promise<CatalogApp | null> => {
-  const id = decodeURIComponent(requestEvent.params.id ?? "");
+  const id = decodeAppId(requestEvent.params.id ?? "");
   const app = await getAppById(resolveServerEnv(requestEvent.platform), id);
+  if (app) return app;
   // During an outage the layout already answered 503: missing here means
-  // "couldn't load", not "doesn't exist".
-  if (!app && !isCatalogUnavailable(requestEvent.sharedMap)) requestEvent.status(404);
-  return app;
+  // "couldn't load", not "doesn't exist". Same when the lookup itself
+  // failed after the layout's check passed.
+  if (isCatalogUnavailable(requestEvent.sharedMap)) return null;
+  if (queryFailedDuringRequest(requestEvent.sharedMap)) {
+    requestEvent.cacheControl({ noStore: true });
+    requestEvent.status(503);
+    return null;
+  }
+  requestEvent.status(404);
+  return null;
 });
 
 /**

@@ -5,6 +5,7 @@ import {
   isSharedCacheable,
   NOT_FOUND_CACHE_CONTROL,
   withCacheStatus,
+  withNoStore,
   withNotFoundCacheControl,
 } from "./edge-cache";
 
@@ -83,5 +84,15 @@ describe("withCacheStatus", () => {
     expect(response.headers.get("Cache-Control")).toBe("public, max-age=60");
     expect(response.status).toBe(404);
     expect(await response.text()).toBe("x");
+  });
+});
+
+describe("withNoStore", () => {
+  it("replaces a public Cache-Control and keeps the status and body", async () => {
+    const response = withNoStore(reply(404, "public, max-age=60, s-maxage=3600"));
+    expect(response.status).toBe(404);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(await response.text()).toBe("x");
+    expect(isSharedCacheable(response)).toBe(false);
   });
 });
