@@ -8,6 +8,7 @@ import {
   type AppSummary,
   type SourcedPackage,
 } from "~/catalog-types";
+import { httpUrl } from "~/safe-url";
 
 // A database row (`SUMMARY_COLUMNS`, or one of catalog's precomputed
 // `listingRows:*`) as the card a listing shows. No database import: the
@@ -15,7 +16,6 @@ import {
 
 /** A row as `@libsql/client` returns it, or as catalog stores it in `listingRows:*`. */
 export type Row = Record<string, unknown>;
-
 
 export function parseRating(row: Row): { average: number; count: number } | undefined {
   return isNullish(row.rating_average)
@@ -29,7 +29,8 @@ export function toSummary(row: Row): AppSummary {
     id: row.id as string,
     name: row.name as string,
     shortDescription: row.short_description as string,
-    iconUrl: (row.icon_url as string | null) ?? undefined,
+    // Source-provided: only an http(s) URL reaches an `<img src>`.
+    iconUrl: httpUrl(row.icon_url),
     kind: row.kind === "gui" ? "gui" : undefined,
     contentType: row.content_type === "game" ? "game" : undefined,
     category: row.category as string,
@@ -45,4 +46,3 @@ export function toSummary(row: Row): AppSummary {
     verifiedSources: verifiedSourcesOf(packages),
   };
 }
-
