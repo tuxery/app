@@ -42,6 +42,28 @@ describe("parseFeedback", () => {
     expect(parseFeedback({ message: "x".repeat(MESSAGE_MAX + 1) })).toMatchObject({ ok: false });
   });
 
+  it("keeps the contact on one line and the message free of control characters", () => {
+    const parsed = parseFeedback({
+      message: "First line\r\nSecond\u0000 line\u2028\twith a tab",
+      contact: "me@example.org\n**App version:** forged",
+    });
+    expect(parsed).toMatchObject({
+      ok: true,
+      input: {
+        message: "First line\nSecond line\twith a tab",
+        contact: "me@example.org **App version:** forged",
+      },
+    });
+  });
+
+  it("drops a page that isn't a path on this site", () => {
+    const parsed = parseFeedback({
+      message: "Nice site, thanks a lot",
+      page: "/app/gimp/\n@octocat",
+    });
+    expect(parsed).toMatchObject({ ok: true, input: { page: undefined } });
+  });
+
   it("flags a filled honeypot as spam", () => {
     expect(parseFeedback({ message: "Buy cheap things now!!", website: "http://spam" })).toEqual({
       ok: false,
@@ -62,7 +84,35 @@ describe("normalizePage", () => {
     expect(normalizePage("javascript:alert(1)")).toBeUndefined();
     expect(normalizePage("")).toBeUndefined();
   });
+
+  it("drops what a browser would read as another site or a script", () => {
+    expect(normalizePage("/\\example.org/")).toBeUndefined();
+    expect(normalizePage("\\\\example.org/")).toBeUndefined();
+    expect(normalizePage("/app\\..\\example.org")).toBeUndefined();
+    expect(normalizePage("https://tuxery.store//example.org/")).toBeUndefined();
+    expect(normalizePage("https://tuxery.store.example.org/")).toBeUndefined();
+    expect(normalizePage("https://tuxery.store@example.org/")).toBeUndefined();
+    expect(normalizePage("JavaScript:alert(1)")).toBeUndefined();
+    expect(normalizePage("data:text/html,x")).toBeUndefined();
+    expect(normalizePage("app/gimp/")).toBeUndefined();
+  });
+
+  it("drops a path carrying a line break or another control character", () => {
+    expect(normalizePage("/app/gimp/\n@octocat")).toBeUndefined();
+    expect(normalizePage("/app/\tgimp/")).toBeUndefined();
+    expect(normalizePage("/app/gimp/\u0000")).toBeUndefined();
+    expect(normalizePage("/app/\u2028gimp/")).toBeUndefined();
+    expect(normalizePage("/\r/example.org")).toBeUndefined();
+  });
+
+  it("caps the length", () => {
+    expect(normalizePage(`/${"a".repeat(1000)}`)).toHaveLength(300);
+  });
 });
+
+/** The issue's "Page" line for a given page. */
+const pageLine = (page: string) =>
+  buildFeedbackIssue({ kind: "bug", message: "Something is off here", page }).body.split("\n")[1];
 
 describe("buildFeedbackIssue", () => {
   it("titles the issue with the kind and the message's first line", () => {
@@ -76,7 +126,7 @@ describe("buildFeedbackIssue", () => {
     );
     expect(issue.title).toBe("[data] Wrong license for Krita");
     expect(issue.labels).toEqual(["feedback", "data"]);
-    expect(issue.body).toContain("https://tuxery.store/app/krita/");
+    expect(issue.body).toContain("**Page:** `https://tuxery.store/app/krita/`");
     expect(issue.body).toContain("**App version:** 2026.11.15");
     expect(issue.body).toContain("It says proprietary.");
   });
@@ -95,5 +145,16 @@ describe("buildFeedbackIssue", () => {
     });
     expect(issue.body).not.toMatch(/@octocat|@someone|#12|<img/);
     expect(issue.body).toContain("&lt;img src=x&gt;");
+    // Still readable: only an invisible character was added.
+    expect(issue.body.replaceAll("\u200b", "")).toContain("Ping @octocat about #12");
+  });
+
+  it("writes the page as a code span nothing can get out of", () => {
+    expect(pageLine("/browse/?q=`@octocat` **bold**")).toBe(
+      "**Page:** `https://tuxery.store/browse/?q=%60@octocat%60 **bold**`  ",
+    );
+    // A page that got here without going through `parseFeedback`.
+    expect(pageLine("/app/gimp/\n\n@octocat")).toBe("**Page:** not given  ");
+    expect(pageLine("//example.org/")).toBe("**Page:** not given  ");
   });
 });

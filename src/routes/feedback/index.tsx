@@ -7,6 +7,7 @@ import {
   FEEDBACK_REPO,
   MESSAGE_MAX,
   MESSAGE_MIN,
+  normalizePage,
   parseFeedback,
 } from "~/feedback";
 import { resolveServerEnv } from "~/server-env";
@@ -55,7 +56,9 @@ export const useSendFeedback = routeAction$(async (form, { platform }): Promise<
 export default component$(() => {
   const action = useSendFeedback();
   const loc = useLocation();
-  const from = loc.url.searchParams.get("from") ?? "";
+  // `?from=` is whatever the link that led here says: only a path on this
+  // site becomes the "back" link's `href` and the form's prefilled page.
+  const from = normalizePage(loc.url.searchParams.get("from")) ?? "";
   const result = action.value;
 
   if (result?.sent) {
