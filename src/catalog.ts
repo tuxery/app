@@ -2,6 +2,7 @@ import { isNullish } from "helpers4/guard";
 import { createClient, type Client } from "@libsql/client";
 import { parseSourceTerms, SOURCE_TERMS_META_KEY, type SourceTerms } from "./source-terms";
 import { parseRating, toSummary, type Row } from "./app-summary";
+import { httpLinks, httpUrl, httpUrls } from "./safe-url";
 import { BUILD_INFO_META_KEY, parseBuildInfo } from "./build-info";
 import { HOME_LISTINGS, MUST_HAVE_APP_IDS } from "./home-rows";
 import {
@@ -13,6 +14,7 @@ import {
   type CatalogApp,
   type CatalogStats,
   type PackageSourceId,
+  type SourcedPackage,
 } from "~/catalog-types";
 import {
   BROWSE_KEYS_META_KEY,
@@ -168,13 +170,25 @@ function parseLicenseKind(row: Row): CatalogApp["licenseKind"] {
     : "unknown";
 }
 
-function toCatalogApp(row: Row): CatalogApp {
+/** A package with its `homepage` kept only as a web link (see `toCatalogApp`). */
+function withWebHomepage(pkg: SourcedPackage): SourcedPackage {
+  return pkg.homepage === undefined ? pkg : { ...pkg, homepage: httpUrl(pkg.homepage) };
+}
+
+/**
+ * A full `apps` row as the app page reads it. Every URL in it that a page
+ * puts in an `href` or a `src` — the homepage, the project's links, the
+ * icon, screenshots and videos, each package's own homepage — goes through
+ * `~/safe-url` here, so no page can be handed anything but an http(s) one:
+ * the sources publish these as free text.
+ */
+export function toCatalogApp(row: Row): CatalogApp {
   return {
     id: row.id as string,
     name: row.name as string,
     shortDescription: row.short_description as string,
     longDescription: str(row.long_description),
-    homepage: str(row.homepage),
+    homepage: httpUrl(row.homepage),
     kind: row.kind === "gui" ? "gui" : undefined,
     contentType: row.content_type === "game" ? "game" : undefined,
     category: row.category as string,
@@ -189,7 +203,7 @@ function toCatalogApp(row: Row): CatalogApp {
     installsLastMonth: num(row.installs_last_month),
     installsDaily: json(row.installs_daily_json),
     dataConfidence: json(row.data_confidence_json),
-    iconUrl: str(row.icon_url),
+    iconUrl: httpUrl(row.icon_url),
     approxSizeBytes: num(row.approx_size_bytes),
     changelog: str(row.changelog),
     requirements: str(row.requirements),
@@ -202,10 +216,10 @@ function toCatalogApp(row: Row): CatalogApp {
       : { system: row.age_rating_system as string, value: row.age_rating_value as string },
     popularity: num(row.popularity),
     languages: json(row.languages_json),
-    screenshots: json(row.screenshots_json),
-    links: json(row.links_json),
+    screenshots: httpUrls(json(row.screenshots_json)),
+    links: httpLinks(json<CatalogApp["links"]>(row.links_json)),
     releases: json(row.releases_json),
-    videos: json(row.videos_json),
+    videos: httpUrls(json(row.videos_json)),
     reviews: json(row.reviews_json),
     features: json(row.features_json),
     permissions: json(row.permissions_json),
@@ -215,7 +229,7 @@ function toCatalogApp(row: Row): CatalogApp {
     storeCollections: json(row.store_collections_json),
     suite: json(row.suite_json),
     compatibilityWarnings: json(row.compat_warnings_json),
-    packages: json(row.packages_json) ?? [],
+    packages: (json<SourcedPackage[]>(row.packages_json) ?? []).map(withWebHomepage),
     // Absent columns on a dataset published before product families read
     // as `undefined`, like any other empty column.
     companions: json(row.companions_json),

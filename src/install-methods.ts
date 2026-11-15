@@ -1,4 +1,5 @@
 import type { PackageSourceId, SourcedPackage } from "~/catalog-types";
+import { httpUrl } from "~/safe-url";
 
 /**
  * A best-effort URI-scheme deep link that may trigger a local install
@@ -236,7 +237,10 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
   // vendor documents that step differently. `homepage` is that page.
   "vendor-repos": {
     kind: "link",
-    websiteLink: (pkg) => (pkg.homepage ? { url: pkg.homepage, label: "Vendor" } : undefined),
+    websiteLink: (pkg) => {
+      const url = httpUrl(pkg.homepage);
+      return url ? { url, label: "Vendor" } : undefined;
+    },
   },
 };
 
@@ -271,7 +275,8 @@ export function pageAttribution(
 ): { text: string; url: string } | undefined {
   for (const pkg of packages) {
     const text = INSTALL_METHODS[pkg.source]?.attribution;
-    if (text && pkg.homepage) return { text, url: pkg.homepage };
+    const url = httpUrl(pkg.homepage);
+    if (text && url) return { text, url };
   }
   return undefined;
 }

@@ -20,6 +20,10 @@ describe("pageAttribution", () => {
   it("owes nothing for sources that don't ask for a credit", () => {
     expect(pageAttribution([flathub])).toBeUndefined();
   });
+
+  it("never links to anything but a web page", () => {
+    expect(pageAttribution([{ ...hub, homepage: "javascript:alert(1)" }])).toBeUndefined();
+  });
 });
 
 const brave = {
@@ -36,6 +40,8 @@ describe("vendor-repos install method", () => {
 
   it("shows no link when the vendor has no homepage", () => {
     expect(installWebsiteLink({ ...brave, homepage: undefined })).toBeUndefined();
+    expect(installWebsiteLink({ ...brave, homepage: "javascript:alert(1)" })).toBeUndefined();
+    expect(installWebsiteLink({ ...brave, homepage: "brave.com/linux/" })).toBeUndefined();
   });
 });
 

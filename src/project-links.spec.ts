@@ -18,6 +18,7 @@ describe("projectLinks", () => {
 
   it("drops links that aren't web pages, and handles none", () => {
     expect(projectLinks({ contact: "mailto:dev@example.org" })).toEqual([]);
+    expect(projectLinks({ donation: "javascript:alert(1)" })).toEqual([]);
     expect(projectLinks(undefined)).toEqual([]);
   });
 });
