@@ -22,6 +22,7 @@ import {
   withNotFoundCacheControl,
 } from "./edge-cache";
 import render from "./entry.ssr";
+import { withSecurityHeaders } from "./security-headers";
 
 declare global {
   type QwikRouterPlatform = PlatformCloudflareWorkers;
@@ -43,10 +44,7 @@ const withoutRouterCache = (request: Request) => {
   return new Request(request, { headers });
 };
 
-const fetch = async (request: Request, env: RouterEnv, ctx: RouterContext) => {
-  const url = new URL(request.url);
-  if (isStaticPath(request.method, url)) return router(request, env, ctx);
-
+const respond = async (request: Request, env: RouterEnv, ctx: RouterContext) => {
   // A catalog query that fails after the layout's health check leaves the
   // page rendered from a fallback, with the layout's public Cache-Control
   // already set: such an answer is never stored, here or in the browser.
@@ -66,6 +64,15 @@ const fetch = async (request: Request, env: RouterEnv, ctx: RouterContext) => {
   if (!isSharedCacheable(response)) return response;
   ctx.waitUntil(cache.put(key, response.clone()));
   return withCacheStatus(response, "miss");
+};
+
+// Static files get their headers from `public/_headers`. Everything else
+// leaves with the security headers (`~/security-headers`), whoever wrote the
+// response: a route, the cache, or the router's own bare 404 and error pages.
+const fetch = async (request: Request, env: RouterEnv, ctx: RouterContext) => {
+  const url = new URL(request.url);
+  if (isStaticPath(request.method, url)) return router(request, env, ctx);
+  return withSecurityHeaders(await respond(request, env, ctx));
 };
 
 export { fetch };
