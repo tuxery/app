@@ -26,6 +26,46 @@ jobs:
       working-directory: .
       node-version: "26"
 
+  # src/store-contract.json must be byte for byte catalog's
+  # src/store/store-contract.json: store-contract.spec.ts pins catalog.ts to
+  # this copy, catalog's tests pin its publish() to that one. A contract
+  # change goes on same-named branches in both repos, so this compares with
+  # catalog's branch of this PR's name when it exists (then its base, then
+  # the pushed branch), and catalog's main otherwise — the same pick as the
+  # E2E jobs below. catalog is public: the default token reads it.
+  store-contract:
+    name: Store contract matches catalog's
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Compare with catalog's copy
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          ref=main
+          for candidate in "$HEAD_REF" "$BASE_REF" "$REF_NAME"; do
+            if [ -n "$candidate" ] && git ls-remote --exit-code --heads https://github.com/tuxery/catalog.git "$candidate" > /dev/null; then
+              ref=$candidate
+              break
+            fi
+          done
+          echo "Comparing with catalog's $ref"
+          gh api -H "Accept: application/vnd.github.raw" \
+            "repos/tuxery/catalog/contents/src/store/store-contract.json?ref=$ref" > "$RUNNER_TEMP/catalog-store-contract.json"
+          if ! diff -u "$RUNNER_TEMP/catalog-store-contract.json" src/store-contract.json; then
+            echo "::error file=src/store-contract.json::differs from catalog's src/store/store-contract.json on $ref: change both, on same-named branches"
+            exit 1
+          fi
+
   # Not folded into ci-web.yml (the shared reusable workflow every
   # tuxery/* repo's CI calls) — this needs a `wrangler dev` run, specific
   # to this repo. See playwright.worker.config.ts's header for what this
@@ -553,7 +593,7 @@ jobs:
   # at a glance without opening the job log.
   pr-comment:
     name: PR status comment
-    needs: [ci, e2e-desktop, e2e-mobile, e2e-worker, e2e-degraded]
+    needs: [ci, store-contract, e2e-desktop, e2e-mobile, e2e-worker, e2e-degraded]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
@@ -568,6 +608,7 @@ jobs:
               "🧹 Lint": "${{ needs.ci.outputs.lint-result }}",
               "🧪 Unit Tests (${{ needs.ci.outputs.test-summary }})": "${{ needs.ci.outputs.test-result }}",
               "📦 Build": "${{ needs.ci.outputs.build-result }}",
+              "🤝 Store contract": "${{ needs.store-contract.result }}",
               "🖥️ E2E Desktop (${{ needs.e2e-desktop.outputs.summary }})": "${{ needs.e2e-desktop.result }}",
               "📱 E2E Mobile (${{ needs.e2e-mobile.outputs.summary }})": "${{ needs.e2e-mobile.result }}",
               "🧭 E2E Worker bundle (${{ needs.e2e-worker.outputs.summary }})": "${{ needs.e2e-worker.result }}",
