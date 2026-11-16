@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   canonicalPath,
   canonicalUrl,
+  isIndexableHost,
   isPreviewHost,
   robotsDirective,
   robotsHeader,
+  robotsMeta,
+  servesSitemap,
   SITE_IS_PUBLIC,
 } from "./seo";
 
@@ -56,5 +59,36 @@ describe("robotsHeader", () => {
 
   it("keeps the site itself out of the index until it is public", () => {
     expect(robotsHeader("tuxery.store")).toBe(SITE_IS_PUBLIC ? undefined : "noindex");
+    expect(robotsHeader("tuxery.store", false)).toBe("noindex");
+    expect(robotsHeader("tuxery.store", true)).toBeUndefined();
+    expect(robotsHeader("pr-104.preview.tuxery.store", true)).toBe("noindex");
+  });
+});
+
+describe("isIndexableHost", () => {
+  it("is only ever the public site, never a Preview", () => {
+    expect(isIndexableHost("tuxery.store", true)).toBe(true);
+    expect(isIndexableHost("tuxery.store", false)).toBe(false);
+    expect(isIndexableHost("pr-1.preview.tuxery.store", true)).toBe(false);
+  });
+});
+
+describe("robotsMeta", () => {
+  it("says what the header says, unless the page has a stricter directive of its own", () => {
+    expect(robotsMeta("/app/firefox/", "tuxery.store", false)).toBe("noindex");
+    expect(robotsMeta("/app/firefox/", "tuxery.store", true)).toBeUndefined();
+    expect(robotsMeta("/settings/", "tuxery.store", true)).toBe("noindex, nofollow");
+    expect(robotsMeta("/claim/", "tuxery.store", false)).toBe("noindex, nofollow");
+    expect(robotsMeta("/", "pr-3.preview.tuxery.store", true)).toBe("noindex");
+  });
+});
+
+describe("servesSitemap", () => {
+  it("keeps production's sitemap for the launch, and shows it everywhere it can be checked", () => {
+    expect(servesSitemap("tuxery.store", false)).toBe(false);
+    expect(servesSitemap("tuxery.store", true)).toBe(true);
+    expect(servesSitemap("pr-104.preview.tuxery.store", false)).toBe(true);
+    expect(servesSitemap("localhost", false)).toBe(true);
+    expect(servesSitemap("127.0.0.1", false)).toBe(true);
   });
 });

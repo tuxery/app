@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { applySecurityHeaders, SECURITY_HEADERS, withSecurityHeaders } from "./security-headers";
 
@@ -66,18 +65,5 @@ describe("withSecurityHeaders", () => {
     expect(redirect.status).toBe(301);
     expect(redirect.headers.get("Location")).toBe("https://tuxery.store/");
     expect(redirect.headers.get("X-Frame-Options")).toBe("DENY");
-  });
-});
-
-describe("public/_headers", () => {
-  it("gives static files the same headers", () => {
-    const file = readFileSync(new URL("../public/_headers", import.meta.url), "utf8");
-    const everyFile = file.slice(
-      file.indexOf("\n/*\n"),
-      file.indexOf("\n\n", file.indexOf("\n/*\n")),
-    );
-    for (const [name, expected] of SECURITY_HEADERS) {
-      expect(everyFile).toContain(`\n  ${name}: ${expected}`);
-    }
   });
 });

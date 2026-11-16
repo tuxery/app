@@ -74,9 +74,10 @@ const respond = async (original: Request, env: RouterEnv, ctx: RouterContext) =>
   return withCacheStatus(response, "miss");
 };
 
-// Static files get their headers from `public/_headers`. Everything else
-// leaves with the security headers (`~/security-headers`), whoever wrote the
-// response: a route, the cache, or the router's own bare 404 and error pages.
+// Static files get their headers from `_headers` (`~/static-files`).
+// Everything else leaves with the security headers (`~/security-headers`),
+// whoever wrote the response: a route, the cache, or the router's own bare
+// 404 and error pages.
 const fetch = async (request: Request, env: RouterEnv, ctx: RouterContext) => {
   const url = new URL(request.url);
   if (isStaticPath(request.method, url)) return router(request, env, ctx);
