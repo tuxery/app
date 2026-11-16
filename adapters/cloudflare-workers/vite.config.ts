@@ -10,6 +10,9 @@ export default extendConfig(baseConfig, () => {
         input: ["src/entry.cloudflare-pages.tsx", "@qwik-router-config"],
       },
     },
-    plugins: [cloudflareWorkersAdapter()],
+    // No static generation: every page reads the catalog, so none is
+    // prerendered, and its by-product, a sitemap.xml of the prerendered
+    // pages (an empty one), would shadow the Worker's own /sitemap.xml.
+    plugins: [cloudflareWorkersAdapter({ ssg: null })],
   };
 });
