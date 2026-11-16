@@ -281,6 +281,25 @@ export const SOURCE_ROWS: SourceRow[] = [
     fields: { popularity: "yes", releaseDate: "yes" },
   },
   { id: "vendor-repos", permission: "not-asked", fields: {} },
+  {
+    id: "brew-homebrew",
+    permission: "not-needed",
+    permissionNote:
+      "Homebrew documents its JSON files as a public API, and its formulae and casks are BSD-2-Clause, so we haven't asked. Their license notices ship with our copy.",
+    fields: { popularity: "yes" },
+    notes: [
+      {
+        what: "Popularity",
+        availability: "yes",
+        note: "Homebrew's 30-day install counts, which include macOS installs: most of them. Casks have none.",
+      },
+      {
+        what: "Icon and screenshots",
+        availability: "none",
+        note: "Homebrew publishes none.",
+      },
+    ],
+  },
 ];
 
 /** A cell's value: open data is available unless said otherwise, everything else isn't. */

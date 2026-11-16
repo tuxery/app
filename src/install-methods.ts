@@ -232,6 +232,28 @@ export const INSTALL_METHODS: Record<PackageSourceId, InstallMethod> = {
   gog: { kind: "link" },
   lutris: { kind: "link" },
   "github-releases": { kind: "link" },
+  // A cask's `appId` is `cask/<token>`: its `name` is the display name
+  // ("Heroic Games Launcher"), not what `brew install --cask` takes.
+  "brew-homebrew": {
+    kind: "command",
+    command: (pkg) =>
+      pkg.appId?.startsWith("cask/")
+        ? `brew install --cask ${pkg.appId.slice("cask/".length)}`
+        : `brew install ${pkg.name}`,
+    websiteLink: (pkg) =>
+      pkg.appId?.startsWith("cask/")
+        ? {
+            url: `https://formulae.brew.sh/cask/${pkg.appId.slice("cask/".length)}`,
+            label: "Homebrew",
+          }
+        : { url: `https://formulae.brew.sh/formula/${pkg.name}`, label: "Homebrew" },
+    setup: {
+      kind: "command",
+      command:
+        '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
+      note: "One-time — Homebrew isn't part of any distro. Its installer goes in /home/linuxbrew and needs build tools and curl; see docs.brew.sh/Homebrew-on-Linux.",
+    },
+  },
   // The vendor's own install page, not an `apt install` line: the package
   // lives in the vendor's apt repo, which has to be added first and each
   // vendor documents that step differently. `homepage` is that page.

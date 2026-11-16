@@ -52,7 +52,7 @@ export interface InstallFormatGroup {
  * Cross-distro packaging formats and distribution-agnostic storefronts —
  * install once, work the same regardless of which distro tile is
  * selected in the OS Selector tab, so every `~/os-catalog` entry
- * recommends all six of these alongside its own native distro group. Also
+ * recommends all of these alongside its own native distro group. Also
  * the "Cross-distro formats" vs. "Distro packages" split on the Sources
  * tab — a UI/recommendation grouping, not a `~/catalog-types` concept.
  */
@@ -63,6 +63,7 @@ export const CROSS_DISTRO_GROUP_IDS = new Set([
   "GOG",
   "Lutris",
   "GitHub Releases",
+  "Homebrew",
 ]);
 
 export interface SettingsState {
@@ -247,6 +248,7 @@ export const defaultInstallGroups = (): InstallFormatGroup[] => [
   { id: "GOG", label: "GOG", shown: "auto", specialRepos: [] },
   { id: "Lutris", label: "Lutris", shown: "auto", specialRepos: [] },
   { id: "GitHub Releases", label: "GitHub Releases", shown: "auto", specialRepos: [] },
+  { id: "Homebrew", label: "Homebrew", shown: "auto", specialRepos: [] },
 ];
 
 const TRI_STATES = new Set(["off", "auto", "on"]);

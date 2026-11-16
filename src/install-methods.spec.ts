@@ -58,3 +58,28 @@ describe("nixpkgs install method", () => {
     );
   });
 });
+
+describe("Homebrew install method", () => {
+  const formula = { source: "brew-homebrew", name: "ripgrep", appId: "ripgrep" } as SourcedPackage;
+  const cask = {
+    source: "brew-homebrew",
+    name: "Heroic Games Launcher",
+    appId: "cask/heroic",
+  } as SourcedPackage;
+
+  it("installs a formula by name", () => {
+    expect(installCommand(formula)).toBe("brew install ripgrep");
+    expect(installWebsiteLink(formula)).toEqual({
+      url: "https://formulae.brew.sh/formula/ripgrep",
+      label: "Homebrew",
+    });
+  });
+
+  it("installs a cask by its token, not its display name", () => {
+    expect(installCommand(cask)).toBe("brew install --cask heroic");
+    expect(installWebsiteLink(cask)).toEqual({
+      url: "https://formulae.brew.sh/cask/heroic",
+      label: "Homebrew",
+    });
+  });
+});
