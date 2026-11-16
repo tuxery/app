@@ -37,8 +37,8 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261106.1",
     "@playwright/test": "^1.65.0",
-    "@qwik.dev/core": "2.0.0-rc.4",
-    "@qwik.dev/router": "2.0.0-rc.4",
+    "@qwik.dev/core": "2.0.0-rc.5",
+    "@qwik.dev/router": "2.0.0-rc.5",
     "@tailwindcss/vite": "^4.3.4",
     "@types/node": "26.6.6",
     "ignore": "^7.0.14",
