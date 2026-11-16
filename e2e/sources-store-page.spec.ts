@@ -8,7 +8,9 @@ test("the sources page links to a store's own page", async ({ page }) => {
   await expect(page).toHaveURL(/\/sources\/flatpak-flathub\/$/);
 });
 
-test("a per-source store page shows real trending apps from that source", async ({ page }) => {
+test("a per-source store page shows real trending apps from that source @private-caches", async ({
+  page,
+}) => {
   await page.goto("/sources/flatpak-flathub/");
   await expect(page.getByRole("heading", { name: "Flathub", level: 1 })).toBeVisible();
   await expect(page.locator("a[href^='/app/']").first()).toBeVisible();

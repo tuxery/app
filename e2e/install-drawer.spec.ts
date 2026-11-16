@@ -20,7 +20,7 @@ async function gotoDiscord(page: Page): Promise<void> {
 // match/group.ts's buildAppId). 0cc-famitracker has neither, so it still
 // uses "source:appId".
 
-test("groups packages by platform, one collapsible per group (closed by default), native package managers show a copy-paste command", async ({
+test("groups packages by platform, one collapsible per group (closed by default), native package managers show a copy-paste command @private-caches", async ({
   page,
 }) => {
   await page.goto("/app/0ad/");
@@ -42,7 +42,7 @@ test("groups packages by platform, one collapsible per group (closed by default)
   await expect(page.getByText("sudo dnf install 0ad")).toBeVisible();
 });
 
-test('the "Install options" label only shows when there\'s a prerequisite or more than one option', async ({
+test('the "Install options" label only shows when there\'s a prerequisite or more than one option @private-caches', async ({
   page,
 }) => {
   await gotoDiscord(page);
@@ -69,7 +69,7 @@ test('the "Install options" label only shows when there\'s a prerequisite or mor
   await expect(archSection.getByText("Install options", { exact: true })).toHaveCount(2);
 });
 
-test("Flatpak's install button is the appstream:// deep link, with a terminal command and website fallback alongside it", async ({
+test("Flatpak's install button is the appstream:// deep link, with a terminal command and website fallback alongside it @private-caches", async ({
   page,
 }) => {
   await page.goto("/app/firefox/");
@@ -96,7 +96,7 @@ test("Flatpak's install button is the appstream:// deep link, with a terminal co
   );
 });
 
-test("a native distro package with a real apt: handler (Debian) shows it as the install button", async ({
+test("a native distro package with a real apt: handler (Debian) shows it as the install button @private-caches", async ({
   page,
 }) => {
   // Debian ships Firefox ESR only: its own page on a dataset with product
@@ -111,7 +111,7 @@ test("a native distro package with a real apt: handler (Debian) shows it as the 
   );
 });
 
-test("AppImage shows a desktop-integration setup step and a Download button, not Click to install", async ({
+test("AppImage shows a desktop-integration setup step and a Download button, not Click to install @private-caches", async ({
   page,
 }) => {
   await gotoDiscord(page);
@@ -137,7 +137,7 @@ test("a native-package-only app shows a copy-paste command, even when it has an 
   await expect(page.getByText("yay -S 0cc-famitracker")).toBeVisible();
 });
 
-test("a source with more than one build (AUR's official/-bin builds) shows a build tab group, and the git build is its own version", async ({
+test("a source with more than one build (AUR's official/-bin builds) shows a build tab group, and the git build is its own version @private-caches", async ({
   page,
 }) => {
   await page.goto("/app/jan-ai/");
@@ -191,7 +191,7 @@ test("activating a source's setup persists and hides the setup step on future vi
   await expect(page.getByText("yay -S 0cc-famitracker")).toBeVisible();
 });
 
-test("selecting an OS collapses its non-recommended platforms behind a 'Show N other platforms' toggle, expandable in place", async ({
+test("selecting an OS collapses its non-recommended platforms behind a 'Show N other platforms' toggle, expandable in place @private-caches", async ({
   page,
 }) => {
   await page.goto("/settings/?tab=os");
@@ -220,7 +220,7 @@ test("selecting an OS collapses its non-recommended platforms behind a 'Show N o
   await expect(debianSummary).toBeVisible();
 });
 
-test("Snap's setup step links to Snapcraft's own install guide instead of an apt-only command", async ({
+test("Snap's setup step links to Snapcraft's own install guide instead of an apt-only command @private-caches", async ({
   page,
 }) => {
   await gotoDiscord(page);
@@ -235,7 +235,9 @@ test("Snap's setup step links to Snapcraft's own install guide instead of an apt
 // Regression: the catalog's metadata-only `*-appstream` packages have no
 // install method, and rendering one in the drawer threw — wedging the next
 // re-render, so neither close control worked. 0ad carries several of them.
-test("the drawer closes from both the ✕ button and the backdrop", async ({ page }) => {
+test("the drawer closes from both the ✕ button and the backdrop @private-caches", async ({
+  page,
+}) => {
   await page.goto("/app/0ad/");
   const heading = page.getByRole("heading", { name: "Install options" });
   const close = page.getByRole("button", { name: "Close install options" });
