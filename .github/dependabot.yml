@@ -1,39 +1,40 @@
 version: 2
-updates:
-  - package-ecosystem: npm
-    directory: /
+
+# One Dependabot pull request a week for the whole repository: npm and the
+# GitHub Actions together (a multi-ecosystem group), instead of one per
+# group and per ecosystem. Every update is reviewed and merged by hand, and
+# four PRs on the same Monday were three too many.
+#
+# Titles and commits use the `deps` scope from scopes.json for every kind of
+# dependency: Dependabot's own `include: scope` would write `deps-dev` for
+# dev dependencies, which isn't a scope here.
+#
+# Bumping @qwik.dev/core also needs the `@builder.io/qwik` override in
+# pnpm-workspace.yaml moved to the same version (two Qwik runtimes otherwise
+# load together, Code(Q30)). Dependabot doesn't know that: the build fails
+# on its PR until the override is updated on the branch.
+multi-ecosystem-groups:
+  dependencies:
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 10
-    groups:
-      qwik:
-        patterns:
-          - "@qwik.dev/*"
-      # Everything else that isn't qwik itself or a dev dependency — before
-      # this, daisyui/helpers4/@libsql/client/etc each got their own
-      # individual PR (5 open at once, 2026-09), most of them small patch/
-      # minor bumps that didn't need separate review cycles.
-      production:
-        dependency-type: production
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "@qwik.dev/*"
-      dev-tooling:
-        dependency-type: development
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "@qwik.dev/*"
     labels:
       - dependencies
 
+updates:
+  - package-ecosystem: npm
+    directory: /
+    patterns:
+      - "*"
+    multi-ecosystem-group: dependencies
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps)"
+
   - package-ecosystem: github-actions
     directory: /
-    schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
+    patterns:
+      - "*"
+    multi-ecosystem-group: dependencies
+    commit-message:
+      prefix: "chore(deps)"
