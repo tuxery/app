@@ -107,7 +107,7 @@ const CategoryRow = component$<{ title: string; category: string; apps?: AppSumm
 );
 
 const TRENDING_TIP =
-  "Ranked by popularity across the sources that publish it (the AUR's usage ranking, Debian's popcon, Arch's pkgstats): apps popular in several of them come first.";
+  "Ranked by popularity across the sources that publish it (the AUR's usage ranking, Debian's popcon, Arch's pkgstats, Homebrew's install counts, the stars of the app's GitHub repository): apps popular in several of them come first.";
 const NEW_GAMES_TIP =
   "Sorted by each source's own newest-release date (Flathub/AppCenter's AppStream <releases> timestamp) — not every app has one, so this skews toward Flatpak-packaged games.";
 const RECENTLY_UPDATED_TIP =

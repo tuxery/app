@@ -51,7 +51,7 @@ const DETAIL_SOURCES: { title: string; text: string; href: string; linkLabel: st
   },
   {
     title: "Popularity statistics",
-    text: "Debian's popcon and Arch's pkgstats, opt-in surveys of what machines have installed, the AUR's own usage ranking and Homebrew's install counts: used to order the trending lists.",
+    text: "Debian's popcon and Arch's pkgstats, opt-in surveys of what machines have installed, the AUR's own usage ranking, Homebrew's install counts and the stars of each app's GitHub repository: used to order the trending lists.",
     href: "/docs/rankings/",
     linkLabel: "How rankings work",
   },
