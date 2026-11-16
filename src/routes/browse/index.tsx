@@ -14,6 +14,7 @@ import {
 } from "~/catalog";
 import {
   BROWSE_PAGE_SIZE,
+  isInstallSource,
   SOURCE_LABELS,
   type AppSummary,
   type PackageSourceId,
@@ -48,7 +49,8 @@ function parseTypeFilter(value: string | null): TypeFilter {
 }
 
 function parseSource(value: string | null): PackageSourceId | undefined {
-  return value && value in SOURCE_LABELS ? (value as PackageSourceId) : undefined;
+  // Own keys only: `in` also accepts `constructor`, `toString`, ...
+  return value && isInstallSource(value) ? value : undefined;
 }
 
 function parseLicense(value: string | null): "free" | undefined {

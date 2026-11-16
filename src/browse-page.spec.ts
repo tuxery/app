@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_PAGE_INDEX, parsePageParam, toPageIndex } from "./browse-page";
+import { MAX_PAGE_INDEX, normalizeBrowseOptions, parsePageParam, toPageIndex } from "./browse-page";
 
 describe("parsePageParam", () => {
   it("reads a 1-based page number as a zero-based index", () => {
@@ -40,5 +40,62 @@ describe("toPageIndex", () => {
     ]) {
       expect(toPageIndex(value)).toBe(0);
     }
+  });
+});
+
+describe("normalizeBrowseOptions", () => {
+  const defaults = {
+    interfaceFilter: "all",
+    typeFilter: "all",
+    category: undefined,
+    source: undefined,
+    license: undefined,
+    sort: "relevance",
+  };
+
+  it("keeps the values browseApps knows", () => {
+    expect(
+      normalizeBrowseOptions({
+        interfaceFilter: "gui",
+        typeFilter: "game",
+        category: "Strategy",
+        source: "flatpak-flathub",
+        license: "free",
+        sort: "name-desc",
+      }),
+    ).toEqual({
+      interfaceFilter: "gui",
+      typeFilter: "game",
+      category: "Strategy",
+      source: "flatpak-flathub",
+      license: "free",
+      sort: "name-desc",
+    });
+  });
+
+  it("takes anything else as the default", () => {
+    expect(
+      normalizeBrowseOptions({
+        interfaceFilter: "tui",
+        typeFilter: ["game"],
+        category: 42,
+        source: '%"source":"%',
+        license: "proprietary",
+        sort: "RANDOM()",
+      }),
+    ).toEqual(defaults);
+    expect(normalizeBrowseOptions(undefined)).toEqual(defaults);
+    expect(normalizeBrowseOptions("nope")).toEqual(defaults);
+  });
+
+  it("refuses a source name inherited from Object", () => {
+    expect(normalizeBrowseOptions({ source: "constructor" }).source).toBeUndefined();
+    expect(normalizeBrowseOptions({ source: "toString" }).source).toBeUndefined();
+  });
+
+  it("drops an empty or overlong category", () => {
+    expect(normalizeBrowseOptions({ category: "" }).category).toBeUndefined();
+    expect(normalizeBrowseOptions({ category: "x".repeat(101) }).category).toBeUndefined();
+    expect(normalizeBrowseOptions({ category: "x".repeat(100) }).category).toHaveLength(100);
   });
 });

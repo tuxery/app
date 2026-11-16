@@ -31,9 +31,10 @@ import {
   type BrowseKeys,
 } from "~/browse-keys";
 import { noteQueryFailure } from "~/catalog-status";
-import { toPageIndex } from "~/browse-page";
+import { normalizeBrowseOptions, toPageIndex } from "~/browse-page";
 import { buildFtsClause } from "~/search-fts";
 import type { ServerEnv } from "~/server-env";
+import { createTtlCache } from "~/ttl-cache";
 
 // Server-only half of the catalog layer — everything here touches the DB
 // (`@libsql/client`, a Node-only driver), so it must only ever be referenced
@@ -103,13 +104,13 @@ async function safely<T>(fallback: T, fn: () => Promise<T>): Promise<T> {
   }
 }
 
-interface CacheEntry<T> {
-  value: T;
-  expiresAt: number;
-}
-
 const LISTING_CACHE_TTL_MS = 10 * 60 * 1000;
-const listingCache = new Map<string, CacheEntry<unknown>>();
+// Far above what the pages ask for in ten minutes (the homepage's rows, a
+// store's, the categories, the /browse pages people really open), and small
+// enough that requests for made-up categories or page numbers can't fill
+// the isolate's memory: at ~30 KB for a /browse page, about 10 MB at most.
+const LISTING_CACHE_MAX_ENTRIES = 300;
+const listingCache = createTtlCache<unknown>(LISTING_CACHE_MAX_ENTRIES, LISTING_CACHE_TTL_MS);
 
 /**
  * Caches a listing/aggregate query in memory for `LISTING_CACHE_TTL_MS`,
@@ -127,15 +128,16 @@ const listingCache = new Map<string, CacheEntry<unknown>>();
  * behavior as `safely()` on failure. Per-isolate only, like this file's
  * own `client` singleton and `~/unsplash`'s photo cache — doesn't survive
  * a cold start or spread across isolates, but free on every request a
- * warm one serves in between.
+ * warm one serves in between. Bounded (`~/ttl-cache`): some keys carry
+ * what the request asked for.
  */
 async function cachedListing<T>(key: string, fallback: T, fn: () => Promise<T>): Promise<T> {
   const cached = listingCache.get(key);
-  if (cached && cached.expiresAt > Date.now()) return cached.value as T;
+  if (cached) return cached.value as T;
 
   try {
     const value = await fn();
-    listingCache.set(key, { value, expiresAt: Date.now() + LISTING_CACHE_TTL_MS });
+    listingCache.set(key, value);
     return value;
   } catch (error) {
     console.error("[catalog] query failed, degrading to empty:", error);
@@ -546,13 +548,8 @@ export async function browseApps(
   if (!db) return { apps: [], total: 0 };
   // /browse's `server$` call passes whatever the client sent.
   const page = toPageIndex(requestedPage);
-  const {
-    interfaceFilter = "all",
-    typeFilter = "all",
-    category,
-    source,
-    sort = "relevance",
-  } = options;
+  const { interfaceFilter, typeFilter, category, source, sort, ...requested } =
+    normalizeBrowseOptions(options);
 
   // The "free software only" filter needs a dataset with `license_kind`,
   // which the same publish marks with `browseKeys.freeCounts`. On an older
@@ -564,7 +561,7 @@ export async function browseApps(
   } catch {
     // No browse keys readable: no filter, the listing still works.
   }
-  const license = freeFilter ? options.license : undefined;
+  const license = freeFilter ? requested.license : undefined;
 
   // /browse's `server$` call passes whatever the client sent here too.
   const trimmed = typeof query === "string" ? query.trim() : "";
