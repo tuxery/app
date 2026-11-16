@@ -22,7 +22,12 @@
 export type ServerEnv = Partial<
   Pick<
     Env,
-    "TURSO_DB_URL" | "TURSO_DB_AUTH_TOKEN" | "UNSPLASH_ACCESS_KEY" | "FEEDBACK_GITHUB_TOKEN"
+    | "TURSO_DB_URL"
+    | "TURSO_DB_AUTH_TOKEN"
+    | "UNSPLASH_ACCESS_KEY"
+    | "FEEDBACK_GITHUB_TOKEN"
+    | "TURNSTILE_SITE_KEY"
+    | "TURNSTILE_SECRET_KEY"
   >
 >;
 

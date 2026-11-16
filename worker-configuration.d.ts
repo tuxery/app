@@ -6,6 +6,9 @@ interface __BaseEnv_Env {
   TURSO_DB_AUTH_TOKEN: string;
   UNSPLASH_ACCESS_KEY: string;
   FEEDBACK_GITHUB_TOKEN: string;
+  TURNSTILE_SITE_KEY: string;
+  TURNSTILE_SECRET_KEY: string;
+  FEEDBACK_RATE_LIMITER: RateLimit;
 }
 declare namespace Cloudflare {
   interface ProductionEnv {
@@ -34,7 +37,12 @@ declare namespace NodeJS {
   interface ProcessEnv extends StringifyValues<
     Pick<
       Cloudflare.Env,
-      "TURSO_DB_URL" | "TURSO_DB_AUTH_TOKEN" | "UNSPLASH_ACCESS_KEY" | "FEEDBACK_GITHUB_TOKEN"
+      | "TURSO_DB_URL"
+      | "TURSO_DB_AUTH_TOKEN"
+      | "UNSPLASH_ACCESS_KEY"
+      | "FEEDBACK_GITHUB_TOKEN"
+      | "TURNSTILE_SITE_KEY"
+      | "TURNSTILE_SECRET_KEY"
     >
   > {}
 }
