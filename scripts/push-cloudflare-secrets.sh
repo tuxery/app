@@ -5,7 +5,8 @@
 # devcontainer, openbao-env loads them from OpenBao (kv/orgs/tuxery, see
 # `openbao-env status`), under the same names as the GitHub Actions secrets:
 #   production <- PROD_TURSO_DB_URL, PROD_TURSO_DB_AUTH_TOKEN (prod-tuxery DB),
-#                 UNSPLASH_ACCESS_KEY, FEEDBACK_GITHUB_TOKEN (optional)
+#                 UNSPLASH_ACCESS_KEY, FEEDBACK_GITHUB_TOKEN (optional),
+#                 TURNSTILE_SECRET_KEY (optional)
 #   previews   <- PREVIEW_TURSO_DB_URL, PREVIEW_TURSO_DB_AUTH_TOKEN
 #                 (preview-tuxery DB), UNSPLASH_ACCESS_KEY
 # Cloudflare auth: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, the same
@@ -49,6 +50,11 @@ push_production() {
   # Previews never get it, so their form can't file test issues.
   if [[ -n "${FEEDBACK_GITHUB_TOKEN:-}" ]]; then
     put production FEEDBACK_GITHUB_TOKEN FEEDBACK_GITHUB_TOKEN
+  fi
+  # Optional, production only: /feedback's Turnstile secret (see
+  # src/turnstile.ts); its site key is a public var in wrangler.jsonc.
+  if [[ -n "${TURNSTILE_SECRET_KEY:-}" ]]; then
+    put production TURNSTILE_SECRET_KEY TURNSTILE_SECRET_KEY
   fi
 }
 
