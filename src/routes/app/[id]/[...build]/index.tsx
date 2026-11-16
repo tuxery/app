@@ -80,6 +80,8 @@ import {
 } from "~/product-builds";
 import { PlatformStack } from "~/components/platform-stack/platform-stack";
 import { AppCardLink } from "~/components/app-card/app-card";
+import { CategoryIcon } from "~/components/category-icon/category-icon";
+import { categoryTrail } from "~/categories";
 import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-scroller";
 import { ScreenshotGallery } from "~/components/screenshot-gallery/screenshot-gallery";
 import { UnifiedRating } from "~/components/unified-rating/unified-rating";
@@ -944,6 +946,24 @@ export default component$(() => {
         </div>
 
         <div class="flex-1 min-w-0">
+          {/* Where the app sits: its type's listing, then its category's. */}
+          <nav aria-label="Breadcrumb" class="breadcrumbs text-sm py-0 mb-1">
+            <ul>
+              {categoryTrail(a.contentType === "game" ? "game" : undefined, a.category).map(
+                (step) => (
+                  <li key={step.href}>
+                    <a href={step.href} class="inline-flex items-center gap-1">
+                      {step.category && <CategoryIcon category={step.category} />}
+                      {step.label}
+                    </a>
+                  </li>
+                ),
+              )}
+              <li aria-current="page" class="text-base-content/70">
+                {a.name}
+              </li>
+            </ul>
+          </nav>
           <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
             <h1 class="text-3xl font-bold">{a.name}</h1>
             <BuildSelectors
@@ -984,12 +1004,11 @@ export default component$(() => {
             </p>
           )}
 
-          {/* Two lines: what the app is (type, category, license, suite,
-              age rating...), then how it's doing (rating, installs,
-              activity) — each figure detailed in its tooltip. */}
+          {/* Two lines: what the app is (license, suite, age rating...;
+              its type and category are the breadcrumb above), then how
+              it's doing (rating, installs, activity) — each figure
+              detailed in its tooltip. */}
           <div class="flex flex-wrap items-center gap-2 mt-3">
-            {a.contentType === "game" && <span class="badge badge-accent">Game</span>}
-            {a.category && <span class="badge badge-outline">{a.category}</span>}
             {licenseKind !== "unknown" &&
               (licenseHref ? (
                 <a
