@@ -136,10 +136,11 @@ test("the platform stack leads with the recommended way to install, and colors t
 });
 
 test("an unverified platform says nothing about verification", async ({ page }) => {
-  // LM Studio: on Flathub but not in its "verified" collection.
+  // LM Studio: on Flathub but not in its "verified" collection; Arch and
+  // Homebrew have no verification at all.
   await page.goto("/app/ai.lmstudio.lm-studio/");
   const stack = page.locator("section").first().locator(".flex.-space-x-2");
-  expect(await tipText(page, stack)).toBe("Flatpak (recommended)\nArch Linux");
+  expect(await tipText(page, stack)).toBe("Flatpak (recommended)\nArch Linux\nHomebrew");
 });
 
 test("Claim this listing links to the claim explainer, personalized with the app's name, and back again", async ({

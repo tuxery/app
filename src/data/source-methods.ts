@@ -32,6 +32,8 @@ export const METHODS: Record<PackageSourceId, string> = {
   gog: "GOG's own catalog API, scoped to Linux-compatible titles. Not redistributed, as our own precaution rather than at GOG's request (see Open data).",
   lutris: "Lutris's installer API, scoped to native Linux installers.",
   "github-releases": 'GitHub repositories tagged "linux-app" that publish a real tagged release.',
+  "brew-homebrew":
+    "Homebrew's documented JSON API: every formula and cask in one file each, those installable on Linux, once a week.",
   "vendor-repos":
     "A hand-curated list of first-party vendor apt repos (Brave, Chrome, VS Code, Firefox, Steam, Slack, ...), read from each vendor's own Packages index.",
 };

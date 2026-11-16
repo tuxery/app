@@ -29,6 +29,7 @@ const GROUPS: { title: string; sources: PackageSourceId[] }[] = [
       "ebuild-gentoo",
     ],
   },
+  { title: "Homebrew (any distro)", sources: ["brew-homebrew"] },
   { title: "Game storefronts", sources: ["gog", "lutris"] },
   { title: "Straight from the publisher", sources: ["vendor-repos", "github-releases"] },
 ];
@@ -50,7 +51,7 @@ const DETAIL_SOURCES: { title: string; text: string; href: string; linkLabel: st
   },
   {
     title: "Popularity statistics",
-    text: "Debian's popcon and Arch's pkgstats, opt-in surveys of what machines have installed, and the AUR's own usage ranking: used to order the trending lists.",
+    text: "Debian's popcon and Arch's pkgstats, opt-in surveys of what machines have installed, the AUR's own usage ranking and Homebrew's install counts: used to order the trending lists.",
     href: "/docs/rankings/",
     linkLabel: "How rankings work",
   },

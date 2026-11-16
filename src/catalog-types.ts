@@ -48,7 +48,8 @@ export type PackageSourceId =
   | "gog"
   | "lutris"
   | "github-releases"
-  | "vendor-repos";
+  | "vendor-repos"
+  | "brew-homebrew";
 
 export const SOURCE_LABELS: Record<PackageSourceId, string> = {
   "flatpak-flathub": "Flathub (Flatpak)",
@@ -78,6 +79,7 @@ export const SOURCE_LABELS: Record<PackageSourceId, string> = {
   lutris: "Lutris",
   "github-releases": "GitHub Releases",
   "vendor-repos": "Vendor apt repository",
+  "brew-homebrew": "Homebrew",
 };
 
 /** Every known source, in a fixed order. Derived from `SOURCE_LABELS` so it can never drift out of sync with `PackageSourceId`. */
@@ -116,6 +118,7 @@ export const SOURCE_GROUP_MEMBERS: Record<string, PackageSourceId[]> = {
   GOG: ["gog"],
   Lutris: ["lutris"],
   "GitHub Releases": ["github-releases"],
+  Homebrew: ["brew-homebrew"],
 };
 
 /** Every source group, in a fixed order — see `SOURCE_GROUP_MEMBERS`. */
