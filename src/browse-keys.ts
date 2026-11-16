@@ -7,9 +7,9 @@ import { safeParseStrict } from "helpers4/json";
 // catalog's `turso-client.ts` for the generation scheme this depends on.
 // Pure and DB-light on purpose, so the format strings and the stale-
 // generation handling are unit-tested (browse-keys.spec.ts) without a
-// database. Every string format here is mirrored by hand from that file —
-// the two repos share no package, so both sides' tests pin the same
-// literals.
+// database. The two repos share no package: every string format here, and
+// catalog's, is pinned to store-contract.json (store-contract.spec.ts), a
+// copy CI keeps identical to catalog's.
 
 export type InterfaceFilterValue = "all" | "gui" | "cli";
 export type TypeFilterValue = "all" | "game" | "app";

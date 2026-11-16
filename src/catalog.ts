@@ -238,7 +238,8 @@ export function toCatalogApp(row: Row): CatalogApp {
   };
 }
 
-const SUMMARY_COLUMNS =
+/** The columns of a summary row, also those of catalog's pre-rendered `listingRows:*` rows — pinned by store-contract.json. */
+export const SUMMARY_COLUMNS =
   "id, name, short_description, icon_url, kind, content_type, category, rating_average, rating_count, packages_json";
 
 /**
@@ -699,7 +700,7 @@ export async function getHomeRowsJson(env: ServerEnv): Promise<string | undefine
   if (!db) return undefined;
 
   return cachedListing<string | undefined>("homeRowsJson", undefined, async () => {
-    const keys = Object.values(HOME_LISTINGS).map((key) => `listingRows:${key}`);
+    const keys = Object.values(HOME_LISTINGS).map(listingRowsKey);
     const listings = await db.execute({
       sql: `SELECT key, value FROM meta WHERE key IN (${keys.map(() => "?").join(", ")})`,
       args: keys,
@@ -710,7 +711,7 @@ export async function getHomeRowsJson(env: ServerEnv): Promise<string | undefine
     });
     const parts = listings.rows.map(
       (row) =>
-        `${JSON.stringify(String(row.key).slice("listingRows:".length))}:${String(row.value)}`,
+        `${JSON.stringify(String(row.key).slice(listingRowsKey("").length))}:${String(row.value)}`,
     );
     const mustHaveRows = mustHave.rows.map((row) =>
       Object.fromEntries(mustHave.columns.map((column) => [column, row[column]])),
@@ -745,7 +746,8 @@ export async function getAppById(env: ServerEnv, id: string): Promise<CatalogApp
   });
 }
 
-const TRENDING_PAGE_SIZE = 60;
+/** Length of catalog's precomputed trending/new/by-source lists — pinned by store-contract.json. */
+export const TRENDING_PAGE_SIZE = 60;
 
 // The icon_url-only requirement every trending/category-preview list below
 // mentions ("HAS_VISUAL_ASSET") is enforced in `tuxery/catalog`'s
@@ -790,6 +792,11 @@ async function summariesForIds(db: Client, ids: string[]): Promise<AppSummary[]>
   });
 }
 
+/** Key of the `meta` row holding one listing's summary rows, pre-rendered by catalog's `publish()` — format pinned by store-contract.json. */
+export function listingRowsKey(listing: string): string {
+  return `listingRows:${listing}`;
+}
+
 /**
  * One precomputed listing (`trending:all`, `categoryPreview:<category>`,
  * ...), capped at `limit`. Reads the summary rows catalog pre-renders under
@@ -801,7 +808,7 @@ async function summariesForIds(db: Client, ids: string[]): Promise<AppSummary[]>
 async function listingFromMeta(db: Client, key: string, limit?: number): Promise<AppSummary[]> {
   const result = await db.execute({
     sql: `SELECT value FROM meta WHERE key = ?`,
-    args: [`listingRows:${key}`],
+    args: [listingRowsKey(key)],
   });
   const value = result.rows[0]?.value;
   if (typeof value === "string") {
@@ -931,7 +938,8 @@ export async function getRecentlyUpdatedAppsBySource(
   });
 }
 
-const CATEGORY_PREVIEW_SIZE = 12;
+/** Length of catalog's precomputed `categoryPreview:*` lists — pinned by store-contract.json. */
+export const CATEGORY_PREVIEW_SIZE = 12;
 
 /**
  * A small preview of apps from one category — powers the homepage's
