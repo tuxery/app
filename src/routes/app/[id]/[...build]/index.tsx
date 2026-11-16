@@ -34,7 +34,7 @@ import { dataIssues } from "~/data-issues";
 import { projectLinks } from "~/project-links";
 import { sandboxSummary } from "~/sandbox";
 import { sparkline } from "~/sparkline";
-import { getAppById, getAppsByCategory, getAppsByIds, getStats } from "~/catalog";
+import { getAppById, getAppIdAlias, getAppsByCategory, getAppsByIds, getStats } from "~/catalog";
 import { resolveServerEnv } from "~/server-env";
 import {
   ALL_SOURCE_GROUPS,
@@ -68,6 +68,7 @@ import {
   editionsOf,
   buildFacts,
   hasBuild,
+  movedProductPath,
   otherSelections,
   packagesOf,
   parseBuildPath,
@@ -114,6 +115,21 @@ export const useApp = routeLoader$(async (requestEvent): Promise<CatalogApp | nu
   // "couldn't load", not "doesn't exist". Same when the lookup itself
   // failed after the layout's check passed.
   if (isCatalogUnavailable(requestEvent.sharedMap)) return null;
+  if (!queryFailedDuringRequest(requestEvent.sharedMap)) {
+    // An id that changed (a merge, a rename, a Snap or Flatpak joining the
+    // group) answers with a permanent redirect to the current one, kept by
+    // the edge cache like a page. Browsers keep it a minute only: should
+    // the old id come back as an app of its own, they ask again.
+    const target = await getAppIdAlias(resolveServerEnv(requestEvent.platform), id);
+    if (target) {
+      const redirect = requestEvent.redirect(
+        301,
+        movedProductPath(target, requestEvent.params.build ?? ""),
+      );
+      requestEvent.cacheControl({ public: true, maxAge: 60, sMaxAge: 3600 });
+      throw redirect;
+    }
+  }
   if (queryFailedDuringRequest(requestEvent.sharedMap)) {
     requestEvent.cacheControl({ noStore: true });
     requestEvent.status(503);

@@ -196,9 +196,14 @@ describe("PAGE_QUERY_PARAMS", () => {
 });
 
 describe("isSharedCacheable", () => {
-  it("keeps public 200s and 404s", () => {
+  it("keeps public 200s, 404s and permanent redirects", () => {
     expect(isSharedCacheable(reply(200, "max-age=60, s-maxage=3600, public"))).toBe(true);
     expect(isSharedCacheable(reply(404, "max-age=60, s-maxage=3600, public"))).toBe(true);
+    expect(isSharedCacheable(reply(301, "max-age=60, s-maxage=3600, public"))).toBe(true);
+  });
+
+  it("drops a permanent redirect that doesn't say it may be cached (the www one)", () => {
+    expect(isSharedCacheable(reply(301))).toBe(false);
   });
 
   it("drops private, no-store, no-cache, cookies and other statuses", () => {
@@ -211,6 +216,7 @@ describe("isSharedCacheable", () => {
     expect(isSharedCacheable(reply(200))).toBe(false);
     expect(isSharedCacheable(reply(503, "public, max-age=60"))).toBe(false);
     expect(isSharedCacheable(reply(500, "public, max-age=60"))).toBe(false);
+    expect(isSharedCacheable(reply(302, "public, max-age=60"))).toBe(false);
   });
 });
 

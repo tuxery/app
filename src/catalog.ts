@@ -746,6 +746,37 @@ export async function getAppById(env: ServerEnv, id: string): Promise<CatalogApp
   });
 }
 
+/**
+ * The current id of an app whose id changed (`tuxery/catalog`'s
+ * `id_aliases`, see its src/store/id-aliases.ts: a group that gained a
+ * Snap or Flatpak, a rename, a merge), or null when `id` names no former
+ * app. One primary-key read. A database published before aliases existed
+ * has no such table: that is no alias, not a failed query.
+ */
+export async function getAppIdAlias(env: ServerEnv, id: string): Promise<string | null> {
+  const db = getClient(env);
+  if (!db) return null;
+
+  return safely(null, async () => {
+    try {
+      const result = await db.execute({
+        sql: `SELECT target FROM id_aliases WHERE alias = ?`,
+        args: [id],
+      });
+      const target = result.rows[0]?.target;
+      return typeof target === "string" ? target : null;
+    } catch (error) {
+      if (isMissingTable(error, "id_aliases")) return null;
+      throw error;
+    }
+  });
+}
+
+/** Whether a query failed only because `table` doesn't exist (SQLite's own wording, kept by libSQL and Turso). */
+export function isMissingTable(error: unknown, table: string): boolean {
+  return error instanceof Error && error.message.includes(`no such table: ${table}`);
+}
+
 /** Length of catalog's precomputed trending/new/by-source lists — pinned by store-contract.json. */
 export const TRENDING_PAGE_SIZE = 60;
 
