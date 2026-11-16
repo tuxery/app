@@ -36,6 +36,8 @@ import { sandboxSummary } from "~/sandbox";
 import { sparkline } from "~/sparkline";
 import { getAppById, getAppsByCategory, getAppsByIds, getStats } from "~/catalog";
 import { resolveServerEnv } from "~/server-env";
+import { canonicalUrl, pageImageMeta, socialImageFor } from "~/seo";
+import { jsonLdScript, softwareApplication } from "~/structured-data";
 import {
   ALL_SOURCE_GROUPS,
   buildLabel,
@@ -1892,6 +1894,22 @@ export const head: DocumentHead = ({ resolveValue }) => {
       : unavailable
         ? "Temporarily unavailable — Tuxery"
         : "App not found — Tuxery",
-    meta: app ? [{ name: "description", content: app.shortDescription }] : [],
+    meta: app
+      ? [
+          { name: "description", content: app.shortDescription },
+          ...pageImageMeta(socialImageFor(app.iconUrl)),
+        ]
+      : [],
+    // What the page describes, for search engines (`~/structured-data`):
+    // the product, under its canonical URL, whichever build the path names.
+    scripts: app
+      ? [
+          {
+            key: "software-application",
+            props: { type: "application/ld+json" },
+            script: jsonLdScript(softwareApplication(app, canonicalUrl(buildPath(app.id, {})))),
+          },
+        ]
+      : [],
   };
 };
