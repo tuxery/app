@@ -9,6 +9,7 @@ import {
   useTask$,
 } from "@qwik.dev/core";
 import { routeLoader$, useLocation, useNavigate, type RequestHandler } from "@qwik.dev/router";
+import { AbortMessage, ServerError } from "@qwik.dev/router/middleware/request-handler";
 import {
   LuCloudOff,
   LuLayoutGrid,
@@ -43,13 +44,33 @@ import { getHeroBackgroundPhoto } from "~/unsplash";
 // bare host, before anything else runs (no catalog check, no render).
 // Pull-request Previews, and the site itself during the private beta, are
 // kept out of search engines (see `robotsHeader`).
-export const onRequest: RequestHandler = ({ url, redirect, headers, sharedMap }) => {
+//
+// An exception thrown further down (a handler, a loader, the render before
+// it starts sending) becomes a 500 `error()`, which Qwik Router answers
+// with routes/error.tsx inside this layout; left as it is, it would get the
+// router's bare error page. Redirects, rewrites and errors the app throws
+// itself go through untouched.
+export const onRequest: RequestHandler = async ({
+  url,
+  redirect,
+  headers,
+  sharedMap,
+  next,
+  error,
+}) => {
   if (url.hostname.startsWith("www.")) {
     throw redirect(301, `${CANONICAL_ORIGIN}${url.pathname}${url.search}`);
   }
   markRequestStart(sharedMap);
   const robots = robotsHeader(url.hostname);
   if (robots) headers.set("X-Robots-Tag", robots);
+  try {
+    await next();
+  } catch (thrown) {
+    if (thrown instanceof AbortMessage || thrown instanceof ServerError) throw thrown;
+    console.error("[layout] request failed:", thrown);
+    throw error(500, "Internal Server Error");
+  }
 };
 
 // Every page is the same for every visitor (nothing reads cookies or
