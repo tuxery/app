@@ -36,3 +36,26 @@ test("the To Classify category shows a 'suggest a category' banner, not shown on
   await page.goto("/browse/?category=Productivity");
   await expect(banner).toHaveCount(0);
 });
+
+test("a link to a category that was split opens the group listing its parts", async ({ page }) => {
+  await page.goto("/browse/?category=Internet+%26+Communication");
+  await expect(page).toHaveURL(/\/categories\/#internet$/);
+  const group = page.locator("#internet");
+  await expect(group.locator("a.card", { hasText: "Web Browsers" })).toBeVisible();
+  await expect(group.locator("a.card", { hasText: "Messaging & Calls" })).toBeVisible();
+});
+
+test("a product page's breadcrumb leads to its type's and its category's listings", async ({
+  page,
+}) => {
+  await page.goto("/app/firefox/");
+  const trail = page.getByRole("navigation", { name: "Breadcrumb" });
+  await expect(trail.getByRole("link", { name: "Apps" })).toHaveAttribute(
+    "href",
+    "/browse/?type=app",
+  );
+  await expect(trail.getByRole("link", { name: "Web Browsers" })).toHaveAttribute(
+    "href",
+    "/browse/?category=Web%20Browsers",
+  );
+});
