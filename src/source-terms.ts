@@ -42,15 +42,24 @@ export function parseSourceTerms(value: unknown): SourceTerms | undefined {
 }
 
 /**
+ * Catalog connectors that list no packages of their own but read the same
+ * provider as a source: `github-stars` (the stars of every app's GitHub
+ * repository) uses GitHub's API, like GitHub Releases.
+ */
+const COMPANION_RECORDS: Record<string, string[]> = {
+  "github-releases": ["github-stars"],
+};
+
+/**
  * The catalog records that describe one of the app's sources: its own, plus
  * the AppStream connector catalog counts with it (`deb-debian` and
- * `deb-debian-appstream`), own record first. Pure.
+ * `deb-debian-appstream`) and any `COMPANION_RECORDS`, own record first. Pure.
  */
 export function recordsFor(
   terms: SourceTerms,
   source: string,
 ): { id: string; record: SourceTermsRecord }[] {
-  return [source, `${source}-appstream`]
+  return [source, `${source}-appstream`, ...(COMPANION_RECORDS[source] ?? [])]
     .filter((id) => terms.sources[id])
     .map((id) => ({ id, record: terms.sources[id] as SourceTermsRecord }));
 }

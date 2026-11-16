@@ -17,6 +17,8 @@ const TERMS: SourceTerms = {
     "deb-debian": record("low-risk-no-terms"),
     "deb-debian-appstream": record("low-risk-no-terms"),
     gog: record("owner-review"),
+    "github-releases": record("clear"),
+    "github-stars": record("clear"),
   },
 };
 
@@ -37,5 +39,12 @@ describe("recordsFor", () => {
     ]);
     expect(recordsFor(TERMS, "gog").map((r) => r.id)).toEqual(["gog"]);
     expect(recordsFor(TERMS, "slackware")).toEqual([]);
+  });
+
+  it("adds the GitHub stars record to GitHub Releases', both read through GitHub's API", () => {
+    expect(recordsFor(TERMS, "github-releases").map((r) => r.id)).toEqual([
+      "github-releases",
+      "github-stars",
+    ]);
   });
 });

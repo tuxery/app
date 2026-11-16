@@ -25,16 +25,21 @@ that publish one:
 - **Debian's popcon**, the opt-in survey of what Debian machines have
   installed;
 - **Arch's pkgstats**, the same kind of opt-in survey for Arch's official
-  repositories.
+  repositories;
+- **Homebrew's install counts** over the last 30 days, mostly from macOS;
+- **GitHub stars** of the app's own repository, when its packages link to
+  one, ranked as a percentile among the apps that have one. A repository
+  several apps link to (a monorepo, or a project whose plugins link to it)
+  gives its stars only to the app named like it.
 
 Each source's figure is scaled within that source first, since the raw
 numbers can't be compared directly. An app's score is then the average of
 its three best sources, and a source with no figure counts as 0.5, the
 middle: being near the top of one source alone isn't enough to lead the
 list, an app has to be popular in several places. Apps found only in sources that publish no popularity figure
-(Fedora, the Snap Store, GOG...) can't appear here, however
-popular they are elsewhere — which answers most "why isn't X trending?"
-questions.
+(Fedora, the Snap Store, GOG...) and with no GitHub repository can't
+appear here, however popular they are elsewhere — which answers most
+"why isn't X trending?" questions.
 
 The same score orders each store page's trending row, restricted to the
 apps that store carries.
