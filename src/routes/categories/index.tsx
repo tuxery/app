@@ -3,6 +3,7 @@ import { routeLoader$ } from "@qwik.dev/router";
 import type { DocumentHead } from "@qwik.dev/router";
 import { CategoryTileGrid } from "~/components/category-tile-grid/category-tile-grid";
 import { getCategories } from "~/catalog";
+import { APP_CATEGORY_GROUPS, groupCategories, TO_CLASSIFY } from "~/categories";
 import { resolveServerEnv } from "~/server-env";
 
 export const useAppCategories = routeLoader$(async (requestEvent) =>
@@ -36,16 +37,25 @@ export default component$(() => {
       ) : (
         <>
           {appCategories.value.length > 0 && (
-            <section>
-              <h2 class="text-lg font-semibold mb-3">Apps</h2>
-              <CategoryTileGrid categories={appCategories.value} />
+            <section class="flex flex-col gap-5">
+              <h2 class="text-lg font-semibold">Apps</h2>
+              {groupCategories(appCategories.value, APP_CATEGORY_GROUPS).map(({ group, items }) => (
+                <div key={group.id} id={group.id} class="scroll-mt-20">
+                  <h3 class="text-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2">
+                    {group.title}
+                  </h3>
+                  <CategoryTileGrid categories={items} />
+                </div>
+              ))}
             </section>
           )}
 
           {gameCategories.value.length > 0 && (
             <section>
               <h2 class="text-lg font-semibold mb-3">Games</h2>
-              <CategoryTileGrid categories={gameCategories.value} />
+              <CategoryTileGrid
+                categories={gameCategories.value.filter(({ category }) => category !== TO_CLASSIFY)}
+              />
             </section>
           )}
         </>

@@ -1,6 +1,6 @@
 import { $, component$, Fragment, useSignal, useVisibleTask$ } from "@qwik.dev/core";
 import { routeLoader$, server$, useLocation } from "@qwik.dev/router";
-import type { DocumentHead, RequestEventBase } from "@qwik.dev/router";
+import type { DocumentHead, RequestEventBase, RequestHandler } from "@qwik.dev/router";
 import { LuArrowUp, LuLoader2 } from "@qwikest/icons/lucide";
 import { reportDataProblemUrl } from "~/contribute-links";
 import { AppCardLink } from "~/components/app-card/app-card";
@@ -20,6 +20,7 @@ import {
   type PackageSourceId,
 } from "~/catalog-types";
 import { parsePageParam } from "~/browse-page";
+import { retiredCategoryRedirect } from "~/categories";
 import { SEARCH_MIN_WORD_LENGTH } from "~/search-fts";
 import { resolveServerEnv } from "~/server-env";
 
@@ -60,6 +61,13 @@ function parseLicense(value: string | null): "free" | undefined {
 function parseSort(value: string | null): SortOption {
   return value === "name-asc" || value === "name-desc" ? value : "relevance";
 }
+
+// A link to a category id catalog no longer publishes (one that was split)
+// goes where its parts are listed rather than to an empty listing.
+export const onGet: RequestHandler = ({ url, redirect }) => {
+  const target = retiredCategoryRedirect(url.searchParams.get("category"));
+  if (target) throw redirect(302, target);
+};
 
 // `search` lists every query param this loader reads: Qwik Router v2 strips
 // the others from its request event (and only re-fetches it when a listed
