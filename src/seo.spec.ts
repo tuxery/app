@@ -2,13 +2,18 @@ import { describe, expect, it } from "vitest";
 import {
   canonicalPath,
   canonicalUrl,
+  DEFAULT_DESCRIPTION,
   isIndexableHost,
   isPreviewHost,
+  pageImageMeta,
   robotsDirective,
   robotsHeader,
   robotsMeta,
   servesSitemap,
   SITE_IS_PUBLIC,
+  socialImageFor,
+  socialMeta,
+  type HeadMeta,
 } from "./seo";
 
 describe("canonicalPath", () => {
@@ -90,5 +95,70 @@ describe("servesSitemap", () => {
     expect(servesSitemap("pr-104.preview.tuxery.store", false)).toBe(true);
     expect(servesSitemap("localhost", false)).toBe(true);
     expect(servesSitemap("127.0.0.1", false)).toBe(true);
+  });
+});
+
+describe("socialImageFor", () => {
+  it("keeps a raster http(s) icon", () => {
+    const icon = "https://dl.flathub.org/media/io/mpv/Mpv/x/icons/128x128/io.mpv.Mpv.png";
+    expect(socialImageFor(icon)).toBe(icon);
+    expect(socialImageFor("https://example.org/icon.JPG?v=2")).toBe(
+      "https://example.org/icon.JPG?v=2",
+    );
+  });
+
+  it("drops what link previews can't show", () => {
+    expect(socialImageFor(undefined)).toBeUndefined();
+    expect(socialImageFor("https://example.org/icon.svg")).toBeUndefined();
+    expect(socialImageFor("https://example.org/icon")).toBeUndefined();
+    expect(socialImageFor("ftp://example.org/icon.png")).toBeUndefined();
+    expect(socialImageFor("not a url.png")).toBeUndefined();
+  });
+});
+
+function content(tags: HeadMeta[], key: string): string | undefined {
+  return tags.find((tag) => tag.property === key || tag.name === key)?.content;
+}
+
+describe("socialMeta", () => {
+  it("describes a page with the site's image when it has none", () => {
+    const tags = socialMeta({
+      title: "Apps — Tuxery",
+      url: "https://tuxery.store/apps/",
+      metas: [{ name: "description", content: "Browse Linux apps." }],
+    });
+    expect(content(tags, "og:title")).toBe("Apps");
+    expect(content(tags, "og:description")).toBe("Browse Linux apps.");
+    expect(content(tags, "og:url")).toBe("https://tuxery.store/apps/");
+    expect(content(tags, "og:site_name")).toBe("Tuxery");
+    expect(content(tags, "og:image")).toBe("https://tuxery.store/og-image.jpg");
+    expect(content(tags, "twitter:card")).toBe("summary_large_image");
+  });
+
+  it("falls back to the site's description, and keeps a title that doesn't end with the site's name", () => {
+    const tags = socialMeta({
+      title: "Tuxery — the unified Linux App Store",
+      url: "https://tuxery.store/",
+      metas: [],
+    });
+    expect(content(tags, "og:title")).toBe("Tuxery — the unified Linux App Store");
+    expect(content(tags, "og:description")).toBe(DEFAULT_DESCRIPTION);
+  });
+
+  it("leaves the page's own image and card alone", () => {
+    const icon = "https://example.org/icon.png";
+    const metas = [{ name: "description", content: "An app." }, ...pageImageMeta(icon)];
+    const tags = socialMeta({ title: "App — Tuxery", url: "https://tuxery.store/app/x/", metas });
+    expect(content(tags, "og:image")).toBeUndefined();
+    expect(content(tags, "og:image:width")).toBeUndefined();
+    expect(content(tags, "twitter:card")).toBeUndefined();
+    expect(content(metas, "og:image")).toBe(icon);
+    expect(content(metas, "twitter:card")).toBe("summary");
+  });
+});
+
+describe("pageImageMeta", () => {
+  it("is nothing without an image", () => {
+    expect(pageImageMeta(undefined)).toEqual([]);
   });
 });
