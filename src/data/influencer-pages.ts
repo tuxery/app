@@ -31,6 +31,11 @@ export interface InfluencerPage {
 // trusted, hand-edited config file, not user input.
 const INFLUENCER_PAGES = rawPages as InfluencerPage[];
 
+/** Every page's slug, in the config file's order. */
+export function influencerSlugs(): string[] {
+  return INFLUENCER_PAGES.map((page) => page.slug);
+}
+
 export async function getInfluencerPage(slug: string): Promise<InfluencerPage | undefined> {
   return INFLUENCER_PAGES.find((page) => page.slug === slug);
 }

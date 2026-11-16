@@ -35,6 +35,7 @@ import { normalizeBrowseOptions, toPageIndex } from "~/browse-page";
 import { buildFtsClause } from "~/search-fts";
 import type { ServerEnv } from "~/server-env";
 import { createTtlCache } from "~/ttl-cache";
+import { findAppSitemapPart, type CategorySize } from "~/sitemap";
 
 // Server-only half of the catalog layer — everything here touches the DB
 // (`@libsql/client`, a Node-only driver), so it must only ever be referenced
@@ -1093,5 +1094,110 @@ export async function getSourceCounts(
       );
     }
     return {};
+  });
+}
+
+/** What the sitemap index lists app sitemaps from: every category and its size, and when catalog published them. */
+export interface AppSitemapSource {
+  categories: CategorySize[];
+  generatedAt?: string;
+}
+
+const CATEGORY_SIZES_META_KEY = "categoryCounts:all";
+
+function parseCategorySizes(value: string | undefined): CategorySize[] {
+  return value ? (JSON.parse(value) as CategorySize[]) : [];
+}
+
+/**
+ * The categories the app sitemaps are cut from (`~/sitemap`): two `meta`
+ * rows. `undefined` when there is no database, or the dataset predates
+ * catalog's per-category id lists — the index then lists no app sitemap.
+ */
+export async function getAppSitemapSource(env: ServerEnv): Promise<AppSitemapSource | undefined> {
+  const db = getClient(env);
+  if (!db) return undefined;
+
+  return safely(undefined, async () => {
+    const keys = await currentBrowseKeys(db);
+    if (!keys?.categoryIds) return undefined;
+    const result = await db.execute({
+      sql: `SELECT key, value FROM meta WHERE key IN (?, ?)`,
+      args: [CATEGORY_SIZES_META_KEY, "generatedAt"],
+    });
+    const meta = new Map(result.rows.map((row) => [row.key as string, row.value as string]));
+    return {
+      categories: parseCategorySizes(meta.get(CATEGORY_SIZES_META_KEY)),
+      generatedAt: meta.get("generatedAt"),
+    };
+  });
+}
+
+/**
+ * The app ids of one app sitemap part, by file name (`~/sitemap`'s
+ * `findAppSitemapPart`), from catalog's per-category id lists: the
+ * categories' sizes, then the `categoryIds:` chunk rows covering the part
+ * (~20 rows), each read pinned to the generation they belong to (see
+ * `readPinned`). `null` when no part has that name (or the dataset has no
+ * per-category lists); `undefined` without a database, or when the read
+ * failed (logged, and noted so the answer isn't cached).
+ */
+export async function getAppSitemapPart(
+  env: ServerEnv,
+  name: string,
+): Promise<string[] | null | undefined> {
+  const db = getClient(env);
+  if (!db) return undefined;
+
+  return safely<string[] | null | undefined>(undefined, async () => {
+    let keys = await currentBrowseKeys(db);
+    for (let attempt = 0; attempt < 2 && keys?.categoryIds; attempt++) {
+      const generation = keys.generation;
+      // Sequential on purpose, same as `readPrecomputedBrowse`: the chunks
+      // to read depend on the sizes, and a retry only happens once a read
+      // found the generation stale.
+      // eslint-disable-next-line no-await-in-loop
+      const sizes = await readPinned(db, generation, [
+        { sql: `SELECT value FROM meta WHERE key = ?`, args: [CATEGORY_SIZES_META_KEY] },
+      ]);
+      if (sizes.kind === "stale") {
+        keys = rememberBrowseKeys(sizes.keys);
+        continue;
+      }
+      const part = findAppSitemapPart(name, parseCategorySizes(metaValue(sizes.results[0])));
+      if (!part) return null;
+
+      const chunkSize = keys.sourceIdsChunkSize;
+      const indexes = chunkIndexesFor(part.start, part.end, chunkSize);
+      // eslint-disable-next-line no-await-in-loop
+      const chunkRows = await readPinned(
+        db,
+        generation,
+        indexes.map((index) => ({
+          sql: `SELECT value FROM meta WHERE key = ?`,
+          args: [categoryIdsChunkKey(generation, index, part.category)],
+        })),
+      );
+      if (chunkRows.kind === "stale") {
+        keys = rememberBrowseKeys(chunkRows.keys);
+        continue;
+      }
+      const chunks = new Map(
+        indexes.map((index, i) => [
+          index,
+          JSON.parse(metaValue(chunkRows.results[i]) ?? "[]") as string[],
+        ]),
+      );
+      const ids = sliceFromChunks(chunks, part.start, part.end, chunkSize);
+      // Catalog writes every chunk before it publishes the generation: a
+      // short list means the data is off, and is not worth a day in cache.
+      if (ids.length !== part.end - part.start) {
+        throw new Error(`${name}: ${ids.length} ids, ${part.end - part.start} expected`);
+      }
+      return ids;
+    }
+    // No per-category lists: the index lists no app sitemap either.
+    if (!keys?.categoryIds) return null;
+    throw new Error(`${name}: the catalog republished during both reads`);
   });
 }
