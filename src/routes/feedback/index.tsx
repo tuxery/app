@@ -1,5 +1,5 @@
-import { component$ } from "@qwik.dev/core";
-import { Form, routeAction$, useLocation, type DocumentHead } from "@qwik.dev/router";
+import { component$, isBrowser, useTask$ } from "@qwik.dev/core";
+import { Form, routeAction$, routeLoader$, useLocation, type DocumentHead } from "@qwik.dev/router";
 import { LuCheckCircle, LuMessageSquare } from "@qwikest/icons/lucide";
 import {
   buildFeedbackIssue,
@@ -11,51 +11,101 @@ import {
   parseFeedback,
 } from "~/feedback";
 import { resolveServerEnv } from "~/server-env";
+import {
+  TURNSTILE_ACTION,
+  TURNSTILE_RESPONSE_FIELD,
+  TURNSTILE_SCRIPT,
+  verifyTurnstile,
+} from "~/turnstile";
 
 type FeedbackResult = { sent: true } | { sent: false; error: string };
 
+/** The Turnstile site key when both of its keys are configured, else null (no widget). */
+export const useTurnstileSiteKey = routeLoader$(({ platform }) => {
+  const env = resolveServerEnv(platform);
+  return env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY ? env.TURNSTILE_SITE_KEY : null;
+});
+
 // Posts the tester's message as an issue in the private feedback repository
 // (see ~/feedback). Without FEEDBACK_GITHUB_TOKEN (local dev, pull-request
-// Previews) the form says so instead of pretending to send.
-export const useSendFeedback = routeAction$(async (form, { platform }): Promise<FeedbackResult> => {
-  const parsed = parseFeedback(form);
-  if (!parsed.ok) return parsed.spam ? { sent: true } : { sent: false, error: parsed.error };
+// Previews) the form says so instead of pretending to send. Before that:
+// at most FEEDBACK_RATE_LIMITER's quota per IP address, and a Turnstile
+// check where Turnstile is configured (see ~/turnstile).
+export const useSendFeedback = routeAction$(
+  async (form, { platform, request }): Promise<FeedbackResult> => {
+    const parsed = parseFeedback(form);
+    if (!parsed.ok) return parsed.spam ? { sent: true } : { sent: false, error: parsed.error };
 
-  const token = resolveServerEnv(platform).FEEDBACK_GITHUB_TOKEN;
-  if (!token) {
+    const env = resolveServerEnv(platform);
+    const token = env.FEEDBACK_GITHUB_TOKEN;
+    if (!token) {
+      return {
+        sent: false,
+        error:
+          "Feedback can't be sent from this copy of the site. Please write to info@tuxery.store.",
+      };
+    }
+
+    const ip = request.headers.get("cf-connecting-ip");
+    const limiter = (platform?.env as Partial<Env> | undefined)?.FEEDBACK_RATE_LIMITER;
+    if (limiter && ip && !(await limiter.limit({ key: ip })).success) {
+      return {
+        sent: false,
+        error: "Too many messages in a short time. Please wait a minute and try again.",
+      };
+    }
+
+    if (env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY) {
+      const verdict = await verifyTurnstile(
+        form[TURNSTILE_RESPONSE_FIELD],
+        env.TURNSTILE_SECRET_KEY,
+        ip,
+      );
+      if (!verdict.ok) {
+        console.warn(`[feedback] Turnstile refused: ${verdict.reason}`);
+        return {
+          sent: false,
+          error:
+            "We couldn't check that you're not a robot. Please complete the check above the Send button and try again.",
+        };
+      }
+    }
+
+    const issue = buildFeedbackIssue(parsed.input, APP_COMMIT.slice(0, 7));
+    try {
+      const response = await fetch(`https://api.github.com/repos/${FEEDBACK_REPO}/issues`, {
+        method: "POST",
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${token}`,
+          "User-Agent": "tuxery-web-feedback",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+        body: JSON.stringify(issue),
+      });
+      if (response.ok) return { sent: true };
+      console.error(`[feedback] GitHub answered ${response.status}: ${await response.text()}`);
+    } catch (err) {
+      console.error("[feedback] GitHub request failed", err);
+    }
     return {
       sent: false,
-      error:
-        "Feedback can't be sent from this copy of the site. Please write to info@tuxery.store.",
+      error: "Your message couldn't be sent. Please try again, or write to info@tuxery.store.",
     };
-  }
-
-  const issue = buildFeedbackIssue(parsed.input, APP_COMMIT.slice(0, 7));
-  try {
-    const response = await fetch(`https://api.github.com/repos/${FEEDBACK_REPO}/issues`, {
-      method: "POST",
-      headers: {
-        Accept: "application/vnd.github+json",
-        Authorization: `Bearer ${token}`,
-        "User-Agent": "tuxery-web-feedback",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-      body: JSON.stringify(issue),
-    });
-    if (response.ok) return { sent: true };
-    console.error(`[feedback] GitHub answered ${response.status}: ${await response.text()}`);
-  } catch (err) {
-    console.error("[feedback] GitHub request failed", err);
-  }
-  return {
-    sent: false,
-    error: "Your message couldn't be sent. Please try again, or write to info@tuxery.store.",
-  };
-});
+  },
+);
 
 export default component$(() => {
   const action = useSendFeedback();
+  const turnstileSiteKey = useTurnstileSiteKey();
   const loc = useLocation();
+  // A Turnstile token is single-use: after an answer that didn't send the
+  // message, the widget needs a fresh one before the next try.
+  useTask$(({ track }) => {
+    track(() => action.value);
+    if (isBrowser && action.value && !action.value.sent)
+      (window as { turnstile?: { reset: () => void } }).turnstile?.reset();
+  });
   // `?from=` is whatever the link that led here says: only a path on this
   // site becomes the "back" link's `href` and the form's prefilled page.
   const from = normalizePage(loc.url.searchParams.get("from")) ?? "";
@@ -159,6 +209,19 @@ export default component$(() => {
             <input type="text" name="website" tabIndex={-1} autoComplete="off" />
           </label>
         </div>
+
+        {turnstileSiteKey.value && (
+          <>
+            <div
+              class="cf-turnstile"
+              data-sitekey={turnstileSiteKey.value}
+              data-action={TURNSTILE_ACTION}
+              data-theme="auto"
+              data-size="flexible"
+            />
+            <script src={TURNSTILE_SCRIPT} async defer />
+          </>
+        )}
 
         {result && !result.sent && (
           <p role="alert" class="alert alert-error">
