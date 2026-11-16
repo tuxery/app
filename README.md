@@ -33,8 +33,9 @@ Queries `tuxery/catalog`'s dataset — always against catalog's own **local**
 `turso dev` server (`http://127.0.0.1:8080`), never a hosted Turso DB; see
 `vite.config.ts`'s own comment for why that's a hard rule, not just a
 default. Run `tuxery/catalog`'s `pnpm seed` then `pnpm serve` first (its own
-README) to have real data locally; without that, the homepage just shows an
-empty catalog rather than failing.
+README) to have real data locally; without that, pages that need the
+catalog answer 503 with a "catalog unavailable" banner (the docs and
+settings still work).
 
 ## Checks
 
@@ -103,9 +104,10 @@ OpenBao if you specifically need real preview data, or run
 
 ## Status
 
-`apps/web`'s homepage renders live, server-side search results against
-`tuxery/catalog`'s dataset (substring match on name/description, via a
-Turso database). That dataset itself is still mostly stubs beyond the
+The app renders live, server-side pages from `tuxery/catalog`'s dataset in
+a Turso database; free-text search on /browse goes through catalog's
+`apps_fts` index (FTS5 trigram over id, name and short description, so
+words of at least 3 characters). That dataset itself is still mostly stubs beyond the
 core fields (name, description, packages) — richer per-app fields
 (screenshots, ratings, reviews...) are tracked as cards on the
 [Tuxery GitHub Project](https://github.com/orgs/tuxery/projects/1), not
