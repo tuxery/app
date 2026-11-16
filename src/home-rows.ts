@@ -15,11 +15,16 @@ export const HOME_LISTINGS = {
   newGames: "newApps:game",
   recentlyUpdatedApps: "newApps:app",
   productivity: "categoryPreview:Productivity",
+  messaging: "categoryPreview:Messaging & Calls",
+  browsers: "categoryPreview:Web Browsers",
+  social: "categoryPreview:Social Media",
   music: "categoryPreview:Music & Audio",
   creativity: "categoryPreview:Graphics & Design",
   learning: "categoryPreview:Education",
   video: "categoryPreview:Photo & Video",
   puzzleGames: "categoryPreview:Puzzle",
+  racingGames: "categoryPreview:Racing",
+  gamingTools: "categoryPreview:Gaming Tools",
 } as const;
 
 export type HomeRowName = keyof typeof HOME_LISTINGS | "mustHave";

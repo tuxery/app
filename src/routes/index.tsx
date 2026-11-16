@@ -76,34 +76,35 @@ const RowPlaceholder = () => (
   />
 );
 
-/** A curated-by-category row (Productivity, Creativity, ...) — real data, not a placeholder, but honest about showing nothing when a category happens to be empty rather than hiding the whole section. */
+/**
+ * A curated-by-category row (Productivity, Messaging & calls, ...). A
+ * category with no listing is left out rather than shown as an empty box:
+ * the site can name a category before the published catalog has it.
+ */
 const CategoryRow = component$<{ title: string; category: string; apps?: AppSummary[] }>(
-  ({ title, category, apps }) => (
-    <section>
-      <div class="flex items-baseline justify-between mb-3">
-        <h2 class="text-lg font-semibold">{title}</h2>
-        <a
-          href={`/browse/?category=${encodeURIComponent(category)}`}
-          class="link link-primary text-sm"
-        >
-          Browse all →
-        </a>
-      </div>
-      {apps === undefined ? (
-        <RowPlaceholder />
-      ) : apps.length === 0 ? (
-        <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/70">
-          No {title.toLowerCase()} catalogued yet.
+  ({ title, category, apps }) =>
+    apps?.length === 0 ? null : (
+      <section>
+        <div class="flex items-baseline justify-between mb-3">
+          <h2 class="text-lg font-semibold">{title}</h2>
+          <a
+            href={`/browse/?category=${encodeURIComponent(category)}`}
+            class="link link-primary text-sm"
+          >
+            Browse all →
+          </a>
         </div>
-      ) : (
-        <HorizontalScroller ariaLabel={title}>
-          {apps.map((app) => (
-            <AppCardLink key={app.id} app={app} linkClass="block w-64 shrink-0 snap-start" />
-          ))}
-        </HorizontalScroller>
-      )}
-    </section>
-  ),
+        {apps === undefined ? (
+          <RowPlaceholder />
+        ) : (
+          <HorizontalScroller ariaLabel={title}>
+            {apps.map((app) => (
+              <AppCardLink key={app.id} app={app} linkClass="block w-64 shrink-0 snap-start" />
+            ))}
+          </HorizontalScroller>
+        )}
+      </section>
+    ),
 );
 
 const TRENDING_TIP =
@@ -440,6 +441,14 @@ export default component$(() => {
             apps={rows.value?.productivity}
           />
 
+          <CategoryRow
+            title="Messaging & calls"
+            category="Messaging & Calls"
+            apps={rows.value?.messaging}
+          />
+
+          <CategoryRow title="Web browsers" category="Web Browsers" apps={rows.value?.browsers} />
+
           <AppScrollRow
             title="New games"
             typeFilter="game"
@@ -464,6 +473,8 @@ export default component$(() => {
             apps={rows.value?.creativity}
           />
 
+          <CategoryRow title="Social media" category="Social Media" apps={rows.value?.social} />
+
           <CategoryRow title="Learning apps" category="Education" apps={rows.value?.learning} />
 
           <CategoryRow
@@ -473,6 +484,14 @@ export default component$(() => {
           />
 
           <CategoryRow title="Puzzle games" category="Puzzle" apps={rows.value?.puzzleGames} />
+
+          <CategoryRow title="Racing games" category="Racing" apps={rows.value?.racingGames} />
+
+          <CategoryRow
+            title="Emulators & game tools"
+            category="Gaming Tools"
+            apps={rows.value?.gamingTools}
+          />
 
           {(appCategories.value.length > 0 || gameCategories.value.length > 0) && (
             <section>
