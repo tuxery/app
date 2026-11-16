@@ -130,14 +130,21 @@ export function isCacheableRequest(request: Request): boolean {
 const PRIVATE_DIRECTIVES = new Set(["private", "no-store", "no-cache"]);
 
 /**
- * Whether a response may be stored for everyone: a 200 or a 404 (a page that
- * doesn't exist is as good a thing to remember as one that does: bots ask for
- * the same wrong URLs by the tens of thousands) that says so itself with a
- * `Cache-Control` without `private`/`no-store`/`no-cache`, and sets no cookie.
- * A 503 (catalog down) carries `no-store` and is never kept.
+ * Statuses the shared cache keeps: a page, a page that doesn't exist (as good
+ * a thing to remember as one that does: bots ask for the same wrong URLs by
+ * the tens of thousands), and a permanent redirect (an app's former id, sent
+ * on to its current one).
+ */
+const SHARED_CACHEABLE_STATUSES = new Set([200, 301, 404]);
+
+/**
+ * Whether a response may be stored for everyone: one of
+ * `SHARED_CACHEABLE_STATUSES` that says so itself with a `Cache-Control`
+ * without `private`/`no-store`/`no-cache`, and sets no cookie. A 503
+ * (catalog down) carries `no-store` and is never kept.
  */
 export function isSharedCacheable(response: Response): boolean {
-  if (response.status !== 200 && response.status !== 404) return false;
+  if (!SHARED_CACHEABLE_STATUSES.has(response.status)) return false;
   const cacheControl = response.headers.get("Cache-Control");
   if (!cacheControl || response.headers.has("Set-Cookie")) return false;
   return !cacheControl

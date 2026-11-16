@@ -6,6 +6,7 @@ import {
   defaultSelection,
   editionsOf,
   hasBuild,
+  movedProductPath,
   packagesOf,
   parseBuildPath,
   selectEdition,
@@ -28,6 +29,20 @@ const firefox = [
   pkg({ name: "firefox-esr-beta", track: "esr", risk: "beta" }),
   pkg({ name: "firefox-developer-edition", track: "devedition" }),
 ];
+
+describe("movedProductPath", () => {
+  it("keeps the edition/version path under the current id", () => {
+    expect(movedProductPath("firefox", "")).toBe("/app/firefox/");
+    expect(movedProductPath("firefox", "esr/beta")).toBe("/app/firefox/esr/beta/");
+    expect(movedProductPath("pacman-aur:x", "nightly/")).toBe("/app/pacman-aur%3Ax/nightly/");
+  });
+
+  it("encodes a segment once, whether or not the path had it encoded", () => {
+    expect(movedProductPath("x", "a%20b")).toBe("/app/x/a%20b/");
+    expect(movedProductPath("x", "a b")).toBe("/app/x/a%20b/");
+    expect(movedProductPath("x", "100%")).toBe("/app/x/100%25/");
+  });
+});
 
 describe("parseBuildPath / buildPath", () => {
   it("reads one segment as a version when it's a risk word, as an edition otherwise", () => {

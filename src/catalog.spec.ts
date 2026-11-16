@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toCatalogApp } from "~/catalog";
+import { isMissingTable, toCatalogApp } from "~/catalog";
 
 const row = (overrides: Record<string, unknown> = {}) => ({
   id: "demo",
@@ -62,5 +62,15 @@ describe("toCatalogApp", () => {
     expect(app.screenshots).toBeUndefined();
     expect(app.links).toBeUndefined();
     expect(app.packages).toEqual([]);
+  });
+});
+
+describe("isMissingTable", () => {
+  it("recognizes SQLite's missing-table error for that table only", () => {
+    const error = new Error("SQLITE_ERROR: no such table: id_aliases");
+    expect(isMissingTable(error, "id_aliases")).toBe(true);
+    expect(isMissingTable(error, "apps")).toBe(false);
+    expect(isMissingTable(new Error("fetch failed"), "id_aliases")).toBe(false);
+    expect(isMissingTable("no such table: id_aliases", "id_aliases")).toBe(false);
   });
 });

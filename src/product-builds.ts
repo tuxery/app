@@ -43,6 +43,25 @@ export function buildPath(appId: string, { track, risk }: BuildSelection): strin
   return `/app/${segments.map(encodeURIComponent).join("/")}/`;
 }
 
+function decodeSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
+/**
+ * Where a page under a product's old id moved (catalog's id aliases): the
+ * same edition/version path, `rawBuild` as the path has it, under the
+ * product's current id. A combination the product no longer has is then
+ * sent on to its own page by that page, like any stale link.
+ */
+export function movedProductPath(appId: string, rawBuild: string): string {
+  const segments = [appId, ...rawBuild.split("/").filter(Boolean).map(decodeSegment)];
+  return `/app/${segments.map(encodeURIComponent).join("/")}/`;
+}
+
 function matches(pkg: SourcedPackage, { track, risk }: BuildSelection): boolean {
   return pkg.track === track && pkg.risk === risk;
 }
