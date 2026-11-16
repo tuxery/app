@@ -102,6 +102,54 @@ OpenBao if you specifically need real preview data, or run
 `pnpm cf-typegen` after creating it to keep `worker-configuration.d.ts`'s
 `Env` type in sync).
 
+## Search engines and the public launch
+
+The site is in a private beta: nothing may be indexed yet. One constant
+decides it, `SITE_IS_PUBLIC` in [`src/seo.ts`](src/seo.ts). While it is
+`false`:
+
+- every page answers with `X-Robots-Tag: noindex` and a
+  `<meta name="robots" content="noindex">`;
+- every static file gets the same header from the `_headers` file the build
+  writes ([`src/static-files.ts`](src/static-files.ts), along with
+  robots.txt: neither lives in `public/`);
+- robots.txt doesn't name the sitemap, and production answers 404 for
+  `/sitemap.xml` and its parts, so no crawler is handed ~100k pages to
+  render that it may not index. Previews and local servers serve them, so
+  they can be checked before the launch (`/sitemap.xml` on any PR
+  Preview).
+
+Pull-request Previews stay `noindex` whatever the switch says.
+
+What is ready either way: canonical URLs, Open Graph and X card tags on
+every page (the app's icon on app pages, `public/og-image.jpg` elsewhere),
+a `SoftwareApplication` JSON-LD on app pages
+([`src/structured-data.ts`](src/structured-data.ts)), the 404 and error
+pages (`src/routes/404.tsx`, `src/routes/error.tsx`), and the sitemap: an
+index at `/sitemap.xml`, the site's pages in `/sitemaps/pages.xml`, every
+app page in parts of at most 10,000 per category (`src/sitemap.ts`), read
+from the per-category id lists catalog precomputes (~300 rows read for the
+whole set, kept a day at the edge).
+
+On launch day:
+
+1. Set `SITE_IS_PUBLIC = true` in `src/seo.ts`, merge, and let the deploy
+   finish.
+2. Check production: `curl -sI https://tuxery.store/` has no
+   `X-Robots-Tag`, `https://tuxery.store/robots.txt` ends with
+   `Sitemap: https://tuxery.store/sitemap.xml`, and that URL answers 200.
+3. Submit `https://tuxery.store/sitemap.xml` in
+   [Google Search Console](https://search.google.com/search-console)
+   (Domain property for `tuxery.store`, verified with a DNS TXT record in
+   Cloudflare) and in
+   [Bing Webmaster Tools](https://www.bing.com/webmasters) (it can import
+   the Search Console property). Bing's submission also reaches the other
+   engines that use its index.
+4. Check the app pages' structured data with Google's
+   [Rich Results Test](https://search.google.com/test/rich-results) on one
+   page (it reports the JSON-LD as read, without a rich result: see
+   `src/structured-data.ts` for why there's no price or rating in it).
+
 ## Status
 
 The app renders live, server-side pages from `tuxery/catalog`'s dataset in
