@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 
-test("multi-word search matches across words, not one literal phrase", async ({ page }) => {
+test("multi-word search matches across words, not one literal phrase @private-caches", async ({
+  page,
+}) => {
   // Real bug, found live: "zen browser" used to return nothing at all —
   // the query was matched as one literal contiguous phrase, and neither
   // the real Zen browser's name ("Zen") nor its description ("Stay
@@ -10,7 +12,7 @@ test("multi-word search matches across words, not one literal phrase", async ({ 
   expect(titles).toContain("Zen");
 });
 
-test("a short exact-name match ranks above longer names that merely contain the query words", async ({
+test("a short exact-name match ranks above longer names that merely contain the query words @private-caches", async ({
   page,
 }) => {
   // "zen-browser-bitwarden" and friends (real Zen browser *extension*

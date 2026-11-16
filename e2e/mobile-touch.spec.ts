@@ -46,7 +46,9 @@ test("the trending row's horizontal scroller responds to a real touch swipe", as
   expect(after).toBeGreaterThan(0);
 });
 
-test("the install drawer opens and a platform section expands, both by tap", async ({ page }) => {
+test("the install drawer opens and a platform section expands, both by tap @private-caches", async ({
+  page,
+}) => {
   await page.goto("/app/firefox/");
   await page.getByRole("button", { name: "Install" }).tap();
 

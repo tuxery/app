@@ -102,10 +102,16 @@ jobs:
           working-directory: catalog
 
       # The private caches (catalog's src/sources/_shared/cache-path.ts:
-      # AppImageHub, Flathub, GOG). Without them those sources read as empty
-      # and the e2e dataset would miss most Flatpak apps. Seeded locally on
-      # the runner only: nothing from them is uploaded or published.
+      # AppImageHub, Flathub, GOG, Snap). Without them those sources read as
+      # empty and the e2e dataset would miss most Flatpak apps. Seeded locally
+      # on the runner only: nothing from them is uploaded or published.
+      # Dependabot's runs don't get them: they only see Dependabot secrets,
+      # which deliberately hold no Pushinator key, so updated dependencies
+      # never run with read access to the private caches. Those runs seed
+      # from the public caches alone and skip the tests tagged
+      # @private-caches (playwright.config.ts).
       - name: Mint a token for the private source caches
+        if: github.actor != 'dependabot[bot]'
         id: pushinator
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
@@ -116,6 +122,7 @@ jobs:
           permission-contents: read
 
       - name: Check out the private source caches
+        if: github.actor != 'dependabot[bot]'
         uses: actions/checkout@v7
         with:
           repository: tuxery/source-cache
@@ -255,10 +262,16 @@ jobs:
           working-directory: catalog
 
       # The private caches (catalog's src/sources/_shared/cache-path.ts:
-      # AppImageHub, Flathub, GOG). Without them those sources read as empty
-      # and the e2e dataset would miss most Flatpak apps. Seeded locally on
-      # the runner only: nothing from them is uploaded or published.
+      # AppImageHub, Flathub, GOG, Snap). Without them those sources read as
+      # empty and the e2e dataset would miss most Flatpak apps. Seeded locally
+      # on the runner only: nothing from them is uploaded or published.
+      # Dependabot's runs don't get them: they only see Dependabot secrets,
+      # which deliberately hold no Pushinator key, so updated dependencies
+      # never run with read access to the private caches. Those runs seed
+      # from the public caches alone and skip the tests tagged
+      # @private-caches (playwright.config.ts).
       - name: Mint a token for the private source caches
+        if: github.actor != 'dependabot[bot]'
         id: pushinator
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
@@ -269,6 +282,7 @@ jobs:
           permission-contents: read
 
       - name: Check out the private source caches
+        if: github.actor != 'dependabot[bot]'
         uses: actions/checkout@v7
         with:
           repository: tuxery/source-cache
@@ -309,6 +323,7 @@ jobs:
         run: pnpm exec playwright test --project=chromium --reporter=list,json
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: e2e-desktop-report.json
+          E2E_WITHOUT_PRIVATE_CACHES: ${{ github.actor == 'dependabot[bot]' }}
 
       - name: Turso rows read by this suite (local sqld estimate)
         if: always()
@@ -330,9 +345,14 @@ jobs:
       - name: Summarize results
         id: summary
         if: always()
+        env:
+          E2E_WITHOUT_PRIVATE_CACHES: ${{ github.actor == 'dependabot[bot]' }}
         run: |
           if [[ -f e2e-desktop-report.json ]]; then
             summary=$(jq -r '.stats | "\(.expected) passed, \(.unexpected) failed, \(.flaky) flaky, \(.skipped) skipped"' e2e-desktop-report.json)
+            if [[ "$E2E_WITHOUT_PRIVATE_CACHES" == "true" ]]; then
+              summary="$summary (public caches only)"
+            fi
           else
             summary="no report"
           fi
@@ -390,10 +410,16 @@ jobs:
           working-directory: catalog
 
       # The private caches (catalog's src/sources/_shared/cache-path.ts:
-      # AppImageHub, Flathub, GOG). Without them those sources read as empty
-      # and the e2e dataset would miss most Flatpak apps. Seeded locally on
-      # the runner only: nothing from them is uploaded or published.
+      # AppImageHub, Flathub, GOG, Snap). Without them those sources read as
+      # empty and the e2e dataset would miss most Flatpak apps. Seeded locally
+      # on the runner only: nothing from them is uploaded or published.
+      # Dependabot's runs don't get them: they only see Dependabot secrets,
+      # which deliberately hold no Pushinator key, so updated dependencies
+      # never run with read access to the private caches. Those runs seed
+      # from the public caches alone and skip the tests tagged
+      # @private-caches (playwright.config.ts).
       - name: Mint a token for the private source caches
+        if: github.actor != 'dependabot[bot]'
         id: pushinator
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
@@ -404,6 +430,7 @@ jobs:
           permission-contents: read
 
       - name: Check out the private source caches
+        if: github.actor != 'dependabot[bot]'
         uses: actions/checkout@v7
         with:
           repository: tuxery/source-cache
@@ -444,6 +471,7 @@ jobs:
         run: pnpm exec playwright test --project=mobile-chromium --reporter=list,json
         env:
           PLAYWRIGHT_JSON_OUTPUT_NAME: e2e-mobile-report.json
+          E2E_WITHOUT_PRIVATE_CACHES: ${{ github.actor == 'dependabot[bot]' }}
 
       - name: Turso rows read by this suite (local sqld estimate)
         if: always()
@@ -465,9 +493,14 @@ jobs:
       - name: Summarize results
         id: summary
         if: always()
+        env:
+          E2E_WITHOUT_PRIVATE_CACHES: ${{ github.actor == 'dependabot[bot]' }}
         run: |
           if [[ -f e2e-mobile-report.json ]]; then
             summary=$(jq -r '.stats | "\(.expected) passed, \(.unexpected) failed, \(.flaky) flaky, \(.skipped) skipped"' e2e-mobile-report.json)
+            if [[ "$E2E_WITHOUT_PRIVATE_CACHES" == "true" ]]; then
+              summary="$summary (public caches only)"
+            fi
           else
             summary="no report"
           fi

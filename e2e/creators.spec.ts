@@ -7,7 +7,7 @@ test("the creators explainer page links to baxyz's real page", async ({ page }) 
   await expect(page).toHaveURL(/\/creators\/baxyz\/?$/);
 });
 
-test("baxyz's influencer page renders its real category blocks, including Hardware/Piper", async ({
+test("baxyz's influencer page renders its real category blocks, including Hardware/Piper @private-caches", async ({
   page,
 }) => {
   await page.goto("/creators/baxyz/");

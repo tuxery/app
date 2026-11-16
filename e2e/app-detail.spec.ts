@@ -34,7 +34,7 @@ const APP_EDITOR = "/app/com.github.donadigo.appeditor/";
 // under its old "minetest" app id.
 const LUANTI = "/app/minetest/";
 
-test("an app page shows an install-options drawer listing every source, each group closed by default", async ({
+test("an app page shows an install-options drawer listing every source, each group closed by default @private-caches", async ({
   page,
 }) => {
   await page.goto(FIREFOX);
@@ -49,7 +49,7 @@ test("an app page shows an install-options drawer listing every source, each gro
   await expect(page.getByRole("link", { name: "Click to install" }).first()).toBeVisible();
 });
 
-test("a single-source rated app's tooltip still prefixes the figure with its source", async ({
+test("a single-source rated app's tooltip still prefixes the figure with its source @private-caches", async ({
   page,
 }) => {
   await page.goto(FLATSWEEP);
@@ -62,7 +62,7 @@ test("a single-source rated app's tooltip still prefixes the figure with its sou
   await expect(page.locator("[popover]:popover-open")).toHaveText(/^ODRS \(Flathub\): ★/);
 });
 
-test("Flathub and AppCenter share one ODRS row in the tooltip, since they carry the same votes", async ({
+test("Flathub and AppCenter share one ODRS row in the tooltip, since they carry the same votes @private-caches", async ({
   page,
 }) => {
   await page.goto(APP_EDITOR);
@@ -73,7 +73,7 @@ test("Flathub and AppCenter share one ODRS row in the tooltip, since they carry 
   );
 });
 
-test("the build count matches the builds its tooltip names", async ({ page }) => {
+test("the build count matches the builds its tooltip names @private-caches", async ({ page }) => {
   // Real bug, found live: an earlier badge counted *packages* (dozens, one
   // per distro, mostly the same build) next to a tooltip naming a handful
   // of builds. The count ("N builds", its accessible name) is checked
@@ -93,7 +93,7 @@ test("the build count matches the builds its tooltip names", async ({ page }) =>
   expect(count).toBe(named);
 });
 
-test("a Flathub-verified app shows a Verified badge next to its developer, and on the Flatpak drawer row", async ({
+test("a Flathub-verified app shows a Verified badge next to its developer, and on the Flatpak drawer row @private-caches", async ({
   page,
 }) => {
   await page.goto(FIREFOX);
@@ -106,7 +106,7 @@ test("a Flathub-verified app shows a Verified badge next to its developer, and o
   await expect(page.locator('[data-tip="Developer-identity-verified on Flathub"]')).toBeVisible();
 });
 
-test("the platform stack leads with the recommended way to install, and colors the selected OS's platforms", async ({
+test("the platform stack leads with the recommended way to install, and colors the selected OS's platforms @private-caches", async ({
   page,
 }) => {
   await page.goto(FIREFOX);
@@ -135,7 +135,7 @@ test("the platform stack leads with the recommended way to install, and colors t
   await expect(stackWithOs.locator("svg").first()).toHaveClass(/text-primary/);
 });
 
-test("an unverified platform says nothing about verification", async ({ page }) => {
+test("an unverified platform says nothing about verification @private-caches", async ({ page }) => {
   // LM Studio: on Flathub but not in its "verified" collection; Arch and
   // Homebrew have no verification at all.
   await page.goto("/app/ai.lmstudio.lm-studio/");
@@ -143,7 +143,7 @@ test("an unverified platform says nothing about verification", async ({ page }) 
   expect(await tipText(page, stack)).toBe("Flatpak (recommended)\nArch Linux\nHomebrew");
 });
 
-test("Claim this listing links to the claim explainer, personalized with the app's name, and back again", async ({
+test("Claim this listing links to the claim explainer, personalized with the app's name, and back again @private-caches", async ({
   page,
 }) => {
   await page.goto(FIREFOX);
@@ -163,7 +163,7 @@ test("the claim page falls back to a generic heading with no ?app given", async 
   await expect(page.getByRole("heading", { name: "Claim your listing" })).toBeVisible();
 });
 
-test("suite navigation: main app lists its components, and a component links back", async ({
+test("suite navigation: main app lists its components, and a component links back @private-caches", async ({
   page,
 }) => {
   await page.goto(CALLIGRA_MAIN);
@@ -226,7 +226,9 @@ test("Firefox's Edition and Version pickers switch to that release line's own pa
   await expect(page).toHaveURL(/\/app\/firefox\/$/);
 });
 
-test("the license and latest release show on the default build only", async ({ page }) => {
+test("the license and latest release show on the default build only @private-caches", async ({
+  page,
+}) => {
   await page.goto("/app/firefox/");
   // Links to what the license lets you do, in the licenses guide.
   const badge = page.getByRole("link", { name: /Free software/ });

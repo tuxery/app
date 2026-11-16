@@ -10,10 +10,16 @@ import { defineConfig, devices } from "@playwright/test";
 // this one.
 const TURSO_DB_URL = process.env.TURSO_DB_URL ?? "http://127.0.0.1:8080";
 
+// A catalog seeded from the public caches alone (CI on Dependabot's PRs, see
+// ci.yml) has no Flathub, AppImageHub, GOG or Snap data: the tests tagged
+// @private-caches assert on it, so they are skipped there.
+const WITHOUT_PRIVATE_CACHES = process.env.E2E_WITHOUT_PRIVATE_CACHES === "true";
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
+  grepInvert: WITHOUT_PRIVATE_CACHES ? /@private-caches/ : undefined,
   retries: process.env.CI ? 2 : 0,
   reporter: "list",
   timeout: process.env.CI ? 60_000 : 30_000,
