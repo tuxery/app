@@ -2,9 +2,10 @@
 // (`entry.cloudflare-pages.tsx`) adds them to whatever it answers with: a
 // page, a loader's JSON, a redirect, a cache hit, or the router's own bare
 // 404 and error pages, which no route or layout ever sees. Static files get
-// the same list from `public/_headers`; a test keeps the two in step. The
-// Vite dev server sends none of them, so the site can still be opened in an
-// editor's embedded preview. Pure, unit-tested in security-headers.spec.ts.
+// the same list from the `_headers` file the build writes from it
+// (`~/static-files`). The Vite dev server sends none of them, so the site
+// can still be opened in an editor's embedded preview. Pure, unit-tested in
+// security-headers.spec.ts.
 
 /**
  * - `Content-Security-Policy`: only directives that restrict nothing the

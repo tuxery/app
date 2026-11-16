@@ -3,11 +3,12 @@
  * When building, the adapter config is used which loads this file and extends it.
  */
 /// <reference types="vitest/config" />
-import { defineConfig, type UserConfig } from "vite";
+import { defineConfig, type Plugin, type UserConfig } from "vite";
 import { qwikVite } from "@qwik.dev/core/optimizer";
 import { qwikRouter } from "@qwik.dev/router/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { execFileSync } from "node:child_process";
+import { headersFile, robotsTxt } from "./src/static-files.ts";
 
 // Tuxery has three environments:
 //   - **dev**     — local only, this file, always the local `turso dev`
@@ -55,6 +56,23 @@ function appCommit(): { commit: string; date: string } {
 }
 
 /**
+ * robots.txt and Cloudflare's `_headers`, written into the client build's
+ * output (dist/) next to public/'s files: they depend on the public switch
+ * and the security headers, kept in TypeScript (see src/static-files.ts).
+ * Not in the server build, which writes no static file.
+ */
+function staticFiles(): Plugin {
+  return {
+    name: "tuxery-static-files",
+    apply: (config, { command }) => command === "build" && !config.build?.ssr,
+    generateBundle() {
+      this.emitFile({ type: "asset", fileName: "robots.txt", source: robotsTxt() });
+      this.emitFile({ type: "asset", fileName: "_headers", source: headersFile() });
+    },
+  };
+}
+
+/**
  * Note that Vite normally starts from `index.html` but the qwikRouter plugin makes start at `src/entry.ssr.tsx` instead.
  */
 export default defineConfig((): UserConfig => {
@@ -78,7 +96,7 @@ export default defineConfig((): UserConfig => {
       APP_COMMIT: JSON.stringify(app.commit),
       APP_COMMIT_DATE: JSON.stringify(app.date),
     },
-    plugins: [qwikRouter(), qwikVite(), tailwindcss()],
+    plugins: [qwikRouter(), qwikVite(), tailwindcss(), staticFiles()],
     // Resolves tsconfig.json's `~/*` alias (Vite's built-in support).
     resolve: { tsconfigPaths: true },
     // This tells Vite which dependencies to pre-build in dev mode.

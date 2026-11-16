@@ -1,6 +1,6 @@
 import { component$ } from "@qwik.dev/core";
 import { useDocumentHead, useLocation } from "@qwik.dev/router";
-import { canonicalUrl, robotsDirective } from "~/seo";
+import { canonicalUrl, robotsMeta } from "~/seo";
 
 /**
  * The RouterHead component is placed inside of the document `<head>` element.
@@ -8,15 +8,15 @@ import { canonicalUrl, robotsDirective } from "~/seo";
 export const RouterHead = component$(() => {
   const head = useDocumentHead();
   const loc = useLocation();
+  const canonical = canonicalUrl(loc.url.pathname);
+  const robots = robotsMeta(loc.url.pathname, loc.url.hostname);
 
   return (
     <>
       <title>{head.title}</title>
 
-      <link rel="canonical" href={canonicalUrl(loc.url.pathname)} />
-      {robotsDirective(loc.url.pathname) && (
-        <meta name="robots" content={robotsDirective(loc.url.pathname)} />
-      )}
+      <link rel="canonical" href={canonical} />
+      {robots && <meta name="robots" content={robots} />}
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
