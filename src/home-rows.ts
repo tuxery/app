@@ -16,7 +16,11 @@ export const HOME_SECTIONS = [
 
 export type HomeSectionId = (typeof HOME_SECTIONS)[number]["id"];
 
-/** The hand-picked row's listing name: `MUST_HAVE_APP_IDS`, not a precomputed listing. */
+/**
+ * The hand-picked row's listing: catalog's `config/home-must-have.json`,
+ * published in its own order as `listingRows:mustHave`. Pinned to
+ * store-contract.json's `mustHaveListing`.
+ */
 export const MUST_HAVE = "mustHave";
 
 export interface HomeRow {
@@ -24,8 +28,8 @@ export interface HomeRow {
   title: string;
   /**
    * Where the cards come from: catalog's precomputed `listingRows:<listing>`
-   * meta row (`trending:app`, `categoryPreview:Racing`, ...), one read each,
-   * or `MUST_HAVE`.
+   * meta row (`trending:app`, `categoryPreview:Racing`, `MUST_HAVE`, ...),
+   * one read each.
    */
   listing: string;
   /** Where the row's "Browse" link leads; none for the hand-picked must-haves. */
@@ -139,34 +143,7 @@ export const HOME_ROWS: readonly HomeRow[] = [
 ];
 
 /** The precomputed listings the rows read (`listingRows:<listing>`), each once. */
-export const HOME_LISTINGS: readonly string[] = [
-  ...new Set(HOME_ROWS.map((row) => row.listing).filter((listing) => listing !== MUST_HAVE)),
-];
-
-/**
- * Hand-picked, not category-derived — there's no "must-have" signal in the
- * data model, so this is genuinely editorial, same spirit as
- * influencer-pages.json. Real catalog ids, capped at 15; the order is the
- * display order. Bare ids: a Snap or Flatpak package's own name is already
- * the app's canonical id (catalog's match/group.ts).
- */
-export const MUST_HAVE_APP_IDS = [
-  "firefox",
-  "zen-browser-snap",
-  "vlc",
-  "libreoffice",
-  "thunderbird",
-  "discord",
-  "signal-desktop",
-  "gimp",
-  "inkscape",
-  "krita",
-  "blender",
-  "kdenlive",
-  "audacity",
-  "obs-studio",
-  "keepassxc",
-] as const;
+export const HOME_LISTINGS: readonly string[] = [...new Set(HOME_ROWS.map((row) => row.listing))];
 
 /** Cards a row shows: five or six at a time, then "Browse". Trending listings hold 60, category ones 12. */
 export const HOME_ROW_SIZE = 16;
@@ -177,21 +154,18 @@ export type HomeRows = Record<string, AppSummary[]>;
 const rowsOf = (value: unknown): Row[] => (Array.isArray(value) ? (value as Row[]) : []);
 
 /**
- * `/api/home/`'s body as rows of cards, by listing: each listing cut to
- * `HOME_ROW_SIZE`, the must-haves in `MUST_HAVE_APP_IDS` order. A missing
- * or malformed listing is an empty row, never a throw.
+ * `/api/home/`'s body as rows of cards, by listing, each cut to
+ * `HOME_ROW_SIZE` in the order catalog published it. A missing or
+ * malformed listing is an empty row, never a throw.
  */
 export function parseHomeRows(body: unknown): HomeRows {
   const raw = (typeof body === "object" && body !== null ? body : {}) as Record<string, unknown>;
-  const rows: HomeRows = Object.fromEntries(
+  return Object.fromEntries(
     HOME_LISTINGS.map((listing) => [
       listing,
       rowsOf(raw[listing]).slice(0, HOME_ROW_SIZE).map(toSummary),
     ]),
   );
-  const mustHave = new Map(rowsOf(raw[MUST_HAVE]).map((row) => [String(row.id), toSummary(row)]));
-  rows[MUST_HAVE] = MUST_HAVE_APP_IDS.flatMap((id) => mustHave.get(id) ?? []);
-  return rows;
 }
 
 /**
