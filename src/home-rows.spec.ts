@@ -6,7 +6,6 @@ import {
   HOME_ROWS,
   homeRowsOf,
   MUST_HAVE,
-  MUST_HAVE_APP_IDS,
   parseHomeRows,
 } from "./home-rows";
 
@@ -38,10 +37,9 @@ describe("parseHomeRows", () => {
     expect(rows["categoryPreview:Puzzle"]?.map((app) => app.id)).toEqual(["puzzle"]);
   });
 
-  it("orders the must-haves as listed, whatever order the database returned", () => {
-    const [first, second] = MUST_HAVE_APP_IDS;
-    const rows = parseHomeRows({ mustHave: [row(second), row("not-a-must-have"), row(first)] });
-    expect(rows[MUST_HAVE]?.map((app) => app.id)).toEqual([first, second]);
+  it("keeps the must-haves in the order catalog published them", () => {
+    const rows = parseHomeRows({ [MUST_HAVE]: [row("vlc"), row("firefox"), row("gimp")] });
+    expect(rows[MUST_HAVE]?.map((app) => app.id)).toEqual(["vlc", "firefox", "gimp"]);
   });
 
   it("gives an empty row for a missing or malformed listing, never a throw", () => {
@@ -54,9 +52,9 @@ describe("parseHomeRows", () => {
 });
 
 describe("HOME_ROWS", () => {
-  it("reads each precomputed listing once, the must-haves apart", () => {
+  it("reads each precomputed listing once, the must-haves among them", () => {
     expect(new Set(HOME_LISTINGS).size).toBe(HOME_LISTINGS.length);
-    expect(HOME_LISTINGS).not.toContain(MUST_HAVE);
+    expect(HOME_LISTINGS).toContain(MUST_HAVE);
     expect(HOME_LISTINGS).toContain("categoryPreview:Racing");
   });
 

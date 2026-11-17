@@ -4,7 +4,7 @@ import { parseSourceTerms, SOURCE_TERMS_META_KEY, type SourceTerms } from "./sou
 import { parseRating, toSummary, type Row } from "./app-summary";
 import { httpLinks, httpUrl, httpUrls } from "./safe-url";
 import { BUILD_INFO_META_KEY, parseBuildInfo } from "./build-info";
-import { HOME_LISTINGS, MUST_HAVE, MUST_HAVE_APP_IDS } from "./home-rows";
+import { HOME_LISTINGS } from "./home-rows";
 import {
   ALL_PACKAGE_SOURCE_IDS,
   BROWSE_PAGE_SIZE,
@@ -753,13 +753,12 @@ export async function browseApps(
   return { ...result, ...supported };
 }
 
-/** Looks up several apps by id at once, in whatever order the DB returns them — callers that need a specific order (e.g. an editorial block referencing ids in a chosen sequence) should re-sort client-side. Missing ids are silently dropped rather than erroring, since editorial content referencing a since-removed app shouldn't break the whole page. */
 /**
  * Every homepage row in one JSON object (`/api/home/`, see `~/home-rows`):
  * the precomputed `listingRows:*` meta rows as stored, keyed by listing,
- * plus the must-have apps' summary rows. Built by string concatenation, no
- * parse or serialization of the listings: this is what keeps the Worker
- * well under its CPU limit. `undefined` when the catalog can't be read.
+ * read in one query. Built by string concatenation, no parse or
+ * serialization of the listings: this is what keeps the Worker well under
+ * its CPU limit. `undefined` when the catalog can't be read.
  */
 export async function getHomeRowsJson(env: ServerEnv): Promise<string | undefined> {
   const db = getClient(env);
@@ -771,22 +770,15 @@ export async function getHomeRowsJson(env: ServerEnv): Promise<string | undefine
       sql: `SELECT key, value FROM meta WHERE key IN (${keys.map(() => "?").join(", ")})`,
       args: keys,
     });
-    const mustHave = await db.execute({
-      sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE id IN (${MUST_HAVE_APP_IDS.map(() => "?").join(", ")})`,
-      args: [...MUST_HAVE_APP_IDS],
-    });
     const parts = listings.rows.map(
       (row) =>
         `${JSON.stringify(String(row.key).slice(listingRowsKey("").length))}:${String(row.value)}`,
     );
-    const mustHaveRows = mustHave.rows.map((row) =>
-      Object.fromEntries(mustHave.columns.map((column) => [column, row[column]])),
-    );
-    parts.push(`${JSON.stringify(MUST_HAVE)}:${JSON.stringify(mustHaveRows)}`);
     return `{${parts.join(",")}}`;
   });
 }
 
+/** Looks up several apps by id at once, in whatever order the DB returns them — callers that need a specific order (e.g. an editorial block referencing ids in a chosen sequence) should re-sort client-side. Missing ids are silently dropped rather than erroring, since editorial content referencing a since-removed app shouldn't break the whole page. */
 export async function getAppsByIds(env: ServerEnv, ids: string[]): Promise<AppSummary[]> {
   const db = getClient(env);
   if (!db || ids.length === 0) return [];
