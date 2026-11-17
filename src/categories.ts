@@ -35,6 +35,7 @@ export const APP_CATEGORY_GROUPS: readonly CategoryGroup[] = [
     categories: ["Graphics & Design", "Photo & Video", "Music & Audio"],
   },
   { id: "work", title: "Work", categories: ["Productivity", "Business", "Finance"] },
+  { id: "ai", title: "Artificial intelligence", categories: ["AI"] },
   {
     id: "learn",
     title: "Learn & discover",

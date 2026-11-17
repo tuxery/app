@@ -41,6 +41,11 @@ describe("groupCategories", () => {
     expect(grouped.map(({ group }) => group.id)).toEqual(["internet"]);
   });
 
+  it("lists AI in a group of its own", () => {
+    const grouped = groupCategories(counts("AI", "Productivity"), APP_CATEGORY_GROUPS);
+    expect(grouped.map(({ group }) => group.id)).toEqual(["work", "ai"]);
+  });
+
   it("names every category at most once", () => {
     const all = APP_CATEGORY_GROUPS.flatMap((group) => group.categories);
     expect(new Set(all).size).toBe(all.length);
