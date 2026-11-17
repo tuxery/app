@@ -73,6 +73,8 @@ export const SOURCE_LOGOS: Partial<Record<PackageSourceId, string>> = {
   "flatpak-appcenter": "elementary",
   "snap-snapcraft": "snapcraft",
   appimage: "appimage",
+  // AppImageHub has no mark of its own in Simple Icons: AppImage's stands in.
+  appimagehub: "appimage",
   gog: "gogdotcom",
   lutris: "lutris",
   "github-releases": "github",

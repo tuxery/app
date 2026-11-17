@@ -1,7 +1,8 @@
 import { test, expect } from "@playwright/test";
 
-// /sources/[id]/ — a dedicated per-store page (Flathub, Snap Store, GOG,
-// Lutris), linked from each of those sources on /docs/sources/.
+// /sources/[id]/ — a dedicated per-store page (Flathub, Snap Store,
+// AppImageHub, GOG, Lutris), linked from each of those sources on
+// /docs/sources/ and, but for GOG, from the homepage's store tiles.
 test("the sources page links to a store's own page", async ({ page }) => {
   await page.goto("/docs/sources/");
   await page.getByRole("link", { name: "Store page" }).first().click();
@@ -18,6 +19,17 @@ test("a per-source store page shows real trending apps from that source @private
   await expect(page.getByRole("link", { name: "Visit Flathub" })).toHaveAttribute(
     "href",
     "https://flathub.org",
+  );
+});
+
+test("the homepage's AppImageHub tile opens its store page", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: "AppImageHub", exact: true }).first().click();
+  await expect(page).toHaveURL(/\/sources\/appimagehub\/$/);
+  await expect(page.getByRole("heading", { name: "AppImageHub", level: 1 })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Visit AppImageHub" })).toHaveAttribute(
+    "href",
+    "https://www.appimagehub.com",
   );
 });
 
