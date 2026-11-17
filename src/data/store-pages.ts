@@ -6,15 +6,16 @@ export interface StorePageInfo {
   tagline: string;
   method: string;
   externalUrl: string;
-  /** What "Recently updated" is sorted by for this store, when it gives a date at all (GOG and Lutris don't, so their pages have no such row). */
+  /** What "Recently updated" is sorted by for this store, when it gives a date at all (AppImageHub, GOG and Lutris don't, so their pages have no such row). */
   recentNote?: string;
 }
 
 // Only the sources with a real, browsable storefront of their own get a
 // dedicated page (`/sources/<id>/`) — not every `/docs/sources/` credit (a distro's raw
 // package index isn't a "store" anyone visits directly the way Flathub,
-// the Snap Store, GOG, or Lutris are). Two universal app stores + two
-// gaming storefronts, replacing the homepage's old "All games"/"Lutris
+// the Snap Store, AppImageHub, GOG, or Lutris are). Three universal app
+// stores, one per format (Flatpak, Snap, AppImage), and two gaming
+// storefronts, replacing the homepage's old "All games"/"Lutris
 // only"/"All apps" tiles (those still exist — see /apps/, /games/,
 // /browse/ — this is a different, source-scoped surface).
 export const STORE_PAGES: StorePageInfo[] = [
@@ -33,6 +34,13 @@ export const STORE_PAGES: StorePageInfo[] = [
     method: "Snapcraft's search API, read page by page.",
     externalUrl: "https://snapcraft.io/store",
     recentNote: "Newest upload first, by the date each channel's revision reached the Snap Store.",
+  },
+  {
+    id: "appimagehub",
+    name: "AppImageHub",
+    tagline: "The AppImage catalog — one file per app, nothing to install, runs on any distro.",
+    method: "AppImageHub's OCS API, read once a week with opendesktop.org's permission.",
+    externalUrl: "https://www.appimagehub.com",
   },
   {
     id: "gog",

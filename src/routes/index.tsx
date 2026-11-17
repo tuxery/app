@@ -180,6 +180,12 @@ const DESTINATION_TILES = [
     source: "snap-snapcraft",
     gradient: "from-orange-500 to-red-600",
   },
+  {
+    title: "AppImageHub",
+    href: "/sources/appimagehub/",
+    source: "appimagehub",
+    gradient: "from-cyan-600 to-slate-700",
+  },
   // GOG's tile is hidden while its fetch is paused (its User Agreement forbids
   // extraction tools; tuxery/catalog#139): no new GOG games come in until GOG
   // answers. Its store page stays reachable from /docs/sources/. To restore:
