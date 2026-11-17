@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   APP_CATEGORY_GROUPS,
+  categoryDirectory,
   categoryTrail,
   groupCategories,
   retiredCategoryRedirect,
@@ -32,9 +33,34 @@ describe("groupCategories", () => {
     );
   });
 
+  it("drops a retired id an older catalog still lists", () => {
+    const grouped = groupCategories(
+      counts("Internet & Communication", "Email"),
+      APP_CATEGORY_GROUPS,
+    );
+    expect(grouped.map(({ group }) => group.id)).toEqual(["internet"]);
+  });
+
   it("names every category at most once", () => {
     const all = APP_CATEGORY_GROUPS.flatMap((group) => group.categories);
     expect(new Set(all).size).toBe(all.length);
+  });
+});
+
+describe("categoryDirectory", () => {
+  it("lists the app groups, then the game genres as a last group", () => {
+    const directory = categoryDirectory(
+      counts("Productivity", "Web Browsers", "To Classify"),
+      counts("Racing", "Puzzle", "To Classify"),
+    );
+    expect(directory.map(({ group }) => group.id)).toEqual(["internet", "work", "games"]);
+    expect(directory.at(-1)?.items.map((item) => item.category)).toEqual(["Racing", "Puzzle"]);
+  });
+
+  it("has no games group when no genre is listed", () => {
+    expect(
+      categoryDirectory(counts("Email"), counts("To Classify")).map(({ group }) => group.id),
+    ).toEqual(["internet"]);
   });
 });
 

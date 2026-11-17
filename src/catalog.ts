@@ -4,7 +4,7 @@ import { parseSourceTerms, SOURCE_TERMS_META_KEY, type SourceTerms } from "./sou
 import { parseRating, toSummary, type Row } from "./app-summary";
 import { httpLinks, httpUrl, httpUrls } from "./safe-url";
 import { BUILD_INFO_META_KEY, parseBuildInfo } from "./build-info";
-import { HOME_LISTINGS, MUST_HAVE_APP_IDS } from "./home-rows";
+import { HOME_LISTINGS, MUST_HAVE, MUST_HAVE_APP_IDS } from "./home-rows";
 import {
   ALL_PACKAGE_SOURCE_IDS,
   BROWSE_PAGE_SIZE,
@@ -701,7 +701,7 @@ export async function getHomeRowsJson(env: ServerEnv): Promise<string | undefine
   if (!db) return undefined;
 
   return cachedListing<string | undefined>("homeRowsJson", undefined, async () => {
-    const keys = Object.values(HOME_LISTINGS).map(listingRowsKey);
+    const keys = HOME_LISTINGS.map(listingRowsKey);
     const listings = await db.execute({
       sql: `SELECT key, value FROM meta WHERE key IN (${keys.map(() => "?").join(", ")})`,
       args: keys,
@@ -717,7 +717,7 @@ export async function getHomeRowsJson(env: ServerEnv): Promise<string | undefine
     const mustHaveRows = mustHave.rows.map((row) =>
       Object.fromEntries(mustHave.columns.map((column) => [column, row[column]])),
     );
-    parts.push(`"mustHave":${JSON.stringify(mustHaveRows)}`);
+    parts.push(`${JSON.stringify(MUST_HAVE)}:${JSON.stringify(mustHaveRows)}`);
     return `{${parts.join(",")}}`;
   });
 }

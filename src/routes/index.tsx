@@ -9,34 +9,33 @@ import {
   LuSearch,
 } from "@qwikest/icons/lucide";
 import { AppCardLink } from "~/components/app-card/app-card";
+import { CategoryIcon } from "~/components/category-icon/category-icon";
 import { CategoryTileGrid } from "~/components/category-tile-grid/category-tile-grid";
 import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-scroller";
 import { Logo } from "~/components/logo/logo";
-import { getAppsByIds, getCategories, getStats } from "~/catalog";
+import { getAppsByIds, getCategories, getStats, type CategoryCount } from "~/catalog";
+import { categoryDirectory } from "~/categories";
 import { creatorPicks, getInfluencerPage } from "~/data/influencer-pages";
 import { SOURCE_LOGOS } from "~/data/logos";
 import { useCatalogUnavailable } from "~/routes/layout";
 import { SEARCH_MIN_WORD_LENGTH } from "~/search-fts";
 import { resolveServerEnv } from "~/server-env";
 import type { AppSummary } from "~/catalog-types";
-import { parseHomeRows, type HomeRows } from "~/home-rows";
+import { HOME_SECTIONS, homeRowsOf, parseHomeRows, type HomeRow, type HomeRows } from "~/home-rows";
 
 export const useStats = routeLoader$(async (requestEvent) => {
   return getStats(resolveServerEnv(requestEvent.platform));
 });
 
-// "Browse by category" is split Apps/Games — each draws from its own
-// taxonomy now (see `tuxery/catalog`'s `CatalogApp.category` doc comment).
-// "To Classify" is a backlog, not somewhere to browse: the homepage leaves
-// it out, /categories lists it and says what it is.
-const browsable = <T extends { category: string }>(categories: T[]) =>
-  categories.filter(({ category }) => category !== "To Classify");
-
+// Apps and games each draw from their own taxonomy (see `tuxery/catalog`'s
+// `CatalogApp.category` doc comment). Read for the category chips and grid,
+// and to know which category rows the published catalog can fill: two
+// `categoryCounts` meta rows, cached like every listing.
 export const useAppCategories = routeLoader$(async (requestEvent) =>
-  browsable(await getCategories(resolveServerEnv(requestEvent.platform), "app")),
+  getCategories(resolveServerEnv(requestEvent.platform), "app"),
 );
 export const useGameCategories = routeLoader$(async (requestEvent) =>
-  browsable(await getCategories(resolveServerEnv(requestEvent.platform), "game")),
+  getCategories(resolveServerEnv(requestEvent.platform), "game"),
 );
 
 // Reuses the same influencer-page data /creators/baxyz/ itself renders
@@ -77,85 +76,87 @@ const RowPlaceholder = () => (
 );
 
 /**
- * A curated-by-category row (Productivity, Messaging & calls, ...). A
- * category with no listing is left out rather than shown as an empty box:
- * the site can name a category before the published catalog has it.
+ * One row of cards (see `HOME_ROWS`): its title, the sort explained on an
+ * info icon when it isn't obvious, a link to the full listing, and the
+ * cards in a horizontal scroller. `apps` is undefined while the rows load.
+ * An empty listing is left out, unless the row has a message to say why
+ * it's empty (the dataset-wide rows: trending, recently updated).
  */
-const CategoryRow = component$<{ title: string; category: string; apps?: AppSummary[] }>(
-  ({ title, category, apps }) =>
-    apps?.length === 0 ? null : (
-      <section>
-        <div class="flex items-baseline justify-between mb-3">
-          <h2 class="text-lg font-semibold">{title}</h2>
-          <a
-            href={`/browse/?category=${encodeURIComponent(category)}`}
-            class="link link-primary text-sm"
-          >
-            Browse all →
-          </a>
+const HomeRowView = component$<{ row: HomeRow; apps?: AppSummary[] }>(({ row, apps }) =>
+  apps?.length === 0 && row.emptyMessage === undefined ? null : (
+    <section>
+      <div class="flex items-baseline justify-between gap-3 mb-3">
+        <div class="flex items-center gap-1.5 min-w-0">
+          <h3 class="text-lg font-semibold">{row.title}</h3>
+          {row.tip && (
+            <div class="tooltip tooltip-right" data-tip={row.tip}>
+              <LuInfo class="text-sm text-base-content/70 cursor-help" aria-label={row.tip} />
+            </div>
+          )}
         </div>
-        {apps === undefined ? (
-          <RowPlaceholder />
-        ) : (
-          <HorizontalScroller ariaLabel={title}>
-            {apps.map((app) => (
-              <AppCardLink key={app.id} app={app} linkClass="block w-64 shrink-0 snap-start" />
-            ))}
-          </HorizontalScroller>
+        {row.href && (
+          <a href={row.href} class="link link-primary text-sm shrink-0">
+            {row.category ? "Browse all →" : "Browse everything →"}
+          </a>
         )}
-      </section>
-    ),
+      </div>
+      {apps === undefined ? (
+        <RowPlaceholder />
+      ) : apps.length === 0 ? (
+        <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/70">
+          {row.emptyMessage}
+        </div>
+      ) : (
+        <HorizontalScroller ariaLabel={row.title}>
+          {apps.map((app) => (
+            <AppCardLink key={app.id} app={app} linkClass="block w-64 shrink-0 snap-start" />
+          ))}
+        </HorizontalScroller>
+      )}
+    </section>
+  ),
 );
 
-const TRENDING_TIP =
-  "Ranked by popularity across the sources that publish it (the AUR's usage ranking, Debian's popcon, Arch's pkgstats, Homebrew's install counts, the stars of the app's GitHub repository): apps popular in several of them come first.";
-const NEW_GAMES_TIP =
-  "Sorted by each source's own newest-release date (Flathub/AppCenter's AppStream <releases> timestamp) — not every app has one, so this skews toward Flatpak-packaged games.";
-const RECENTLY_UPDATED_TIP =
-  "Sorted by the date of the app's newest release, as its AppStream metadata (Flathub, AppCenter, Fedora, openSUSE, Arch) or its GitHub releases state it. Apps no source dates can't appear here.";
 /**
- * One horizontal app row (Trending apps/games, New games, Download
- * trends, ...), optionally scoped to one content type — used to be a
- * single "TrendingRow" hardcoded to the trending methodology tooltip;
- * generalized once "New games"/"Download trends" needed the same shell
- * with different copy (a release-date/install-count explanation, not a
- * popularity one) rather than duplicating the whole scroller structure.
- * `typeFilter: "all"` (Download trends — both apps and games trend on
- * downloads) still links to a real, working `/browse/?type=all`, the
- * same as picking "All" in Browse's own type dropdown.
+ * The way in by category, right under the search: one scrolling line of
+ * chips for the app categories (in /categories' group order) and one for
+ * the game genres, each a /browse filter. The full grid with counts is at
+ * the bottom of the page.
  */
-const AppScrollRow = component$<{
-  title: string;
-  typeFilter: "all" | "app" | "game";
-  apps?: AppSummary[];
-  tip: string;
-  emptyMessage: string;
-}>(({ title, typeFilter, apps, tip, emptyMessage }) => (
-  <section>
-    <div class="flex items-baseline justify-between mb-3">
-      <div class="flex items-center gap-1.5">
-        <h2 class="text-lg font-semibold">{title}</h2>
-        <div class="tooltip tooltip-right" data-tip={tip}>
-          <LuInfo class="text-sm text-base-content/70 cursor-help" aria-label={tip} />
-        </div>
-      </div>
-      <a href={`/browse/?type=${typeFilter}`} class="link link-primary text-sm">
-        Browse everything →
+const CategoryChips = component$<{
+  lines: { label: string; categories: CategoryCount[] }[];
+}>(({ lines }) => (
+  <section aria-labelledby="home-categories" class="flex flex-col gap-2">
+    <div class="flex items-baseline justify-between">
+      <h2 id="home-categories" class="text-lg font-semibold">
+        Categories
+      </h2>
+      <a href="/categories/" class="link link-primary text-sm">
+        All categories →
       </a>
     </div>
-    {apps === undefined ? (
-      <RowPlaceholder />
-    ) : apps.length === 0 ? (
-      <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/70">
-        {emptyMessage}
+    {lines.map((line) => (
+      // The gap leaves room for the scroller's left arrow, which straddles its edge.
+      <div key={line.label} class="flex items-center gap-3 sm:gap-6">
+        <span class="w-14 shrink-0 text-xs font-semibold text-base-content/70 uppercase tracking-wide">
+          {line.label}
+        </span>
+        <div class="min-w-0 flex-1">
+          <HorizontalScroller ariaLabel={`${line.label} categories`} compact>
+            {line.categories.map(({ category }) => (
+              <a
+                key={category}
+                href={`/browse/?category=${encodeURIComponent(category)}`}
+                class="btn btn-sm rounded-full font-normal shrink-0 snap-start"
+              >
+                <CategoryIcon category={category} class="text-primary" />
+                {category}
+              </a>
+            ))}
+          </HorizontalScroller>
+        </div>
       </div>
-    ) : (
-      <HorizontalScroller ariaLabel={title}>
-        {apps.map((app) => (
-          <AppCardLink key={app.id} app={app} linkClass="block w-64 shrink-0 snap-start" />
-        ))}
-      </HorizontalScroller>
-    )}
+    ))}
   </section>
 ));
 
@@ -321,6 +322,24 @@ export default component$(() => {
     }
   });
   const catalogUnavailable = useCatalogUnavailable().value;
+  // Which category rows the published catalog can fill, and what the
+  // chips and the bottom grid list.
+  const available = new Set(
+    [...appCategories.value, ...gameCategories.value].map(({ category }) => category),
+  );
+  const directory = categoryDirectory(appCategories.value, gameCategories.value);
+  const chipLines = [
+    {
+      label: "Apps",
+      categories: directory
+        .filter(({ group }) => group.id !== "games")
+        .flatMap(({ items }) => items),
+    },
+    {
+      label: "Games",
+      categories: directory.find(({ group }) => group.id === "games")?.items ?? [],
+    },
+  ].filter(({ categories }) => categories.length > 0);
 
   return (
     <div class="flex flex-col gap-14">
@@ -370,6 +389,8 @@ export default component$(() => {
         )
       ) : (
         <>
+          {chipLines.length > 0 && <CategoryChips lines={chipLines} />}
+
           {/* Events & collections: a featured-creator slider (left, 2/3) next
               to four store destination tiles (right, 2x2) — capped to
               roughly three classic app-card heights so it doesn't
@@ -403,122 +424,45 @@ export default component$(() => {
             </div>
           </section>
 
-          <AppScrollRow
-            title="Trending apps"
-            typeFilter="app"
-            apps={rows.value?.trendingApps}
-            tip={TRENDING_TIP}
-            emptyMessage="No trending data available yet."
-          />
-          <AppScrollRow
-            title="Trending games"
-            typeFilter="game"
-            apps={rows.value?.trendingGames}
-            tip={TRENDING_TIP}
-            emptyMessage="No trending data available yet."
-          />
-
-          <section>
-            <h2 class="text-lg font-semibold mb-3">Must-have apps</h2>
-            {rows.value === undefined ? (
-              <RowPlaceholder />
-            ) : rows.value.mustHave.length === 0 ? (
-              <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/70">
-                No must-have apps catalogued yet.
+          {HOME_SECTIONS.map((section) => (
+            <section
+              key={section.id}
+              aria-labelledby={`home-${section.id}`}
+              class="flex flex-col gap-10"
+            >
+              <div class="flex items-baseline justify-between border-b border-base-300 pb-2">
+                <h2 id={`home-${section.id}`} class="text-2xl font-bold">
+                  {section.title}
+                </h2>
+                <a href={section.href} class="link link-primary text-sm">
+                  {section.linkLabel} →
+                </a>
               </div>
-            ) : (
-              <HorizontalScroller ariaLabel="Must-have apps">
-                {rows.value.mustHave.map((app) => (
-                  <AppCardLink key={app.id} app={app} linkClass="block w-64 shrink-0 snap-start" />
-                ))}
-              </HorizontalScroller>
-            )}
-          </section>
+              {homeRowsOf(section.id, available).map((row) => (
+                <HomeRowView key={row.listing} row={row} apps={rows.value?.[row.listing]} />
+              ))}
+            </section>
+          ))}
 
-          <CategoryRow
-            title="Productivity apps"
-            category="Productivity"
-            apps={rows.value?.productivity}
-          />
-
-          <CategoryRow
-            title="Messaging & calls"
-            category="Messaging & Calls"
-            apps={rows.value?.messaging}
-          />
-
-          <CategoryRow title="Web browsers" category="Web Browsers" apps={rows.value?.browsers} />
-
-          <AppScrollRow
-            title="New games"
-            typeFilter="game"
-            apps={rows.value?.newGames}
-            tip={NEW_GAMES_TIP}
-            emptyMessage="No release-date data available yet."
-          />
-
-          <AppScrollRow
-            title="Recently updated apps"
-            typeFilter="app"
-            apps={rows.value?.recentlyUpdatedApps}
-            tip={RECENTLY_UPDATED_TIP}
-            emptyMessage="No release-date data available yet."
-          />
-
-          <CategoryRow title="Music apps" category="Music & Audio" apps={rows.value?.music} />
-
-          <CategoryRow
-            title="Graphics & design apps"
-            category="Graphics & Design"
-            apps={rows.value?.creativity}
-          />
-
-          <CategoryRow title="Social media" category="Social Media" apps={rows.value?.social} />
-
-          <CategoryRow title="Learning apps" category="Education" apps={rows.value?.learning} />
-
-          <CategoryRow
-            title="Photo & video apps"
-            category="Photo & Video"
-            apps={rows.value?.video}
-          />
-
-          <CategoryRow title="Puzzle games" category="Puzzle" apps={rows.value?.puzzleGames} />
-
-          <CategoryRow title="Racing games" category="Racing" apps={rows.value?.racingGames} />
-
-          <CategoryRow
-            title="Emulators & game tools"
-            category="Gaming Tools"
-            apps={rows.value?.gamingTools}
-          />
-
-          {(appCategories.value.length > 0 || gameCategories.value.length > 0) && (
-            <section>
-              <h2 class="text-lg font-semibold mb-3">Browse by category</h2>
-              <p class="text-sm text-base-content/70 mb-3">
-                Every category, including the ones without a dedicated row above — apps and games
-                each draw from their own taxonomy, same split Trending uses.
-              </p>
-
+          {directory.length > 0 && (
+            <section aria-labelledby="home-browse-categories">
+              <div class="flex items-baseline justify-between mb-3">
+                <h2 id="home-browse-categories" class="text-lg font-semibold">
+                  Browse by category
+                </h2>
+                <a href="/categories/" class="link link-primary text-sm">
+                  All categories →
+                </a>
+              </div>
               <div class="flex flex-col gap-4">
-                {appCategories.value.length > 0 && (
-                  <div>
+                {directory.map(({ group, items }) => (
+                  <div key={group.id}>
                     <h3 class="text-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2">
-                      Apps
+                      {group.title}
                     </h3>
-                    <CategoryTileGrid categories={appCategories.value} />
+                    <CategoryTileGrid categories={items} />
                   </div>
-                )}
-
-                {gameCategories.value.length > 0 && (
-                  <div>
-                    <h3 class="text-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2">
-                      Games
-                    </h3>
-                    <CategoryTileGrid categories={gameCategories.value} />
-                  </div>
-                )}
+                ))}
               </div>
             </section>
           )}
