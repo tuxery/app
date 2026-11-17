@@ -57,6 +57,8 @@ export const AppCard = component$<AppCardProps>(
                   alt=""
                   width={56}
                   height={56}
+                  loading="lazy"
+                  decoding="async"
                   class="w-full h-full object-cover"
                 />
               ) : (
