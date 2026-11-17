@@ -118,10 +118,10 @@ const HomeRowView = component$<{ row: HomeRow; apps?: AppSummary[] }>(({ row, ap
 );
 
 /**
- * The way in by category, right under the search: one scrolling line of
- * chips for the app categories (in /categories' group order) and one for
- * the game genres, each a /browse filter. The full grid with counts is at
- * the bottom of the page.
+ * The way in by category, under the creator slider and store tiles: one
+ * scrolling line of chips for the app categories (in /categories' group
+ * order) and one for the game genres, each a /browse filter. The full grid
+ * with counts is at the bottom of the page.
  */
 const CategoryChips = component$<{
   lines: { label: string; categories: CategoryCount[] }[];
@@ -389,8 +389,6 @@ export default component$(() => {
         )
       ) : (
         <>
-          {chipLines.length > 0 && <CategoryChips lines={chipLines} />}
-
           {/* Events & collections: a featured-creator slider (left, 2/3) next
               to four store destination tiles (right, 2x2) — capped to
               roughly three classic app-card heights so it doesn't
@@ -423,6 +421,8 @@ export default component$(() => {
               </div>
             </div>
           </section>
+
+          {chipLines.length > 0 && <CategoryChips lines={chipLines} />}
 
           {HOME_SECTIONS.map((section) => (
             <section
