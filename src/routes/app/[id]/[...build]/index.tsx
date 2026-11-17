@@ -44,8 +44,9 @@ import {
   formatBytes,
   formatSourceLabel,
   ageRatingTip,
+  appAgeBracket,
   availableViaLabels,
-  formatMinAge,
+  formatAgeBracket,
   isInstallSource,
   isVerifiedPackage,
   provenanceInfo,
@@ -810,6 +811,7 @@ export default component$(() => {
   const runtimes = flatpakRuntimes(installSourcePackages);
   // The catalog's verdict when the dataset has one, else the same classifier.
   const licenseKind = a.licenseKind ?? classifyLicense(a.license);
+  const ageBracket = appAgeBracket(a);
   const licenseHref = licenseInfoHref(a.license, a.licenseSpdx, licenseKind);
   // The badge names the license when it's one short id ("MPL-2.0"), not a
   // long expression — the tooltip and the info row carry the full string.
@@ -1045,15 +1047,14 @@ export default component$(() => {
                 Part of {a.suite.mainApp.name}
               </a>
             )}
-            {a.ageRating && (
-              <a
-                href="/docs/glossary/#age-rating"
-                class="tooltip badge badge-outline"
-                title={ageRatingTip(a.ageRating.value, a.packages)}
-              >
-                {formatMinAge(a.ageRating.value)}
-              </a>
-            )}
+            {/* Always there: an unrated app says so rather than look all ages. */}
+            <a
+              href="/docs/glossary/#age-rating"
+              class={`tooltip badge ${ageBracket === undefined ? "badge-ghost" : "badge-outline"}`}
+              title={ageRatingTip(a, a.packages)}
+            >
+              {formatAgeBracket(ageBracket)}
+            </a>
             {a.aiFeatures && <span class="badge badge-secondary">AI features</span>}
             {a.inAppPurchases && <span class="badge badge-warning">In-app purchases</span>}
           </div>

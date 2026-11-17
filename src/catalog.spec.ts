@@ -63,6 +63,14 @@ describe("toCatalogApp", () => {
     expect(app.links).toBeUndefined();
     expect(app.packages).toEqual([]);
   });
+
+  it("reads the age bracket column as one of the brackets only", () => {
+    expect(toCatalogApp(row({ age_bracket: 12 })).ageBracket).toBe(12);
+    expect(toCatalogApp(row({ age_bracket: null })).ageBracket).toBeUndefined();
+    expect(toCatalogApp(row({ age_bracket: 13 })).ageBracket).toBeUndefined();
+    // A dataset published before the column.
+    expect(toCatalogApp(row({})).ageBracket).toBeUndefined();
+  });
 });
 
 describe("isMissingTable", () => {

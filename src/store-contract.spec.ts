@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import contract from "./store-contract.json";
 import {
+  ageCountKey,
+  ageIdsChunkKey,
   BROWSE_KEYS_META_KEY,
   categoryIdsChunkKey,
   countKey,
@@ -10,11 +12,13 @@ import {
   type BrowseKeys,
 } from "~/browse-keys";
 import {
+  AGE_BRACKET_COLUMN,
   CATEGORY_PREVIEW_SIZE,
   listingRowsKey,
   SUMMARY_COLUMNS,
   TRENDING_PAGE_SIZE,
 } from "~/catalog";
+import { AGE_BRACKETS, AGE_FILTERS } from "~/catalog-types";
 
 // Pins what this repo reads from catalog's Turso rows to store-contract.json,
 // the file catalog's publish() is pinned to on its side (CI keeps the two
@@ -30,6 +34,7 @@ const BROWSE_KEYS_FIELDS = {
   sourceIdsChunkSize: true,
   freeCounts: true,
   categoryIds: true,
+  ageFilter: true,
 } satisfies Record<keyof BrowseKeys, true>;
 
 describe("store contract (store-contract.json)", () => {
@@ -47,7 +52,13 @@ describe("store contract (store-contract.json)", () => {
     expect(Object.keys(BROWSE_KEYS_FIELDS).toSorted()).toEqual(
       contract.browseKeys.fields.toSorted(),
     );
-    const value = { generation: "1", sourceIdsChunkSize: 500, freeCounts: true, categoryIds: true };
+    const value = {
+      generation: "1",
+      sourceIdsChunkSize: 500,
+      freeCounts: true,
+      categoryIds: true,
+      ageFilter: true,
+    };
     expect(parseBrowseKeys(JSON.stringify(value))).toEqual(value);
   });
 
@@ -65,6 +76,32 @@ describe("store contract (store-contract.json)", () => {
       formats.categoryIds,
     );
     expect(listingRowsKey("{listing}")).toBe(formats.listingRows);
+    expect(
+      ageCountKey(
+        "{generation}",
+        "{age}" as never,
+        "{license}" as never,
+        iface,
+        type,
+        "{source}",
+        "{category}",
+      ),
+    ).toBe(formats.countAge);
+    expect(ageIdsChunkKey("{generation}", "{age}" as never, type, "{chunk}" as never)).toBe(
+      formats.ageIds,
+    );
+  });
+
+  it("filters by the contract's age brackets, on its column", () => {
+    expect([...AGE_BRACKETS]).toEqual(contract.ageBrackets.values);
+    expect([...AGE_FILTERS]).toEqual(contract.ageBrackets.filters);
+    expect(AGE_BRACKET_COLUMN).toBe(contract.ageBrackets.column);
+  });
+
+  it("writes an unset license in an age count as the contract's unset filter", () => {
+    expect(ageCountKey("g", 7, undefined, "all", "all", undefined, undefined)).toBe(
+      `countAge:g:7:${contract.unsetFilter}:all:all:${contract.unsetFilter}:${contract.unsetFilter}`,
+    );
   });
 
   it("writes an unset source or category as the contract's unset filter", () => {

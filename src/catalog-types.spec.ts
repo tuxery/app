@@ -4,6 +4,10 @@ import {
   availableViaLabels,
   buildLabel,
   formatMinAge,
+  appAgeBracket,
+  bracketForMinAge,
+  formatAgeBracket,
+  parseAgeFilter,
   formatSourceLabel,
   isInstallSource,
   provenanceInfo,
@@ -150,11 +154,60 @@ describe("age ratings", () => {
     ]);
   });
 
-  it("puts the unified age first in the tooltip, then each source", () => {
+  it("puts the bracket first in the tooltip, then each source", () => {
     expect(
-      ageRatingTip("16", [
+      ageRatingTip({ ageRating: { system: "min-age", value: "16" }, ageBracket: 16 }, [
         { source: "gog", ageRating: { system: "PEGI", value: "16", minAge: 16 } },
       ]),
-    ).toBe("Minimum age: 16+ (the strictest of the sources)\nGOG: PEGI 16");
+    ).toBe("Suitable for: 16+ (the strictest of the sources)\nGOG: PEGI 16");
+  });
+
+  it("names the age a bracket rounds up", () => {
+    expect(
+      ageRatingTip({ ageRating: { system: "min-age", value: "13" }, ageBracket: 16 }, [
+        { source: "flatpak-flathub", ageRating: { system: "OARS", value: "intense", minAge: 13 } },
+      ]),
+    ).toBe(
+      "Suitable for: 16+ (minimum age 13+, the strictest of the sources, rounded up)\nFlathub (Flatpak): OARS intense, 13+",
+    );
+  });
+
+  it("says an unrated app is not all ages", () => {
+    expect(ageRatingTip({}, [])).toMatch(/^Unrated: .*doesn't make it suitable for all ages/);
+  });
+
+  it("rounds a minimum age up to its bracket, as catalog does", () => {
+    expect(["0", "3", "4", "7", "8", "13", "15", "17", "18"].map(bracketForMinAge)).toEqual([
+      3, 3, 7, 7, 12, 16, 16, 18, 18,
+    ]);
+    expect(bracketForMinAge(undefined)).toBeUndefined();
+    expect(bracketForMinAge("n/a")).toBeUndefined();
+  });
+
+  it("prefers catalog's bracket, and rounds the age on an older dataset without one", () => {
+    expect(appAgeBracket({ ageRating: { system: "min-age", value: "13" }, ageBracket: 16 })).toBe(
+      16,
+    );
+    expect(appAgeBracket({ ageRating: { system: "min-age", value: "5" } })).toBe(7);
+    expect(appAgeBracket({})).toBeUndefined();
+  });
+
+  it("labels brackets, and unrated apps", () => {
+    expect([3, 7, 12, 16, 18, undefined].map((b) => formatAgeBracket(b as never))).toEqual([
+      "All ages",
+      "7+",
+      "12+",
+      "16+",
+      "18+",
+      "Unrated",
+    ]);
+  });
+
+  it("reads an age filter only from its own values", () => {
+    expect(parseAgeFilter("7")).toBe(7);
+    expect(parseAgeFilter(12)).toBe(12);
+    expect(parseAgeFilter("18")).toBeUndefined();
+    expect(parseAgeFilter("07x")).toBeUndefined();
+    expect(parseAgeFilter(null)).toBeUndefined();
   });
 });

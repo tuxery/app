@@ -4,7 +4,7 @@
 // is trusted to be what its type says.
 
 import type { BrowseOptions } from "~/catalog";
-import { isInstallSource } from "~/catalog-types";
+import { isInstallSource, parseAgeFilter } from "~/catalog-types";
 
 /** Pages past this one are answered as the first: no listing is that long, and an `OFFSET` costs a read per skipped row. */
 export const MAX_PAGE_INDEX = 4999;
@@ -40,12 +40,12 @@ const MAX_CATEGORY_LENGTH = 100;
 export function normalizeBrowseOptions(
   options: unknown,
 ): Required<Pick<BrowseOptions, "interfaceFilter" | "typeFilter" | "sort">> &
-  Pick<BrowseOptions, "category" | "source" | "license"> {
+  Pick<BrowseOptions, "category" | "source" | "license" | "age"> {
   const given = (typeof options === "object" && options !== null ? options : {}) as Record<
     string,
     unknown
   >;
-  const { interfaceFilter, typeFilter, category, source, license, sort } = given;
+  const { interfaceFilter, typeFilter, category, source, license, age, sort } = given;
   return {
     interfaceFilter:
       interfaceFilter === "gui" || interfaceFilter === "cli" ? interfaceFilter : "all",
@@ -56,6 +56,7 @@ export function normalizeBrowseOptions(
         : undefined,
     source: typeof source === "string" && isInstallSource(source) ? source : undefined,
     license: license === "free" ? "free" : undefined,
+    age: parseAgeFilter(age),
     sort: sort === "name-asc" || sort === "name-desc" ? sort : "relevance",
   };
 }

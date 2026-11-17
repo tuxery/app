@@ -13,8 +13,11 @@ import {
   type TypeFilter,
 } from "~/catalog";
 import {
+  AGE_FILTERS,
   BROWSE_PAGE_SIZE,
+  formatAgeBracket,
   isInstallSource,
+  parseAgeFilter,
   SOURCE_LABELS,
   type AppSummary,
   type PackageSourceId,
@@ -83,10 +86,11 @@ export const useBrowse = routeLoader$(
       category: url.searchParams.get("category") ?? undefined,
       source: parseSource(url.searchParams.get("source")),
       license: parseLicense(url.searchParams.get("license")),
+      age: parseAgeFilter(url.searchParams.get("age")),
       sort: parseSort(url.searchParams.get("sort")),
     });
   },
-  { search: ["q", "page", "interface", "type", "category", "source", "license", "sort"] },
+  { search: ["q", "page", "interface", "type", "category", "source", "license", "age", "sort"] },
 );
 
 // Scoped to the current Type filter — apps and games each draw from their
@@ -115,8 +119,17 @@ export default component$(() => {
   const category = location.url.searchParams.get("category") ?? undefined;
   const source = parseSource(location.url.searchParams.get("source"));
   const license = parseLicense(location.url.searchParams.get("license"));
+  const age = parseAgeFilter(location.url.searchParams.get("age"));
   const sort = parseSort(location.url.searchParams.get("sort"));
-  const options: BrowseOptions = { interfaceFilter, typeFilter, category, source, license, sort };
+  const options: BrowseOptions = {
+    interfaceFilter,
+    typeFilter,
+    category,
+    source,
+    license,
+    age,
+    sort,
+  };
 
   // One entry per loaded page, kept separate (rather than one flat array)
   // purely so a divider can be rendered between batches — the actual grid
@@ -225,6 +238,22 @@ export default component$(() => {
           </select>
         </label>
 
+        {browse.value.ageFilter && (
+          <label class="form-control min-w-[9rem]">
+            <span class="label-text text-sm mb-1">Suitable for</span>
+            <select name="age" class="select select-sm w-full">
+              <option value="" selected={age === undefined}>
+                Any rating
+              </option>
+              {AGE_FILTERS.map((filter) => (
+                <option key={filter} value={String(filter)} selected={age === filter}>
+                  {formatAgeBracket(filter)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+
         <label class="form-control min-w-[9rem]">
           <span class="label-text text-sm mb-1">Sort</span>
           <select name="sort" class="select select-sm w-full">
@@ -277,6 +306,18 @@ export default component$(() => {
         "Games" is a confirmed match, "Apps" its complement — a rare undetected game may still show
         up as an app. "GUI"/"CLI" is a separate best-effort split by desktop-file detection, not a
         guarantee.
+        {age !== undefined && (
+          <>
+            {" "}
+            "Suitable for {formatAgeBracket(age)}" lists products rated {formatAgeBracket(age)}
+            {age === 3 ? "" : " or lower"} by Flathub, the distributions' app catalogs or a rating
+            board. Most of the catalog has no rating and never shows under an age:{" "}
+            <a href="/docs/glossary/#age-rating" class="link">
+              what the ages mean
+            </a>
+            .
+          </>
+        )}
       </p>
 
       {category === "To Classify" && (

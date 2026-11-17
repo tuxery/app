@@ -50,6 +50,7 @@ describe("normalizeBrowseOptions", () => {
     category: undefined,
     source: undefined,
     license: undefined,
+    age: undefined,
     sort: "relevance",
   };
 
@@ -61,6 +62,7 @@ describe("normalizeBrowseOptions", () => {
         category: "Strategy",
         source: "flatpak-flathub",
         license: "free",
+        age: 7,
         sort: "name-desc",
       }),
     ).toEqual({
@@ -69,6 +71,7 @@ describe("normalizeBrowseOptions", () => {
       category: "Strategy",
       source: "flatpak-flathub",
       license: "free",
+      age: 7,
       sort: "name-desc",
     });
   });
@@ -81,6 +84,7 @@ describe("normalizeBrowseOptions", () => {
         category: 42,
         source: '%"source":"%',
         license: "proprietary",
+        age: "1 OR 1=1",
         sort: "RANDOM()",
       }),
     ).toEqual(defaults);
