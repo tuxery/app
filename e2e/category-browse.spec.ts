@@ -22,6 +22,16 @@ test("a category card on /categories leads to filtered, non-empty /browse result
   await expect(page.locator("a[href^='/app/']").first()).toBeVisible();
 });
 
+test("/categories lists AI in its own group, and its card leads to AI apps", async ({ page }) => {
+  await page.goto("/categories/");
+  await expect(page.getByRole("heading", { name: "Artificial intelligence" })).toBeVisible();
+  await page.locator("a.card[href='/browse/?category=AI']").click();
+
+  await expect(page).toHaveURL(/\/browse\/\?category=AI$/);
+  await expect(page.locator(".badge", { hasText: "AI" })).toBeVisible();
+  await expect(page.locator("a[href^='/app/']").first()).toBeVisible();
+});
+
 test("the To Classify category shows a 'suggest a category' banner, not shown on a real category", async ({
   page,
 }) => {
