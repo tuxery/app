@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { HOME_ROW_SIZE, MUST_HAVE_APP_IDS, parseHomeRows } from "./home-rows";
+import { APP_CATEGORY_GROUPS } from "./categories";
+import {
+  HOME_LISTINGS,
+  HOME_ROW_SIZE,
+  HOME_ROWS,
+  homeRowsOf,
+  MUST_HAVE,
+  MUST_HAVE_APP_IDS,
+  parseHomeRows,
+} from "./home-rows";
 
 const row = (id: string) => ({
   id,
@@ -20,26 +29,61 @@ describe("parseHomeRows", () => {
       "trending:app": Array.from({ length: 60 }, (_, index) => row(`app-${index}`)),
       "categoryPreview:Puzzle": [row("puzzle")],
     });
-    expect(rows.trendingApps).toHaveLength(HOME_ROW_SIZE);
-    expect(rows.trendingApps[0]).toMatchObject({
+    expect(rows["trending:app"]).toHaveLength(HOME_ROW_SIZE);
+    expect(rows["trending:app"]?.[0]).toMatchObject({
       id: "app-0",
       shortDescription: "About app-0",
       sources: ["flatpak-flathub"],
     });
-    expect(rows.puzzleGames.map((app) => app.id)).toEqual(["puzzle"]);
+    expect(rows["categoryPreview:Puzzle"]?.map((app) => app.id)).toEqual(["puzzle"]);
   });
 
   it("orders the must-haves as listed, whatever order the database returned", () => {
     const [first, second] = MUST_HAVE_APP_IDS;
     const rows = parseHomeRows({ mustHave: [row(second), row("not-a-must-have"), row(first)] });
-    expect(rows.mustHave.map((app) => app.id)).toEqual([first, second]);
+    expect(rows[MUST_HAVE]?.map((app) => app.id)).toEqual([first, second]);
   });
 
   it("gives an empty row for a missing or malformed listing, never a throw", () => {
     for (const body of [{}, null, "nope", { "trending:game": "not an array" }]) {
       const rows = parseHomeRows(body);
-      expect(rows.trendingGames).toEqual([]);
-      expect(rows.mustHave).toEqual([]);
+      expect(rows["trending:game"]).toEqual([]);
+      expect(rows[MUST_HAVE]).toEqual([]);
     }
+  });
+});
+
+describe("HOME_ROWS", () => {
+  it("reads each precomputed listing once, the must-haves apart", () => {
+    expect(new Set(HOME_LISTINGS).size).toBe(HOME_LISTINGS.length);
+    expect(HOME_LISTINGS).not.toContain(MUST_HAVE);
+    expect(HOME_LISTINGS).toContain("categoryPreview:Racing");
+  });
+
+  it("lists the app category rows in /categories' group order", () => {
+    const order = APP_CATEGORY_GROUPS.flatMap((group) => group.categories);
+    const positions = HOME_ROWS.filter(
+      (candidate) => candidate.section === "apps" && candidate.category !== undefined,
+    ).map((candidate) => order.indexOf(candidate.category ?? ""));
+    expect(positions).not.toContain(-1);
+    expect(positions).toEqual(positions.toSorted((a, b) => a - b));
+  });
+
+  it("links every category row to its listing", () => {
+    for (const candidate of HOME_ROWS.filter(({ category }) => category !== undefined)) {
+      expect(candidate.href).toBe(
+        `/browse/?category=${encodeURIComponent(candidate.category ?? "")}`,
+      );
+    }
+  });
+});
+
+describe("homeRowsOf", () => {
+  it("leaves out a category row whose category the catalog doesn't list, keeps the others", () => {
+    const titles = homeRowsOf("games", new Set(["Racing"])).map(({ title }) => title);
+    expect(titles).toContain("Racing games");
+    expect(titles).toContain("Trending games");
+    expect(titles).not.toContain("Puzzle games");
+    expect(titles).not.toContain("Trending apps");
   });
 });
