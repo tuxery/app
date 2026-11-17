@@ -10,7 +10,11 @@ import { LuChevronLeft, LuChevronRight } from "@qwikest/icons/lucide";
  * `AppCardLink` in `routes/index.tsx`) so they align with this container's
  * `snap-x`.
  */
-export const HorizontalScroller = component$<{ ariaLabel: string }>(({ ariaLabel }) => {
+export const HorizontalScroller = component$<{
+  ariaLabel: string;
+  /** Tighter spacing, for a row of chips rather than cards. */
+  compact?: boolean;
+}>(({ ariaLabel, compact }) => {
   const trackRef = useSignal<HTMLElement>();
 
   return (
@@ -18,7 +22,10 @@ export const HorizontalScroller = component$<{ ariaLabel: string }>(({ ariaLabel
       <div
         ref={trackRef}
         aria-label={ariaLabel}
-        class="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4"
+        class={[
+          "flex overflow-x-auto scroll-smooth snap-x snap-mandatory",
+          compact ? "gap-2 pb-2" : "gap-4 pb-4",
+        ]}
       >
         <Slot />
       </div>

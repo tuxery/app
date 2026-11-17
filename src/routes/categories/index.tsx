@@ -3,7 +3,7 @@ import { routeLoader$ } from "@qwik.dev/router";
 import type { DocumentHead } from "@qwik.dev/router";
 import { CategoryTileGrid } from "~/components/category-tile-grid/category-tile-grid";
 import { getCategories } from "~/catalog";
-import { APP_CATEGORY_GROUPS, groupCategories, TO_CLASSIFY } from "~/categories";
+import { APP_CATEGORY_GROUPS, groupCategories, isBrowsableCategory } from "~/categories";
 import { resolveServerEnv } from "~/server-env";
 
 export const useAppCategories = routeLoader$(async (requestEvent) =>
@@ -54,7 +54,9 @@ export default component$(() => {
             <section>
               <h2 class="text-lg font-semibold mb-3">Games</h2>
               <CategoryTileGrid
-                categories={gameCategories.value.filter(({ category }) => category !== TO_CLASSIFY)}
+                categories={gameCategories.value.filter(({ category }) =>
+                  isBrowsableCategory(category),
+                )}
               />
             </section>
           )}

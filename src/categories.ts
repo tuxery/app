@@ -61,7 +61,9 @@ export const TO_CLASSIFY = "To Classify";
  * `items` (anything with a `category`) sorted into `groups`, each group in
  * its own listed order, empty groups left out; whatever no group names
  * (a category newer than this file) lands in a trailing "Other" group so
- * it is never hidden. "To Classify" is left out entirely.
+ * it is never hidden. "To Classify" and retired ids (a catalog published
+ * before their split still lists them; their link only leads back to
+ * /categories) are left out entirely.
  */
 export function groupCategories<T extends { category: string }>(
   items: readonly T[],
@@ -76,7 +78,7 @@ export function groupCategories<T extends { category: string }>(
     }))
     .filter(({ items: listed }) => listed.length > 0);
   const others = items.filter(
-    (item) => !grouped.has(item.category) && item.category !== TO_CLASSIFY,
+    (item) => !grouped.has(item.category) && isBrowsableCategory(item.category),
   );
   if (others.length > 0) {
     result.push({ group: { id: "other", title: "Other", categories: [] }, items: others });
@@ -93,6 +95,35 @@ export function groupCategories<T extends { category: string }>(
 const RETIRED_CATEGORIES: Readonly<Record<string, string>> = {
   "Internet & Communication": "/categories/#internet",
 };
+
+/** A category a grid or chip can link to: neither "To Classify" nor a retired id. */
+export function isBrowsableCategory(category: string): boolean {
+  return category !== TO_CLASSIFY && !Object.hasOwn(RETIRED_CATEGORIES, category);
+}
+
+/**
+ * Every category to browse, as the homepage lists them: the app groups of
+ * /categories, then the game genres as one last "Games" group (in
+ * `gameCategories`' order, largest first). Same rules as
+ * `groupCategories`: nothing to classify, no retired id, no empty group.
+ */
+export function categoryDirectory<T extends { category: string }>(
+  appCategories: readonly T[],
+  gameCategories: readonly T[],
+): { group: CategoryGroup; items: T[] }[] {
+  const games = gameCategories.filter(({ category }) => isBrowsableCategory(category));
+  return [
+    ...groupCategories(appCategories, APP_CATEGORY_GROUPS),
+    ...(games.length > 0
+      ? [
+          {
+            group: { id: "games", title: "Games", categories: games.map((g) => g.category) },
+            items: games,
+          },
+        ]
+      : []),
+  ];
+}
 
 /** Where a `/browse/` link filtering on `category` should go instead, when that id is retired. */
 export function retiredCategoryRedirect(category: string | null): string | undefined {
