@@ -101,6 +101,7 @@ export const HOME_ROWS: readonly HomeRow[] = [
   categoryRow("apps", "Music apps", "Music & Audio"),
   // Work
   categoryRow("apps", "Productivity apps", "Productivity"),
+  categoryRow("apps", "AI assistants", "AI"),
   // Learn & discover
   categoryRow("apps", "Learning apps", "Education"),
   categoryRow("apps", "Science apps", "Science"),
