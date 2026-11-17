@@ -14,24 +14,27 @@ import type { CatalogApp } from "~/catalog-types";
 
 /**
  * The application types Google accepts for `applicationCategory`, per
- * Tuxery category. Categories without a clear match (Science, Productivity,
- * News & Weather, To Classify...) get none rather than a wrong one.
+ * Tuxery category. Categories without a clear match (AI, Networking, Science,
+ * Productivity, Gaming Tools, To Classify...) get none rather than a wrong one.
  */
 const APPLICATION_CATEGORIES: Readonly<Record<string, string>> = {
   "Books & Reference": "ReferenceApplication",
   Business: "BusinessApplication",
   "Developer Tools": "DeveloperApplication",
   Education: "EducationalApplication",
+  Email: "CommunicationApplication",
   Finance: "FinanceApplication",
   "Graphics & Design": "DesignApplication",
-  "Internet & Communication": "CommunicationApplication",
+  "Messaging & Calls": "CommunicationApplication",
   "Music & Audio": "MultimediaApplication",
   "Photo & Video": "MultimediaApplication",
   Security: "SecurityApplication",
   Settings: "UtilitiesApplication",
+  "Social Media": "SocialNetworkingApplication",
   "System Tools": "UtilitiesApplication",
   "Travel & Navigation": "TravelApplication",
   Utilities: "UtilitiesApplication",
+  "Web Browsers": "BrowserApplication",
 };
 
 /** Google's application type for an app: every game is a `GameApplication`; an app by its category, when one fits. */
