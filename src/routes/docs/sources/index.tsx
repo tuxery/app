@@ -51,9 +51,15 @@ const DETAIL_SOURCES: { title: string; text: string; href: string; linkLabel: st
   },
   {
     title: "Popularity statistics",
-    text: "Debian's popcon and Arch's pkgstats, opt-in surveys of what machines have installed, the AUR's own usage ranking, Homebrew's install counts and the stars of each app's GitHub repository: used to order the trending lists.",
+    text: "Debian's popcon and Arch's pkgstats, opt-in surveys of what machines have installed, the AUR's own usage ranking, Homebrew's install counts and GitHub stars: used to order the trending lists.",
     href: "/docs/rankings/",
     linkLabel: "How rankings work",
+  },
+  {
+    title: "GitHub",
+    text: "The star count of the GitHub repository an app's packages point to (its homepage or project link), read through GitHub's API: one of the popularity signals behind the trending lists. Only repository names and star counts are kept; an app with no repository there has no stars.",
+    href: "https://github.com/",
+    linkLabel: "github.com",
   },
 ];
 
