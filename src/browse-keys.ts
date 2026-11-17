@@ -25,6 +25,8 @@ export interface BrowseKeys {
   freeCounts?: boolean;
   /** Whether this generation has each category's ids in "popular first" order (`categoryIdsChunkKey`), chunked by `sourceIdsChunkSize`. Absent on older datasets: category pages then list A-Z live. */
   categoryIds?: boolean;
+  /** Whether `apps` has `age_bracket` and this generation has the "suitable for" counts (`ageCountKey`) and id lists (`ageIdsChunkKey`). Absent on older datasets: /browse then has no age filter. */
+  ageFilter?: boolean;
 }
 
 /** Parses the `browseKeys` row's JSON, `undefined` when it's absent or malformed (→ live fallback, never a throw). */
@@ -58,6 +60,35 @@ export function freeCountKey(
   category: string | undefined,
 ): string {
   return `countFree:${generation}:${interfaceFilter}:${typeFilter}:${source ?? "*"}:${category ?? "*"}`;
+}
+
+/**
+ * `countKey`'s combination among the products suitable for `age` (rated
+ * that bracket or lower), all of them (`license` unset) or free software
+ * only. Catalog writes it when the source or the category is unset; with
+ * both set, count live. Present when `BrowseKeys.ageFilter` is. Mirrored
+ * from catalog's `ageCountKey`.
+ */
+export function ageCountKey(
+  generation: string,
+  age: number,
+  license: "free" | undefined,
+  interfaceFilter: InterfaceFilterValue,
+  typeFilter: TypeFilterValue,
+  source: string | undefined,
+  category: string | undefined,
+): string {
+  return `countAge:${generation}:${age}:${license ?? "*"}:${interfaceFilter}:${typeFilter}:${source ?? "*"}:${category ?? "*"}`;
+}
+
+/** A chunk of the ids of the products suitable for `age`, of one type or all, in `name ASC` order like `sourceIdsChunkKey`'s. Mirrored from catalog's `ageIdsChunkKey`. */
+export function ageIdsChunkKey(
+  generation: string,
+  age: number,
+  typeFilter: TypeFilterValue,
+  index: number,
+): string {
+  return `ageIds:${generation}:${age}:${typeFilter}:${index}`;
 }
 
 export function sourceIdsChunkKey(generation: string, source: string, index: number): string {

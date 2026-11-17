@@ -138,9 +138,10 @@ version lately.
 
 ### Age rating
 
-The minimum age Tuxery shows for an app (**All ages**, **3+**, **12+**,
-**18+**, ...). Stores rate apps in different systems, so Tuxery puts them
-on one scale, the minimum age in years:
+The age bracket Tuxery shows for an app: **All ages**, **7+**, **12+**,
+**16+** or **18+**, PEGI's brackets, or **Unrated**. Stores rate apps in
+different systems, so Tuxery first puts them on one scale, the minimum age
+in years:
 
 - **OARS**, used by Flathub and the distributions' app catalogs, lists how
   much of each kind of content an app has (cartoon violence, language,
@@ -149,11 +150,20 @@ on one scale, the minimum age in years:
   the highest among them.
 - **PEGI**, **ESRB** and **USK**, used by GOG for games, are already ages.
 
-When sources disagree, the strictest age is shown: a source that rated an
-app higher saw something the others may have missed. Hover the badge to
-see what each source said. The age describes how much mature content an
-app declares, not whether it is safe, and an app that no source rated has
-no badge rather than "All ages".
+When sources disagree, the strictest age counts: a source that rated an
+app higher saw something the others may have missed. The age is then
+rounded **up** to its bracket: an app rated 13 is **16+**, never 12+, so
+"Suitable for 12+" on the [Browse](/browse/) page only lists apps whose
+age is 12 or less. GNOME Software rounds down instead, so it may show a
+lower bracket for the same app. Hover the badge to see the age and what
+each source said.
+
+The age describes how much mature content an app declares, not whether
+it is safe. Online features count too: an app that lets you chat with
+strangers or shares data about you is rated older than its content alone
+would be. An app no source rated is **Unrated**, not "All ages": it
+never shows under the "Suitable for" filter. Most of the catalog is
+unrated, since only Flathub rates every app.
 
 ## Licenses
 

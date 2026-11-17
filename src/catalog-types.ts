@@ -246,6 +246,8 @@ export interface CatalogApp {
   /** AppStream kudos as the developer states them — see `CatalogApp.kudos` and `~/accessibility-hints`. */
   kudos?: string[];
   ageRating?: { system: string; value: string };
+  /** `ageRating`'s age rounded up to a bracket (`AGE_BRACKETS`), absent when unrated — see `tuxery/catalog`'s `CatalogApp.ageBracket` and docs/age-ratings.md. Also absent on a dataset published before it: `appAgeBracket` then rounds `ageRating` itself. */
+  ageBracket?: AgeBracket;
   aiFeatures?: boolean;
   inAppPurchases?: boolean;
   gdprCompliant?: boolean;
@@ -417,7 +419,41 @@ export function formatSourceLabel(pkg: { source: PackageSourceId } & BuildFields
   return isDefaultBuild(pkg) ? label : `${label} (${buildLabel(pkg)} build)`;
 }
 
-/** An age on the unified scale, as a badge: "All ages" for 0, otherwise "12+". `value` is `CatalogApp.ageRating.value`, the minimum age in years. */
+/** The brackets catalog files rated products under, PEGI's: 3 is all ages. Pinned by store-contract.json's `ageBrackets.values`. */
+export const AGE_BRACKETS = [3, 7, 12, 16, 18] as const;
+export type AgeBracket = (typeof AGE_BRACKETS)[number];
+
+/** The "Suitable for" ages /browse filters by (`age_bracket <= ?`): 18 isn't one, being every rated product. Pinned by store-contract.json's `ageBrackets.filters`. */
+export const AGE_FILTERS = [3, 7, 12, 16] as const;
+export type AgeFilter = (typeof AGE_FILTERS)[number];
+
+/** A `?age=` value as one of `AGE_FILTERS`, `undefined` for anything else (no filter). */
+export function parseAgeFilter(value: unknown): AgeFilter | undefined {
+  const age = typeof value === "string" && /^\d{1,2}$/.test(value) ? Number(value) : value;
+  return AGE_FILTERS.find((filter) => filter === age);
+}
+
+/** A minimum age (in years) rounded up to its bracket, catalog's own rule (`ageBracket`); `undefined` when it isn't a number. */
+export function bracketForMinAge(value: string | undefined): AgeBracket | undefined {
+  const age = value === undefined || value.trim() === "" ? Number.NaN : Number(value);
+  if (!Number.isFinite(age) || age < 0) return undefined;
+  return AGE_BRACKETS.find((bracket) => age <= bracket) ?? 18;
+}
+
+/** The product's bracket: catalog's column, else (an older dataset) its age rounded the same way; `undefined` when unrated. */
+export function appAgeBracket(
+  app: Pick<CatalogApp, "ageBracket" | "ageRating">,
+): AgeBracket | undefined {
+  return app.ageBracket ?? bracketForMinAge(app.ageRating?.value);
+}
+
+/** A bracket as a badge or a filter option: "All ages" for 3, otherwise "12+"; "Unrated" when no source rates the product. */
+export function formatAgeBracket(bracket: AgeBracket | undefined): string {
+  if (bracket === undefined) return "Unrated";
+  return bracket === 3 ? "All ages" : `${bracket}+`;
+}
+
+/** An age on the unified scale, for a source's own detail: "All ages" for 0, otherwise "12+". `value` is a minimum age in years. */
 export function formatMinAge(value: string): string {
   return Number(value) === 0 ? "All ages" : `${Number(value)}+`;
 }
@@ -461,13 +497,27 @@ export function summarizeAgeRatings(
   );
 }
 
-/** The age badge's tooltip: the unified age, then what each source said (several lines, as the native tooltip shows them). */
+/**
+ * The age badge's tooltip: the bracket and the age it rounds up, then
+ * what each source said (several lines, as the native tooltip shows
+ * them). An unrated product says so, and that unrated isn't all ages.
+ */
 export function ageRatingTip(
-  value: string,
+  app: Pick<CatalogApp, "ageBracket" | "ageRating">,
   packages: Parameters<typeof summarizeAgeRatings>[0],
 ): string {
+  const bracket = appAgeBracket(app);
+  const value = app.ageRating?.value;
+  if (bracket === undefined || value === undefined) {
+    return "Unrated: no source rates this app's content, which doesn't make it suitable for all ages.";
+  }
+  const minAge = formatMinAge(value);
+  const head =
+    minAge === formatAgeBracket(bracket)
+      ? `Suitable for: ${minAge} (the strictest of the sources)`
+      : `Suitable for: ${formatAgeBracket(bracket)} (minimum age ${minAge}, the strictest of the sources, rounded up)`;
   const rows = summarizeAgeRatings(packages).map((row) => `${row.label}: ${row.detail}`);
-  return [`Minimum age: ${formatMinAge(value)} (the strictest of the sources)`, ...rows].join("\n");
+  return [head, ...rows].join("\n");
 }
 
 export interface SourceRating {
@@ -569,6 +619,8 @@ export interface BrowseResult {
   totalCapped?: boolean;
   /** Whether the dataset supports the "free software only" filter (catalog's `license_kind`) — /browse only offers it then. */
   freeFilter?: boolean;
+  /** Whether the dataset supports the "Suitable for" age filter (catalog's `age_bracket`) — /browse only offers it then. */
+  ageFilter?: boolean;
   /** The free-text query had no word long enough to look up (`~/search-fts`'s `SEARCH_MIN_WORD_LENGTH`): nothing was searched, and /browse says so instead of "no apps found". */
   queryTooShort?: boolean;
 }

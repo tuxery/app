@@ -8,7 +8,9 @@ import { HOME_LISTINGS, MUST_HAVE, MUST_HAVE_APP_IDS } from "./home-rows";
 import {
   ALL_PACKAGE_SOURCE_IDS,
   BROWSE_PAGE_SIZE,
+  AGE_BRACKETS,
   EMPTY_STATS,
+  type AgeFilter,
   type AppSummary,
   type BrowseResult,
   type CatalogApp,
@@ -18,6 +20,8 @@ import {
 } from "~/catalog-types";
 import {
   BROWSE_KEYS_META_KEY,
+  ageCountKey,
+  ageIdsChunkKey,
   chunkIndexesFor,
   countKey,
   freeCountKey,
@@ -163,6 +167,14 @@ function json<T>(value: unknown): T | undefined {
   return isNullish(value) ? undefined : (JSON.parse(value as string) as T);
 }
 
+/** Catalog's age bracket column — pinned by store-contract.json's `ageBrackets.column`. */
+export const AGE_BRACKET_COLUMN = "age_bracket";
+
+/** The age bracket column as one of `AGE_BRACKETS`; `undefined` when NULL, absent (older dataset) or anything else. */
+function parseAgeBracket(value: unknown): CatalogApp["ageBracket"] {
+  return AGE_BRACKETS.find((bracket) => bracket === value);
+}
+
 /** The catalog's free/proprietary verdict: `unknown` for a NULL column, `undefined` when the column doesn't exist yet (older dataset). */
 function parseLicenseKind(row: Row): CatalogApp["licenseKind"] {
   if (!("license_kind" in row)) return undefined;
@@ -215,6 +227,8 @@ export function toCatalogApp(row: Row): CatalogApp {
     ageRating: isNullish(row.age_rating_system)
       ? undefined
       : { system: row.age_rating_system as string, value: row.age_rating_value as string },
+    // Only ever one of the brackets: anything else reads as no column.
+    ageBracket: parseAgeBracket(row[AGE_BRACKET_COLUMN]),
     popularity: num(row.popularity),
     languages: json(row.languages_json),
     screenshots: httpUrls(json(row.screenshots_json)),
@@ -389,6 +403,7 @@ async function readPrecomputedBrowse(
     category?: string;
     source?: PackageSourceId;
     license?: "free";
+    age?: AgeFilter;
     sort: SortOption;
     offset: number;
   },
@@ -396,6 +411,15 @@ async function readPrecomputedBrowse(
   let keys = await currentBrowseKeys(db);
   // An older generation has no free-only counts: count live instead.
   if (filters.license === "free" && !keys?.freeCounts) return undefined;
+  // Nor age counts; and catalog doesn't key an age with both a source and
+  // a category (rarely combined, ~31k more keys): those count live,
+  // through the category's index.
+  if (
+    filters.age !== undefined &&
+    (!keys?.ageFilter || (filters.source !== undefined && filters.category !== undefined))
+  ) {
+    return undefined;
+  }
   for (let attempt = 0; attempt < 2 && keys; attempt++) {
     // Sequential on purpose: a retry only happens after the previous
     // attempt found the generation stale, and its keys depend on that.
@@ -404,13 +428,23 @@ async function readPrecomputedBrowse(
       {
         sql: `SELECT value FROM meta WHERE key = ?`,
         args: [
-          (filters.license === "free" ? freeCountKey : countKey)(
-            keys.generation,
-            filters.interfaceFilter,
-            filters.typeFilter,
-            filters.source,
-            filters.category,
-          ),
+          filters.age === undefined
+            ? (filters.license === "free" ? freeCountKey : countKey)(
+                keys.generation,
+                filters.interfaceFilter,
+                filters.typeFilter,
+                filters.source,
+                filters.category,
+              )
+            : ageCountKey(
+                keys.generation,
+                filters.age,
+                filters.license,
+                filters.interfaceFilter,
+                filters.typeFilter,
+                filters.source,
+                filters.category,
+              ),
         ],
       },
     ]);
@@ -421,30 +455,48 @@ async function readPrecomputedBrowse(
     const total = Number(metaValue(count.results[0]) ?? 0);
 
     // Precomputed id lists exist for the single-dimension source filter
-    // (every link into a store/distro page is `/browse/?source=X`) and,
-    // in its default order, the single-dimension category filter (every
-    // link into a category is `/browse/?category=X`); any other
-    // combination lists live, with just the count precomputed.
+    // (every link into a store/distro page is `/browse/?source=X`), in
+    // its default order the single-dimension category filter (every
+    // link into a category is `/browse/?category=X`), and an age with or
+    // without a type (`/browse/?age=7&type=game`: the rated products are
+    // ~4% of the catalog, a live page walks the name index past the
+    // rest); any other combination lists live, with just the count
+    // precomputed.
     const singleFilter =
-      !filters.license && filters.interfaceFilter === "all" && filters.typeFilter === "all";
-    const sourceOnly = singleFilter && filters.source !== undefined && !filters.category;
+      !filters.license && filters.interfaceFilter === "all" && filters.age === undefined;
+    const sourceOnly =
+      singleFilter &&
+      filters.typeFilter === "all" &&
+      filters.source !== undefined &&
+      !filters.category;
     // "Popular first", catalog's `byPopularFirst` order; A-Z and Z-A list live.
     const categoryOnly =
       singleFilter &&
+      filters.typeFilter === "all" &&
       filters.category !== undefined &&
       filters.source === undefined &&
       filters.sort === "relevance" &&
       keys.categoryIds === true;
-    if (!sourceOnly && !categoryOnly) return { total };
+    const age = filters.age;
+    const ageOnly =
+      age !== undefined &&
+      !filters.license &&
+      filters.interfaceFilter === "all" &&
+      filters.source === undefined &&
+      filters.category === undefined;
+    if (!sourceOnly && !categoryOnly && !ageOnly) return { total };
 
-    const descending = sourceOnly && filters.sort === "name-desc";
+    // Source and age lists are `name ASC`: Z-A reads them from the end.
+    const descending = !categoryOnly && filters.sort === "name-desc";
     const { start, end } = pageRange(filters.offset, BROWSE_PAGE_SIZE, total, descending);
     const indexes = chunkIndexesFor(start, end, keys.sourceIdsChunkSize);
     if (indexes.length === 0) return { total, ids: [] };
-    const chunkKey = (generation: string, index: number) =>
-      sourceOnly
+    const chunkKey = (generation: string, index: number) => {
+      if (ageOnly) return ageIdsChunkKey(generation, age, filters.typeFilter, index);
+      return sourceOnly
         ? sourceIdsChunkKey(generation, filters.source ?? "", index)
         : categoryIdsChunkKey(generation, index, filters.category ?? "");
+    };
 
     // eslint-disable-next-line no-await-in-loop
     const chunkRows = await readPinned(
@@ -535,6 +587,8 @@ export interface BrowseOptions {
   source?: PackageSourceId;
   /** `free`: free software only (catalog's `license_kind`). */
   license?: "free";
+  /** Suitable for this age: rated in its bracket or a lower one (catalog's `age_bracket`). Unrated products never match. */
+  age?: AgeFilter;
   sort?: SortOption;
 }
 
@@ -554,28 +608,34 @@ export async function browseApps(
     normalizeBrowseOptions(options);
 
   // The "free software only" filter needs a dataset with `license_kind`,
-  // which the same publish marks with `browseKeys.freeCounts`. On an older
+  // which the same publish marks with `browseKeys.freeCounts`, and the age
+  // filter one with `age_bracket` (`browseKeys.ageFilter`). On an older
   // one the filter is ignored (and /browse hides it) rather than querying a
   // column that isn't there.
   let freeFilter = false;
+  let ageFilter = false;
   try {
-    freeFilter = (await currentBrowseKeys(db))?.freeCounts === true;
+    const keys = await currentBrowseKeys(db);
+    freeFilter = keys?.freeCounts === true;
+    ageFilter = keys?.ageFilter === true;
   } catch {
     // No browse keys readable: no filter, the listing still works.
   }
   const license = freeFilter ? requested.license : undefined;
+  const age = ageFilter ? requested.age : undefined;
+  const supported = { freeFilter, ageFilter };
 
   // /browse's `server$` call passes whatever the client sent here too.
   const trimmed = typeof query === "string" ? query.trim() : "";
   const fts = buildFtsClause(trimmed);
   // Nothing the index can look up (see `buildFtsClause`): no search at all.
-  if (trimmed && !fts) return { apps: [], total: 0, queryTooShort: true, freeFilter };
+  if (trimmed && !fts) return { apps: [], total: 0, queryTooShort: true, ...supported };
 
   const runBrowseQuery = async (): Promise<BrowseResult> => {
     const { orderBy, orderArgs } = buildSearchOrder(trimmed);
 
     const conditions: string[] = [];
-    const conditionArgs: string[] = [];
+    const conditionArgs: (string | number)[] = [];
     if (fts) conditions.push(fts.where);
     if (interfaceFilter === "gui") {
       conditions.push("kind = 'gui'");
@@ -598,6 +658,10 @@ export async function browseApps(
       conditionArgs.push(category);
     }
     if (license === "free") conditions.push("license_kind = 'free'");
+    if (age !== undefined) {
+      conditions.push(`${AGE_BRACKET_COLUMN} <= ?`);
+      conditionArgs.push(age);
+    }
     if (source) {
       conditions.push("packages_json LIKE ?");
       conditionArgs.push(`%"source":"${source}"%`);
@@ -617,6 +681,7 @@ export async function browseApps(
           category,
           source,
           license,
+          age,
           sort,
           offset,
         });
@@ -681,11 +746,11 @@ export async function browseApps(
   const result = trimmed
     ? await safely({ apps: [], total: 0 }, runBrowseQuery)
     : await cachedListing(
-        `browseApps:${interfaceFilter}:${typeFilter}:${category ?? ""}:${source ?? ""}:${license ?? ""}:${sort}:${page}`,
+        `browseApps:${interfaceFilter}:${typeFilter}:${category ?? ""}:${source ?? ""}:${license ?? ""}:${age ?? ""}:${sort}:${page}`,
         { apps: [], total: 0 },
         runBrowseQuery,
       );
-  return { ...result, freeFilter };
+  return { ...result, ...supported };
 }
 
 /** Looks up several apps by id at once, in whatever order the DB returns them — callers that need a specific order (e.g. an editorial block referencing ids in a chosen sequence) should re-sort client-side. Missing ids are silently dropped rather than erroring, since editorial content referencing a since-removed app shouldn't break the whole page. */
