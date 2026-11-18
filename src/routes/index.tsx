@@ -3,6 +3,7 @@ import { routeLoader$ } from "@qwik.dev/router";
 import type { DocumentHead } from "@qwik.dev/router";
 import { CategoryList, StoreList, TopTen } from "~/components/home-aside/home-aside";
 import { FeatureCard, FeatureList } from "~/components/home-featured/home-featured";
+import { CategoryTileGrid } from "~/components/category-tile-grid/category-tile-grid";
 import { HomeHero } from "~/components/home-hero/home-hero";
 import {
   BlockPlaceholder,
@@ -16,6 +17,7 @@ import {
   SpotlightRow,
 } from "~/components/home-sections/home-sections";
 import { getAppsByIds, getCategories, getStats } from "~/catalog";
+import { categoryDirectory } from "~/categories";
 import { dailyPick } from "~/daily-pick";
 import {
   featureView,
@@ -42,9 +44,9 @@ export const useStats = routeLoader$(async (requestEvent) => {
 });
 
 // Apps and games each draw from their own taxonomy (see `tuxery/catalog`'s
-// `CatalogApp.category` doc comment). Read for the category list and the
-// Explore tiles' counts, and to know which category listings the published
-// catalog can fill: two `categoryCounts` meta rows, cached like every listing.
+// `CatalogApp.category` doc comment). Read for the side column's category
+// list, the Explore tiles' counts and the grid that ends the page, and to
+// know which category listings the published catalog can fill: two `categoryCounts` meta rows, cached like every listing.
 export const useAppCategories = routeLoader$(async (requestEvent) =>
   getCategories(resolveServerEnv(requestEvent.platform), "app"),
 );
@@ -121,6 +123,8 @@ export default component$(() => {
     homeRowsOf(section, available).flatMap(({ category }) =>
       category ? [{ category, count: counts.get(category) ?? 0 }] : [],
     );
+  // Every category, grouped like /categories, for the grid that ends the page.
+  const directory = categoryDirectory(appCategories.value, gameCategories.value);
   const [feature, ...otherFeatures] = features.value;
   const family = HOME_ROWS.find((row) => row.listing === FAMILY_GAMES);
 
@@ -155,148 +159,169 @@ export default component$(() => {
         // Two columns on wide screens: the feed, and a side column of charts,
         // categories and stores. Below `lg` the side column sits between the
         // feed's first blocks (featured, today, must-haves) and the rest.
-        <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[auto_1fr] items-start">
-          <div class="flex flex-col gap-12 min-w-0 lg:col-start-1 lg:row-start-1">
-            {feature && (
-              <div class="flex flex-col gap-3">
-                <FeatureCard feature={feature} />
-                <div class="lg:hidden">
-                  <FeatureList features={otherFeatures} />
+        <>
+          <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[auto_1fr] items-start">
+            <div class="flex flex-col gap-12 min-w-0 lg:col-start-1 lg:row-start-1">
+              {feature && (
+                <div class="flex flex-col gap-3">
+                  <FeatureCard feature={feature} />
+                  <div class="lg:hidden">
+                    <FeatureList features={otherFeatures} />
+                  </div>
                 </div>
-              </div>
-            )}
-
-            <section>
-              <SectionHeader eyebrow="New every day" title="Today on Tuxery" level={2} />
-              {rows.value === undefined ? (
-                <BlockPlaceholder class="h-80 sm:h-72" />
-              ) : (
-                pick && (
-                  <FeaturedApp
-                    app={pick}
-                    eyebrow={pick.contentType === "game" ? "Game of the day" : "App of the day"}
-                  />
-                )
               )}
-            </section>
 
-            {(rows.value === undefined || listing(MUST_HAVE).length > 0) && (
               <section>
-                <SectionHeader eyebrow="Start here" title="Must-have apps" level={2} />
+                <SectionHeader eyebrow="New every day" title="Today on Tuxery" level={2} />
                 {rows.value === undefined ? (
-                  <BlockPlaceholder class="h-80" />
+                  <BlockPlaceholder class="h-80 sm:h-72" />
                 ) : (
-                  <SpotlightRow apps={listing(MUST_HAVE)} label="Must-have apps" />
+                  pick && (
+                    <FeaturedApp
+                      app={pick}
+                      eyebrow={pick.contentType === "game" ? "Game of the day" : "App of the day"}
+                    />
+                  )
                 )}
               </section>
-            )}
-          </div>
 
-          <aside
-            aria-label="Charts, categories and stores"
-            class="flex flex-col gap-6 min-w-0 lg:col-start-2 lg:row-start-1 lg:row-span-2"
-          >
-            <div class="hidden lg:block">
-              <FeatureList features={otherFeatures} />
+              {(rows.value === undefined || listing(MUST_HAVE).length > 0) && (
+                <section>
+                  <SectionHeader eyebrow="Start here" title="Must-have apps" level={2} />
+                  {rows.value === undefined ? (
+                    <BlockPlaceholder class="h-80" />
+                  ) : (
+                    <SpotlightRow apps={listing(MUST_HAVE)} label="Must-have apps" />
+                  )}
+                </section>
+              )}
             </div>
-            {(["apps", "games"] as const).map((section) => {
-              const trending = homeRowsOf(section, available).find((row) =>
-                row.listing.startsWith("trending:"),
-              );
-              return (
-                trending && (
-                  <TopTen
-                    key={section}
-                    title={trending.title}
-                    tip={trending.tip}
-                    href={trending.href ?? "/browse/"}
-                    apps={rows.value?.[trending.listing]}
-                  />
-                )
-              );
-            })}
-            <CategoryList apps={categoriesOf("apps")} games={categoriesOf("games")} />
-            <StoreList />
-          </aside>
 
-          <div class="flex flex-col gap-12 min-w-0 lg:col-start-1 lg:row-start-2">
-            {explore.length > 0 && (
-              <section>
-                <SectionHeader
-                  eyebrow="Different every day"
-                  title="Explore"
-                  href="/categories/"
-                  linkLabel="All categories"
+            <aside
+              aria-label="Charts, categories and stores"
+              class="flex flex-col gap-6 min-w-0 lg:col-start-2 lg:row-start-1 lg:row-span-2"
+            >
+              <div class="hidden lg:block">
+                <FeatureList features={otherFeatures} />
+              </div>
+              {(["apps", "games"] as const).map((section) => {
+                const trending = homeRowsOf(section, available).find((row) =>
+                  row.listing.startsWith("trending:"),
+                );
+                return (
+                  trending && (
+                    <TopTen
+                      key={section}
+                      title={trending.title}
+                      tip={trending.tip}
+                      href={trending.href ?? "/browse/"}
+                      apps={rows.value?.[trending.listing]}
+                    />
+                  )
+                );
+              })}
+              <CategoryList apps={categoriesOf("apps")} games={categoriesOf("games")} />
+              <StoreList />
+            </aside>
+
+            <div class="flex flex-col gap-12 min-w-0 lg:col-start-1 lg:row-start-2">
+              {explore.length > 0 && (
+                <section>
+                  <SectionHeader
+                    eyebrow="Different every day"
+                    title="Explore"
+                    href="/categories/"
+                    linkLabel="All categories"
+                    level={2}
+                  />
+                  <div class="grid gap-3 grid-cols-1 min-[420px]:grid-cols-2 xl:grid-cols-3">
+                    {explore.map((row) => (
+                      <ExploreTile
+                        key={row.listing}
+                        title={row.title}
+                        category={row.category ?? ""}
+                        href={row.href ?? "/categories/"}
+                        count={counts.get(row.category ?? "")}
+                        unit={row.section === "games" ? "games" : "apps"}
+                        apps={rows.value?.[row.listing]}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {family && (rows.value === undefined || listing(FAMILY_GAMES).length > 0) && (
+                <Collection
                   level={2}
-                />
-                <div class="grid gap-3 grid-cols-1 min-[420px]:grid-cols-2 xl:grid-cols-3">
-                  {explore.map((row) => (
-                    <ExploreTile
-                      key={row.listing}
-                      title={row.title}
-                      category={row.category ?? ""}
-                      href={row.href ?? "/categories/"}
-                      count={counts.get(row.category ?? "")}
-                      unit={row.section === "games" ? "games" : "apps"}
-                      apps={rows.value?.[row.listing]}
+                  eyebrow="All ages"
+                  title={family.title}
+                  blurb={family.blurb ?? ""}
+                  href={family.href}
+                >
+                  {rows.value === undefined ? (
+                    <BlockPlaceholder class="h-56" />
+                  ) : (
+                    <CompactGrid
+                      apps={listing(FAMILY_GAMES).slice(0, 6)}
+                      label={family.title}
+                      dense
                     />
-                  ))}
-                </div>
-              </section>
-            )}
+                  )}
+                </Collection>
+              )}
 
-            {family && (rows.value === undefined || listing(FAMILY_GAMES).length > 0) && (
-              <Collection
-                level={2}
-                eyebrow="All ages"
-                title={family.title}
-                blurb={family.blurb ?? ""}
-                href={family.href}
-              >
-                {rows.value === undefined ? (
-                  <BlockPlaceholder class="h-56" />
-                ) : (
-                  <CompactGrid
-                    apps={listing(FAMILY_GAMES).slice(0, 6)}
-                    label={family.title}
-                    dense
-                  />
-                )}
-              </Collection>
-            )}
+              {(rows.value === undefined || recent.length > 0) && (
+                <section>
+                  <SectionHeader title="Recently updated" tip={RECENTLY_UPDATED_TIP} level={2} />
+                  {rows.value === undefined ? (
+                    <BlockPlaceholder class="h-64" />
+                  ) : (
+                    <CompactGrid apps={recent} label="Recently updated" dense />
+                  )}
+                </section>
+              )}
 
-            {(rows.value === undefined || recent.length > 0) && (
-              <section>
-                <SectionHeader title="Recently updated" tip={RECENTLY_UPDATED_TIP} level={2} />
-                {rows.value === undefined ? (
-                  <BlockPlaceholder class="h-64" />
-                ) : (
-                  <CompactGrid apps={recent} label="Recently updated" dense />
-                )}
-              </section>
-            )}
+              <Doors apps={rows.value?.["trending:app"]} games={rows.value?.["trending:game"]} />
 
-            <Doors apps={rows.value?.["trending:app"]} games={rows.value?.["trending:game"]} />
-
-            {shelves.length > 0 && (
-              <section>
-                <SectionHeader eyebrow="Popular in" title="Shelves of the day" level={2} />
-                <div class="grid gap-4 md:grid-cols-3">
-                  {shelves.map((row) => (
-                    <Shelf
-                      key={row.listing}
-                      title={row.title}
-                      category={row.category}
-                      href={row.href}
-                      count={counts.get(row.category ?? "")}
-                      apps={rows.value?.[row.listing]?.slice(0, 4)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
+              {shelves.length > 0 && (
+                <section>
+                  <SectionHeader eyebrow="Popular in" title="Shelves of the day" level={2} />
+                  <div class="grid gap-4 md:grid-cols-3">
+                    {shelves.map((row) => (
+                      <Shelf
+                        key={row.listing}
+                        title={row.title}
+                        category={row.category}
+                        href={row.href}
+                        count={counts.get(row.category ?? "")}
+                        apps={rows.value?.[row.listing]?.slice(0, 4)}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
           </div>
-        </div>
+
+          {directory.length > 0 && (
+            <section aria-label="Browse by category" class="flex flex-col gap-4">
+              <SectionHeader
+                title="Browse by category"
+                href="/categories/"
+                linkLabel="All categories"
+                level={2}
+              />
+              {directory.map(({ group, items }) => (
+                <div key={group.id}>
+                  <h3 class="text-xs font-semibold uppercase tracking-wide text-base-content/70 mb-2">
+                    {group.title}
+                  </h3>
+                  <CategoryTileGrid categories={items} />
+                </div>
+              ))}
+            </section>
+          )}
+        </>
       )}
     </div>
   );
