@@ -951,16 +951,18 @@ export default component$(() => {
           {/* Where the app sits: its type's listing, then its category's. */}
           <nav aria-label="Breadcrumb" class="breadcrumbs text-sm py-0 mb-1">
             <ul>
-              {categoryTrail(a.contentType === "game" ? "game" : undefined, a.category).map(
-                (step) => (
-                  <li key={step.href}>
-                    <a href={step.href} class="inline-flex items-center gap-1">
-                      {step.category && <CategoryIcon category={step.category} />}
-                      {step.label}
-                    </a>
-                  </li>
-                ),
-              )}
+              {categoryTrail(
+                a.contentType === "game" ? "game" : undefined,
+                a.category,
+                a.subcategory,
+              ).map((step) => (
+                <li key={step.href}>
+                  <a href={step.href} class="inline-flex items-center gap-1">
+                    {step.category && <CategoryIcon category={step.category} />}
+                    {step.label}
+                  </a>
+                </li>
+              ))}
               <li aria-current="page" class="text-base-content/70">
                 {a.name}
               </li>

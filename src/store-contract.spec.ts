@@ -9,6 +9,9 @@ import {
   freeCountKey,
   parseBrowseKeys,
   sourceIdsChunkKey,
+  subcategoryCountKey,
+  subcategoryCountsKey,
+  subcategoryIdsChunkKey,
   type BrowseKeys,
 } from "~/browse-keys";
 import {
@@ -36,6 +39,7 @@ const BROWSE_KEYS_FIELDS = {
   freeCounts: true,
   categoryIds: true,
   ageFilter: true,
+  subcategories: true,
 } satisfies Record<keyof BrowseKeys, true>;
 
 describe("store contract (store-contract.json)", () => {
@@ -69,6 +73,7 @@ describe("store contract (store-contract.json)", () => {
       freeCounts: true,
       categoryIds: true,
       ageFilter: true,
+      subcategories: true,
     };
     expect(parseBrowseKeys(JSON.stringify(value))).toEqual(value);
   });
@@ -100,6 +105,28 @@ describe("store contract (store-contract.json)", () => {
     ).toBe(formats.countAge);
     expect(ageIdsChunkKey("{generation}", "{age}" as never, type, "{chunk}" as never)).toBe(
       formats.ageIds,
+    );
+    expect(
+      subcategoryCountKey(
+        "{generation}",
+        iface,
+        type,
+        "{license}" as never,
+        "{age}" as never,
+        "{category}",
+        "{subcategory}",
+      ),
+    ).toBe(formats.countSub);
+    expect(
+      subcategoryIdsChunkKey("{generation}", "{chunk}" as never, "{category}", "{subcategory}"),
+    ).toBe(formats.subcategoryIds);
+    expect(subcategoryCountsKey(type)).toBe(formats.subcategoryCounts);
+  });
+
+  it("writes an unset license or age in a subcategory count as the contract's unset filter", () => {
+    const unset = contract.unsetFilter;
+    expect(subcategoryCountKey("g", "all", "all", undefined, undefined, "C", "S")).toBe(
+      `countSub:g:all:all:${unset}:${unset}:C:S`,
     );
   });
 

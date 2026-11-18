@@ -26,7 +26,18 @@ export function cacheName(commit: string): string {
  * are passed through as they are.
  */
 export const PAGE_QUERY_PARAMS: Readonly<Record<string, readonly string[]>> = {
-  "/browse/": ["age", "category", "interface", "license", "page", "q", "sort", "source", "type"],
+  "/browse/": [
+    "age",
+    "category",
+    "interface",
+    "license",
+    "page",
+    "q",
+    "sort",
+    "source",
+    "sub",
+    "type",
+  ],
   "/claim/": ["app"],
   "/feedback/": ["from"],
   "/settings/": ["tab"],

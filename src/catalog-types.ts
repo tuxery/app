@@ -212,6 +212,8 @@ export interface CatalogApp {
   longDescription?: string;
   /** Always a real label, "To Classify" at worst — see `tuxery/catalog`'s `CatalogApp.category` doc comment. */
   category: string;
+  /** The second level of the category tree (catalog's `subcategory`), when the category has one and a rule recognized the product. */
+  subcategory?: string;
   developer?: string;
   publisher?: string;
   license?: string;

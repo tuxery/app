@@ -57,7 +57,7 @@ const ICONS = {
   "Developer Tools": LuCode,
   "System Tools": LuTerminal,
   Security: LuShield,
-  Settings: LuSettings,
+  "Desktop & Settings": LuSettings,
   Utilities: LuWrench,
   Productivity: LuBriefcase,
   Business: LuHammer,

@@ -32,6 +32,9 @@ import {
   sliceFromChunks,
   sourceIdsChunkKey,
   categoryIdsChunkKey,
+  subcategoryCountKey,
+  subcategoryCountsKey,
+  subcategoryIdsChunkKey,
   type BrowseKeys,
 } from "~/browse-keys";
 import { noteQueryFailure } from "~/catalog-status";
@@ -205,6 +208,7 @@ export function toCatalogApp(row: Row): CatalogApp {
     kind: row.kind === "gui" ? "gui" : undefined,
     contentType: row.content_type === "game" ? "game" : undefined,
     category: row.category as string,
+    subcategory: (row.subcategory as string | null | undefined) ?? undefined,
     developer: str(row.developer),
     publisher: str(row.publisher),
     license: str(row.license),
@@ -401,6 +405,7 @@ async function readPrecomputedBrowse(
     interfaceFilter: InterfaceFilter;
     typeFilter: TypeFilter;
     category?: string;
+    subcategory?: string;
     source?: PackageSourceId;
     license?: "free";
     age?: AgeFilter;
@@ -409,6 +414,12 @@ async function readPrecomputedBrowse(
   },
 ): Promise<PrecomputedBrowse | undefined> {
   let keys = await currentBrowseKeys(db);
+  const { category, subcategory } = filters;
+  // A subcategory is counted under every filter but source; with a source
+  // it counts live (one category's rows at most).
+  if (subcategory !== undefined && (!keys?.subcategories || filters.source !== undefined)) {
+    return undefined;
+  }
   // An older generation has no free-only counts: count live instead.
   if (filters.license === "free" && !keys?.freeCounts) return undefined;
   // Nor age counts; and catalog doesn't key an age with both a source and
@@ -428,23 +439,33 @@ async function readPrecomputedBrowse(
       {
         sql: `SELECT value FROM meta WHERE key = ?`,
         args: [
-          filters.age === undefined
-            ? (filters.license === "free" ? freeCountKey : countKey)(
+          subcategory !== undefined && category !== undefined
+            ? subcategoryCountKey(
                 keys.generation,
                 filters.interfaceFilter,
                 filters.typeFilter,
-                filters.source,
-                filters.category,
-              )
-            : ageCountKey(
-                keys.generation,
-                filters.age,
                 filters.license,
-                filters.interfaceFilter,
-                filters.typeFilter,
-                filters.source,
-                filters.category,
-              ),
+                filters.age,
+                category,
+                subcategory,
+              )
+            : filters.age === undefined
+              ? (filters.license === "free" ? freeCountKey : countKey)(
+                  keys.generation,
+                  filters.interfaceFilter,
+                  filters.typeFilter,
+                  filters.source,
+                  filters.category,
+                )
+              : ageCountKey(
+                  keys.generation,
+                  filters.age,
+                  filters.license,
+                  filters.interfaceFilter,
+                  filters.typeFilter,
+                  filters.source,
+                  filters.category,
+                ),
         ],
       },
     ]);
@@ -477,6 +498,7 @@ async function readPrecomputedBrowse(
       filters.source === undefined &&
       filters.sort === "relevance" &&
       keys.categoryIds === true;
+    const subcategoryOnly = categoryOnly && subcategory !== undefined;
     const age = filters.age;
     const ageOnly =
       age !== undefined &&
@@ -485,6 +507,8 @@ async function readPrecomputedBrowse(
       filters.source === undefined &&
       filters.category === undefined;
     if (!sourceOnly && !categoryOnly && !ageOnly) return { total };
+    // Without the generation's subcategory lists, a subcategory page lists live.
+    if (subcategory !== undefined && !subcategoryOnly) return { total };
 
     // Source and age lists are `name ASC`: Z-A reads them from the end.
     const descending = !categoryOnly && filters.sort === "name-desc";
@@ -493,6 +517,9 @@ async function readPrecomputedBrowse(
     if (indexes.length === 0) return { total, ids: [] };
     const chunkKey = (generation: string, index: number) => {
       if (ageOnly) return ageIdsChunkKey(generation, age, filters.typeFilter, index);
+      if (subcategoryOnly) {
+        return subcategoryIdsChunkKey(generation, index, category ?? "", subcategory);
+      }
       return sourceOnly
         ? sourceIdsChunkKey(generation, filters.source ?? "", index)
         : categoryIdsChunkKey(generation, index, filters.category ?? "");
@@ -583,6 +610,8 @@ export interface BrowseOptions {
   interfaceFilter?: InterfaceFilter;
   typeFilter?: TypeFilter;
   category?: string;
+  /** A subcategory of `category` (catalog's `subcategory` column); ignored without a category. */
+  subcategory?: string;
   /** Restricts to apps with at least one package from this source — matched against the packages_json blob, the only place per-package sources live. */
   source?: PackageSourceId;
   /** `free`: free software only (catalog's `license_kind`). */
@@ -614,15 +643,19 @@ export async function browseApps(
   // column that isn't there.
   let freeFilter = false;
   let ageFilter = false;
+  let subcategoryFilter = false;
   try {
     const keys = await currentBrowseKeys(db);
     freeFilter = keys?.freeCounts === true;
     ageFilter = keys?.ageFilter === true;
+    subcategoryFilter = keys?.subcategories === true;
   } catch {
     // No browse keys readable: no filter, the listing still works.
   }
   const license = freeFilter ? requested.license : undefined;
   const age = ageFilter ? requested.age : undefined;
+  // An older dataset has no `subcategory` column: the filter is dropped.
+  const subcategory = subcategoryFilter ? requested.subcategory : undefined;
   const supported = { freeFilter, ageFilter };
 
   // /browse's `server$` call passes whatever the client sent here too.
@@ -657,6 +690,10 @@ export async function browseApps(
       conditions.push("category = ?");
       conditionArgs.push(category);
     }
+    if (subcategory) {
+      conditions.push("subcategory = ?");
+      conditionArgs.push(subcategory);
+    }
     if (license === "free") conditions.push("license_kind = 'free'");
     if (age !== undefined) {
       conditions.push(`${AGE_BRACKET_COLUMN} <= ?`);
@@ -679,6 +716,7 @@ export async function browseApps(
           interfaceFilter,
           typeFilter,
           category,
+          subcategory,
           source,
           license,
           age,
@@ -746,7 +784,7 @@ export async function browseApps(
   const result = trimmed
     ? await safely({ apps: [], total: 0 }, runBrowseQuery)
     : await cachedListing(
-        `browseApps:${interfaceFilter}:${typeFilter}:${category ?? ""}:${source ?? ""}:${license ?? ""}:${age ?? ""}:${sort}:${page}`,
+        `browseApps:${interfaceFilter}:${typeFilter}:${category ?? ""}:${subcategory ?? ""}:${source ?? ""}:${license ?? ""}:${age ?? ""}:${sort}:${page}`,
         { apps: [], total: 0 },
         runBrowseQuery,
       );
@@ -1100,6 +1138,35 @@ export async function getCategories(
     });
     const value = result.rows[0]?.value as string | undefined;
     return value ? (JSON.parse(value) as CategoryCount[]) : [];
+  });
+}
+
+export interface SubcategoryCount {
+  category: string;
+  subcategory: string;
+  count: number;
+}
+
+/**
+ * Every subcategory with its number of products, for one type or all,
+ * largest category first and largest subcategory first inside each:
+ * catalog's precomputed `subcategoryCounts:` row, one read, cached like
+ * `getCategories`. Empty on a dataset published before subcategories.
+ */
+export async function getSubcategories(
+  env: ServerEnv,
+  typeFilter: TypeFilter = "all",
+): Promise<SubcategoryCount[]> {
+  const db = getClient(env);
+  if (!db) return [];
+
+  return cachedListing(`getSubcategories:${typeFilter}`, [], async () => {
+    const result = await db.execute({
+      sql: `SELECT value FROM meta WHERE key = ?`,
+      args: [subcategoryCountsKey(typeFilter)],
+    });
+    const value = result.rows[0]?.value as string | undefined;
+    return value ? (JSON.parse(value) as SubcategoryCount[]) : [];
   });
 }
 

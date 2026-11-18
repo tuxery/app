@@ -27,6 +27,8 @@ export interface BrowseKeys {
   categoryIds?: boolean;
   /** Whether `apps` has `age_bracket` and this generation has the "suitable for" counts (`ageCountKey`) and id lists (`ageIdsChunkKey`). Absent on older datasets: /browse then has no age filter. */
   ageFilter?: boolean;
+  /** Whether `apps` has `subcategory` and this generation has its counts (`subcategoryCountKey`), its id lists (`subcategoryIdsChunkKey`) and `subcategoryCounts:` rows. Absent on older datasets: /browse then has no subcategory filter. */
+  subcategories?: boolean;
 }
 
 /** Parses the `browseKeys` row's JSON, `undefined` when it's absent or malformed (→ live fallback, never a throw). */
@@ -89,6 +91,39 @@ export function ageIdsChunkKey(
   index: number,
 ): string {
   return `ageIds:${generation}:${age}:${typeFilter}:${index}`;
+}
+
+/**
+ * The number of products of one subcategory under the other filters but
+ * source (`*` when unset; with a source, count live). Present when
+ * `BrowseKeys.subcategories` is. Labels never contain ":". Mirrored from
+ * catalog's `subcategoryCountKey`.
+ */
+export function subcategoryCountKey(
+  generation: string,
+  interfaceFilter: InterfaceFilterValue,
+  typeFilter: TypeFilterValue,
+  license: "free" | undefined,
+  age: number | undefined,
+  category: string,
+  subcategory: string,
+): string {
+  return `countSub:${generation}:${interfaceFilter}:${typeFilter}:${license ?? "*"}:${age ?? "*"}:${category}:${subcategory}`;
+}
+
+/** A chunk of one subcategory's ids in "popular first" order, like `categoryIdsChunkKey`'s. Mirrored from catalog's `subcategoryIdsChunkKey`. */
+export function subcategoryIdsChunkKey(
+  generation: string,
+  index: number,
+  category: string,
+  subcategory: string,
+): string {
+  return `subcategoryIds:${generation}:${index}:${category}:${subcategory}`;
+}
+
+/** The `meta` row listing every subcategory with its count, for one type or all (`CategoryTypeFilter`'s values). Present when `BrowseKeys.subcategories` is. */
+export function subcategoryCountsKey(typeFilter: TypeFilterValue): string {
+  return `subcategoryCounts:${typeFilter}`;
 }
 
 export function sourceIdsChunkKey(generation: string, source: string, index: number): string {

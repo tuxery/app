@@ -69,3 +69,44 @@ test("a product page's breadcrumb leads to its type's and its category's listing
     "/browse/?category=Web%20Browsers",
   );
 });
+
+test("a category's listing offers its subcategories, and one narrows the results", async ({
+  page,
+}) => {
+  await page.goto("/browse/?category=Security");
+  const kinds = page.getByRole("navigation", { name: "Kinds of Security" });
+  await expect(kinds.getByRole("link", { name: "All", exact: true })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await kinds.getByRole("link", { name: /^Passwords & Authentication/ }).click();
+
+  await expect(page).toHaveURL(/[?&]sub=Passwords\+%26\+Authentication/);
+  await expect(kinds.getByRole("link", { name: /^Passwords & Authentication/ })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await expect(page.locator(".badge", { hasText: "Passwords & Authentication" })).toBeVisible();
+  await expect(page.locator("a[href='/app/keepassxc/']")).toBeVisible();
+});
+
+test("a subcategory that isn't the category's is ignored", async ({ page }) => {
+  await page.goto("/browse/?category=Security&sub=Version+Control");
+  await expect(page.locator(".badge", { hasText: "Version Control" })).toHaveCount(0);
+  await expect(page.locator("a[href^='/app/']").first()).toBeVisible();
+});
+
+test("a link to the former Settings category opens Desktop & Settings", async ({ page }) => {
+  await page.goto("/browse/?category=Settings");
+  await expect(page).toHaveURL(/\/browse\/\?category=Desktop%20%26%20Settings$/);
+  await expect(page.locator(".badge", { hasText: "Desktop & Settings" })).toBeVisible();
+});
+
+test("a product page's breadcrumb ends at its subcategory", async ({ page }) => {
+  await page.goto("/app/keepassxc/");
+  const trail = page.getByRole("navigation", { name: "Breadcrumb" });
+  await expect(trail.getByRole("link", { name: "Passwords & Authentication" })).toHaveAttribute(
+    "href",
+    "/browse/?category=Security&sub=Passwords%20%26%20Authentication",
+  );
+});
