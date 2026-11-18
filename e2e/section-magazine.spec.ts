@@ -24,7 +24,7 @@ test("/apps lists a category as a collection with its blurb", async ({ page }) =
   await expect(collection.getByText("Collection", { exact: true })).toBeVisible();
   await expect(collection.getByRole("link", { name: "Browse all" })).toHaveAttribute(
     "href",
-    "/browse/?category=Web%20Browsers",
+    "/categories/web-browsers/",
   );
   await expect(
     collection.getByRole("list", { name: "Web browsers" }).getByRole("link").first(),

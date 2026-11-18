@@ -12,6 +12,8 @@ const PAGES = [
   "/browse/",
   "/app/firefox/",
   "/categories/",
+  "/categories/graphics-and-design/",
+  "/categories/security/passwords-and-authentication/",
   "/apps/",
   "/games/",
   "/docs/status/",
