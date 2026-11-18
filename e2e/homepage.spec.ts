@@ -37,7 +37,7 @@ test("New games is sorted by release date, newest first, not a re-list of Trendi
   }
 });
 
-test("the side column lists today's categories, apps then games, each a /browse filter", async ({
+test("the side column lists today's categories, apps then games, each leading to its page", async ({
   page,
 }) => {
   await page.goto("/");
@@ -53,8 +53,8 @@ test("the side column lists today's categories, apps then games, each a /browse 
   const link = games.getByRole("link").first();
   const genre = (await link.locator("span.truncate").innerText()).trim();
   await link.click();
-  await expect(page).toHaveURL(/\/browse\/\?category=/);
-  await expect(page.locator(".badge", { hasText: genre })).toBeVisible();
+  await expect(page).toHaveURL(/\/categories\/[a-z0-9-]+\/$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(genre);
 });
 
 test("picking a system on the OS line keeps it, and Change offers the systems again", async ({
@@ -91,7 +91,7 @@ test("today's pick, the must-haves and the Explore tiles fill in from the listin
   await expect(page.getByLabel("Must-have apps", { exact: true })).toBeVisible();
 
   const explore = page.locator("section", { has: page.getByRole("heading", { name: "Explore" }) });
-  const tiles = explore.locator("a[href^='/browse/?category=']");
+  const tiles = explore.locator("div.grid > a");
   await expect(tiles).toHaveCount(9);
   await expect(tiles.first().locator("img").first()).toBeAttached();
 });
