@@ -1,32 +1,33 @@
 import { component$ } from "@qwik.dev/core";
 import type { CategoryCount } from "~/catalog";
-import { CategoryIcon } from "~/components/category-icon/category-icon";
 import { categoryPageHref } from "~/categories";
+import { CategoryIcon } from "~/components/category-icon/category-icon";
 
 /**
- * A grid of category tiles, each linking to the category's page —
- * shared by the homepage's "Browse by category" section, the Apps/Games
- * pages' own category grids, and the full `/categories` listing. Callers
- * decide their own empty-state handling (an empty grid here would just be
- * a blank box) — pass a non-empty `categories` array.
+ * A grid of compact category tiles (icon, name, count), each leading to the
+ * category's page — the homepage's "Browse by category" grid and the
+ * Apps/Games pages' own. Callers decide their own empty-state handling (an
+ * empty grid here would just be a blank box) — pass a non-empty
+ * `categories` array.
  */
 export const CategoryTileGrid = component$<{ categories: CategoryCount[] }>(({ categories }) => (
-  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+  <ul class="grid gap-2 grid-cols-1 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
     {categories.map((c) => (
-      <a
-        key={c.category}
-        href={categoryPageHref(c.category)}
-        aria-label={`Browse ${c.category} (${c.count} apps)`}
-        class="card bg-base-100 border border-base-300 hover:border-primary/40 hover:shadow-md transition-shadow"
-      >
-        <div class="card-body p-4 flex-row items-center justify-between gap-2">
-          <span class="flex items-center gap-2 min-w-0">
-            <CategoryIcon category={c.category} class="text-lg text-primary shrink-0" />
-            <span class="font-medium">{c.category}</span>
+      <li key={c.category} class="min-w-0">
+        <a
+          href={categoryPageHref(c.category)}
+          aria-label={`${c.category} (${c.count.toLocaleString()})`}
+          class="flex items-center gap-2 rounded-box border border-base-300 bg-base-100 px-3 py-2 hover:border-primary/50 hover:shadow-sm transition-shadow"
+        >
+          <CategoryIcon category={c.category} class="text-primary shrink-0" />
+          <span class="truncate text-sm font-medium" title={c.category}>
+            {c.category}
           </span>
-          <span class="badge badge-ghost">{c.count.toLocaleString()}</span>
-        </div>
-      </a>
+          <span class="ml-auto text-xs text-base-content/70 tabular-nums">
+            {c.count.toLocaleString()}
+          </span>
+        </a>
+      </li>
     ))}
-  </div>
+  </ul>
 ));
