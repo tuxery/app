@@ -1,20 +1,16 @@
 import { toSummary, type Row } from "./app-summary";
 import type { AppSummary } from "./catalog-types";
 
-// The homepage's rows of cards, loaded by the browser from `/api/home/`
-// rather than rendered by the Worker. Rendering and serializing ~340 cards
+// The listings behind the homepage, /apps and /games, loaded by the browser
+// from `/api/home/` (one edge-cached response for all three) rather than
+// rendered by the Worker. Rendering and serializing ~340 cards
 // cost ~1 s of Worker CPU per homepage render in production (Workers Logs,
 // 2026-10-19), against a 10 ms limit on the free plan. The data was never
 // the cost: each row is one precomputed `listingRows:*` meta row, which
 // the endpoint sends as stored, so the Worker only concatenates strings.
 
-/** The two halves of the homepage, apps first, each a heading over its rows. */
-export const HOME_SECTIONS = [
-  { id: "apps", title: "Apps", href: "/apps/", linkLabel: "All apps" },
-  { id: "games", title: "Games", href: "/games/", linkLabel: "All games" },
-] as const;
-
-export type HomeSectionId = (typeof HOME_SECTIONS)[number]["id"];
+/** Which page a row belongs to: /apps or /games (the homepage mixes both). */
+export type HomeSectionId = "apps" | "games";
 
 /**
  * The hand-picked row's listing: catalog's `config/home-must-have.json`,
