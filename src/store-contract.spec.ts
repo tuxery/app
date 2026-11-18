@@ -19,7 +19,7 @@ import {
   TRENDING_PAGE_SIZE,
 } from "~/catalog";
 import { AGE_BRACKETS, AGE_FILTERS } from "~/catalog-types";
-import { HOME_LISTINGS, MUST_HAVE } from "~/home-rows";
+import { FAMILY_GAMES, HOME_LISTINGS, MUST_HAVE } from "~/home-rows";
 
 // Pins what this repo reads from catalog's Turso rows to store-contract.json,
 // the file catalog's publish() is pinned to on its side (CI keeps the two
@@ -51,6 +51,11 @@ describe("store contract (store-contract.json)", () => {
   it("reads the homepage's must-haves from the contract's listing", () => {
     expect(MUST_HAVE).toBe(contract.mustHaveListing);
     expect(HOME_LISTINGS).toContain(contract.mustHaveListing);
+  });
+
+  it("reads the homepage's all-ages games from the contract's listing", () => {
+    expect(FAMILY_GAMES).toBe(contract.familyGamesListing);
+    expect(HOME_LISTINGS).toContain(contract.familyGamesListing);
   });
 
   it("reads the browseKeys row under its key, with the contract's fields", () => {

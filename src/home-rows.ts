@@ -23,6 +23,13 @@ export type HomeSectionId = (typeof HOME_SECTIONS)[number]["id"];
  */
 export const MUST_HAVE = "mustHave";
 
+/**
+ * The games rated for all ages (age bracket 3), most popular first:
+ * catalog's `listingRows:familyGames`. Pinned to store-contract.json's
+ * `familyGamesListing`.
+ */
+export const FAMILY_GAMES = "familyGames";
+
 export interface HomeRow {
   section: HomeSectionId;
   title: string;
@@ -50,6 +57,8 @@ const TRENDING_TIP =
   "Ranked by popularity across the sources that publish it (the AUR's usage ranking, Debian's popcon, Arch's pkgstats, Homebrew's install counts, the stars of the app's GitHub repository): apps popular in several of them come first.";
 const NEW_GAMES_TIP =
   "Sorted by each source's own newest-release date (Flathub/AppCenter's AppStream <releases> timestamp) — not every app has one, so this skews toward Flatpak-packaged games.";
+const FAMILY_GAMES_TIP =
+  "Games rated for all ages (PEGI 3, or an AppStream content rating with nothing to declare), most popular first. Unrated games can't appear here.";
 const RECENTLY_UPDATED_TIP =
   "Sorted by the date of the app's newest release, as its AppStream metadata (Flathub, AppCenter, Fedora, openSUSE, Arch) or its GitHub releases state it. Apps no source dates can't appear here.";
 
@@ -128,6 +137,13 @@ export const HOME_ROWS: readonly HomeRow[] = [
     href: "/browse/?type=game",
     tip: NEW_GAMES_TIP,
     emptyMessage: "No release-date data available yet.",
+  },
+  {
+    section: "games",
+    title: "Games for the whole family",
+    listing: FAMILY_GAMES,
+    href: "/browse/?type=game&age=3",
+    tip: FAMILY_GAMES_TIP,
   },
   // Around games (an app category, listed with the games)
   categoryRow("games", "Emulators & game tools", "Gaming Tools"),
