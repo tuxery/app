@@ -12,6 +12,7 @@ const PAGES = [
   "/browse/",
   "/app/firefox/",
   "/categories/",
+  "/apps/",
   "/games/",
   "/docs/status/",
   "/docs/glossary/",

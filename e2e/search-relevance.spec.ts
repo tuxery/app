@@ -53,6 +53,9 @@ test("sort options: alphabetical (A-Z) actually reorders results", async ({ page
 
 test("/games page lists a real by-genre category grid", async ({ page }) => {
   await page.goto("/games/");
-  await expect(page.getByRole("heading", { name: "Browse by genre" })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Strategy/ })).toBeVisible();
+  const grid = page.locator("section", {
+    has: page.getByRole("heading", { name: "Browse by genre" }),
+  });
+  await expect(grid).toBeVisible();
+  await expect(grid.getByRole("link", { name: /Strategy/ })).toBeVisible();
 });
