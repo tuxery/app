@@ -1,13 +1,13 @@
 import { test, expect } from "@playwright/test";
 
-test("a category card on /categories leads to the category's own page, with its apps", async ({
+test("a category on /categories leads to the category's own page, with its apps", async ({
   page,
 }) => {
   await page.goto("/categories/");
   await expect(page.getByRole("heading", { name: "Categories" })).toBeVisible();
 
-  const firstCategory = page.locator("a.card[href^='/categories/']").first();
-  const categoryName = await firstCategory.locator(".font-medium").innerText();
+  const firstCategory = page.locator("main section h3 a").first();
+  const categoryName = await firstCategory.locator(".font-bold").innerText();
   await firstCategory.click();
 
   await expect(page).toHaveURL(/\/categories\/[a-z0-9-]+\/$/);
@@ -15,10 +15,10 @@ test("a category card on /categories leads to the category's own page, with its 
   await expect(page.locator("a[href^='/app/']").first()).toBeVisible();
 });
 
-test("/categories lists AI in its own group, and its card leads to AI apps", async ({ page }) => {
+test("/categories lists AI in its own group, and its name leads to its page", async ({ page }) => {
   await page.goto("/categories/");
   await expect(page.getByRole("heading", { name: "Artificial intelligence" })).toBeVisible();
-  await page.locator("a.card[href='/categories/ai/']").click();
+  await page.locator("main section h3 a[href='/categories/ai/']").click();
 
   await expect(page).toHaveURL(/\/categories\/ai\/$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("AI");
@@ -44,8 +44,8 @@ test("a link to a category that was split opens the group listing its parts", as
   await page.goto("/browse/?category=Internet+%26+Communication");
   await expect(page).toHaveURL(/\/categories\/#internet$/);
   const group = page.locator("#internet");
-  await expect(group.locator("a.card", { hasText: "Web Browsers" })).toBeVisible();
-  await expect(group.locator("a.card", { hasText: "Messaging & Calls" })).toBeVisible();
+  await expect(group.getByRole("link", { name: /^Web Browsers/ })).toBeVisible();
+  await expect(group.getByRole("link", { name: /^Messaging & Calls/ })).toBeVisible();
 });
 
 test("a product page's breadcrumb leads to its type's and its category's pages", async ({
@@ -99,4 +99,14 @@ test("a product page's breadcrumb ends at its subcategory", async ({ page }) => 
     "href",
     "/categories/security/passwords-and-authentication/",
   );
+});
+
+test("/categories lists each category's subcategories, each leading to its page", async ({
+  page,
+}) => {
+  await page.goto("/categories/");
+  const link = page.getByRole("link", { name: "Passwords & Authentication", exact: true });
+  await expect(link).toHaveAttribute("href", "/categories/security/passwords-and-authentication/");
+  await link.click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Passwords & Authentication");
 });

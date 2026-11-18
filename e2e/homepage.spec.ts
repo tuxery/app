@@ -95,3 +95,16 @@ test("today's pick, the must-haves and the Explore tiles fill in from the listin
   await expect(tiles).toHaveCount(9);
   await expect(tiles.first().locator("img").first()).toBeAttached();
 });
+
+test("the homepage ends with every category, grouped, each leading to its page", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const grid = page.getByRole("region", { name: "Browse by category" });
+  await expect(grid.getByRole("heading", { name: "Internet & communication" })).toBeVisible();
+  await expect(grid.getByRole("heading", { name: "Games", exact: true })).toBeVisible();
+  await expect(grid.getByRole("link", { name: /^Web Browsers/ })).toHaveAttribute(
+    "href",
+    "/categories/web-browsers/",
+  );
+});
