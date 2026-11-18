@@ -1,9 +1,10 @@
 import { component$ } from "@qwik.dev/core";
 import type { CategoryCount } from "~/catalog";
 import { CategoryIcon } from "~/components/category-icon/category-icon";
+import { categoryPageHref } from "~/categories";
 
 /**
- * A grid of category tiles, each linking to `/browse/?category=...` —
+ * A grid of category tiles, each linking to the category's page —
  * shared by the homepage's "Browse by category" section, the Apps/Games
  * pages' own category grids, and the full `/categories` listing. Callers
  * decide their own empty-state handling (an empty grid here would just be
@@ -14,7 +15,7 @@ export const CategoryTileGrid = component$<{ categories: CategoryCount[] }>(({ c
     {categories.map((c) => (
       <a
         key={c.category}
-        href={`/browse/?category=${encodeURIComponent(c.category)}`}
+        href={categoryPageHref(c.category)}
         aria-label={`Browse ${c.category} (${c.count} apps)`}
         class="card bg-base-100 border border-base-300 hover:border-primary/40 hover:shadow-md transition-shadow"
       >
