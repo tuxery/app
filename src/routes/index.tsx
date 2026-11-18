@@ -1,36 +1,50 @@
 import { component$, useSignal, useVisibleTask$ } from "@qwik.dev/core";
 import { routeLoader$ } from "@qwik.dev/router";
 import type { DocumentHead } from "@qwik.dev/router";
+import { CategoryList, StoreList, TopTen } from "~/components/home-aside/home-aside";
+import { FeatureCard, FeatureList } from "~/components/home-featured/home-featured";
+import { HomeHero } from "~/components/home-hero/home-hero";
 import {
-  LuChevronLeft,
-  LuChevronRight,
-  LuInfo,
-  LuMegaphone,
-  LuSearch,
-} from "@qwikest/icons/lucide";
-import { AppCardLink } from "~/components/app-card/app-card";
-import { CategoryIcon } from "~/components/category-icon/category-icon";
-import { CategoryTileGrid } from "~/components/category-tile-grid/category-tile-grid";
-import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-scroller";
-import { Logo } from "~/components/logo/logo";
-import { getAppsByIds, getCategories, getStats, type CategoryCount } from "~/catalog";
-import { categoryDirectory } from "~/categories";
+  BlockPlaceholder,
+  Collection,
+  CompactGrid,
+  Doors,
+  ExploreTile,
+  FeaturedApp,
+  SectionHeader,
+  Shelf,
+  SpotlightRow,
+} from "~/components/home-sections/home-sections";
+import { getAppsByIds, getCategories, getStats } from "~/catalog";
+import { dailyPick } from "~/daily-pick";
+import {
+  featureView,
+  HOME_FEATURES,
+  liveFeatures,
+  type CreatorPreview,
+} from "~/data/home-features";
 import { creatorPicks, getInfluencerPage } from "~/data/influencer-pages";
-import { SOURCE_LOGOS } from "~/data/logos";
 import { useCatalogUnavailable } from "~/routes/layout";
-import { SEARCH_MIN_WORD_LENGTH } from "~/search-fts";
 import { resolveServerEnv } from "~/server-env";
-import type { AppSummary } from "~/catalog-types";
-import { HOME_SECTIONS, homeRowsOf, parseHomeRows, type HomeRow, type HomeRows } from "~/home-rows";
+import {
+  FAMILY_GAMES,
+  HOME_ROWS,
+  homeRowsOf,
+  interleave,
+  mixedCategoryRows,
+  MUST_HAVE,
+  parseHomeRows,
+  type HomeRows,
+} from "~/home-rows";
 
 export const useStats = routeLoader$(async (requestEvent) => {
   return getStats(resolveServerEnv(requestEvent.platform));
 });
 
 // Apps and games each draw from their own taxonomy (see `tuxery/catalog`'s
-// `CatalogApp.category` doc comment). Read for the category chips and grid,
-// and to know which category rows the published catalog can fill: two
-// `categoryCounts` meta rows, cached like every listing.
+// `CatalogApp.category` doc comment). Read for the category list and the
+// Explore tiles' counts, and to know which category listings the published
+// catalog can fill: two `categoryCounts` meta rows, cached like every listing.
 export const useAppCategories = routeLoader$(async (requestEvent) =>
   getCategories(resolveServerEnv(requestEvent.platform), "app"),
 );
@@ -38,285 +52,52 @@ export const useGameCategories = routeLoader$(async (requestEvent) =>
   getCategories(resolveServerEnv(requestEvent.platform), "game"),
 );
 
-// Reuses the same influencer-page data /creators/baxyz/ itself renders
-// from, so the homepage slide's name/avatar stay in sync with that page
-// rather than duplicating them as separate hardcoded homepage copy. Adds a
-// preview of the picks (their count and the first few icons, four primary
-// key lookups): the slide used to be a name on a gradient, which said
-// nothing about what is behind it.
-export const useFeaturedCreator = routeLoader$(async (requestEvent) => {
-  const page = await getInfluencerPage("baxyz");
-  if (!page) return undefined;
-  const picks = creatorPicks(page);
-  const apps = await getAppsByIds(resolveServerEnv(requestEvent.platform), picks.previewIds);
-  return {
-    name: page.name,
-    slug: page.slug,
-    avatarUrl: page.avatarUrl,
-    tagline: page.tagline,
-    count: picks.count,
-    groups: picks.groups,
-    icons: picks.previewIds.flatMap((id) => {
-      const app = apps.find((candidate) => candidate.id === id);
-      return app?.iconUrl ? [{ id, name: app.name, iconUrl: app.iconUrl }] : [];
+// The featured entries live today (`~/data/home-features`), drawn as they
+// will be. A creator entry reads the same page data /creators/<slug>/
+// renders from, plus a preview of its picks: their count and the first
+// few icons (a handful of primary key lookups).
+export const useFeatures = routeLoader$(async (requestEvent) => {
+  const env = resolveServerEnv(requestEvent.platform);
+  return Promise.all(
+    liveFeatures(HOME_FEATURES, new Date()).map(async (feature) => {
+      if (feature.kind !== "creator") return featureView(feature);
+      const page = await getInfluencerPage(feature.slug);
+      if (!page) return featureView(feature);
+      const picks = creatorPicks(page);
+      const apps = await getAppsByIds(env, picks.previewIds);
+      const creator: CreatorPreview = {
+        slug: page.slug,
+        name: page.name,
+        tagline: page.tagline,
+        count: picks.count,
+        icons: picks.previewIds.flatMap((id) => {
+          const app = apps.find((candidate) => candidate.id === id);
+          return app?.iconUrl ? [{ id, name: app.name, iconUrl: app.iconUrl }] : [];
+        }),
+      };
+      return featureView(feature, creator);
     }),
-  };
-});
-
-/**
- * A row's place while its cards load (see `~/home-rows`): the height of a
- * row of cards, so the page doesn't jump when they arrive.
- */
-const RowPlaceholder = () => (
-  <div
-    class="h-56 rounded-box bg-base-200/60 animate-pulse"
-    aria-busy="true"
-    aria-label="Loading"
-  />
-);
-
-/**
- * One row of cards (see `HOME_ROWS`): its title, the sort explained on an
- * info icon when it isn't obvious, a link to the full listing, and the
- * cards in a horizontal scroller. `apps` is undefined while the rows load.
- * An empty listing is left out, unless the row has a message to say why
- * it's empty (the dataset-wide rows: trending, recently updated).
- */
-const HomeRowView = component$<{ row: HomeRow; apps?: AppSummary[] }>(({ row, apps }) =>
-  apps?.length === 0 && row.emptyMessage === undefined ? null : (
-    <section>
-      <div class="flex items-baseline justify-between gap-3 mb-3">
-        <div class="flex items-center gap-1.5 min-w-0">
-          <h3 class="text-lg font-semibold">{row.title}</h3>
-          {row.tip && (
-            <div class="tooltip tooltip-right" data-tip={row.tip}>
-              <LuInfo class="text-sm text-base-content/70 cursor-help" aria-label={row.tip} />
-            </div>
-          )}
-        </div>
-        {row.href && (
-          <a href={row.href} class="link link-primary text-sm shrink-0">
-            {row.category ? "Browse all →" : "Browse everything →"}
-          </a>
-        )}
-      </div>
-      {apps === undefined ? (
-        <RowPlaceholder />
-      ) : apps.length === 0 ? (
-        <div class="border border-dashed border-base-300 rounded-box p-6 text-sm text-base-content/70">
-          {row.emptyMessage}
-        </div>
-      ) : (
-        <HorizontalScroller ariaLabel={row.title}>
-          {apps.map((app) => (
-            <AppCardLink key={app.id} app={app} linkClass="block w-64 shrink-0 snap-start" />
-          ))}
-        </HorizontalScroller>
-      )}
-    </section>
-  ),
-);
-
-/**
- * The way in by category, under the creator slider and store tiles: one
- * scrolling line of chips for the app categories (in /categories' group
- * order) and one for the game genres, each a /browse filter. The full grid
- * with counts is at the bottom of the page.
- */
-const CategoryChips = component$<{
-  lines: { label: string; categories: CategoryCount[] }[];
-}>(({ lines }) => (
-  <section aria-labelledby="home-categories" class="flex flex-col gap-2">
-    <div class="flex items-baseline justify-between">
-      <h2 id="home-categories" class="text-lg font-semibold">
-        Categories
-      </h2>
-      <a href="/categories/" class="link link-primary text-sm">
-        All categories →
-      </a>
-    </div>
-    {lines.map((line) => (
-      // The gap leaves room for the scroller's left arrow, which straddles its edge.
-      <div key={line.label} class="flex items-center gap-3 sm:gap-6">
-        <span class="w-14 shrink-0 text-xs font-semibold text-base-content/70 uppercase tracking-wide">
-          {line.label}
-        </span>
-        <div class="min-w-0 flex-1">
-          <HorizontalScroller ariaLabel={`${line.label} categories`} compact>
-            {line.categories.map(({ category }) => (
-              <a
-                key={category}
-                href={`/browse/?category=${encodeURIComponent(category)}`}
-                class="btn btn-sm rounded-full font-normal shrink-0 snap-start"
-              >
-                <CategoryIcon category={category} class="text-primary" />
-                {category}
-              </a>
-            ))}
-          </HorizontalScroller>
-        </div>
-      </div>
-    ))}
-  </section>
-));
-
-// Placeholder tiles: a color gradient + the store's logo per destination, not a real
-// photo — no external image dependency (no Unsplash-quota cost, no
-// per-image attribution to display on a small tile). Swap `gradient` for
-// a real `imageUrl` later without changing the grid around it. Each links
-// to that source's own dedicated page (`/sources/[id]/`), not straight to
-// the external store — the dedicated page is what has the external
-// "Visit ___" link, plus a trending recap first.
-const DESTINATION_TILES = [
-  {
-    title: "Flathub",
-    href: "/sources/flatpak-flathub/",
-    source: "flatpak-flathub",
-    gradient: "from-sky-500 to-blue-700",
-  },
-  {
-    title: "Snap Store",
-    href: "/sources/snap-snapcraft/",
-    source: "snap-snapcraft",
-    gradient: "from-orange-500 to-red-600",
-  },
-  {
-    title: "AppImageHub",
-    href: "/sources/appimagehub/",
-    source: "appimagehub",
-    gradient: "from-cyan-600 to-slate-700",
-  },
-  // GOG's tile is hidden while its fetch is paused (its User Agreement forbids
-  // extraction tools; tuxery/catalog#139): no new GOG games come in until GOG
-  // answers. Its store page stays reachable from /docs/sources/. To restore:
-  // { title: "GOG", href: "/sources/gog/", source: "gog", gradient: "from-violet-600 to-indigo-700" },
-  {
-    title: "Lutris",
-    href: "/sources/lutris/",
-    source: "lutris",
-    gradient: "from-amber-500 to-rose-600",
-  },
-] as const;
-
-/**
- * The left 2/3 of "Events & collections": a single-card-at-a-time slider,
- * same scroll-snap-row + circle-button pattern as `HorizontalScroller`
- * (not reused directly — its children peek at a fixed width, this needs
- * exactly one full-width slide visible at a time). Not daisyUI's `stack`:
- * `stack` overlays elements in place for a static deck look, it doesn't
- * scroll, so it's the wrong tool for "one card visible, scroll to the
- * next one." Two slides: the featured creator's pick, then a
- * call-to-action pointing at the still-TODO "influencer mode" roadmap
- * item (see /creators/).
- */
-const InfluencerSlider = component$<{
-  creator:
-    | {
-        name: string;
-        slug: string;
-        avatarUrl?: string;
-        tagline: string;
-        count: number;
-        groups: number;
-        icons: { id: string; name: string; iconUrl: string }[];
-      }
-    | undefined;
-}>(({ creator }) => {
-  const trackRef = useSignal<HTMLElement>();
-
-  return (
-    <div class="relative w-full h-full">
-      <div
-        ref={trackRef}
-        aria-label="Featured creators"
-        class="flex w-full h-full overflow-x-auto scroll-smooth snap-x snap-mandatory rounded-box"
-      >
-        <a
-          href={creator ? `/creators/${creator.slug}/` : "/creators/"}
-          aria-label={creator ? `${creator.name}'s picks` : "Creator picks"}
-          class="w-full h-full shrink-0 snap-start flex flex-col items-center justify-center text-center gap-3 p-6 bg-gradient-to-br from-primary to-secondary text-primary-content"
-        >
-          <div class="avatar avatar-placeholder">
-            <div class="w-16 rounded-full bg-base-100 text-base-content">
-              {creator?.avatarUrl ? (
-                <img src={creator.avatarUrl} alt="" width={64} height={64} />
-              ) : (
-                <span class="text-xl">{creator?.name.charAt(0).toUpperCase() ?? "?"}</span>
-              )}
-            </div>
-          </div>
-          <p class="text-sm opacity-80">Picked by</p>
-          <p class="text-2xl font-bold">{creator?.name ?? "our creators"}</p>
-          {creator && (
-            <>
-              <p class="text-sm opacity-90 max-w-md line-clamp-2">{creator.tagline}</p>
-              {creator.icons.length > 0 && (
-                <ul class="flex -space-x-2" aria-hidden="true">
-                  {creator.icons.map((icon) => (
-                    <li key={icon.id}>
-                      <img
-                        src={icon.iconUrl}
-                        alt=""
-                        width={36}
-                        height={36}
-                        loading="lazy"
-                        class="size-9 rounded-field bg-base-100 p-1 object-contain ring-2 ring-primary"
-                      />
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <span class="text-sm underline underline-offset-2">
-                {creator.count} apps in {creator.groups} categories →
-              </span>
-            </>
-          )}
-        </a>
-        <a
-          href="/creators/"
-          aria-label="Want to share your apps? Click here"
-          class="w-full h-full shrink-0 snap-start flex flex-col items-center justify-center text-center gap-3 p-6 bg-gradient-to-br from-secondary to-accent text-secondary-content"
-        >
-          <LuMegaphone class="text-3xl opacity-90" />
-          <p class="text-lg font-semibold">Want to share your apps?</p>
-          <span class="text-sm underline underline-offset-2">Click here →</span>
-        </a>
-      </div>
-
-      {/* Same left/right circle-button pattern as HorizontalScroller — a
-          plain scroll-snap row gives no visual hint it's scrollable at
-          all, especially with a mouse (no drag affordance, no arrows). */}
-      <button
-        type="button"
-        class="btn btn-circle btn-sm absolute left-2 top-1/2 -translate-y-1/2 shadow-md"
-        aria-label="Previous slide"
-        onClick$={() =>
-          trackRef.value?.scrollBy({ left: -trackRef.value.clientWidth, behavior: "smooth" })
-        }
-      >
-        <LuChevronLeft />
-      </button>
-      <button
-        type="button"
-        class="btn btn-circle btn-sm absolute right-2 top-1/2 -translate-y-1/2 shadow-md"
-        aria-label="Next slide"
-        onClick$={() =>
-          trackRef.value?.scrollBy({ left: trackRef.value.clientWidth, behavior: "smooth" })
-        }
-      >
-        <LuChevronRight />
-      </button>
-    </div>
   );
 });
+
+/** How many of the trending games share the app of the day's turn with the must-haves. */
+const DAILY_GAMES = 12;
+/** The Explore tiles, and the shelves after them, rotating daily through the category rows. */
+const EXPLORE_TILES = 9;
+const DAILY_SHELVES = 3;
+
+const RECENTLY_UPDATED_TIP =
+  "Apps and games in turn, each sorted by the date of its newest release, as its AppStream metadata or its GitHub releases state it.";
 
 export default component$(() => {
   const stats = useStats();
   const appCategories = useAppCategories();
   const gameCategories = useGameCategories();
-  const featuredCreator = useFeaturedCreator();
-  // The rows of cards come from `/api/home/` in the browser (see
-  // `~/home-rows`): `undefined` while they load, then each row's cards.
+  const features = useFeatures();
+  // The listings come from `/api/home/` in the browser (see
+  // `~/home-rows`): `undefined` while they load. Everything picked by the
+  // day (the app of the day, the Explore tiles, the shelves) is picked
+  // there too, so the edge-cached HTML is the same all day for everyone.
   const rows = useSignal<HomeRows>();
   const generation = stats.value.generatedAt.replaceAll(/\D/g, "");
   useVisibleTask$(async () => {
@@ -328,58 +109,35 @@ export default component$(() => {
     }
   });
   const catalogUnavailable = useCatalogUnavailable().value;
-  // Which category rows the published catalog can fill, and what the
-  // chips and the bottom grid list.
-  const available = new Set(
-    [...appCategories.value, ...gameCategories.value].map(({ category }) => category),
+
+  const counts = new Map(
+    [...appCategories.value, ...gameCategories.value].map(({ category, count }) => [
+      category,
+      count,
+    ]),
   );
-  const directory = categoryDirectory(appCategories.value, gameCategories.value);
-  const chipLines = [
-    {
-      label: "Apps",
-      categories: directory
-        .filter(({ group }) => group.id !== "games")
-        .flatMap(({ items }) => items),
-    },
-    {
-      label: "Games",
-      categories: directory.find(({ group }) => group.id === "games")?.items ?? [],
-    },
-  ].filter(({ categories }) => categories.length > 0);
+  const available = new Set(counts.keys());
+  const categoriesOf = (section: "apps" | "games") =>
+    homeRowsOf(section, available).flatMap(({ category }) =>
+      category ? [{ category, count: counts.get(category) ?? 0 }] : [],
+    );
+  const [feature, ...otherFeatures] = features.value;
+  const family = HOME_ROWS.find((row) => row.listing === FAMILY_GAMES);
+
+  const today = new Date();
+  const listing = (name: string) => rows.value?.[name] ?? [];
+  const [pick] = dailyPick(
+    interleave(listing(MUST_HAVE), listing("trending:game").slice(0, DAILY_GAMES)),
+    today,
+  );
+  const dailyRows = dailyPick(mixedCategoryRows(available), today, EXPLORE_TILES + DAILY_SHELVES);
+  const explore = dailyRows.slice(0, EXPLORE_TILES);
+  const shelves = dailyRows.slice(EXPLORE_TILES);
+  const recent = interleave(listing("newApps:app"), listing("newApps:game")).slice(0, 8);
 
   return (
-    <div class="flex flex-col gap-14">
-      <section class="hero rounded-box px-4 md:px-6">
-        <div class="hero-content text-center py-14">
-          <div class="max-w-2xl">
-            <h1 class="text-4xl md:text-5xl font-bold md:text-nowrap">
-              Search <span class="text-primary">every</span> Linux app.
-            </h1>
-            <p class="py-4 text-base-content/70">
-              Tuxery aggregates Flathub, the Snap Store, AppImage, and every distro's own repos into
-              one catalog — search once, install from wherever it's shipped.
-            </p>
-            <form action="/browse" method="get" class="flex justify-center">
-              <label class="input input-lg w-full max-w-md flex items-center gap-2">
-                <LuSearch class="text-base-content/70" />
-                <input
-                  type="search"
-                  name="q"
-                  minLength={SEARCH_MIN_WORD_LENGTH}
-                  placeholder="Search for an app or game…"
-                  aria-label="Search for an app"
-                  class="grow"
-                />
-              </label>
-            </form>
-            {stats.value.total > 0 && (
-              <p class="text-sm mt-4 text-base-content/70">
-                {stats.value.total.toLocaleString()} apps and games catalogued
-              </p>
-            )}
-          </div>
-        </div>
-      </section>
+    <div class="flex flex-col gap-8">
+      <HomeHero total={stats.value.total} />
 
       {stats.value.total === 0 ? (
         // Unreachable database: the layout's outage banner already says so.
@@ -394,85 +152,151 @@ export default component$(() => {
           </p>
         )
       ) : (
-        <>
-          {/* Events & collections: a featured-creator slider (left, 2/3) next
-              to four store destination tiles (right, 2x2) — capped to
-              roughly three classic app-card heights so it doesn't
-              dominate the page above Trending. */}
-          <section>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 h-auto lg:h-96">
-              <div class="lg:col-span-2 h-64 lg:h-full">
-                <InfluencerSlider creator={featuredCreator.value} />
+        // Two columns on wide screens: the feed, and a side column of charts,
+        // categories and stores. Below `lg` the side column sits between the
+        // feed's first blocks (featured, today, must-haves) and the rest.
+        <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[auto_1fr] items-start">
+          <div class="flex flex-col gap-12 min-w-0 lg:col-start-1 lg:row-start-1">
+            {feature && (
+              <div class="flex flex-col gap-3">
+                <FeatureCard feature={feature} />
+                <div class="lg:hidden">
+                  <FeatureList features={otherFeatures} />
+                </div>
               </div>
-              <div class="grid grid-cols-2 grid-rows-2 gap-3 h-64 lg:h-full">
-                {DESTINATION_TILES.map((tile, i) => (
-                  <a
-                    key={tile.title}
-                    href={tile.href}
-                    aria-label={tile.title}
-                    class={[
-                      `card bg-gradient-to-br ${tile.gradient} text-white justify-center hover:brightness-110 transition-[filter]`,
-                      // An odd last tile spans the row, so the 2x2 grid has no hole.
-                      DESTINATION_TILES.length % 2 === 1 &&
-                        i === DESTINATION_TILES.length - 1 &&
-                        "col-span-2",
-                    ]}
-                  >
-                    <div class="card-body items-center justify-center text-center p-3 gap-1">
-                      <Logo slug={SOURCE_LOGOS[tile.source]} class="w-9 h-9" />
-                      <span class="font-semibold text-sm">{tile.title}</span>
-                    </div>
-                  </a>
-                ))}
-              </div>
+            )}
+
+            <section>
+              <SectionHeader eyebrow="New every day" title="Today on Tuxery" level={2} />
+              {rows.value === undefined ? (
+                <BlockPlaceholder class="h-80 sm:h-72" />
+              ) : (
+                pick && (
+                  <FeaturedApp
+                    app={pick}
+                    eyebrow={pick.contentType === "game" ? "Game of the day" : "App of the day"}
+                  />
+                )
+              )}
+            </section>
+
+            {(rows.value === undefined || listing(MUST_HAVE).length > 0) && (
+              <section>
+                <SectionHeader eyebrow="Start here" title="Must-have apps" level={2} />
+                {rows.value === undefined ? (
+                  <BlockPlaceholder class="h-80" />
+                ) : (
+                  <SpotlightRow apps={listing(MUST_HAVE)} label="Must-have apps" />
+                )}
+              </section>
+            )}
+          </div>
+
+          <aside
+            aria-label="Charts, categories and stores"
+            class="flex flex-col gap-6 min-w-0 lg:col-start-2 lg:row-start-1 lg:row-span-2"
+          >
+            <div class="hidden lg:block">
+              <FeatureList features={otherFeatures} />
             </div>
-          </section>
+            {(["apps", "games"] as const).map((section) => {
+              const trending = homeRowsOf(section, available).find((row) =>
+                row.listing.startsWith("trending:"),
+              );
+              return (
+                trending && (
+                  <TopTen
+                    key={section}
+                    title={trending.title}
+                    tip={trending.tip}
+                    href={trending.href ?? "/browse/"}
+                    apps={rows.value?.[trending.listing]}
+                  />
+                )
+              );
+            })}
+            <CategoryList apps={categoriesOf("apps")} games={categoriesOf("games")} />
+            <StoreList />
+          </aside>
 
-          {chipLines.length > 0 && <CategoryChips lines={chipLines} />}
+          <div class="flex flex-col gap-12 min-w-0 lg:col-start-1 lg:row-start-2">
+            {explore.length > 0 && (
+              <section>
+                <SectionHeader
+                  eyebrow="Different every day"
+                  title="Explore"
+                  href="/categories/"
+                  linkLabel="All categories"
+                  level={2}
+                />
+                <div class="grid gap-3 grid-cols-1 min-[420px]:grid-cols-2 xl:grid-cols-3">
+                  {explore.map((row) => (
+                    <ExploreTile
+                      key={row.listing}
+                      title={row.title}
+                      category={row.category ?? ""}
+                      href={row.href ?? "/categories/"}
+                      count={counts.get(row.category ?? "")}
+                      unit={row.section === "games" ? "games" : "apps"}
+                      apps={rows.value?.[row.listing]}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
 
-          {HOME_SECTIONS.map((section) => (
-            <section
-              key={section.id}
-              aria-labelledby={`home-${section.id}`}
-              class="flex flex-col gap-10"
-            >
-              <div class="flex items-baseline justify-between border-b border-base-300 pb-2">
-                <h2 id={`home-${section.id}`} class="text-2xl font-bold">
-                  {section.title}
-                </h2>
-                <a href={section.href} class="link link-primary text-sm">
-                  {section.linkLabel} →
-                </a>
-              </div>
-              {homeRowsOf(section.id, available).map((row) => (
-                <HomeRowView key={row.listing} row={row} apps={rows.value?.[row.listing]} />
-              ))}
-            </section>
-          ))}
+            {family && (rows.value === undefined || listing(FAMILY_GAMES).length > 0) && (
+              <Collection
+                level={2}
+                eyebrow="All ages"
+                title={family.title}
+                blurb={family.blurb ?? ""}
+                href={family.href}
+              >
+                {rows.value === undefined ? (
+                  <BlockPlaceholder class="h-56" />
+                ) : (
+                  <CompactGrid
+                    apps={listing(FAMILY_GAMES).slice(0, 6)}
+                    label={family.title}
+                    dense
+                  />
+                )}
+              </Collection>
+            )}
 
-          {directory.length > 0 && (
-            <section aria-labelledby="home-browse-categories">
-              <div class="flex items-baseline justify-between mb-3">
-                <h2 id="home-browse-categories" class="text-lg font-semibold">
-                  Browse by category
-                </h2>
-                <a href="/categories/" class="link link-primary text-sm">
-                  All categories →
-                </a>
-              </div>
-              <div class="flex flex-col gap-4">
-                {directory.map(({ group, items }) => (
-                  <div key={group.id}>
-                    <h3 class="text-xs font-semibold text-base-content/70 uppercase tracking-wide mb-2">
-                      {group.title}
-                    </h3>
-                    <CategoryTileGrid categories={items} />
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-        </>
+            {(rows.value === undefined || recent.length > 0) && (
+              <section>
+                <SectionHeader title="Recently updated" tip={RECENTLY_UPDATED_TIP} level={2} />
+                {rows.value === undefined ? (
+                  <BlockPlaceholder class="h-64" />
+                ) : (
+                  <CompactGrid apps={recent} label="Recently updated" dense />
+                )}
+              </section>
+            )}
+
+            <Doors apps={rows.value?.["trending:app"]} games={rows.value?.["trending:game"]} />
+
+            {shelves.length > 0 && (
+              <section>
+                <SectionHeader eyebrow="Popular in" title="Shelves of the day" level={2} />
+                <div class="grid gap-4 md:grid-cols-3">
+                  {shelves.map((row) => (
+                    <Shelf
+                      key={row.listing}
+                      title={row.title}
+                      category={row.category}
+                      href={row.href}
+                      count={counts.get(row.category ?? "")}
+                      apps={rows.value?.[row.listing]?.slice(0, 4)}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

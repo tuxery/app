@@ -200,3 +200,21 @@ export function homeRowsOf(section: HomeSectionId, available: ReadonlySet<string
     (row) => row.section === section && (row.category === undefined || available.has(row.category)),
   );
 }
+
+/** `a` and `b` taken in turn, the longer one's rest at the end. */
+export function interleave<T>(a: readonly T[], b: readonly T[]): T[] {
+  return Array.from({ length: Math.max(a.length, b.length) }, (_, i) => [a[i], b[i]])
+    .flat()
+    .filter((item): item is T => item !== undefined);
+}
+
+/**
+ * The category rows of both sections that the published catalog lists,
+ * an app category and a game genre in turn: what the homepage's Explore
+ * tiles and shelves of the day rotate through.
+ */
+export function mixedCategoryRows(available: ReadonlySet<string>): HomeRow[] {
+  const of = (section: HomeSectionId) =>
+    homeRowsOf(section, available).filter((row) => row.category !== undefined);
+  return interleave(of("apps"), of("games"));
+}
