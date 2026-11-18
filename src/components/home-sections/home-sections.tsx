@@ -57,6 +57,19 @@ const IconWash = component$<{ app: AppSummary; strength?: "soft" | "strong" }>(
     ) : null,
 );
 
+/** An h2 or an h3: blocks sit under a page's h2 sections, or are page sections themselves. */
+const Heading = component$<{ level: 2 | 3; class: string }>(({ level, class: className }) =>
+  level === 2 ? (
+    <h2 class={className}>
+      <Slot />
+    </h2>
+  ) : (
+    <h3 class={className}>
+      <Slot />
+    </h3>
+  ),
+);
+
 /** A section's heading line: title, an info tip on how it's sorted, and its "see all" link. */
 export const SectionHeader = component$<{
   title: string;
@@ -64,14 +77,17 @@ export const SectionHeader = component$<{
   href?: string;
   linkLabel?: string;
   eyebrow?: string;
-}>(({ title, tip, href, linkLabel = "See all", eyebrow }) => (
+  level?: 2 | 3;
+}>(({ title, tip, href, linkLabel = "See all", eyebrow, level = 3 }) => (
   <div class="flex items-end justify-between gap-3 mb-4">
     <div class="min-w-0">
       {eyebrow && (
         <p class="text-xs font-semibold uppercase tracking-wider text-primary mb-0.5">{eyebrow}</p>
       )}
       <div class="flex items-center gap-1.5">
-        <h3 class="text-xl font-bold">{title}</h3>
+        <Heading level={level} class="text-xl font-bold">
+          {title}
+        </Heading>
         {tip && (
           <div class="tooltip tooltip-right" data-tip={tip}>
             <LuInfo class="text-sm text-base-content/70 cursor-help" aria-label={tip} />
@@ -156,7 +172,7 @@ export const RankedList = component$<{ apps: AppSummary[]; label: string; column
       ]}
     >
       {apps.map((app, i) => (
-        <li key={app.id}>
+        <li key={app.id} class="@container">
           <a
             href={appHref(app)}
             class="flex items-center gap-3 rounded-box px-2 py-2 hover:bg-base-200 transition-colors"
@@ -173,7 +189,7 @@ export const RankedList = component$<{ apps: AppSummary[]; label: string; column
               <span class="block text-sm text-base-content/70 truncate">{app.category}</span>
             </span>
             {app.rating && (
-              <span class="hidden sm:inline-flex shrink-0">
+              <span class="hidden @sm:inline-flex shrink-0">
                 <UnifiedRating
                   average={app.rating.average}
                   count={app.rating.count}
@@ -319,7 +335,8 @@ export const Collection = component$<{
   href?: string;
   category?: string;
   eyebrow?: string;
-}>(({ title, blurb, href, category, eyebrow = "Collection" }) => (
+  level?: 2 | 3;
+}>(({ title, blurb, href, category, eyebrow = "Collection", level = 3 }) => (
   <section class="grid gap-4 lg:grid-cols-[18rem_1fr] items-stretch">
     <div class="rounded-box p-6 bg-gradient-to-br from-primary/15 via-secondary/10 to-accent/10 border border-base-300 flex flex-col gap-3">
       {category && (
@@ -328,7 +345,9 @@ export const Collection = component$<{
         </span>
       )}
       <p class="text-xs font-semibold uppercase tracking-wider text-primary">{eyebrow}</p>
-      <h3 class="text-2xl font-bold leading-tight">{title}</h3>
+      <Heading level={level} class="text-2xl font-bold leading-tight">
+        {title}
+      </Heading>
       <p class="text-sm text-base-content/80">{blurb}</p>
       {href && (
         <a href={href} class="btn btn-sm btn-outline btn-primary mt-auto self-start">
