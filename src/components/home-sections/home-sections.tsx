@@ -1,5 +1,5 @@
 import { component$, Slot } from "@qwik.dev/core";
-import { LuArrowRight, LuInfo, LuPackage } from "@qwikest/icons/lucide";
+import { LuArrowRight, LuGamepad2, LuInfo, LuLayoutGrid, LuPackage } from "@qwikest/icons/lucide";
 import { CategoryIcon } from "~/components/category-icon/category-icon";
 import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-scroller";
 import { PlatformStack } from "~/components/platform-stack/platform-stack";
@@ -214,7 +214,7 @@ export const SpotlightCard = component$<{ app: AppSummary }>(({ app }) => (
         <AppIcon app={app} size={76} class="relative rounded-2xl bg-base-100 p-1.5 shadow-lg" />
       </div>
       <div class="card-body p-5 gap-1">
-        <h4 class="text-lg font-semibold line-clamp-1">{app.name}</h4>
+        <h3 class="text-lg font-semibold line-clamp-1">{app.name}</h3>
         <p class="text-sm text-base-content/70 line-clamp-1">{app.category}</p>
         <p class="text-sm text-base-content/80 line-clamp-3 mt-1">{app.shortDescription}</p>
         <div class="flex flex-wrap items-center gap-3 mt-auto pt-3">
@@ -282,14 +282,14 @@ export const Shelf = component$<{
 }>(({ title, category, href, count, apps }) => (
   <section class="card bg-base-100 border border-base-300 h-full min-w-0">
     <div class="card-body p-4 gap-3">
-      <h4 class="flex items-center gap-2 font-bold text-base">
+      <h3 class="flex items-center gap-2 font-bold text-base">
         {category && (
           <span class="size-8 rounded-field bg-primary/10 text-primary inline-flex items-center justify-center">
             <CategoryIcon category={category} />
           </span>
         )}
         {title}
-      </h4>
+      </h3>
       {apps === undefined ? (
         <BlockPlaceholder class="h-52" />
       ) : (
@@ -360,3 +360,92 @@ export const Collection = component$<{
     </div>
   </section>
 ));
+
+/**
+ * A category as a door: its icon, name and count, and the icons of a few
+ * of its most popular apps. The homepage's "Explore" grid.
+ */
+export const ExploreTile = component$<{
+  title: string;
+  category: string;
+  href: string;
+  count?: number;
+  /** What the count counts: "apps" or "games". */
+  unit: string;
+  apps?: AppSummary[];
+}>(({ title, category, href, count, unit, apps }) => (
+  <a
+    href={href}
+    class="flex flex-col gap-3 rounded-box border border-base-300 bg-base-100 p-4 hover:border-primary/50 hover:shadow-md transition-shadow min-w-0"
+  >
+    <span class="flex items-center gap-2 min-w-0">
+      <span class="size-9 shrink-0 rounded-field bg-primary/10 text-primary inline-flex items-center justify-center">
+        <CategoryIcon category={category} class="text-lg" />
+      </span>
+      <span class="min-w-0">
+        <span class="block font-semibold leading-tight truncate">{title}</span>
+        {count !== undefined && (
+          <span class="block text-xs text-base-content/70 tabular-nums">
+            {count.toLocaleString()} {unit}
+          </span>
+        )}
+      </span>
+    </span>
+    <span class="flex -space-x-2 min-h-9" aria-hidden="true">
+      {(apps ?? []).slice(0, 5).map((app) => (
+        <AppIcon key={app.id} app={app} size={36} class="ring-2 ring-base-100 bg-base-100 p-0.5" />
+      ))}
+    </span>
+  </a>
+));
+
+const DOORS = [
+  {
+    title: "Explore apps",
+    text: "Browsers, creative tools, office, developer tools and more.",
+    href: "/apps/",
+    gradient: "from-sky-700 to-indigo-800",
+    Icon: LuLayoutGrid,
+  },
+  {
+    title: "Explore games",
+    text: "Trending games, new releases and every genre.",
+    href: "/games/",
+    gradient: "from-fuchsia-700 to-rose-700",
+    Icon: LuGamepad2,
+  },
+] as const;
+
+/**
+ * Two big doors to /apps and /games, each with a tilted wall of trending
+ * icons. White text on dark gradients, the same in both themes.
+ */
+export const Doors = component$<{ apps?: AppSummary[]; games?: AppSummary[] }>(
+  ({ apps, games }) => (
+    <div class="grid gap-4 sm:grid-cols-2">
+      {DOORS.map((door, i) => (
+        <a
+          key={door.href}
+          href={door.href}
+          class={`group relative isolate overflow-hidden rounded-box bg-gradient-to-br ${door.gradient} text-white p-6 min-h-44 flex flex-col justify-end`}
+        >
+          <ul
+            class="absolute -right-4 -top-4 grid grid-cols-4 gap-2 rotate-12 opacity-90 motion-safe:transition-transform motion-safe:group-hover:rotate-6"
+            aria-hidden="true"
+          >
+            {((i === 0 ? apps : games) ?? []).slice(0, 8).map((app) => (
+              <li key={app.id}>
+                <AppIcon app={app} size={48} class="bg-white/95 p-1 shadow-lg" />
+              </li>
+            ))}
+          </ul>
+          <span class="relative">
+            <door.Icon class="text-2xl mb-1" aria-hidden="true" />
+            <span class="block text-2xl font-extrabold">{door.title} →</span>
+            <span class="block text-sm opacity-90 max-w-xs">{door.text}</span>
+          </span>
+        </a>
+      ))}
+    </div>
+  ),
+);

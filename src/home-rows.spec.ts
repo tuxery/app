@@ -5,6 +5,8 @@ import {
   HOME_ROW_SIZE,
   HOME_ROWS,
   homeRowsOf,
+  interleave,
+  mixedCategoryRows,
   MUST_HAVE,
   parseHomeRows,
 } from "./home-rows";
@@ -83,5 +85,23 @@ describe("homeRowsOf", () => {
     expect(titles).toContain("Trending games");
     expect(titles).not.toContain("Puzzle games");
     expect(titles).not.toContain("Trending apps");
+  });
+});
+
+describe("interleave", () => {
+  it("takes from each list in turn, the longer one's rest at the end", () => {
+    expect(interleave(["1", "2", "3"], ["a"])).toEqual(["1", "a", "2", "3"]);
+    expect(interleave([], ["a", "b"])).toEqual(["a", "b"]);
+  });
+});
+
+describe("mixedCategoryRows", () => {
+  it("alternates app categories and game genres, only the ones the catalog lists", () => {
+    const rows = mixedCategoryRows(new Set(["Web Browsers", "Racing", "Photo & Video"]));
+    expect(rows.map(({ title }) => title)).toEqual([
+      "Web browsers",
+      "Racing games",
+      "Photo & video apps",
+    ]);
   });
 });
