@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   APP_CATEGORY_GROUPS,
   categoryDirectory,
+  categoryPageHref,
+  categorySlug,
   categoryTrail,
+  labelForSlug,
   orderSubcategories,
   groupCategories,
   retiredCategoryRedirect,
@@ -100,31 +103,57 @@ describe("orderSubcategories", () => {
 });
 
 describe("categoryTrail", () => {
-  it("leads from the type's listing to the category's", () => {
+  it("leads from /apps or /games to the category's page", () => {
     expect(categoryTrail(undefined, "Graphics & Design")).toEqual([
-      { label: "Apps", href: "/browse/?type=app" },
+      { label: "Apps", href: "/apps/" },
       {
         label: "Graphics & Design",
-        href: "/browse/?category=Graphics%20%26%20Design",
+        href: "/categories/graphics-and-design/",
         category: "Graphics & Design",
       },
     ]);
-    expect(categoryTrail("game", "Puzzle")[0]).toEqual({
-      label: "Games",
-      href: "/browse/?type=game",
-    });
+    expect(categoryTrail("game", "Puzzle")[0]).toEqual({ label: "Games", href: "/games/" });
   });
 
-  it("ends at the subcategory's listing when the product has one", () => {
+  it("ends at the subcategory's page when the product has one", () => {
     expect(categoryTrail(undefined, "Developer Tools", "Version Control")[2]).toEqual({
       label: "Version Control",
-      href: "/browse/?category=Developer%20Tools&sub=Version%20Control",
+      href: "/categories/developer-tools/version-control/",
     });
   });
 
   it("stops at the type for To Classify, which isn't a category", () => {
-    expect(categoryTrail(undefined, "To Classify")).toEqual([
-      { label: "Apps", href: "/browse/?type=app" },
-    ]);
+    expect(categoryTrail(undefined, "To Classify")).toEqual([{ label: "Apps", href: "/apps/" }]);
+  });
+});
+
+describe("categorySlug", () => {
+  it('lowercases, spells out "&" and joins words with hyphens', () => {
+    expect(categorySlug("Graphics & Design")).toBe("graphics-and-design");
+    expect(categorySlug("3D Modeling & Rendering")).toBe("3d-modeling-and-rendering");
+    expect(categorySlug("Clipboard, Screenshots & Desktop Helpers")).toBe(
+      "clipboard-screenshots-and-desktop-helpers",
+    );
+    expect(categorySlug("Role-Playing")).toBe("role-playing");
+    expect(categorySlug("AI")).toBe("ai");
+  });
+});
+
+describe("categoryPageHref", () => {
+  it("names a category's page and a subcategory's under it", () => {
+    expect(categoryPageHref("Web Browsers")).toBe("/categories/web-browsers/");
+    expect(categoryPageHref("Puzzle", "Word & Trivia")).toBe("/categories/puzzle/word-and-trivia/");
+  });
+
+  it("keeps To Classify a /browse filter, since it has no page", () => {
+    expect(categoryPageHref("To Classify")).toBe("/browse/?category=To%20Classify");
+  });
+});
+
+describe("labelForSlug", () => {
+  it("finds the label a slug was made from", () => {
+    const labels = ["Web Browsers", "Graphics & Design"];
+    expect(labelForSlug(labels, "graphics-and-design")).toBe("Graphics & Design");
+    expect(labelForSlug(labels, "graphics")).toBeUndefined();
   });
 });

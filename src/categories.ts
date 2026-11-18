@@ -162,9 +162,40 @@ export function subcategoryHref(category: string, subcategory: string): string {
 }
 
 /**
- * The trail above a product page's name: the type's listing, then its
- * category's, then its subcategory's when it has one, each a /browse
- * filter. No category step for "To Classify", which isn't one.
+ * A category's or subcategory's name in a URL or a file name: lowercase,
+ * "&" spelled out, anything else that isn't a letter or a digit a single
+ * hyphen ("Books & Reference" → "books-and-reference").
+ */
+export function categorySlug(label: string): string {
+  return label
+    .normalize("NFKD")
+    .replaceAll(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replaceAll("&", " and ")
+    .replaceAll(/[^a-z0-9]+/g, "-")
+    .replaceAll(/^-+|-+$/g, "");
+}
+
+/**
+ * A category's own page, or one of its subcategories': `/categories/<slug>/`
+ * and `/categories/<slug>/<sub-slug>/`. "To Classify" has no page and
+ * stays a /browse filter.
+ */
+export function categoryPageHref(category: string, subcategory?: string): string {
+  if (category === TO_CLASSIFY) return `/browse/?category=${encodeURIComponent(category)}`;
+  return `/categories/${categorySlug(category)}/${subcategory ? `${categorySlug(subcategory)}/` : ""}`;
+}
+
+/** The label among `labels` whose slug is `slug`, if any. */
+export function labelForSlug(labels: Iterable<string>, slug: string): string | undefined {
+  for (const label of labels) if (categorySlug(label) === slug) return label;
+  return undefined;
+}
+
+/**
+ * The trail above a product page's name: /apps or /games, then its
+ * category's page, then its subcategory's when it has one. No category
+ * step for "To Classify", which isn't one.
  */
 export function categoryTrail(
   contentType: "game" | undefined,
@@ -173,12 +204,12 @@ export function categoryTrail(
 ): { label: string; href: string; category?: string }[] {
   const root =
     contentType === "game"
-      ? { label: "Games", href: "/browse/?type=game" }
-      : { label: "Apps", href: "/browse/?type=app" };
+      ? { label: "Games", href: "/games/" }
+      : { label: "Apps", href: "/apps/" };
   if (!category || category === TO_CLASSIFY) return [root];
   return [
     root,
-    { label: category, href: `/browse/?category=${encodeURIComponent(category)}`, category },
-    ...(subcategory ? [{ label: subcategory, href: subcategoryHref(category, subcategory) }] : []),
+    { label: category, href: categoryPageHref(category), category },
+    ...(subcategory ? [{ label: subcategory, href: categoryPageHref(category, subcategory) }] : []),
   ];
 }
