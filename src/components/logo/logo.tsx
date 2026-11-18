@@ -1,4 +1,4 @@
-import { LOGO_PATHS } from "~/data/logos";
+import { BRAND_COLORS, LOGO_PATHS } from "~/data/logos";
 import { LOGO_SPRITE_URL } from "~/logo-sprite";
 
 /**
@@ -26,3 +26,26 @@ export const Logo = ({
     </svg>
   );
 };
+
+/**
+ * A logo in its brand color on a small white chip, the same in both themes
+ * (a black or pale brand color would vanish on one of them). Decorative,
+ * like `Logo`.
+ */
+export const LogoChip = ({
+  slug,
+  size = "md",
+}: {
+  slug: string | undefined;
+  size?: "sm" | "md";
+}) => (
+  <span
+    class={[
+      "shrink-0 rounded-field bg-white inline-flex items-center justify-center shadow-sm ring-1 ring-black/5",
+      size === "sm" ? "size-7" : "size-9",
+    ]}
+    style={{ color: (slug && BRAND_COLORS[slug]) || "#2e3440" }}
+  >
+    <Logo slug={slug} class={size === "sm" ? "size-4" : "size-5"} />
+  </span>
+);
