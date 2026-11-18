@@ -82,7 +82,7 @@ import {
 import { PlatformStack } from "~/components/platform-stack/platform-stack";
 import { AppCardLink } from "~/components/app-card/app-card";
 import { CategoryIcon } from "~/components/category-icon/category-icon";
-import { categoryTrail } from "~/categories";
+import { categoryPageHref, categoryTrail } from "~/categories";
 import { HorizontalScroller } from "~/components/horizontal-scroller/horizontal-scroller";
 import { ScreenshotGallery } from "~/components/screenshot-gallery/screenshot-gallery";
 import { UnifiedRating } from "~/components/unified-rating/unified-rating";
@@ -1853,10 +1853,7 @@ export default component$(() => {
             <div>
               <div class="flex items-baseline justify-between mb-2">
                 <h3 class="text-sm font-semibold text-base-content/70">{a.category}</h3>
-                <a
-                  href={`/browse/?category=${encodeURIComponent(a.category)}`}
-                  class="link link-primary text-sm"
-                >
+                <a href={categoryPageHref(a.category)} class="link link-primary text-sm">
                   Browse all →
                 </a>
               </div>

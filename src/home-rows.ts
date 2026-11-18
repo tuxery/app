@@ -1,5 +1,6 @@
 import { toSummary, type Row } from "./app-summary";
 import type { AppSummary } from "./catalog-types";
+import { categoryPageHref } from "./categories";
 
 // The listings behind the homepage, /apps and /games, loaded by the browser
 // from `/api/home/` (one edge-cached response for all three) rather than
@@ -69,7 +70,7 @@ const categoryRow = (section: HomeSectionId, title: string, category: string): H
   title,
   category,
   listing: `categoryPreview:${category}`,
-  href: `/browse/?category=${encodeURIComponent(category)}`,
+  href: categoryPageHref(category),
 });
 
 /**

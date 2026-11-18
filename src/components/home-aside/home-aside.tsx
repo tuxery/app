@@ -1,5 +1,6 @@
 import { component$, Slot } from "@qwik.dev/core";
 import { CategoryIcon } from "~/components/category-icon/category-icon";
+import { categoryPageHref } from "~/categories";
 import {
   BlockPlaceholder,
   RankedList,
@@ -47,7 +48,7 @@ const CategoryLines = component$<{ title: string; categories: CategoryCount[] }>
         {categories.map(({ category, count }) => (
           <li key={category}>
             <a
-              href={`/browse/?category=${encodeURIComponent(category)}`}
+              href={categoryPageHref(category)}
               class="flex items-center justify-between gap-2 rounded-box px-2 py-1 hover:bg-base-200 text-sm"
             >
               <span class="flex items-center gap-2 min-w-0">

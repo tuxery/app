@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { APP_CATEGORY_GROUPS } from "./categories";
+import { APP_CATEGORY_GROUPS, categoryPageHref } from "./categories";
 import {
   HOME_LISTINGS,
   HOME_ROW_SIZE,
@@ -69,12 +69,11 @@ describe("HOME_ROWS", () => {
     expect(positions).toEqual(positions.toSorted((a, b) => a - b));
   });
 
-  it("links every category row to its listing", () => {
-    for (const candidate of HOME_ROWS.filter(({ category }) => category !== undefined)) {
-      expect(candidate.href).toBe(
-        `/browse/?category=${encodeURIComponent(candidate.category ?? "")}`,
-      );
-    }
+  it("links every category row to its category's page", () => {
+    const rows = HOME_ROWS.filter(({ category }) => category !== undefined);
+    expect(rows.map(({ href }) => href)).toEqual(
+      rows.map(({ category }) => categoryPageHref(category ?? "")),
+    );
   });
 });
 
