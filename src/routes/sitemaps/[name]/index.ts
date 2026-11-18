@@ -1,8 +1,8 @@
 import type { RequestHandler } from "@qwik.dev/router";
-import { getAppSitemapPart } from "~/catalog";
+import { getAppSitemapPart, getCategories, getSubcategories } from "~/catalog";
 import { resolveServerEnv } from "~/server-env";
 import { CANONICAL_ORIGIN } from "~/seo";
-import { appPageUrl, PAGES_SITEMAP, sitePagePaths, urlSetXml } from "~/sitemap";
+import { appPageUrl, categoryPagePaths, PAGES_SITEMAP, sitePagePaths, urlSetXml } from "~/sitemap";
 import {
   answeredWithoutCatalog,
   sendNoSitemap,
@@ -11,12 +11,19 @@ import {
 } from "~/sitemap-response";
 
 // One sitemap of the index at /sitemap.xml: the site's own pages
-// (`pages.xml`, no catalog needed), or one part of a category's app pages.
+// (`pages.xml`, with the categories' pages when the catalog answers), or
+// one part of a category's app pages.
 export const onGet: RequestHandler = async (event) => {
   if (!servesSitemapOrAnswer(event)) return;
   const name = event.params.name ?? "";
   if (name === PAGES_SITEMAP) {
-    sendSitemap(event, urlSetXml(sitePagePaths().map((path) => `${CANONICAL_ORIGIN}${path}`)));
+    const env = resolveServerEnv(event.platform);
+    const [categories, subcategories] = await Promise.all([
+      getCategories(env, "all"),
+      getSubcategories(env, "all"),
+    ]);
+    const paths = [...sitePagePaths(), ...categoryPagePaths(categories, subcategories)];
+    sendSitemap(event, urlSetXml(paths.map((path) => `${CANONICAL_ORIGIN}${path}`)));
     return;
   }
   if (answeredWithoutCatalog(event)) return;

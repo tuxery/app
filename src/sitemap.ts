@@ -9,6 +9,7 @@
 // The routes serving it live in routes/sitemap.xml/ and routes/sitemaps/.
 // Pure, unit-tested in sitemap.spec.ts.
 
+import { categoryPageHref, categorySlug, isBrowsableCategory } from "~/categories";
 import { influencerSlugs } from "~/data/influencer-pages";
 import { STORE_PAGES } from "~/data/store-pages";
 import { METHODS } from "~/data/source-methods";
@@ -33,19 +34,6 @@ export const PAGES_SITEMAP = "pages.xml";
 /** A sitemap's URL, from its file name. */
 export function sitemapUrl(name: string): string {
   return `${CANONICAL_ORIGIN}/sitemaps/${name}`;
-}
-
-/**
- * A category's name in a sitemap's file name: lowercase, "&" spelled out,
- * anything else that isn't a letter or a digit a single hyphen
- * ("Books & Reference" → "books-and-reference").
- */
-export function categorySlug(category: string): string {
-  return category
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
 }
 
 export interface CategorySize {
@@ -110,6 +98,24 @@ export function sitePagePaths(): string[] {
     ...DOCS_PAGES.map((page) => page.href),
     ...Object.keys(METHODS).map((id) => `/docs/sources/${id}/`),
   ];
+}
+
+/**
+ * The categories' and subcategories' own pages, for the pages sitemap:
+ * every category the published catalog lists (not "To Classify" or a
+ * retired id), then each of its subcategories.
+ */
+export function categoryPagePaths(
+  categories: readonly { category: string }[],
+  subcategories: readonly { category: string; subcategory: string }[],
+): string[] {
+  const listed = categories.map(({ category }) => category).filter(isBrowsableCategory);
+  return listed.flatMap((category) => [
+    categoryPageHref(category),
+    ...subcategories
+      .filter((s) => s.category === category)
+      .map((s) => categoryPageHref(category, s.subcategory)),
+  ]);
 }
 
 /** An app's page, as the sitemap lists it: the product page, which every build-variant page names as canonical. */
