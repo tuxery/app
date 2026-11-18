@@ -1,21 +1,35 @@
-import { component$ } from "@qwik.dev/core";
+import { component$, useSignal, useVisibleTask$ } from "@qwik.dev/core";
 import { routeLoader$ } from "@qwik.dev/router";
 import type { DocumentHead } from "@qwik.dev/router";
-import { AppCardLink } from "~/components/app-card/app-card";
 import { CategoryTileGrid } from "~/components/category-tile-grid/category-tile-grid";
-import { getCategories, getTrendingApps } from "~/catalog";
+import { SectionMagazine } from "~/components/section-magazine/section-magazine";
+import { getCategories, getStats } from "~/catalog";
+import { parseHomeRows, type HomeRows } from "~/home-rows";
 import { resolveServerEnv } from "~/server-env";
 
-export const useTrending = routeLoader$(async (requestEvent) =>
-  getTrendingApps(resolveServerEnv(requestEvent.platform), "app"),
+export const useStats = routeLoader$(async (requestEvent) =>
+  getStats(resolveServerEnv(requestEvent.platform)),
 );
 export const useCategories = routeLoader$(async (requestEvent) =>
   getCategories(resolveServerEnv(requestEvent.platform), "app"),
 );
 
 export default component$(() => {
-  const trending = useTrending();
+  const stats = useStats();
   const categories = useCategories();
+  // The same rows as the homepage, from the same edge-cached `/api/home/`
+  // response (see `~/home-rows`): `undefined` while they load.
+  const rows = useSignal<HomeRows>();
+  const generation = stats.value.generatedAt.replaceAll(/\D/g, "");
+  useVisibleTask$(async () => {
+    try {
+      const response = await fetch(`/api/home/?g=${generation}`);
+      rows.value = parseHomeRows(response.ok ? await response.json() : {});
+    } catch {
+      rows.value = parseHomeRows({});
+    }
+  });
+  const available = new Set(categories.value.map(({ category }) => category));
 
   return (
     <div class="flex flex-col gap-10">
@@ -30,20 +44,8 @@ export default component$(() => {
         </p>
       </div>
 
-      {trending.value.length > 0 && (
-        <section>
-          <div class="flex items-baseline justify-between mb-3">
-            <h2 class="text-lg font-semibold">Trending apps</h2>
-            <a href="/browse/?type=app" class="link link-primary text-sm">
-              Browse all apps →
-            </a>
-          </div>
-          <div class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
-            {trending.value.slice(0, 12).map((app) => (
-              <AppCardLink key={app.id} app={app} />
-            ))}
-          </div>
-        </section>
+      {stats.value.total > 0 && (
+        <SectionMagazine section="apps" rows={rows.value} available={available} />
       )}
 
       {categories.value.length > 0 && (
