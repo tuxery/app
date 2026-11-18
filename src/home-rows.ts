@@ -49,6 +49,11 @@ export interface HomeRow {
   category?: string;
   /** What the row is sorted by, shown on an info icon next to its title. */
   tip?: string;
+  /**
+   * A sentence on what the row holds, for the pages that draw it as an
+   * editorial collection rather than a plain row (/games' family games).
+   */
+  blurb?: string;
   /** Shown when the listing is empty. Without one, an empty row is left out. */
   emptyMessage?: string;
 }
@@ -144,6 +149,7 @@ export const HOME_ROWS: readonly HomeRow[] = [
     listing: FAMILY_GAMES,
     href: "/browse/?type=game&age=3",
     tip: FAMILY_GAMES_TIP,
+    blurb: "Rated for every age: games to play with the kids, most popular first.",
   },
   // Around games (an app category, listed with the games)
   categoryRow("games", "Emulators & game tools", "Gaming Tools"),

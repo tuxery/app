@@ -83,9 +83,11 @@ const Block = component$<{
 /**
  * The /apps or /games page body, as a magazine: the app of the day in a
  * large banner, the trending top 10 as a numbered chart, the hand-picked or
- * newest ones as large cards, the recently updated as small tiles, then
- * the section's category rows, one in three as an editorial collection
- * with a sentence on what it holds. Every block reads the same `HOME_ROWS`
+ * newest ones as large cards, the recently updated as small tiles, any
+ * other hand-made listing (the family games) as a collection with its
+ * `blurb`, then the section's category rows, one in three as an editorial
+ * collection with a sentence on what it holds (never two collections in a
+ * row). Every block reads the same `HOME_ROWS`
  * listings as the homepage (`rows`, undefined while they load); an empty
  * listing is left out unless its row says why it's empty.
  */
@@ -103,6 +105,13 @@ export const SectionMagazine = component$<{
   // tiles; games have no hand-picked row, so their newest get the large cards.
   const spotlight = mustHave ?? recent;
   const compact = mustHave ? recent : undefined;
+  // Any other hand-made listing (the family games): an editorial collection.
+  const collections = sectionRows.filter(
+    (row) =>
+      row.category === undefined &&
+      ![trending, recent, mustHave].includes(row) &&
+      isDrawn(row, rows?.[row.listing]),
+  );
   const categories = sectionRows
     .filter((row) => row.category !== undefined)
     .filter((row) => isDrawn(row, rows?.[row.listing]));
@@ -140,8 +149,23 @@ export const SectionMagazine = component$<{
       {compact && isDrawn(compact, rows?.[compact.listing]) && (
         <Block row={compact} apps={rows?.[compact.listing]} kind="compact" placeholder="h-40" />
       )}
+      {collections.map((row) => (
+        <Collection
+          key={row.listing}
+          level={2}
+          title={row.title}
+          blurb={row.blurb ?? ""}
+          href={row.href}
+        >
+          {rows === undefined ? (
+            <BlockPlaceholder class="h-56" />
+          ) : (
+            <CompactGrid apps={(rows[row.listing] ?? []).slice(0, 6)} label={row.title} dense />
+          )}
+        </Collection>
+      ))}
       {categories.map((row, i) =>
-        i % 3 === 0 ? (
+        (i + collections.length) % 3 === 0 ? (
           <Collection
             key={row.listing}
             level={2}
