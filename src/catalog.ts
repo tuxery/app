@@ -1171,6 +1171,66 @@ export async function getSubcategories(
 }
 
 /**
+ * The most popular products of each of `subcategories` (all of one
+ * `category`), `size` each, popular first: the first chunk of each
+ * subcategory's precomputed /browse list (`subcategoryIds:`), all read in
+ * one pinned batch, then their rows in one `id IN (...)` query. Two
+ * queries whatever the number of subcategories, cached like the other
+ * listings. A subcategory missing from the dataset gets no entry; on a
+ * dataset published before subcategories, the result is empty.
+ */
+export async function getSubcategoryTops(
+  env: ServerEnv,
+  category: string,
+  subcategories: readonly string[],
+  size: number,
+): Promise<Record<string, AppSummary[]>> {
+  const db = getClient(env);
+  if (!db || subcategories.length === 0) return {};
+
+  const key = `getSubcategoryTops:${category}:${size}:${subcategories.join("\u0000")}`;
+  return cachedListing<Record<string, AppSummary[]>>(key, {}, async () => {
+    let keys = await currentBrowseKeys(db);
+    for (let attempt = 0; attempt < 2 && keys?.subcategories === true; attempt++) {
+      const generation = keys.generation;
+      // eslint-disable-next-line no-await-in-loop
+      const read = await readPinned(
+        db,
+        generation,
+        subcategories.map((subcategory) => ({
+          sql: `SELECT value FROM meta WHERE key = ?`,
+          args: [subcategoryIdsChunkKey(generation, 0, category, subcategory)],
+        })),
+      );
+      if (read.kind === "stale") {
+        keys = rememberBrowseKeys(read.keys);
+        continue;
+      }
+      const idsBySub = subcategories.map((_, i) =>
+        (JSON.parse(metaValue(read.results[i]) ?? "[]") as string[]).slice(0, size),
+      );
+      const ids = [...new Set(idsBySub.flat())];
+      if (ids.length === 0) return {};
+      // eslint-disable-next-line no-await-in-loop
+      const rows = await db.execute({
+        sql: `SELECT ${SUMMARY_COLUMNS} FROM apps WHERE id IN (${ids.map(() => "?").join(", ")})`,
+        args: ids,
+      });
+      const byId = new Map(
+        rows.rows.map((row) => [String(row.id), toSummary(row as unknown as Row)]),
+      );
+      return Object.fromEntries(
+        subcategories.map((subcategory, i) => [
+          subcategory,
+          idsBySub[i].flatMap((id) => byId.get(id) ?? []),
+        ]),
+      );
+    }
+    return {};
+  });
+}
+
+/**
  * Reads precomputed totals from the `meta` table — never `COUNT(*)` on `apps` at request time.
  *
  * Only the two keys it needs, by primary key: `meta` also holds every
