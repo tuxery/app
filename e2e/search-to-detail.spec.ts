@@ -7,7 +7,7 @@ test("searching from the header lands on real /browse results, and a result open
   page,
 }) => {
   await page.goto("/");
-  await page.getByPlaceholder("Search for an app or game…").fill("firefox");
+  await page.getByRole("searchbox", { name: "Search apps and games" }).fill("firefox");
   await page.keyboard.press("Enter");
 
   await expect(page).toHaveURL(/\/browse\/\?q=firefox/);

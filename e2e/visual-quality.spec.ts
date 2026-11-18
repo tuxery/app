@@ -11,9 +11,7 @@ async function placeholderCount(page: import("@playwright/test").Page): Promise<
   return placeholders;
 }
 
-test("homepage trending/category rows only show apps with a real icon or screenshot", async ({
-  page,
-}) => {
+test("the homepage's cards only show apps with a real icon or screenshot", async ({ page }) => {
   await page.goto("/");
   const cards = page.locator("article.card");
   await expect(cards.first()).toBeVisible();
