@@ -34,25 +34,36 @@ const MAX_CATEGORY_LENGTH = 100;
  * conditions and in the listing cache's key: a `source` that is not a real
  * source would be a `LIKE` pattern of the visitor's choosing over every
  * app, and a free-form `sort` or `interfaceFilter` as many cache entries as
- * there are strings. `category` stays free text (the list lives in the
- * database), bounded in length: an unknown one matches no row.
+ * there are strings. `category` and `subcategory` stay free text (the lists
+ * live in the database), bounded in length: an unknown one matches no
+ * row.
  */
 export function normalizeBrowseOptions(
   options: unknown,
 ): Required<Pick<BrowseOptions, "interfaceFilter" | "typeFilter" | "sort">> &
-  Pick<BrowseOptions, "category" | "source" | "license" | "age"> {
+  Pick<BrowseOptions, "category" | "subcategory" | "source" | "license" | "age"> {
   const given = (typeof options === "object" && options !== null ? options : {}) as Record<
     string,
     unknown
   >;
-  const { interfaceFilter, typeFilter, category, source, license, age, sort } = given;
+  const { interfaceFilter, typeFilter, category, subcategory, source, license, age, sort } = given;
+  const validCategory =
+    typeof category === "string" && category !== "" && category.length <= MAX_CATEGORY_LENGTH
+      ? category
+      : undefined;
   return {
     interfaceFilter:
       interfaceFilter === "gui" || interfaceFilter === "cli" ? interfaceFilter : "all",
     typeFilter: typeFilter === "game" || typeFilter === "app" ? typeFilter : "all",
-    category:
-      typeof category === "string" && category !== "" && category.length <= MAX_CATEGORY_LENGTH
-        ? category
+    category: validCategory,
+    // Only inside a category: a subcategory label alone is ambiguous
+    // (Arcade games and Action games could both have "Platformers").
+    subcategory:
+      validCategory !== undefined &&
+      typeof subcategory === "string" &&
+      subcategory !== "" &&
+      subcategory.length <= MAX_CATEGORY_LENGTH
+        ? subcategory
         : undefined,
     source: typeof source === "string" && isInstallSource(source) ? source : undefined,
     license: license === "free" ? "free" : undefined,

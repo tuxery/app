@@ -3,6 +3,7 @@ import {
   APP_CATEGORY_GROUPS,
   categoryDirectory,
   categoryTrail,
+  orderSubcategories,
   groupCategories,
   retiredCategoryRedirect,
 } from "./categories";
@@ -74,10 +75,27 @@ describe("retiredCategoryRedirect", () => {
     expect(retiredCategoryRedirect("Internet & Communication")).toBe("/categories/#internet");
   });
 
+  it("sends a renamed category's links to its new name", () => {
+    expect(retiredCategoryRedirect("Settings")).toBe("/browse/?category=Desktop%20%26%20Settings");
+  });
+
   it("leaves current categories and other filters alone", () => {
     expect(retiredCategoryRedirect("Email")).toBeUndefined();
     expect(retiredCategoryRedirect(null)).toBeUndefined();
     expect(retiredCategoryRedirect("hasOwnProperty")).toBeUndefined();
+  });
+});
+
+describe("orderSubcategories", () => {
+  it("lists the drawers of packages people rarely browse for last", () => {
+    const subs = ["Language Modules & Cross-Compilers", "Version Control", "Databases"].map(
+      (subcategory) => ({ subcategory }),
+    );
+    expect(orderSubcategories(subs).map((s) => s.subcategory)).toEqual([
+      "Version Control",
+      "Databases",
+      "Language Modules & Cross-Compilers",
+    ]);
   });
 });
 
@@ -94,6 +112,13 @@ describe("categoryTrail", () => {
     expect(categoryTrail("game", "Puzzle")[0]).toEqual({
       label: "Games",
       href: "/browse/?type=game",
+    });
+  });
+
+  it("ends at the subcategory's listing when the product has one", () => {
+    expect(categoryTrail(undefined, "Developer Tools", "Version Control")[2]).toEqual({
+      label: "Version Control",
+      href: "/browse/?category=Developer%20Tools&sub=Version%20Control",
     });
   });
 

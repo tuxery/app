@@ -50,7 +50,7 @@ export const APP_CATEGORY_GROUPS: readonly CategoryGroup[] = [
   {
     id: "system",
     title: "System & development",
-    categories: ["Developer Tools", "System Tools", "Security", "Settings", "Utilities"],
+    categories: ["Developer Tools", "System Tools", "Security", "Desktop & Settings", "Utilities"],
   },
   { id: "gaming", title: "Around games", categories: ["Gaming Tools"] },
 ];
@@ -95,6 +95,8 @@ export function groupCategories<T extends { category: string }>(
  */
 const RETIRED_CATEGORIES: Readonly<Record<string, string>> = {
   "Internet & Communication": "/categories/#internet",
+  // Renamed when it took in window managers, bars and themes.
+  Settings: "/browse/?category=Desktop%20%26%20Settings",
 };
 
 /** A category a grid or chip can link to: neither "To Classify" nor a retired id. */
@@ -133,13 +135,41 @@ export function retiredCategoryRedirect(category: string | null): string | undef
 }
 
 /**
+ * Subcategories catalog files packages a store visitor rarely browses
+ * for (cross-compilers and language modules, printer drivers, editor
+ * plugins): listed after the others, whatever their size, so the first
+ * chips of a category are the kinds of apps people look for.
+ */
+const LISTED_LAST_SUBCATEGORIES: ReadonlySet<string> = new Set([
+  "Language Modules & Cross-Compilers",
+  "Printers & Scanners",
+  "Editor Plugins",
+]);
+
+/** `subcategories` (largest first, as catalog lists them) with the listed-last ones moved to the end. */
+export function orderSubcategories<T extends { subcategory: string }>(
+  subcategories: readonly T[],
+): T[] {
+  return [
+    ...subcategories.filter((s) => !LISTED_LAST_SUBCATEGORIES.has(s.subcategory)),
+    ...subcategories.filter((s) => LISTED_LAST_SUBCATEGORIES.has(s.subcategory)),
+  ];
+}
+
+/** The /browse link to one subcategory of `category`. */
+export function subcategoryHref(category: string, subcategory: string): string {
+  return `/browse/?category=${encodeURIComponent(category)}&sub=${encodeURIComponent(subcategory)}`;
+}
+
+/**
  * The trail above a product page's name: the type's listing, then its
- * category's, each a /browse filter. No category step for "To Classify",
- * which isn't one.
+ * category's, then its subcategory's when it has one, each a /browse
+ * filter. No category step for "To Classify", which isn't one.
  */
 export function categoryTrail(
   contentType: "game" | undefined,
   category: string | undefined,
+  subcategory?: string,
 ): { label: string; href: string; category?: string }[] {
   const root =
     contentType === "game"
@@ -149,5 +179,6 @@ export function categoryTrail(
   return [
     root,
     { label: category, href: `/browse/?category=${encodeURIComponent(category)}`, category },
+    ...(subcategory ? [{ label: subcategory, href: subcategoryHref(category, subcategory) }] : []),
   ];
 }

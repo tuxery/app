@@ -48,6 +48,7 @@ describe("normalizeBrowseOptions", () => {
     interfaceFilter: "all",
     typeFilter: "all",
     category: undefined,
+    subcategory: undefined,
     source: undefined,
     license: undefined,
     age: undefined,
@@ -60,6 +61,7 @@ describe("normalizeBrowseOptions", () => {
         interfaceFilter: "gui",
         typeFilter: "game",
         category: "Strategy",
+        subcategory: "Real-Time Strategy",
         source: "flatpak-flathub",
         license: "free",
         age: 7,
@@ -69,6 +71,7 @@ describe("normalizeBrowseOptions", () => {
       interfaceFilter: "gui",
       typeFilter: "game",
       category: "Strategy",
+      subcategory: "Real-Time Strategy",
       source: "flatpak-flathub",
       license: "free",
       age: 7,
@@ -95,6 +98,14 @@ describe("normalizeBrowseOptions", () => {
   it("refuses a source name inherited from Object", () => {
     expect(normalizeBrowseOptions({ source: "constructor" }).source).toBeUndefined();
     expect(normalizeBrowseOptions({ source: "toString" }).source).toBeUndefined();
+  });
+
+  it("keeps a subcategory only inside a category", () => {
+    expect(normalizeBrowseOptions({ subcategory: "Version Control" }).subcategory).toBeUndefined();
+    expect(
+      normalizeBrowseOptions({ category: "Developer Tools", subcategory: "x".repeat(101) })
+        .subcategory,
+    ).toBeUndefined();
   });
 
   it("drops an empty or overlong category", () => {

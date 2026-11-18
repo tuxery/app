@@ -29,7 +29,7 @@ const APPLICATION_CATEGORIES: Readonly<Record<string, string>> = {
   "Music & Audio": "MultimediaApplication",
   "Photo & Video": "MultimediaApplication",
   Security: "SecurityApplication",
-  Settings: "UtilitiesApplication",
+  "Desktop & Settings": "UtilitiesApplication",
   "Social Media": "SocialNetworkingApplication",
   "System Tools": "UtilitiesApplication",
   "Travel & Navigation": "TravelApplication",

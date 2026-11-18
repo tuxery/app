@@ -7,7 +7,9 @@ import { AppCardLink } from "~/components/app-card/app-card";
 import {
   browseApps,
   getCategories,
+  getSubcategories,
   type BrowseOptions,
+  type SubcategoryCount,
   type InterfaceFilter,
   type SortOption,
   type TypeFilter,
@@ -23,7 +25,8 @@ import {
   type PackageSourceId,
 } from "~/catalog-types";
 import { parsePageParam } from "~/browse-page";
-import { retiredCategoryRedirect } from "~/categories";
+import { orderSubcategories, retiredCategoryRedirect } from "~/categories";
+import type { ServerEnv } from "~/server-env";
 import { SEARCH_MIN_WORD_LENGTH } from "~/search-fts";
 import { resolveServerEnv } from "~/server-env";
 
@@ -65,6 +68,36 @@ function parseSort(value: string | null): SortOption {
   return value === "name-asc" || value === "name-desc" ? value : "relevance";
 }
 
+/**
+ * `sub` when it names a subcategory of `category` in `subcategories`,
+ * else nothing: the filter form keeps `sub` across a change of category,
+ * and a subcategory of the previous one would list nothing.
+ */
+function validSubcategory(
+  subcategories: readonly SubcategoryCount[],
+  category: string | undefined,
+  sub: string | null,
+): string | undefined {
+  if (!category || !sub) return undefined;
+  return subcategories.some((s) => s.category === category && s.subcategory === sub)
+    ? sub
+    : undefined;
+}
+
+async function requestedSubcategory(
+  env: ServerEnv,
+  url: URL,
+  typeFilter: TypeFilter,
+): Promise<string | undefined> {
+  const sub = url.searchParams.get("sub");
+  if (!sub) return undefined;
+  return validSubcategory(
+    await getSubcategories(env, typeFilter),
+    url.searchParams.get("category") ?? undefined,
+    sub,
+  );
+}
+
 // A link to a category id catalog no longer publishes (one that was split)
 // goes where its parts are listed rather than to an empty listing.
 export const onGet: RequestHandler = ({ url, redirect }) => {
@@ -80,17 +113,33 @@ export const useBrowse = routeLoader$(
     const { url } = requestEvent;
     const query = url.searchParams.get("q") ?? "";
     const page = parsePageParam(url.searchParams.get("page"));
-    return browseApps(resolveServerEnv(requestEvent.platform), query, page, {
+    const env = resolveServerEnv(requestEvent.platform);
+    const typeFilter = parseTypeFilter(url.searchParams.get("type"));
+    return browseApps(env, query, page, {
       interfaceFilter: parseInterfaceFilter(url.searchParams.get("interface")),
-      typeFilter: parseTypeFilter(url.searchParams.get("type")),
+      typeFilter,
       category: url.searchParams.get("category") ?? undefined,
+      subcategory: await requestedSubcategory(env, url, typeFilter),
       source: parseSource(url.searchParams.get("source")),
       license: parseLicense(url.searchParams.get("license")),
       age: parseAgeFilter(url.searchParams.get("age")),
       sort: parseSort(url.searchParams.get("sort")),
     });
   },
-  { search: ["q", "page", "interface", "type", "category", "source", "license", "age", "sort"] },
+  {
+    search: [
+      "q",
+      "page",
+      "interface",
+      "type",
+      "category",
+      "sub",
+      "source",
+      "license",
+      "age",
+      "sort",
+    ],
+  },
 );
 
 // Scoped to the current Type filter — apps and games each draw from their
@@ -107,16 +156,43 @@ export const useBrowseCategories = routeLoader$(
   { search: ["type"] },
 );
 
+// Every subcategory with its count, for the chips of a category's listing.
+export const useBrowseSubcategories = routeLoader$(
+  async (requestEvent) =>
+    getSubcategories(
+      resolveServerEnv(requestEvent.platform),
+      parseTypeFilter(requestEvent.url.searchParams.get("type")),
+    ),
+  { search: ["type"] },
+);
+
 export default component$(() => {
   const location = useLocation();
   const browse = useBrowse();
   const categories = useBrowseCategories();
+  const subcategories = useBrowseSubcategories();
 
   const query = location.url.searchParams.get("q") ?? "";
   const startPage = parsePageParam(location.url.searchParams.get("page"));
   const interfaceFilter = parseInterfaceFilter(location.url.searchParams.get("interface"));
   const typeFilter = parseTypeFilter(location.url.searchParams.get("type"));
   const category = location.url.searchParams.get("category") ?? undefined;
+  const subcategory = validSubcategory(
+    subcategories.value,
+    category,
+    location.url.searchParams.get("sub"),
+  );
+  const categorySubcategories = category
+    ? orderSubcategories(subcategories.value.filter((s) => s.category === category))
+    : [];
+  // A chip keeps every other filter and starts again at the first page.
+  const subcategoryLink = (sub: string | undefined) => {
+    const url = new URL(location.url);
+    url.searchParams.delete("page");
+    if (sub) url.searchParams.set("sub", sub);
+    else url.searchParams.delete("sub");
+    return `${url.pathname}${url.search}`;
+  };
   const source = parseSource(location.url.searchParams.get("source"));
   const license = parseLicense(location.url.searchParams.get("license"));
   const age = parseAgeFilter(location.url.searchParams.get("age"));
@@ -125,6 +201,7 @@ export default component$(() => {
     interfaceFilter,
     typeFilter,
     category,
+    subcategory,
     source,
     license,
     age,
@@ -283,6 +360,7 @@ export default component$(() => {
         )}
 
         {source && <input type="hidden" name="source" value={source} />}
+        {subcategory && <input type="hidden" name="sub" value={subcategory} />}
 
         <button type="submit" class="btn btn-primary btn-sm">
           Filter
@@ -298,8 +376,40 @@ export default component$(() => {
               <span aria-hidden="true">✕</span>
             </a>
           )}
+          {subcategory && (
+            <a
+              href={subcategoryLink(undefined)}
+              class="badge badge-outline gap-1 hover:badge-error"
+            >
+              {subcategory}
+              <span aria-hidden="true">✕</span>
+            </a>
+          )}
           {source && <span class="badge badge-outline">{SOURCE_LABELS[source]}</span>}
         </div>
+      )}
+
+      {categorySubcategories.length > 0 && (
+        <nav aria-label={`Kinds of ${category}`} class="flex flex-wrap gap-2">
+          <a
+            href={subcategoryLink(undefined)}
+            class={["btn btn-sm", subcategory ? "btn-ghost" : "btn-primary"]}
+            aria-current={subcategory ? undefined : "page"}
+          >
+            All
+          </a>
+          {categorySubcategories.map((s) => (
+            <a
+              key={s.subcategory}
+              href={subcategoryLink(s.subcategory)}
+              class={["btn btn-sm", s.subcategory === subcategory ? "btn-primary" : "btn-ghost"]}
+              aria-current={s.subcategory === subcategory ? "page" : undefined}
+            >
+              {s.subcategory}
+              <span class="opacity-60 font-normal">{s.count.toLocaleString()}</span>
+            </a>
+          ))}
+        </nav>
       )}
 
       <p class="text-sm text-base-content/70">
