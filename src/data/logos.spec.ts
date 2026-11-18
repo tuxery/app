@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { INSTALL_GROUP_LOGOS, LOGO_PATHS, OS_LOGOS, SOURCE_LOGOS } from "./logos";
+import { BRAND_COLORS, INSTALL_GROUP_LOGOS, LOGO_PATHS, OS_LOGOS, SOURCE_LOGOS } from "./logos";
 import { STORE_PAGES } from "./store-pages";
 
 describe("logos", () => {
@@ -11,5 +11,10 @@ describe("logos", () => {
 
   it("has a logo for every source with a store page of its own", () => {
     for (const store of STORE_PAGES) expect(SOURCE_LOGOS[store.id]).toBeDefined();
+  });
+
+  it("has a plain #rrggbb brand color for every logo", () => {
+    for (const slug of Object.keys(LOGO_PATHS))
+      expect(BRAND_COLORS[slug]).toMatch(/^#[0-9A-F]{6}$/);
   });
 });

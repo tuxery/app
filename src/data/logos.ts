@@ -127,3 +127,37 @@ export const INSTALL_GROUP_LOGOS: Record<string, string> = {
   Deepin: "deepin",
   "MX Linux": "mxlinux",
 };
+
+/**
+ * Each logo's brand color (Simple Icons' own hex), for `LogoChip`, which
+ * draws it on a white chip so a dark or pale brand color reads in both
+ * themes. A slug left out is drawn in near-black.
+ */
+export const BRAND_COLORS: Record<string, string> = {
+  alpinelinux: "#0D597F",
+  appimage: "#2B9AF3",
+  archlinux: "#1793D1",
+  debian: "#A81D33",
+  deepin: "#007CFF",
+  elementary: "#64BAFF",
+  fedora: "#51A2DA",
+  flatpak: "#4A90D9",
+  flathub: "#000000",
+  gentoo: "#54487A",
+  github: "#181717",
+  gogdotcom: "#86328A",
+  homebrew: "#FBB040",
+  linuxmint: "#87CF3E",
+  lutris: "#FF9900",
+  manjaro: "#35BFA4",
+  mxlinux: "#000000",
+  nixos: "#5277C3",
+  opensuse: "#73BA25",
+  popos: "#48B9C7",
+  slackware: "#000000",
+  snapcraft: "#82BEA0",
+  solus: "#5294E2",
+  ubuntu: "#E95420",
+  voidlinux: "#478061",
+  zorin: "#15A6F0",
+};
