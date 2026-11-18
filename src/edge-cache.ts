@@ -26,6 +26,7 @@ export function cacheName(commit: string): string {
  * are passed through as they are.
  */
 export const PAGE_QUERY_PARAMS: Readonly<Record<string, readonly string[]>> = {
+  "/api/category-listing/": ["category", "page", "sub"],
   "/browse/": [
     "age",
     "category",
