@@ -24,7 +24,10 @@ test("a per-source store page shows real trending apps from that source @private
 
 test("the homepage's AppImageHub tile opens its store page", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: "AppImageHub", exact: true }).first().click();
+  await page
+    .getByRole("complementary", { name: "Charts, categories and stores" })
+    .getByRole("link", { name: /^AppImageHub/ })
+    .click();
   await expect(page).toHaveURL(/\/sources\/appimagehub\/$/);
   await expect(page.getByRole("heading", { name: "AppImageHub", level: 1 })).toBeVisible();
   await expect(page.getByRole("link", { name: "Visit AppImageHub" })).toHaveAttribute(

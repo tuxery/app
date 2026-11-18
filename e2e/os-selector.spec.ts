@@ -19,7 +19,7 @@ test("header shows a rainbow-aura 'Select your OS' with none picked, and the pla
     .toContain('"osId":"ubuntu"');
 
   await page.goto("/");
-  const osButton = page.getByRole("link", { name: "Ubuntu", exact: true });
+  const osButton = page.locator("header").getByRole("link", { name: "Ubuntu", exact: true });
   await expect(osButton).toBeVisible();
   await expect(osButton).not.toHaveClass(/btn-primary/);
   await expect(page.getByRole("link", { name: "Select your OS" })).toHaveCount(0);

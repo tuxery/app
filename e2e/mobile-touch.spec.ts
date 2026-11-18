@@ -26,15 +26,15 @@ async function swipeLeft(page: Page, x: number, y: number, distance: number): Pr
   await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
 }
 
-test("the trending row's horizontal scroller responds to a real touch swipe", async ({ page }) => {
+test("the must-have row's horizontal scroller responds to a real touch swipe", async ({ page }) => {
   await page.goto("/");
-  const heading = page.getByRole("heading", { name: "Trending apps" });
+  const heading = page.getByRole("heading", { name: "Must-have apps" });
   await heading.scrollIntoViewIfNeeded();
 
-  const track = page.getByLabel("Trending apps", { exact: true });
+  const track = page.getByLabel("Must-have apps", { exact: true });
   await expect(track).toBeVisible();
   const box = await track.boundingBox();
-  if (!box) throw new Error("trending apps scroller has no box");
+  if (!box) throw new Error("must-have scroller has no box");
 
   const before = await track.evaluate((el) => el.scrollLeft);
   expect(before).toBe(0);
@@ -67,7 +67,7 @@ test("searching from the homepage hero, by tap, reaches real results", async ({ 
   // keyboard's own "Go"/"Search" action key maps to Enter, so that's the
   // realistic touch flow here, not a button tap.
   await page.goto("/");
-  const searchInput = page.getByPlaceholder("Search for an app or game…");
+  const searchInput = page.getByRole("searchbox", { name: "Search apps and games" });
   await searchInput.tap();
   await searchInput.fill("firefox");
   await searchInput.press("Enter");
