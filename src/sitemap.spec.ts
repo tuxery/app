@@ -3,13 +3,14 @@ import { DOCS_PAGES } from "./docs-nav";
 import {
   appPageUrl,
   appSitemapParts,
-  categorySlug,
   findAppSitemapPart,
   sitemapIndexXml,
   sitemapUrl,
   sitePagePaths,
   urlSetXml,
+  categoryPagePaths,
 } from "./sitemap";
+import { categorySlug } from "./categories";
 
 describe("categorySlug", () => {
   it("makes a file-name-safe slug of a category", () => {
@@ -114,5 +115,19 @@ describe("urlSetXml", () => {
     expect(xml).toContain("<url><loc>https://tuxery.store/</loc></url>");
     expect(xml).toContain("<url><loc>https://tuxery.store/a?b=1&amp;c=&lt;2&gt;</loc></url>");
     expect(xml.match(/<url>/g)).toHaveLength(2);
+  });
+});
+
+describe("categoryPagePaths", () => {
+  it("lists each listed category's page, then its subcategories'", () => {
+    expect(
+      categoryPagePaths(
+        [{ category: "Puzzle" }, { category: "To Classify" }, { category: "Settings" }],
+        [
+          { category: "Puzzle", subcategory: "Word & Trivia" },
+          { category: "Strategy", subcategory: "Real-Time Strategy" },
+        ],
+      ),
+    ).toEqual(["/categories/puzzle/", "/categories/puzzle/word-and-trivia/"]);
   });
 });
