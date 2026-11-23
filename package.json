@@ -35,20 +35,20 @@
     "helpers4": "^3.1.12"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20261115.1",
-    "@playwright/test": "^1.65.0",
+    "@cloudflare/workers-types": "^5.20261120.1",
+    "@playwright/test": "^1.65.1",
     "@qwik.dev/core": "2.0.0-rc.5",
     "@qwik.dev/router": "2.0.0-rc.5",
     "@tailwindcss/vite": "^4.3.5",
     "@types/node": "26.6.6",
-    "ignore": "^7.0.14",
-    "oxfmt": "^0.78.0",
-    "oxlint": "^1.93.0",
+    "ignore": "^7.0.16",
+    "oxfmt": "^0.79.0",
+    "oxlint": "^1.94.0",
     "tailwindcss": "^4.3.5",
     "typescript": "7.0.2",
     "vite": "^8.3.8",
-    "vitest": "5.1.0",
-    "wrangler": "^4.162.0"
+    "vitest": "5.1.1",
+    "wrangler": "^4.165.0"
   },
   "engines": {
     "node": ">=26.0.0"
